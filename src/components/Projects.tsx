@@ -24,7 +24,8 @@ interface ProjectsProps {
   currentUser: User | null;
 }
 
-interface Project extends Omit<ProjectType, 'budget' | 'due_date' | 'team_size'> {
+interface Project extends Omit<ProjectType, 'budget' | 'due_date' | 'team_size' | 'id'> {
+  id: string;
   budget: string;
   dueDate: string;
   team: number;
@@ -69,7 +70,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
       // Transform data to match component interface
       const transformedProjects: Project[] = data.map(project => ({
         ...project,
-        id: parseInt(project.id) || 0,
+        id: project.id,
         client: project.client?.name || 'Unknown Client',
         budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
         dueDate: project.due_date || '',
@@ -127,7 +128,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
         if (modalMode === 'create') {
           await projectService.create(apiData);
         } else if (selectedProject) {
-          await projectService.update(selectedProject.id.toString(), apiData);
+          await projectService.update(selectedProject.id, apiData);
         }
         
         // Reload projects
@@ -144,7 +145,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const confirmDelete = async () => {
     if (selectedProject) {
       try {
-        await projectService.delete(selectedProject.id.toString());
+        await projectService.delete(selectedProject.id);
         await loadProjects();
         setIsDeleteDialogOpen(false);
         setSelectedProject(undefined);
@@ -173,20 +174,20 @@ export default function Projects({ currentUser }: ProjectsProps) {
     }
   };
 
-  const moveProject = (projectId: number, newStatus: string) => {
+  const moveProject = (projectId: string, newStatus: string) => {
     const updateProject = async () => {
       try {
         // Update the project in the local state immediately for better UX
-        setProjects(prevProjects => 
-          prevProjects.map(p => 
-            p.id === projectId 
+        setProjects(prevProjects =>
+          prevProjects.map(p =>
+            p.id === projectId
               ? { ...p, status: newStatus, color: getStatusColor(newStatus) }
               : p
           )
         );
-        
+
         // Then update in the backend
-        await projectService.update(projectId.toString(), { status: newStatus });
+        await projectService.update(projectId, { status: newStatus });
         await loadProjects();
       } catch (error) {
         console.error('Error updating project status:', error);
@@ -203,7 +204,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
     
     setDraggedProject(project);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', project.id.toString());
+    e.dataTransfer.setData('text/plain', project.id);
     
     // Add visual feedback
     const target = e.target as HTMLElement;
@@ -249,8 +250,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
     
     e.preventDefault();
     setDragOverColumn(null);
-    
-    const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+
+    const draggedId = e.dataTransfer.getData('text/plain');
     const project = projects.find(p => p.id === draggedId);
     
     if (project && project.status !== columnId) {
