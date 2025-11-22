@@ -201,27 +201,25 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
   const handleDragStart = (e: React.DragEvent, project: Project) => {
     if (!isAdmin) return;
-    
+
     setDraggedProject(project);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', project.id);
-    
-    // Add visual feedback
-    const target = e.target as HTMLElement;
-    target.style.opacity = '0.5';
-    target.style.transform = 'rotate(5deg)';
+
+    const target = e.currentTarget as HTMLElement;
+    setTimeout(() => {
+      target.style.opacity = '0.4';
+    }, 0);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
     if (!isAdmin) return;
-    
+
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
+
     setDraggedProject(null);
     setDragOverColumn(null);
-    
-    // Reset visual feedback
-    const target = e.target as HTMLElement;
-    target.style.opacity = '1';
-    target.style.transform = 'rotate(0deg)';
   };
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
@@ -234,13 +232,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
   const handleDragLeave = (e: React.DragEvent) => {
     if (!isAdmin) return;
-    
-    // Only clear if we're leaving the column entirely
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const currentTarget = e.currentTarget as HTMLElement;
+
+    if (!currentTarget.contains(relatedTarget)) {
       setDragOverColumn(null);
     }
   };
@@ -372,12 +368,12 @@ export default function Projects({ currentUser }: ProjectsProps) {
       {currentViewMode === 'kanban' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {kanbanColumns.map((column) => (
-            <div 
-              key={column.id} 
-              className={`glass-card rounded-xl p-4 min-h-[400px] transition-all duration-200 ${
-                dragOverColumn === column.id 
-                  ? 'border-2 border-blue-400 bg-blue-900/10 scale-105' 
-                  : 'border-2 border-transparent'
+            <div
+              key={column.id}
+              className={`glass-card rounded-xl p-4 min-h-[500px] transition-all duration-300 ${
+                dragOverColumn === column.id
+                  ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
+                  : 'border-2 border-slate-700/50'
               }`}
               onDragOver={isAdmin ? (e) => handleDragOver(e, column.id) : undefined}
               onDragLeave={isAdmin ? handleDragLeave : undefined}
@@ -393,11 +389,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
               
               <div className="space-y-4">
                 {getProjectsByStatus(column.id).map((project) => (
-                  <div 
-                    key={project.id} 
-                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 border-2 border-transparent hover:border-blue-400/50 hover:shadow-lg hover:scale-105 ${
+                  <div
+                    key={project.id}
+                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 ${
                       isAdmin ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
-                    } ${draggedProject?.id === project.id ? 'opacity-50 rotate-2 scale-105' : ''}`}
+                    } ${
+                      draggedProject?.id === project.id
+                        ? 'opacity-40 scale-95 shadow-none'
+                        : 'border-2 border-slate-700/50 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]'
+                    }`}
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
                     onDragEnd={isAdmin ? handleDragEnd : undefined}
@@ -465,7 +465,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 ))}
                 
                 {getProjectsByStatus(column.id).length === 0 && (
-                  <div className="text-center py-8">
+                  <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${
+                    dragOverColumn === column.id
+                      ? 'border-blue-400 bg-blue-500/5'
+                      : 'border-slate-700/30'
+                  }`}>
                     <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
                     {isAdmin && (
                       <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
