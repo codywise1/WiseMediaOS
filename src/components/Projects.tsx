@@ -6,7 +6,8 @@ import {
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -51,6 +52,16 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [clientFilter, setClientFilter] = useState('all');
   const [clients, setClients] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'planning': return 'bg-[#3aa3eb]';
+      case 'in_progress': return 'bg-[#3aa3eb]';
+      case 'completed': return 'bg-green-500';
+      case 'on_hold': return 'bg-red-500';
+      default: return 'bg-[#3aa3eb]';
+    }
+  };
 
   React.useEffect(() => {
     loadProjects();
@@ -188,16 +199,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
       </div>
     );
   }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'planning': return 'bg-[#3aa3eb]';
-      case 'in_progress': return 'bg-[#3aa3eb]';
-      case 'completed': return 'bg-green-500';
-      case 'on_hold': return 'bg-red-500';
-      default: return 'bg-[#3aa3eb]';
-    }
-  };
 
   const moveProject = async (projectId: string, newStatus: string) => {
     try {
