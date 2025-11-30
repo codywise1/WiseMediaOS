@@ -132,6 +132,16 @@ export interface Project {
   start_date?: string;
   due_date?: string;
   team_size: number;
+  project_type?: string;
+  priority?: string;
+  billing_type?: string;
+  invoice_link?: string;
+  owner?: string;
+  assigned_members?: string[];
+  deliverables?: string[];
+  internal_tags?: string[];
+  milestones?: any[];
+  asset_count?: number;
   created_at: string;
   updated_at: string;
   client?: Client;

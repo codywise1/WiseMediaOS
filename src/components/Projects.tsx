@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectService, Project as ProjectType } from '../lib/supabase';
-import { 
-  FolderIcon, 
-  CalendarIcon, 
+import { projectService, Project as ProjectType, clientService } from '../lib/supabase';
+import {
+  FolderIcon,
+  CalendarIcon,
   UserGroupIcon,
   ChartBarIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon
+  EyeIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -49,10 +51,26 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
+  const [clients, setClients] = useState<any[]>([]);
 
   React.useEffect(() => {
     loadProjects();
+    if (currentUser?.role === 'admin') {
+      loadClients();
+    }
   }, [currentUser]);
+
+  const loadClients = async () => {
+    try {
+      const clientData = await clientService.getAll();
+      setClients(clientData);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    }
+  };
 
   const loadProjects = async () => {
     try {
@@ -103,10 +121,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleViewProject = (project: Project) => {
-    console.log(`Viewing project details for: ${project.name}`);
-    // In a real app, this would navigate to a detailed project view
-    alert(`Viewing project: ${project.name}\nClient: ${project.client}\nStatus: ${project.status}\nProgress: ${project.progress}%`);
+  const handleViewProject = (project: Project, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    navigate(`/projects/${project.id}`);
   };
 
   const handleSaveProject = (projectData: any) => {
@@ -254,9 +273,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
     }
   };
   const isAdmin = currentUser?.role === 'admin';
-  
-  // All projects are already filtered by loadProjects based on user role
-  const visibleProjects = projects;
+
+  // Apply filters
+  const visibleProjects = projects.filter(project => {
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.client.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
+    return matchesSearch && matchesStatus && matchesClient;
+  });
 
 
   const getProjectsByStatus = (status: string) => {
@@ -267,7 +292,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
     <div className="space-y-8">
       {/* Header */}
       <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
             <p className="text-gray-300">Manage and track all your active projects</p>
@@ -280,6 +305,49 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <PlusIcon className="h-5 w-5 text-white" />
               <span>New Project</span>
             </button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2 relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search projects or clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+          </div>
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            >
+              <option value="all">All Status</option>
+              <option value="planning">Planning</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="on_hold">On Hold</option>
+            </select>
+          </div>
+          {isAdmin && (
+            <div>
+              <select
+                value={clientFilter}
+                onChange={(e) => setClientFilter(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              >
+                <option value="all">All Clients</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
       </div>
@@ -361,9 +429,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 {getProjectsByStatus(column.id).map((project) => (
                   <div
                     key={project.id}
-                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 ${
-                      isAdmin ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
-                    } ${
+                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${
                       draggedProject?.id === project.id
                         ? 'opacity-40 scale-95 shadow-none'
                         : 'border-2 border-slate-700/50 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]'
@@ -371,6 +437,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
                     onDragEnd={isAdmin ? handleDragEnd : undefined}
+                    onClick={() => handleViewProject(project)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="text-white font-medium text-sm">{project.name}</h4>
