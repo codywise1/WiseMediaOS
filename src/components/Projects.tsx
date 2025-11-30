@@ -459,21 +459,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     
                     <p className="text-gray-400 text-xs mb-2">{project.client}</p>
                     <p className="text-gray-500 text-xs mb-3 line-clamp-2">{project.description}</p>
-                    
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-400">Progress</span>
-                        <span className="text-white">{project.progress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-700 rounded-full h-1.5">
-                        <div 
-                          className={`h-1.5 rounded-full ${project.color}`}
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <UserGroupIcon className="h-3 w-3 text-blue-500" />
