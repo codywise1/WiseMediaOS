@@ -6,6 +6,7 @@ interface Proposal {
   id: string;
   title: string;
   client: string;
+  client_id?: string;
   value: number;
   status: string;
   createdDate: string;

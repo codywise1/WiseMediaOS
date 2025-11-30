@@ -41,7 +41,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedProposal, setSelectedProposal] = useState<typeof initialProposals[0] | undefined>();
+  const [selectedProposal, setSelectedProposal] = useState<any | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   React.useEffect(() => {
@@ -92,13 +92,13 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     setIsModalOpen(true);
   };
 
-  const handleEditProposal = (proposal: typeof initialProposals[0]) => {
+  const handleEditProposal = (proposal: any) => {
     setSelectedProposal(proposal);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleDeleteProposal = (proposal: typeof initialProposals[0]) => {
+  const handleDeleteProposal = (proposal: any) => {
     setSelectedProposal(proposal);
     setIsDeleteDialogOpen(true);
   };
@@ -106,9 +106,13 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const handleSaveProposal = (proposalData: any) => {
     const saveProposal = async () => {
       try {
-        // Transform data for API
+        const currentYear = new Date().getFullYear();
+        const proposalId = modalMode === 'create'
+          ? `PROP-${currentYear}-${String(proposals.length + 1).padStart(3, '0')}`
+          : proposalData.id;
+
         const apiData = {
-          id: modalMode === 'create' ? `PROP-2024-${String(proposals.length + 1).padStart(3, '0')}` : proposalData.id,
+          id: proposalId,
           client_id: proposalData.client_id,
           title: proposalData.title,
           description: proposalData.description,
@@ -123,15 +127,15 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         } else if (selectedProposal) {
           await proposalService.update(selectedProposal.id, apiData);
         }
-        
-        // Reload proposals
+
         await loadProposals();
+        setIsModalOpen(false);
       } catch (error) {
         console.error('Error saving proposal:', error);
         alert('Error saving proposal. Please try again.');
       }
     };
-    
+
     saveProposal();
   };
 
@@ -367,6 +371,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         onSave={handleSaveProposal}
         proposal={selectedProposal}
         mode={modalMode}
+        currentUser={currentUser}
       />
 
       <ConfirmDialog
