@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ClipboardDocumentListIcon, 
+import {
+  ClipboardDocumentListIcon,
   CurrencyDollarIcon,
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
   EyeIcon,
   PencilIcon,
-  DocumentArrowDownIcon,
   PlusIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 import ProposalModal from './ProposalModal';
 import ConfirmDialog from './ConfirmDialog';
-import { generateProposalPDF } from '../utils/pdfGenerator';
-import { proposalService, clientService } from '../lib/supabase';
+import { proposalService } from '../lib/supabase';
 
 interface User {
   email: string;
@@ -318,38 +316,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                     <span className="text-sm text-gray-400">Expires: {proposal.expiryDate}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
-                  <button 
-                    onClick={() => {
-                      alert(`Viewing proposal: ${proposal.title}\nClient: ${proposal.client}\nValue: $${proposal.value.toLocaleString()}\nStatus: ${proposal.status}\n\nOpening detailed view...`);
-                    }}
-                    className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm"
-                  >
-                    <EyeIcon className="h-4 w-4 text-white" />
-                    View
-                  </button>
-                  <button 
-                    onClick={() => {
-                      generateProposalPDF(proposal);
-                    }}
-                    className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm"
-                  >
-                    <DocumentArrowDownIcon className="h-4 w-4 text-white" />
-                    Download
-                  </button>
-                  {proposal.status === 'pending' && (
-                    <button 
-                      onClick={() => {
-                        alert(`Signing contract for: ${proposal.title}\nValue: $${proposal.value.toLocaleString()}\n\nRedirecting to DocuSign...`);
-                      }}
-                      className="btn-action text-sm font-medium"
-                    >
-                      Sign Contract
-                    </button>
-                  )}
                   {proposal.status === 'draft' && (
-                    <button 
+                    <button
                       onClick={() => {
                         alert(`Sending proposal for review: ${proposal.title}\nClient: ${proposal.client}\n\nProposal sent successfully!`);
                       }}
