@@ -274,9 +274,9 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
           </div>
         </div>
 
-        {/* Section 2: Timeline */}
+        {/* Section 2: Timeline & Progress */}
         <div>
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Timeline</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Timeline & Progress</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
@@ -297,6 +297,30 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 onChange={handleChange}
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Progress: <span className="text-blue-400 font-bold">{formData.progress}%</span>
+              </label>
+              <input
+                type="range"
+                name="progress"
+                min="0"
+                max="100"
+                value={formData.progress}
+                onChange={handleChange}
+                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
+                style={{
+                  background: `linear-gradient(to right, #3aa3eb 0%, #3aa3eb ${formData.progress}%, #334155 ${formData.progress}%, #334155 100%)`
+                }}
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0%</span>
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+                <span>100%</span>
+              </div>
             </div>
           </div>
         </div>
