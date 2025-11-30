@@ -55,6 +55,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
   const [clients, setClients] = useState<any[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   React.useEffect(() => {
     loadProjects();
@@ -122,6 +123,10 @@ export default function Projects({ currentUser }: ProjectsProps) {
   };
 
   const handleViewProject = (project: Project, e?: React.MouseEvent) => {
+    if (isDragging) {
+      console.log('Ignoring click during drag');
+      return;
+    }
     if (e) {
       e.stopPropagation();
     }
@@ -201,17 +206,23 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
   const moveProject = async (projectId: string, newStatus: string) => {
     try {
+      console.log('Moving project:', projectId, 'to status:', newStatus);
+
       // Update the project in the local state immediately for better UX
-      setProjects(prevProjects =>
-        prevProjects.map(p =>
-          p.id === projectId
-            ? { ...p, status: newStatus, color: getStatusColor(newStatus) }
-            : p
-        )
-      );
+      setProjects(prevProjects => {
+        const updated = prevProjects.map(p => {
+          if (p.id === projectId) {
+            console.log('Updating project:', p.id, 'from', p.status, 'to', newStatus);
+            return { ...p, status: newStatus, color: getStatusColor(newStatus) };
+          }
+          return p;
+        });
+        return updated;
+      });
 
       // Update in the backend
       await projectService.update(projectId, { status: newStatus });
+      console.log('Project updated successfully in backend');
     } catch (error) {
       console.error('Error updating project status:', error);
       // Reload projects to revert the optimistic update on error
@@ -222,6 +233,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const handleDragStart = (e: React.DragEvent, project: Project) => {
     if (!isAdmin) return;
 
+    console.log('Drag start:', project.id, project.name);
+    setIsDragging(true);
     setDraggedProject(project);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', project.id);
@@ -240,11 +253,12 @@ export default function Projects({ currentUser }: ProjectsProps) {
       target.style.opacity = '1';
     }
 
-    // Small delay to ensure drop completes first
+    // Small delay to ensure drop completes first and prevent click
     setTimeout(() => {
       setDraggedProject(null);
       setDragOverColumn(null);
-    }, 50);
+      setIsDragging(false);
+    }, 100);
   };
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
@@ -275,12 +289,21 @@ export default function Projects({ currentUser }: ProjectsProps) {
     setDraggedProject(null);
 
     const draggedId = e.dataTransfer.getData('text/plain');
-    if (!draggedId) return;
+    console.log('Drop - draggedId:', draggedId, 'columnId:', columnId);
+
+    if (!draggedId) {
+      console.log('No dragged ID found');
+      return;
+    }
 
     const project = projects.find(p => p.id === draggedId);
+    console.log('Found project:', project?.name, 'current status:', project?.status);
 
     if (project && project.status !== columnId) {
+      console.log('Moving project to new column');
       await moveProject(draggedId, columnId);
+    } else {
+      console.log('Project not moved - same status or not found');
     }
   };
   const isAdmin = currentUser?.role === 'admin';
@@ -449,7 +472,14 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
                     onDragEnd={isAdmin ? handleDragEnd : undefined}
-                    onClick={() => handleViewProject(project)}
+                    onClick={(e) => {
+                      if (!isDragging) {
+                        handleViewProject(project);
+                      } else {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="text-white font-medium text-sm">{project.name}</h4>
