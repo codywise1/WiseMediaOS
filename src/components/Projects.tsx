@@ -128,36 +128,43 @@ export default function Projects({ currentUser }: ProjectsProps) {
     navigate(`/projects/${project.id}`);
   };
 
-  const handleSaveProject = (projectData: any) => {
-    const saveProject = async () => {
-      try {
-        // Transform data for API
-        const apiData = {
-          name: projectData.name,
-          client_id: projectData.client_id,
-          description: projectData.description,
-          status: projectData.status.toLowerCase().replace(' ', '_'),
-          progress: projectData.progress,
-          budget: parseInt(projectData.budget.replace(/[$,]/g, '')),
-          due_date: projectData.dueDate,
-          team_size: projectData.team
-        };
+  const handleSaveProject = async (projectData: any) => {
+    try {
+      // Transform data for API
+      const apiData = {
+        name: projectData.name,
+        client_id: projectData.client_id,
+        description: projectData.description,
+        status: projectData.status.toLowerCase().replace(' ', '_'),
+        progress: projectData.progress,
+        budget: parseInt(projectData.budget.replace(/[$,]/g, '')) || 0,
+        due_date: projectData.dueDate,
+        start_date: projectData.startDate,
+        team_size: projectData.team,
+        project_type: projectData.project_type,
+        priority: projectData.priority,
+        billing_type: projectData.billing_type,
+        invoice_link: projectData.invoice_link,
+        owner: projectData.owner,
+        assigned_members: projectData.assigned_members || [],
+        deliverables: projectData.deliverables || [],
+        internal_tags: projectData.internal_tags || [],
+        milestones: projectData.milestones || [],
+        asset_count: projectData.asset_count || 0
+      };
 
-        if (modalMode === 'create') {
-          await projectService.create(apiData);
-        } else if (selectedProject) {
-          await projectService.update(selectedProject.id, apiData);
-        }
-        
-        // Reload projects
-        await loadProjects();
-      } catch (error) {
-        console.error('Error saving project:', error);
-        alert('Error saving project. Please try again.');
+      if (modalMode === 'create') {
+        await projectService.create(apiData);
+      } else if (selectedProject) {
+        await projectService.update(selectedProject.id, apiData);
       }
-    };
-    
-    saveProject();
+
+      // Reload projects
+      await loadProjects();
+    } catch (error) {
+      console.error('Error saving project:', error);
+      alert('Error saving project. Please try again.');
+    }
   };
 
   const confirmDelete = async () => {
@@ -192,29 +199,24 @@ export default function Projects({ currentUser }: ProjectsProps) {
     }
   };
 
-  const moveProject = (projectId: string, newStatus: string) => {
-    const updateProject = async () => {
-      try {
-        // Update the project in the local state immediately for better UX
-        setProjects(prevProjects =>
-          prevProjects.map(p =>
-            p.id === projectId
-              ? { ...p, status: newStatus, color: getStatusColor(newStatus) }
-              : p
-          )
-        );
+  const moveProject = async (projectId: string, newStatus: string) => {
+    try {
+      // Update the project in the local state immediately for better UX
+      setProjects(prevProjects =>
+        prevProjects.map(p =>
+          p.id === projectId
+            ? { ...p, status: newStatus, color: getStatusColor(newStatus) }
+            : p
+        )
+      );
 
-        // Then update in the backend
-        await projectService.update(projectId, { status: newStatus });
-        await loadProjects();
-      } catch (error) {
-        console.error('Error updating project status:', error);
-        // Reload projects to revert the optimistic update on error
-        await loadProjects();
-      }
-    };
-    
-    updateProject();
+      // Update in the backend
+      await projectService.update(projectId, { status: newStatus });
+    } catch (error) {
+      console.error('Error updating project status:', error);
+      // Reload projects to revert the optimistic update on error
+      await loadProjects();
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, project: Project) => {
@@ -234,10 +236,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
     if (!isAdmin) return;
 
     const target = e.currentTarget as HTMLElement;
-    target.style.opacity = '1';
+    if (target) {
+      target.style.opacity = '1';
+    }
 
-    setDraggedProject(null);
-    setDragOverColumn(null);
+    // Small delay to ensure drop completes first
+    setTimeout(() => {
+      setDraggedProject(null);
+      setDragOverColumn(null);
+    }, 50);
   };
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
@@ -259,25 +266,30 @@ export default function Projects({ currentUser }: ProjectsProps) {
     }
   };
 
-  const handleDrop = (e: React.DragEvent, columnId: string) => {
+  const handleDrop = async (e: React.DragEvent, columnId: string) => {
     if (!isAdmin) return;
-    
+
     e.preventDefault();
+    e.stopPropagation();
     setDragOverColumn(null);
+    setDraggedProject(null);
 
     const draggedId = e.dataTransfer.getData('text/plain');
+    if (!draggedId) return;
+
     const project = projects.find(p => p.id === draggedId);
-    
+
     if (project && project.status !== columnId) {
-      moveProject(draggedId, columnId);
+      await moveProject(draggedId, columnId);
     }
   };
   const isAdmin = currentUser?.role === 'admin';
 
   // Apply filters
   const visibleProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.client.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm ||
+                         project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.client?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
     return matchesSearch && matchesStatus && matchesClient;
