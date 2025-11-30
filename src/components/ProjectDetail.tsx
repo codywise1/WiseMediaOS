@@ -307,26 +307,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          {/* Row 4 - Deliverables & Progress */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
-            <ClipboardDocumentListIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-2">Deliverables</p>
-              {project.deliverables && project.deliverables.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {project.deliverables.map((tag: string, index: number) => (
-                    <span key={index} className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">Empty</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          {/* Row 4 - Progress */}
+          <div className="md:col-span-2 flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
             <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-2">Progress</p>
