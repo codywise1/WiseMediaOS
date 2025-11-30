@@ -116,7 +116,10 @@ export interface Client {
   address?: string;
   website?: string;
   notes?: string;
-  status: 'active' | 'inactive' | 'prospect';
+  status: 'active' | 'inactive' | 'prospect' | 'archived';
+  service_type?: 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other';
+  client_tier?: 'Lead' | 'Active' | 'Past' | 'VIP';
+  source?: 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other';
   created_at: string;
   updated_at: string;
 }
@@ -346,7 +349,10 @@ export const clientService = {
           address: client.address || null,
           website: client.website || null,
           notes: client.notes || null,
-          status: client.status || 'active'
+          status: client.status || 'active',
+          service_type: client.service_type || null,
+          client_tier: client.client_tier || null,
+          source: client.source || null
         }])
         .select()
         .single();
