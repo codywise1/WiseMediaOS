@@ -28,7 +28,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     invoice_link: '',
     owner: '',
     assigned_members: [] as string[],
-    deliverables: [] as string[],
     internal_tags: [] as string[],
     description: '',
     progress: 0,
@@ -36,7 +35,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
   });
 
   const [tempTag, setTempTag] = useState('');
-  const [tempDeliverable, setTempDeliverable] = useState('');
   const [tempMember, setTempMember] = useState('');
   const [tempInternalTag, setTempInternalTag] = useState('');
 
@@ -71,7 +69,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         invoice_link: project.invoice_link || '',
         owner: project.owner || '',
         assigned_members: project.assigned_members || [],
-        deliverables: project.deliverables || [],
         internal_tags: project.internal_tags || [],
         description: project.description || '',
         progress: project.progress || 0,
@@ -92,7 +89,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         invoice_link: '',
         owner: currentUser?.name || '',
         assigned_members: [],
-        deliverables: [],
         internal_tags: [],
         description: '',
         progress: 0,
@@ -121,23 +117,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     setFormData(prev => ({
       ...prev,
       [name]: name === 'progress' || name === 'team' ? parseInt(value) || 0 : value
-    }));
-  };
-
-  const addDeliverable = () => {
-    if (tempDeliverable.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        deliverables: [...prev.deliverables, tempDeliverable.trim()]
-      }));
-      setTempDeliverable('');
-    }
-  };
-
-  const removeDeliverable = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      deliverables: prev.deliverables.filter((_, i) => i !== index)
     }));
   };
 
@@ -371,41 +350,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         <div>
           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Scope and Team</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Deliverables</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={tempDeliverable}
-                  onChange={(e) => setTempDeliverable(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addDeliverable())}
-                  className="form-input flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  placeholder="Add deliverable (press Enter)"
-                />
-                <button
-                  type="button"
-                  onClick={addDeliverable}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.deliverables.map((deliverable, index) => (
-                  <span key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full">
-                    {deliverable}
-                    <button
-                      type="button"
-                      onClick={() => removeDeliverable(index)}
-                      className="hover:text-red-400"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Owner</label>
               <input
