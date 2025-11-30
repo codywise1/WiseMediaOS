@@ -236,7 +236,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
 
       {/* Quick Book Options */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {appointmentTypes.slice(0, 3).map((type, index) => (
             <div key={index} className="glass-card rounded-xl p-6 card-hover cursor-pointer">
               <div className={`p-3 rounded-lg ${type.color} mb-4 inline-block`}>
@@ -244,7 +244,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
               </div>
               <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{type.name}</h3>
               <p className="text-gray-400 text-sm mb-4">{type.duration}</p>
-              <button 
+              <button
                 onClick={() => handleBookAppointmentType(type)}
                 className="btn-secondary w-full text-sm font-medium"
               >
