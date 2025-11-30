@@ -251,7 +251,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       <div className="glass-card neon-glow rounded-2xl p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Row 1 - Status & Client */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <FlagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Status</p>
@@ -262,7 +262,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <BuildingOfficeIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Client</p>
@@ -271,7 +271,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           </div>
 
           {/* Row 2 - Value & Due Date */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <CurrencyDollarIcon className="h-6 w-6 text-green-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Project Value</p>
@@ -280,7 +280,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <CalendarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Due Date</p>
@@ -289,7 +289,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           </div>
 
           {/* Row 3 - Owner & Priority */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <UserIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Owner</p>
@@ -297,7 +297,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <FlagIcon className="h-6 w-6 text-orange-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-1">Priority</p>
@@ -308,7 +308,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           </div>
 
           {/* Row 4 - Internal Tags & Progress */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <TagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-2">Internal Tags</p>
@@ -326,7 +326,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
             <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-2">Progress</p>
