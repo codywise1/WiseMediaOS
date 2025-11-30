@@ -307,25 +307,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          {/* Row 4 - Progress */}
-          <div className="md:col-span-2 flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
-            <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-2">Progress</p>
-              <div className="flex items-center space-x-3">
-                <div className="flex-1 bg-slate-700 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${getStatusColor(project.status)}`}
-                    style={{ width: `${project.progress || 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-white font-medium text-sm">{project.progress || 0}%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 5 - Tags (full width) */}
-          <div className="md:col-span-2 flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          {/* Row 4 - Internal Tags & Progress */}
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
             <TagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-2">Internal Tags</p>
@@ -340,6 +323,22 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               ) : (
                 <p className="text-gray-500 text-sm">Empty</p>
               )}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+            <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-gray-400 mb-2">Progress</p>
+              <div className="flex items-center space-x-3">
+                <div className="flex-1 bg-slate-700 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${getStatusColor(project.status)}`}
+                    style={{ width: `${project.progress || 0}%` }}
+                  ></div>
+                </div>
+                <span className="text-white font-medium text-sm">{project.progress || 0}%</span>
+              </div>
             </div>
           </div>
         </div>
