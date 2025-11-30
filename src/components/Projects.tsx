@@ -47,7 +47,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [viewMode, setViewMode] = useState<'kanban' | 'grid'>('kanban');
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
@@ -259,8 +258,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
   // All projects are already filtered by loadProjects based on user role
   const visibleProjects = projects;
 
-  // Force kanban view for clients
-  const currentViewMode = isAdmin ? viewMode : 'kanban';
 
   const getProjectsByStatus = (status: string) => {
     return visibleProjects.filter(p => p.status === status);
@@ -275,41 +272,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
             <p className="text-gray-300">Manage and track all your active projects</p>
           </div>
-          <div className="flex items-center space-x-4">
-            {isAdmin && (
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={() => setViewMode('kanban')}
-                  className={`btn-pill text-sm font-medium transition-colors ${
-                    viewMode === 'kanban' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-slate-700 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  Kanban
-                </button>
-                <button 
-                  onClick={() => setViewMode('grid')}
-                  className={`btn-pill text-sm font-medium transition-colors ${
-                    viewMode === 'grid' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-slate-700 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  Grid
-                </button>
-              </div>
-            )}
-            {isAdmin && (
-              <button 
-                onClick={handleNewProject}
-                className="btn-primary text-white font-medium flex items-center space-x-2"
-              >
-                <PlusIcon className="h-5 w-5 text-white" />
-                <span>New Project</span>
-              </button>
-            )}
-          </div>
+          {isAdmin && (
+            <button
+              onClick={handleNewProject}
+              className="btn-primary text-white font-medium flex items-center space-x-2"
+            >
+              <PlusIcon className="h-5 w-5 text-white" />
+              <span>New Project</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -365,8 +336,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
       </div>
 
       {/* Kanban Board */}
-      {currentViewMode === 'kanban' && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {kanbanColumns.map((column) => (
             <div
               key={column.id}
@@ -479,98 +449,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Grid View */}
-      {currentViewMode === 'grid' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {visibleProjects.map((project) => (
-            <div key={project.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-              {/* Project Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${project.color}`}>
-                    <FolderIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{project.name}</h3>
-                    <p className="text-sm text-gray-400">{project.client}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button 
-                    onClick={() => handleViewProject(project)}
-                    className="text-blue-500 hover:text-white p-1"
-                    title="View Project"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                  </button>
-                  {isAdmin && (
-                    <>
-                      <button 
-                        onClick={() => handleEditProject(project)}
-                        className="text-blue-500 hover:text-white p-1"
-                        title="Edit Project"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteProject(project)}
-                        className="text-blue-500 hover:text-red-400 p-1"
-                        title="Delete Project"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <p className="text-gray-300 mb-4">{project.description}</p>
-
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Progress</span>
-                  <span className="text-white font-medium">{project.progress}%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${project.color}`}
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Project Details */}
-              <div className="flex items-center justify-between mb-4">
-                <span className={"px-3 py-1 rounded-full text-xs font-medium text-white " + project.color}>
-                  {project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </span>
-                <span className="text-sm text-gray-400">Due: {project.dueDate}</span>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-1">
-                    <UserGroupIcon className="h-4 w-4 text-[#3aa3eb]" />
-                    <span className="text-sm text-gray-400">{project.team} members</span>
-                  </div>
-                  <span className="text-sm font-medium text-green-400">{project.budget}</span>
-                </div>
-                <button 
-                  onClick={() => handleViewProject(project)}
-                  className="text-white hover:text-blue-300 text-sm font-medium btn-pill px-3 py-1 hover:bg-blue-900/20"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
 
       <ProjectModal
         isOpen={isModalOpen}
