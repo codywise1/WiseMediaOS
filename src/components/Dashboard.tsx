@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   projectService,
   invoiceService,
-  appointmentService,
-  proposalService
+  appointmentService
 } from '../lib/supabase';
 import {
   FolderIcon,
   DocumentIcon,
   CalendarIcon,
-  ClipboardDocumentListIcon,
   PlusIcon,
   ArrowUpRightIcon,
   CheckCircleIcon,
@@ -69,16 +67,6 @@ const adminQuickActions = [
     actions: ['Book Call', 'View Calendar'],
     route: '/appointments'
   },
-  {
-    name: 'Proposals',
-    description: 'Review and manage project proposals',
-    icon: ClipboardDocumentListIcon,
-    count: 0,
-    status: 'No Proposals',
-    color: 'bg-[#3aa3eb]',
-    actions: ['Create New', 'View All'],
-    route: '/proposals'
-  },
 ];
 
 const userQuickActions = [
@@ -112,7 +100,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     projects: 0,
     invoices: 0,
     appointments: 0,
-    proposals: 0,
     supportTickets: 0,
     pendingInvoices: 0,
     revenue: 0,
@@ -137,11 +124,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       try {
         if (currentUser?.role === 'admin') {
           // Admin sees all data
-          const [projects, invoices, appointments, proposals] = await Promise.all([
+          const [projects, invoices, appointments] = await Promise.all([
             projectService.getAll(),
             invoiceService.getAll(),
-            appointmentService.getAll(),
-            proposalService.getAll()
+            appointmentService.getAll()
           ]);
           
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
@@ -170,7 +156,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             projects: projects.length,
             invoices: invoices.length,
             appointments: appointments.length,
-            proposals: proposals.length,
             supportTickets: 0,
             pendingInvoices,
             overdueInvoices,
@@ -196,7 +181,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             projects: projects.length,
             invoices: invoices.length,
             appointments: appointments.length,
-            proposals: 0,
             supportTickets: 0,
             pendingInvoices,
             overdueInvoices,
@@ -215,7 +199,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           projects: 0,
           invoices: 0,
           appointments: 0,
-          proposals: 0,
           supportTickets: 0,
           pendingInvoices: 0,
           overdueInvoices: 0,
@@ -234,7 +217,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         projects: 0,
         invoices: 0,
         appointments: 0,
-        proposals: 0,
         supportTickets: 0,
         pendingInvoices: 0,
         overdueInvoices: 0,
@@ -272,12 +254,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           ...action,
           count: dashboardData.appointments,
           status: dashboardData.appointments > 0 ? `${dashboardData.appointments} Scheduled` : 'No Meetings'
-        };
-      case 'Proposals':
-        return {
-          ...action,
-          count: dashboardData.proposals,
-          status: dashboardData.proposals > 0 ? `${dashboardData.proposals} Active` : 'No Proposals'
         };
       default:
         return action;
