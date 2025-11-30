@@ -1,18 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  projectService, 
-  invoiceService, 
-  appointmentService, 
-  proposalService,
-  supportService
+import {
+  projectService,
+  invoiceService,
+  appointmentService,
+  proposalService
 } from '../lib/supabase';
-import { 
-  FolderIcon, 
-  DocumentIcon, 
-  CalendarIcon, 
+import {
+  FolderIcon,
+  DocumentIcon,
+  CalendarIcon,
   ClipboardDocumentListIcon,
-  ChatBubbleLeftRightIcon,
   PlusIcon,
   ArrowUpRightIcon,
   CheckCircleIcon,
@@ -48,7 +46,7 @@ const adminQuickActions = [
     count: 0,
     status: 'Ready to Start',
     color: 'bg-[#3aa3eb]',
-    actions: ['View All', 'Create New', 'Export Report'],
+    actions: ['View All', 'Create New'],
     route: '/projects'
   },
   {
@@ -81,16 +79,6 @@ const adminQuickActions = [
     actions: ['Create New', 'View All'],
     route: '/proposals'
   },
-  {
-    name: 'Support',
-    description: 'Get help and submit tickets',
-    icon: ChatBubbleLeftRightIcon,
-    count: 0,
-    status: 'No Tickets',
-    color: 'bg-[#3aa3eb]',
-    actions: ['Contact Support', 'View Tickets', 'Knowledge Base'],
-    route: '/support'
-  },
 ];
 
 const userQuickActions = [
@@ -113,16 +101,6 @@ const userQuickActions = [
     color: 'bg-[#3aa3eb]',
     actions: ['View All'],
     route: '/invoices'
-  },
-  {
-    name: 'Support',
-    description: 'Get help and submit tickets',
-    icon: ChatBubbleLeftRightIcon,
-    count: 0,
-    status: 'No Tickets',
-    color: 'bg-[#3aa3eb]',
-    actions: ['Contact Support', 'Create Ticket'],
-    route: '/support'
   },
 ];
 
@@ -159,12 +137,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       try {
         if (currentUser?.role === 'admin') {
           // Admin sees all data
-          const [projects, invoices, appointments, proposals, tickets] = await Promise.all([
+          const [projects, invoices, appointments, proposals] = await Promise.all([
             projectService.getAll(),
             invoiceService.getAll(),
             appointmentService.getAll(),
-            proposalService.getAll(),
-            supportService.getAll()
+            proposalService.getAll()
           ]);
           
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
@@ -194,23 +171,22 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             invoices: invoices.length,
             appointments: appointments.length,
             proposals: proposals.length,
-            supportTickets: tickets.length,
+            supportTickets: 0,
             pendingInvoices,
             overdueInvoices,
             revenue,
             completedProjects,
-            activeClients: 0, // Will be calculated from clients if available
+            activeClients: 0,
             previousMonthRevenue,
             previousMonthProjects: previousMonthProjects.length,
             previousMonthInvoices: previousMonthInvoices.length
           });
         } else if (currentUser?.id) {
           // Client sees only their data
-          const [projects, invoices, appointments, tickets] = await Promise.all([
+          const [projects, invoices, appointments] = await Promise.all([
             projectService.getByClientId(currentUser.id),
             invoiceService.getByClientId(currentUser.id),
-            appointmentService.getByClientId(currentUser.id),
-            supportService.getByClientId(currentUser.id)
+            appointmentService.getByClientId(currentUser.id)
           ]);
           
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
@@ -220,11 +196,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             projects: projects.length,
             invoices: invoices.length,
             appointments: appointments.length,
-            proposals: 0, // Clients don't see proposals in dashboard
-            supportTickets: tickets.length,
+            proposals: 0,
+            supportTickets: 0,
             pendingInvoices,
             overdueInvoices,
-            revenue: 0, // Clients don't see revenue
+            revenue: 0,
             completedProjects: projects.filter(p => p.status === 'completed').length,
             activeClients: 0,
             previousMonthRevenue: 0,
@@ -302,12 +278,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           ...action,
           count: dashboardData.proposals,
           status: dashboardData.proposals > 0 ? `${dashboardData.proposals} Active` : 'No Proposals'
-        };
-      case 'Support':
-        return {
-          ...action,
-          count: dashboardData.supportTickets,
-          status: dashboardData.supportTickets > 0 ? `${dashboardData.supportTickets} Open` : 'No Tickets'
         };
       default:
         return action;
