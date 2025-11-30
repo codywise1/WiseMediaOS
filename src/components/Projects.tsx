@@ -2,16 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectService, Project as ProjectType, clientService } from '../lib/supabase';
 import {
-  FolderIcon,
-  CalendarIcon,
-  UserGroupIcon,
-  ChartBarIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -384,57 +379,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
               </select>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Project Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <FolderIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Total Projects</p>
-              <p className="text-2xl font-bold text-white">{visibleProjects.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-500">
-              <ChartBarIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Completed</p>
-              <p className="text-2xl font-bold text-white">{getProjectsByStatus('completed').length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <CalendarIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">In Progress</p>
-              <p className="text-2xl font-bold text-white">{getProjectsByStatus('in_progress').length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <UserGroupIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Team Members</p>
-              <p className="text-2xl font-bold text-white">{visibleProjects.reduce((sum, p) => sum + p.team, 0)}</p>
-            </div>
-          </div>
         </div>
       </div>
 
