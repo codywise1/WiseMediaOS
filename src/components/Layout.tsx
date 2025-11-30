@@ -55,7 +55,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
     setIsProfileModalOpen(false);
   };
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative z-10">
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 z-50 w-64">
         <div className="glass-card h-full p-6">
