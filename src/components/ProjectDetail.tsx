@@ -5,7 +5,6 @@ import {
   ArrowLeftIcon,
   PencilIcon,
   DocumentDuplicateIcon,
-  ArchiveBoxIcon,
   TrashIcon,
   BuildingOfficeIcon,
   CurrencyDollarIcon,
@@ -14,10 +13,6 @@ import {
   FlagIcon,
   ClipboardDocumentListIcon,
   ChartBarIcon,
-  DocumentTextIcon,
-  FolderIcon,
-  CheckCircleIcon,
-  ClockIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
@@ -347,45 +342,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          {/* Row 5 - Notes & Assets */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
-            <DocumentTextIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-1">Related Notes</p>
-              <p className="text-gray-500 text-sm">No notes</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
-            <FolderIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-1">Project Assets</p>
-              <p className="text-white font-medium">{project.asset_count || 0} Files</p>
-            </div>
-          </div>
-
-          {/* Row 6 - Milestones & Tags */}
-          <div className="flex items-start space-x-4 p-4 bg-slate-800/30 rounded-lg">
-            <ClockIcon className="h-6 w-6 text-blue-400 flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-2">Milestones</p>
-              {project.milestones && project.milestones.length > 0 ? (
-                <div className="space-y-2">
-                  {project.milestones.map((milestone: any, index: number) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <CheckCircleIcon className={`h-4 w-4 ${milestone.completed ? 'text-green-400' : 'text-gray-600'}`} />
-                      <span className="text-sm text-white">{milestone.name}</span>
-                      <span className="text-xs text-gray-500">{formatDate(milestone.due_date)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No milestones</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
+          {/* Row 5 - Tags (full width) */}
+          <div className="md:col-span-2 flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
             <TagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-gray-400 mb-2">Internal Tags</p>
