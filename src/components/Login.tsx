@@ -85,29 +85,7 @@ export default function Login({ onLogin }: LoginProps) {
           </p>
         </div>
 
-        {/* Test Credentials Info */}
-        {!isSupabaseAvailable() && (
-          <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-            <h3 className="text-blue-400 font-medium mb-2">Demo Mode - Test Credentials</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Admin Access:</span>
-                <div className="text-right">
-                  <div className="text-white">Username: <code className="bg-slate-800 px-2 py-1 rounded">admin</code></div>
-                  <div className="text-white">Password: <code className="bg-slate-800 px-2 py-1 rounded">admin</code></div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Client Access:</span>
-                <div className="text-right">
-                  <div className="text-white">Username: <code className="bg-slate-800 px-2 py-1 rounded">user</code></div>
-                  <div className="text-white">Password: <code className="bg-slate-800 px-2 py-1 rounded">user</code></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+      
         {/* Error Message */}
         {error && (
           <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
