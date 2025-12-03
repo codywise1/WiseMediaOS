@@ -261,6 +261,34 @@ export interface SupportTicket {
   client?: Client;
 }
 
+export interface NoteAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploaded_at: string;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+  tags: string[];
+  client_id?: string;
+  project_id?: string;
+  related_meeting?: string;
+  is_shared_with_client: boolean;
+  is_shared_with_admin: boolean;
+  is_pinned: boolean;
+  attachments: NoteAttachment[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  client?: Client;
+  project?: Project;
+}
+
 // Support operations
 export const supportService = {
   async getAll() {
@@ -909,7 +937,126 @@ export const appointmentService = {
       .from('appointments')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
+  }
+};
+
+export const noteService = {
+  async getAll() {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('notes')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .order('is_pinned', { ascending: false })
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as Note[]) || [];
+  },
+
+  async getById(id: string) {
+    const { data, error } = await supabase
+      .from('notes')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as Note | null;
+  },
+
+  async getByClient(clientId: string) {
+    const { data, error } = await supabase
+      .from('notes')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('client_id', clientId)
+      .order('is_pinned', { ascending: false })
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as Note[]) || [];
+  },
+
+  async getByProject(projectId: string) {
+    const { data, error } = await supabase
+      .from('notes')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('project_id', projectId)
+      .order('is_pinned', { ascending: false })
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as Note[]) || [];
+  },
+
+  async create(note: Omit<Note, 'id' | 'created_at' | 'updated_at'>) {
+    const { data: userData } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('notes')
+      .insert({
+        ...note,
+        created_by: userData?.user?.id || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data as Note;
+  },
+
+  async update(id: string, updates: Partial<Note>) {
+    const { data, error } = await supabase
+      .from('notes')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data as Note;
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  async togglePin(id: string, isPinned: boolean) {
+    return this.update(id, { is_pinned: isPinned });
   }
 };
