@@ -8,8 +8,10 @@ import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
 import Notes from './components/Notes';
 import Invoices from './components/Invoices';
+import InvoiceDetail from './components/InvoiceDetail';
 import Appointments from './components/Appointments';
 import Proposals from './components/Proposals';
+import Support from './components/Support';
 import Login from './components/Login';
 import { authService, isSupabaseAvailable, clientService, supabase, avatarService } from './lib/supabase';
 
@@ -292,8 +294,10 @@ function App() {
           <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
           <Route path="/notes" element={<Notes currentUser={currentUser} />} />
           <Route path="/invoices" element={<Invoices currentUser={currentUser} />} />
+          <Route path="/invoices/:id" element={<InvoiceDetail currentUser={currentUser} />} />
           <Route path="/appointments" element={<Appointments currentUser={currentUser} />} />
           <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
+          <Route path="/support" element={<Support currentUser={currentUser} />} />
         </Routes>
       </Layout>
     </Router>

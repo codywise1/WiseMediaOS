@@ -226,9 +226,23 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
             <div className="bg-slate-800/30 rounded-xl p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <BuildingOfficeIcon className="h-4 w-4 text-[#3aa3eb]" />
-                <span className="text-xs text-gray-400">Category</span>
+                <span className="text-xs text-gray-400">Industry</span>
               </div>
-              <p className="text-lg font-medium text-white">{client.category}</p>
+              <span className="inline-block px-2.5 py-1 rounded-lg text-sm font-medium bg-slate-700/50 text-gray-300 border border-slate-600/50">
+                {client.category}
+              </span>
+            </div>
+          )}
+
+          {client.location && (
+            <div className="bg-slate-800/30 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <MapPinIcon className="h-4 w-4 text-[#3aa3eb]" />
+                <span className="text-xs text-gray-400">Location</span>
+              </div>
+              <span className="inline-block px-2.5 py-1 rounded-lg text-sm font-medium bg-slate-700/50 text-gray-300 border border-slate-600/50">
+                {client.location}
+              </span>
             </div>
           )}
         </div>

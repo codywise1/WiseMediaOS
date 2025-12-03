@@ -323,8 +323,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   <p className="text-sm text-gray-400">Created: {invoice.createdDate}</p>
                   
                   <div className="flex items-center space-x-3">
-                    <button 
-                      onClick={() => console.log(`Viewing invoice ${invoice.id}`)}
+                    <button
+                      onClick={() => navigate(`/invoices/${invoice.id}`)}
                       className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm"
                     >
                       <EyeIcon className="h-4 w-4 text-white" />
