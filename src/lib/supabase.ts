@@ -339,6 +339,44 @@ export const clientService = {
         throw new Error('User not authenticated. Please log in to create clients.');
       }
 
+      // First, create the user account via Edge Function
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (token) {
+        try {
+          const createUserResponse = await fetch(
+            `${supabaseUrl}/functions/v1/create-client-user`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: client.email,
+                name: client.name,
+                phone: client.phone || ''
+              })
+            }
+          );
+
+          if (!createUserResponse.ok) {
+            const errorData = await createUserResponse.json();
+            console.warn('Failed to create user account:', errorData);
+            // Continue anyway - the client record will still be created
+            // The trigger will create the client record when user signs up manually
+          } else {
+            const userData = await createUserResponse.json();
+            console.log('User account created:', userData);
+          }
+        } catch (userError) {
+          console.warn('Error creating user account:', userError);
+          // Continue anyway
+        }
+      }
+
+      // Then create the client record
       const { data, error } = await supabase
         .from('clients')
         .insert([{
@@ -356,7 +394,7 @@ export const clientService = {
         }])
         .select()
         .single();
-      
+
       if (error) {
         console.error('Supabase error:', error);
         if (error.code === '42501') {
@@ -364,7 +402,7 @@ export const clientService = {
         }
         throw new Error(`Database error: ${error.message}`);
       }
-      
+
       console.log('Client created successfully:', data);
       return data as Client;
     } catch (error) {
