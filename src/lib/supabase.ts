@@ -167,6 +167,10 @@ export interface Client {
   service_type?: 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other';
   client_tier?: 'Lead' | 'Active' | 'Past' | 'VIP';
   source?: 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other';
+  first_name?: string;
+  category?: 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex';
+  location?: string;
+  services_requested?: string[];
   created_at: string;
   updated_at: string;
 }

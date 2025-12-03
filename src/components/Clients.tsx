@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  UserGroupIcon, 
+import {
+  UserGroupIcon,
   BuildingOfficeIcon,
   PhoneIcon,
   EnvelopeIcon,
@@ -9,10 +9,17 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon
+  EyeIcon,
+  Squares2X2Icon,
+  Bars3Icon,
+  MagnifyingGlassIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
+import ClientTableView from './ClientTableView';
+import CategoryBadge from './CategoryBadge';
+import ServiceTag from './ServiceTag';
 import { clientService, Client } from '../lib/supabase';
 
 interface User {
@@ -39,6 +46,12 @@ export default function Clients({ currentUser }: ClientsProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
+    return (localStorage.getItem('clients_view_mode') as 'cards' | 'table') || 'cards';
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
 
   useEffect(() => {
     loadClients();
@@ -140,6 +153,31 @@ export default function Clients({ currentUser }: ClientsProps) {
 
   const isAdmin = currentUser?.role === 'admin';
 
+  const handleViewModeChange = (mode: 'cards' | 'table') => {
+    setViewMode(mode);
+    localStorage.setItem('clients_view_mode', mode);
+  };
+
+  const handleViewClient = (client: Client) => {
+    alert(`Client Details:\n\nName: ${client.name}\nEmail: ${client.email}\nCompany: ${client.company || 'N/A'}\nPhone: ${client.phone || 'N/A'}\nStatus: ${client.status}\n\nNotes: ${client.notes || 'No notes'}`);
+  };
+
+  const filteredClients = clients.filter(client => {
+    const matchesSearch =
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.company?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (client.first_name?.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = categoryFilter === 'all' || client.category === categoryFilter;
+    const matchesLocation = locationFilter === 'all' || client.location === locationFilter;
+
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
+
+  const uniqueCategories = Array.from(new Set(clients.map(c => c.category).filter(Boolean)));
+  const uniqueLocations = Array.from(new Set(clients.map(c => c.location).filter(Boolean)));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -150,26 +188,127 @@ export default function Clients({ currentUser }: ClientsProps) {
 
   const activeClients = clients.filter(c => c.status === 'active').length;
   const prospects = clients.filter(c => c.status === 'prospect').length;
+  const companiesCount = clients.filter(c => c.company).length;
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Clients</h1>
             <p className="text-gray-300">Manage your client relationships and information</p>
           </div>
-          {isAdmin && (
-            <button 
-              onClick={handleNewClient}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
-            >
-              <PlusIcon className="h-5 w-5" />
-              Add Client
-            </button>
-          )}
+          <div className="flex items-center space-x-4">
+            {/* View Toggle */}
+            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1">
+              <button
+                onClick={() => handleViewModeChange('cards')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'cards'
+                    ? 'bg-[#3aa3eb] text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="Card View"
+              >
+                <Squares2X2Icon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => handleViewModeChange('table')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'table'
+                    ? 'bg-[#3aa3eb] text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="Table View"
+              >
+                <Bars3Icon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {isAdmin && (
+              <button
+                onClick={handleNewClient}
+                className="btn-primary text-white font-medium flex items-center space-x-2"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Add Client</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Search and Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            />
+          </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+          >
+            <option value="all">All Categories</option>
+            {uniqueCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+          >
+            <option value="all">All Locations</option>
+            {uniqueLocations.map((location) => (
+              <option key={location} value={location}>
+                {location}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Active Filters Display */}
+        {(searchQuery || categoryFilter !== 'all' || locationFilter !== 'all') && (
+          <div className="flex items-center space-x-2 mt-4 text-sm">
+            <span className="text-gray-400">Active filters:</span>
+            {searchQuery && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Search: {searchQuery}
+              </span>
+            )}
+            {categoryFilter !== 'all' && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Category: {categoryFilter}
+              </span>
+            )}
+            {locationFilter !== 'all' && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Location: {locationFilter}
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setCategoryFilter('all');
+                setLocationFilter('all');
+              }}
+              className="text-[#3aa3eb] hover:text-blue-300 font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Client Stats */}
@@ -217,104 +356,156 @@ export default function Clients({ currentUser }: ClientsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Companies</p>
-              <p className="text-2xl font-bold text-white">{clients.filter(c => c.company).length}</p>
+              <p className="text-2xl font-bold text-white">{companiesCount}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Clients Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {clients.map((client) => {
-          const statusInfo = statusConfig[client.status];
-          
-          return (
-            <div key={client.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-lg bg-slate-700">
-                    <UserGroupIcon className="h-6 w-6 text-[#3aa3eb]" />
+      {/* Clients Display */}
+      {viewMode === 'table' ? (
+        <ClientTableView
+          clients={filteredClients}
+          isAdmin={isAdmin}
+          onView={handleViewClient}
+          onEdit={handleEditClient}
+          onDelete={handleDeleteClient}
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredClients.map((client) => {
+            const statusInfo = statusConfig[client.status];
+
+            return (
+              <div key={client.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 rounded-lg bg-slate-700">
+                      <UserGroupIcon className="h-6 w-6 text-[#3aa3eb]" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                        {client.company || client.name}
+                      </h3>
+                      {client.first_name && (
+                        <p className="text-sm text-gray-400">{client.first_name}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{client.name}</h3>
-                    {client.company && (
-                      <p className="text-sm text-gray-400">{client.company}</p>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                    {statusInfo.label}
+                  </span>
+                </div>
+
+                {/* Category and Location */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {client.category && <CategoryBadge category={client.category} />}
+                  {client.location && (
+                    <span className="px-3 py-1 rounded-md text-xs font-medium bg-slate-700 text-gray-300">
+                      {client.location}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-300">{client.email}</span>
+                  </div>
+                  {client.phone && (
+                    <div className="flex items-center space-x-2">
+                      <PhoneIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-300">{client.phone}</span>
+                    </div>
+                  )}
+                  {client.website && (
+                    <div className="flex items-center space-x-2">
+                      <GlobeAltIcon className="h-4 w-4 text-gray-400" />
+                      <a
+                        href={client.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-400 hover:text-blue-300"
+                      >
+                        {client.website}
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Services Requested */}
+                {client.services_requested && client.services_requested.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-400 mb-2">Services Requested:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {client.services_requested.map((service, idx) => (
+                        <ServiceTag key={idx} service={service} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {client.notes && (
+                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{client.notes}</p>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                  <span className="text-xs text-gray-400">
+                    Added {new Date(client.created_at).toLocaleDateString()}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleViewClient(client)}
+                      className="text-white hover:text-blue-300 p-1"
+                      title="View Client"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => handleEditClient(client)}
+                          className="text-blue-500 hover:text-white p-1"
+                          title="Edit Client"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClient(client)}
+                          className="text-blue-500 hover:text-red-400 p-1"
+                          title="Delete Client"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                  {statusInfo.label}
-                </span>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center space-x-2">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-300">{client.email}</span>
-                </div>
-                {client.phone && (
-                  <div className="flex items-center space-x-2">
-                    <PhoneIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{client.phone}</span>
-                  </div>
-                )}
-                {client.website && (
-                  <div className="flex items-center space-x-2">
-                    <GlobeAltIcon className="h-4 w-4 text-gray-400" />
-                    <a 
-                      href={client.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300"
-                    >
-                      {client.website}
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {client.notes && (
-                <p className="text-sm text-gray-500 mb-4 line-clamp-2">{client.notes}</p>
-              )}
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                <span className="text-xs text-gray-400">
-                  Added {new Date(client.created_at).toLocaleDateString()}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <button 
-                    onClick={() => {
-                      alert(`Client Details:\n\nName: ${client.name}\nEmail: ${client.email}\nCompany: ${client.company || 'N/A'}\nPhone: ${client.phone || 'N/A'}\nStatus: ${client.status}\n\nNotes: ${client.notes || 'No notes'}`);
-                    }}
-                    className="text-white hover:text-blue-300 p-1"
-                    title="View Client"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                  </button>
-                  {isAdmin && (
-                    <>
-                      <button 
-                        onClick={() => handleEditClient(client)}
-                        className="text-blue-500 hover:text-white p-1"
-                        title="Edit Client"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClient(client)}
-                        className="text-blue-500 hover:text-red-400 p-1"
-                        title="Delete Client"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {filteredClients.length === 0 && clients.length > 0 && (
+        <div className="glass-card rounded-xl p-12 text-center">
+          <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-2">No clients match your filters</h3>
+          <p className="text-gray-400 mb-6">
+            Try adjusting your search or filter criteria to see more results.
+          </p>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setCategoryFilter('all');
+              setLocationFilter('all');
+            }}
+            className="btn-primary"
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
 
       {clients.length === 0 && (
         <div className="glass-card rounded-xl p-12 text-center">
@@ -323,18 +514,17 @@ export default function Clients({ currentUser }: ClientsProps) {
             {loading ? 'Loading clients...' : 'No clients yet'}
           </h3>
           <p className="text-gray-400 mb-6">
-            {loading 
-              ? 'Please wait while we load your clients.' 
+            {loading
+              ? 'Please wait while we load your clients.'
               : 'Start by adding your first client to manage projects and relationships.'
             }
           </p>
-          {isAdmin && (
-            <button 
+          {isAdmin && !loading && (
+            <button
               onClick={handleNewClient}
               className="btn-primary"
-              disabled={loading}
             >
-              {loading ? 'Loading...' : 'Add Your First Client'}
+              Add Your First Client
             </button>
           )}
         </div>

@@ -19,6 +19,10 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     email: '',
     phone: '',
     company: '',
+    first_name: '',
+    category: '' as '' | 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex',
+    location: '',
+    services_requested: [] as string[],
     service_type: '' as '' | 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other',
     client_tier: '' as '' | 'Lead' | 'Active' | 'Past' | 'VIP',
     source: '' as '' | 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other',
@@ -35,6 +39,10 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         email: client.email,
         phone: client.phone || '',
         company: client.company || '',
+        first_name: client.first_name || '',
+        category: client.category || '',
+        location: client.location || '',
+        services_requested: client.services_requested || [],
         service_type: client.service_type || '',
         client_tier: client.client_tier || '',
         source: client.source || '',
@@ -49,6 +57,10 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         email: '',
         phone: '',
         company: '',
+        first_name: '',
+        category: '',
+        location: '',
+        services_requested: [],
         service_type: '',
         client_tier: '',
         source: '',
@@ -84,6 +96,10 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
       email: formData.email.trim().toLowerCase(),
       phone: formData.phone.trim() || null,
       company: formData.company.trim() || null,
+      first_name: formData.first_name.trim() || null,
+      category: formData.category || null,
+      location: formData.location.trim() || null,
+      services_requested: formData.services_requested.length > 0 ? formData.services_requested : null,
       service_type: formData.service_type || null,
       client_tier: formData.client_tier || null,
       source: formData.source || null,
@@ -156,7 +172,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
             </div>
           </div>
 
-          {/* Row 2: Company & Phone */}
+          {/* Row 2: Company & First Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Company</label>
@@ -170,6 +186,58 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="John"
+              />
+            </div>
+          </div>
+
+          {/* Row 2b: Category & Location */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 rounded-lg"
+              >
+                <option value="">Select category...</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Art">Art</option>
+                <option value="Web3">Web3</option>
+                <option value="Hospitality">Hospitality</option>
+                <option value="Travel Agency">Travel Agency</option>
+                <option value="E-Commerce">E-Commerce</option>
+                <option value="Law">Law</option>
+                <option value="Investing">Investing</option>
+                <option value="Finance">Finance</option>
+                <option value="Forex">Forex</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="Calgary, Miami, etc."
+              />
+            </div>
+          </div>
+
+          {/* Row 2c: Phone & Services */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
               <input
                 type="tel"
@@ -179,6 +247,34 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                 className="form-input w-full px-4 py-3 rounded-lg"
                 placeholder="+1 (555) 123-4567"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Services Requested</label>
+              <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                {['WordPress Website', 'SEO', 'Brand Identity', 'Video Editing', 'Graphic Design', 'Landing Page'].map(service => (
+                  <label key={service} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.services_requested.includes(service)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            services_requested: [...prev.services_requested, service]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            services_requested: prev.services_requested.filter(s => s !== service)
+                          }));
+                        }
+                      }}
+                      className="rounded border-gray-600 text-[#3aa3eb] focus:ring-[#3aa3eb]"
+                    />
+                    <span className="text-xs text-gray-300">{service}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
