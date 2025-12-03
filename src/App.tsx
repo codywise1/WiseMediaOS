@@ -9,7 +9,7 @@ import Invoices from './components/Invoices';
 import Appointments from './components/Appointments';
 import Proposals from './components/Proposals';
 import Login from './components/Login';
-import { authService, isSupabaseAvailable } from './lib/supabase';
+import { authService, isSupabaseAvailable, clientService, supabase, avatarService } from './lib/supabase';
 
 interface User {
   email: string;
@@ -54,8 +54,7 @@ function App() {
         role: 'admin',
         name: 'Cody Wise (Dev)',
         phone: '+1 (555) 123-4567',
-        company: 'Wise Media',
-        avatar: 'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
+        company: 'Wise Media'
       };
       setCurrentUser(devUser);
       setIsAuthenticated(true);
@@ -131,8 +130,7 @@ function App() {
           role: 'admin',
           name: 'Demo Admin',
           phone: '+1 (555) 123-4567',
-          company: 'Wise Media',
-          avatar: 'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
+          company: 'Wise Media'
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
@@ -145,8 +143,7 @@ function App() {
           role: 'user',
           name: 'Demo Client',
           phone: '+1 (555) 987-6543',
-          company: 'Client Corp',
-          avatar: 'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
+          company: 'Client Corp'
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
@@ -181,13 +178,68 @@ function App() {
     return false;
   };
 
-  const handleUpdateProfile = (userData: Partial<User>) => {
-    if (currentUser) {
+  const handleUpdateProfile = async (userData: Partial<User>) => {
+    if (!currentUser) return;
+
+    try {
       const updatedUser = { ...currentUser, ...userData };
+
+      if (isSupabaseAvailable()) {
+        // Update client record in database
+        const clientUpdates = {
+          name: userData.name || currentUser.name,
+          phone: userData.phone,
+          company: userData.company,
+          address: userData.address,
+          website: userData.website,
+          notes: userData.notes
+        };
+
+        // Update the client record by email
+        await clientService.updateByEmail(currentUser.email, clientUpdates);
+
+        // Update auth user metadata
+        const { error: authError } = await supabase.auth.updateUser({
+          data: {
+            name: userData.name || currentUser.name,
+            phone: userData.phone,
+            company: userData.company,
+            avatar: userData.avatar,
+            title: userData.title,
+            website: userData.website,
+            linkedin: userData.linkedin,
+            twitter: userData.twitter,
+            instagram: userData.instagram,
+            facebook: userData.facebook,
+            github: userData.github,
+            address: userData.address,
+            city: userData.city,
+            state: userData.state,
+            zipCode: userData.zipCode,
+            country: userData.country,
+            timezone: userData.timezone,
+            bio: userData.bio,
+            industry: userData.industry,
+            companySize: userData.companySize,
+            budget: userData.budget,
+            referralSource: userData.referralSource,
+            notes: userData.notes
+          }
+        });
+
+        if (authError) {
+          console.error('Error updating user metadata:', authError);
+          throw authError;
+        }
+
+        console.log('Profile and client record updated successfully');
+      }
+
       setCurrentUser(updatedUser);
-      
-      // In a real app, you'd also update the backend
-      console.log('Profile updated:', updatedUser);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
     }
   };
   const handleLogout = async () => {

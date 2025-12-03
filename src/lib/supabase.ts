@@ -19,6 +19,53 @@ export const isSupabaseAvailable = () => {
   return supabase !== null;
 };
 
+// Avatar upload service
+export const avatarService = {
+  async uploadAvatar(file: File, userId: string): Promise<string> {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  },
+
+  async deleteAvatar(avatarUrl: string) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const path = avatarUrl.split('/avatars/').pop();
+    if (!path) return;
+
+    const { error } = await supabase.storage
+      .from('avatars')
+      .remove([`avatars/${path}`]);
+
+    if (error) {
+      console.error('Error deleting avatar:', error);
+    }
+  }
+};
+
 // Authentication functions
 export const authService = {
   async signUp(email: string, password: string, userData: { name: string, phone?: string, role?: 'admin' | 'user' }) {
@@ -452,8 +499,35 @@ export const clientService = {
       .from('clients')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
+  },
+
+  async updateByEmail(email: string, updates: Partial<Client>) {
+    if (!isSupabaseAvailable()) {
+      const clientIndex = mockClients.findIndex(c => c.email === email);
+      if (clientIndex === -1) throw new Error('Client not found');
+
+      const updatedClient = {
+        ...mockClients[clientIndex],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      mockClients[clientIndex] = updatedClient;
+      saveToStorage('wise_media_clients', mockClients);
+      console.log('Mock client updated by email:', updatedClient);
+      return updatedClient;
+    }
+
+    const { data, error } = await supabase
+      .from('clients')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('email', email)
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as Client | null;
   }
 };
 

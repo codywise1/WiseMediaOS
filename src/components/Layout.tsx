@@ -91,45 +91,38 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
 
           {/* User Menu */}
           <div className="absolute bottom-6 left-6 right-6">
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* User Profile Card */}
-              <button 
+              <button
                 onClick={() => setIsProfileModalOpen(true)}
-                className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-white/40"
+                className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#3aa3eb]/40 hover:shadow-lg hover:shadow-[#3aa3eb]/20 group"
               >
-                <div className="flex items-center space-x-4 p-5">
-                  <div className="relative">
-                    {currentUser?.avatar ? (
-                      <img 
-                        src={currentUser.avatar} 
-                        alt={currentUser.name}
-                        className="w-14 h-14 rounded-full object-cover border-3 border-white/30 shadow-lg"
+                <div className="p-4">
+                  {/* Profile Label */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Profile</span>
+                    <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#3aa3eb] transition-colors" />
+                  </div>
+
+                  {/* User Info */}
+                  <div className="flex items-center space-x-3">
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={currentUser?.avatar || 'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'}
+                        alt={currentUser?.name || 'User'}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-md bg-white p-1"
                       />
-                    ) : (
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#3aa3eb] to-blue-600 flex items-center justify-center border-3 border-white/30 shadow-lg">
-                        <span className="text-white font-bold text-lg">
-                          {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                    )}
-                    {/* Online Status Indicator */}
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-slate-900 shadow-sm"></div>
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-lg font-bold text-white truncate leading-tight">
-                      {currentUser?.name}
-                    </p>
-                    {currentUser?.company && (
-                      <p className="text-sm text-gray-300 truncate mt-0.5">
-                        {currentUser.company}
+                      {/* Online Status Indicator */}
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-900 shadow-sm"></div>
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-base font-bold text-white truncate">
+                        {currentUser?.name}
                       </p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-1">
-                      {currentUser?.role === 'admin' ? 'Administrator' : 'Client'}
-                    </p>
-                  </div>
-                  <div className="text-white/60">
-                    <PencilIcon className="h-5 w-5" />
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {currentUser?.role === 'admin' ? 'Administrator' : 'Client'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </button>

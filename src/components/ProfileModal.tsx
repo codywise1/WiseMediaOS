@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { UserCircleIcon, CameraIcon } from '@heroicons/react/24/outline';
+import { avatarService, isSupabaseAvailable } from '../lib/supabase';
 
 interface User {
   email: string;
@@ -150,19 +151,46 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
     }));
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, you'd upload to a service like Supabase Storage
-      // For demo, we'll use a placeholder
-      const reader = new FileReader();
-      reader.onload = (event) => {
+    if (!file) return;
+
+    if (!user?.id) {
+      alert('User ID not found. Please try logging in again.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    try {
+      if (isSupabaseAvailable()) {
+        const avatarUrl = await avatarService.uploadAvatar(file, user.id);
         setFormData(prev => ({
           ...prev,
-          avatar: event.target?.result as string
+          avatar: avatarUrl
         }));
-      };
-      reader.readAsDataURL(file);
+        alert('Avatar uploaded successfully!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setFormData(prev => ({
+            ...prev,
+            avatar: event.target?.result as string
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
     }
   };
 
@@ -172,19 +200,11 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
         {/* Avatar Section */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            {formData.avatar ? (
-              <img 
-                src={formData.avatar} 
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border-4 border-white/20"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#3aa3eb] to-blue-600 flex items-center justify-center border-4 border-white/20">
-                <span className="text-white font-bold text-2xl">
-                  {formData.name?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
-              </div>
-            )}
+            <img
+              src={formData.avatar || 'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'}
+              alt="Profile"
+              className="w-24 h-24 rounded-full object-cover border-4 border-white/20 bg-white p-2"
+            />
             <label className="absolute bottom-0 right-0 w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center border-2 border-white/20 cursor-pointer hover:bg-slate-600 transition-colors">
               <CameraIcon className="h-4 w-4 text-white" />
               <input
