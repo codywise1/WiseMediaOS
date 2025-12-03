@@ -162,6 +162,11 @@ export interface Client {
   company?: string;
   address?: string;
   website?: string;
+  linkedin?: string;
+  twitter?: string;
+  instagram?: string;
+  facebook?: string;
+  github?: string;
   notes?: string;
   status: 'active' | 'inactive' | 'prospect' | 'archived';
   service_type?: 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other';

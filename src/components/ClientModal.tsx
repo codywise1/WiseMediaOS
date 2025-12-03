@@ -29,6 +29,11 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     status: 'active' as 'active' | 'inactive' | 'prospect' | 'archived',
     notes: '',
     website: '',
+    linkedin: '',
+    twitter: '',
+    instagram: '',
+    facebook: '',
+    github: '',
     address: ''
   });
 
@@ -49,6 +54,11 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         status: client.status,
         notes: client.notes || '',
         website: client.website || '',
+        linkedin: client.linkedin || '',
+        twitter: client.twitter || '',
+        instagram: client.instagram || '',
+        facebook: client.facebook || '',
+        github: client.github || '',
         address: client.address || ''
       });
     } else {
@@ -67,6 +77,11 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         status: 'active',
         notes: '',
         website: '',
+        linkedin: '',
+        twitter: '',
+        instagram: '',
+        facebook: '',
+        github: '',
         address: ''
       });
     }
@@ -106,6 +121,11 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
       status: formData.status,
       notes: formData.notes.trim() || null,
       website: formData.website.trim() || null,
+      linkedin: formData.linkedin.trim() || null,
+      twitter: formData.twitter.trim() || null,
+      instagram: formData.instagram.trim() || null,
+      facebook: formData.facebook.trim() || null,
+      github: formData.github.trim() || null,
       address: formData.address.trim() || null,
       ...(mode === 'edit' && client ? { id: client.id, created_at: client.created_at, updated_at: client.updated_at } : {})
     };
@@ -399,6 +419,67 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                     className="form-input w-full px-4 py-3 rounded-lg"
                     placeholder="Full address"
                   />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Social Media</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">💼 LinkedIn</label>
+                    <input
+                      type="text"
+                      name="linkedin"
+                      value={formData.linkedin}
+                      onChange={handleChange}
+                      className="form-input w-full px-4 py-3 rounded-lg"
+                      placeholder="linkedin.com/in/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">𝕏 Twitter/X</label>
+                    <input
+                      type="text"
+                      name="twitter"
+                      value={formData.twitter}
+                      onChange={handleChange}
+                      className="form-input w-full px-4 py-3 rounded-lg"
+                      placeholder="@username or twitter.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">📸 Instagram</label>
+                    <input
+                      type="text"
+                      name="instagram"
+                      value={formData.instagram}
+                      onChange={handleChange}
+                      className="form-input w-full px-4 py-3 rounded-lg"
+                      placeholder="@username or instagram.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">👥 Facebook</label>
+                    <input
+                      type="text"
+                      name="facebook"
+                      value={formData.facebook}
+                      onChange={handleChange}
+                      className="form-input w-full px-4 py-3 rounded-lg"
+                      placeholder="facebook.com/username"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">💻 GitHub</label>
+                    <input
+                      type="text"
+                      name="github"
+                      value={formData.github}
+                      onChange={handleChange}
+                      className="form-input w-full px-4 py-3 rounded-lg"
+                      placeholder="github.com/username"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

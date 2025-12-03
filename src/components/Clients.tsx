@@ -159,7 +159,7 @@ export default function Clients({ currentUser }: ClientsProps) {
   };
 
   const handleViewClient = (client: Client) => {
-    alert(`Client Details:\n\nName: ${client.name}\nEmail: ${client.email}\nCompany: ${client.company || 'N/A'}\nPhone: ${client.phone || 'N/A'}\nStatus: ${client.status}\n\nNotes: ${client.notes || 'No notes'}`);
+    navigate(`/clients/${client.id}`);
   };
 
   const filteredClients = clients.filter(client => {

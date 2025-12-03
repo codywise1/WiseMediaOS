@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Clients from './components/Clients';
+import ClientDetail from './components/ClientDetail';
 import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
+import Notes from './components/Notes';
 import Invoices from './components/Invoices';
 import Appointments from './components/Appointments';
 import Proposals from './components/Proposals';
@@ -285,8 +287,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard currentUser={currentUser} />} />
           <Route path="/clients" element={<Clients currentUser={currentUser} />} />
+          <Route path="/clients/:id" element={<ClientDetail currentUser={currentUser} />} />
           <Route path="/projects" element={<Projects currentUser={currentUser} />} />
           <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
+          <Route path="/notes" element={<Notes currentUser={currentUser} />} />
           <Route path="/invoices" element={<Invoices currentUser={currentUser} />} />
           <Route path="/appointments" element={<Appointments currentUser={currentUser} />} />
           <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
