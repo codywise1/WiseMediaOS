@@ -76,7 +76,6 @@ body::before {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
   color: #ffffff;
 }
 
@@ -99,7 +98,6 @@ body::before {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
   color: #ffffff;
 }
 
@@ -122,7 +120,6 @@ body::before {
   background: rgba(58, 163, 235, 0.3);
   border-color: rgba(58, 163, 235, 0.4);
   box-shadow: 0 20px 25px -5px rgba(58, 163, 235, 0.2), 0 10px 10px -5px rgba(58, 163, 235, 0.1);
-  transform: translateY(-2px);
   color: #ffffff;
 }
 
@@ -157,7 +154,6 @@ body::before {
 .btn-secondary:active,
 .btn-action:active,
 .btn-pill:active {
-  transform: translateY(0px);
   box-shadow: 0 5px 10px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
@@ -235,7 +231,6 @@ body::before {
 }
 
 .card-hover:hover {
-  transform: translateY(-5px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -250,7 +245,6 @@ body::before {
 
 .profile-card:hover {
   background: rgba(30, 41, 59, 1);
-  transform: translateY(-2px);
   color: #ffffff;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(58, 163, 235, 0.1);
 }
@@ -265,7 +259,6 @@ body::before {
 
 .logout-card:hover {
   background: rgba(30, 41, 59, 1);
-  transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
@@ -317,76 +310,17 @@ input[type="range"].slider::-moz-range-thumb:hover {
   box-shadow: 0 4px 12px rgba(58, 163, 235, 0.6);
 }
 
-/* Smooth Animations and Transitions */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* Mobile-optimized smooth scrolling */
-html {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+/* Hover shrink effect for interactive elements */
+button:hover,
+a:hover {
+  transform: scale(0.98);
+  transition: transform 0.2s ease;
 }
 
 /* Touch interactions for mobile */
 @media (hover: none) and (pointer: coarse) {
-  .btn-primary:active,
-  .btn-secondary:active,
-  .btn-action:active {
+  button:active,
+  a:active {
     transform: scale(0.95);
     transition: transform 0.1s ease;
   }
@@ -399,65 +333,9 @@ html {
   }
 }
 
-/* Smooth transitions for all interactive elements */
-a, button, input, select, textarea {
-  transition: all 0.2s ease;
-}
-
-/* Card hover effects with smooth transitions */
-.glass-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  transform: translateY(-2px);
-}
-
-/* Loading skeleton animation */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-.skeleton {
-  animation: shimmer 2s infinite;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.1) 75%
-  );
-  background-size: 1000px 100%;
-}
-
-/* Mobile menu animation */
-.mobile-menu-enter {
-  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.mobile-menu-exit {
-  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) reverse;
-}
-
-/* Smooth focus outlines for accessibility */
+/* Focus outlines for accessibility */
 *:focus-visible {
   outline: 2px solid rgba(58, 163, 235, 0.6);
   outline-offset: 2px;
   border-radius: 4px;
-}
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
