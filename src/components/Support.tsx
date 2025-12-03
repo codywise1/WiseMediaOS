@@ -439,7 +439,7 @@ export default function Support({ currentUser }: SupportProps) {
             </div>
             <div>
               <p className="text-white font-medium">Email Support</p>
-              <p className="text-gray-400">support@wisemedia.io</p>
+              <p className="text-gray-400">info@wisemedia.io</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -448,7 +448,7 @@ export default function Support({ currentUser }: SupportProps) {
             </div>
             <div>
               <p className="text-white font-medium">Phone Support</p>
-              <p className="text-gray-400">+1 (555) 123-4567</p>
+              <p className="text-gray-400">+1 (587) 718-0698</p>
             </div>
           </div>
         </div>
