@@ -114,7 +114,7 @@ export default function Login({ onLogin }: LoginProps) {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-              Username *
+              Email *
             </label>
             <input
               type="text"
