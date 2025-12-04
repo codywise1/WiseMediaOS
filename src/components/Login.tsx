@@ -25,7 +25,7 @@ export default function Login({ onLogin }: LoginProps) {
     try {
       const success = await onLogin(email, password);
       if (!success) {
-        setError('Invalid credentials. Please check your username and password.');
+        setError('Invalid credentials. Please check your email and password.');
       }
     } catch (error) {
       console.error('Login error:', error);
