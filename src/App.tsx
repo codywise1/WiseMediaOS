@@ -20,6 +20,7 @@ import CourseSinglePage from './pages/CourseSinglePage';
 import ProfilePage from './pages/ProfilePage';
 import AdminBackendPage from './pages/AdminBackendPage';
 import { useAuth } from './contexts/AuthContext';
+import LessonPage from './pages/LessonPage';
 
 interface User {
   email: string;
@@ -409,6 +410,14 @@ function App() {
             element={
               <CommunityGuard>
                 <CourseSinglePage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/courses/:id/lesson/:lessonId"
+            element={
+              <CommunityGuard>
+                <LessonPage />
               </CommunityGuard>
             }
           />

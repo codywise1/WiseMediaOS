@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import {
   Play,
@@ -62,6 +62,7 @@ export default function CourseSinglePage() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const courseId = id || '123';
 
   useEffect(() => {
@@ -233,7 +234,15 @@ export default function CourseSinglePage() {
           </div>
           <div className="mt-6 flex gap-4">
             {isEnrolled ? (
-              <button className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+              <button
+                onClick={() => {
+                  const firstIncomplete = lessons.find(l => !l.completed);
+                  const target = firstIncomplete || lessons[0];
+                  if (target) navigate(`/community/courses/${courseId}/lesson/${target.id}`);
+                }}
+                className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40 flex items-center gap-2"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+              >
                 <Play size={20} />
                 Continue Learning
               </button>
@@ -348,10 +357,10 @@ export default function CourseSinglePage() {
                       </button>
                     </div>
                   )}
-                  {isEnrolled && !lesson.completed && !adminMode && (
-                    <button onClick={() => markLessonComplete(lesson.id)} className="px-4 py-2 bg-[#3AA3EB]/20 hover:bg-[#3AA3EB]/30 text-[#3AA3EB] rounded-lg transition-colors text-sm font-medium">
-                      Mark Complete
-                    </button>
+                  {isEnrolled && !adminMode && (
+                    <Link to={`/community/courses/${courseId}/lesson/${lesson.id}`} className="px-4 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors text-sm font-medium">
+                      {lesson.completed ? 'Review' : 'Start Lesson'}
+                    </Link>
                   )}
                 </div>
               </GlassCard>
