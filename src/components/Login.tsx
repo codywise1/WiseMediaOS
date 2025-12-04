@@ -122,7 +122,7 @@ export default function Login({ onLogin }: LoginProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="form-input w-full px-4 py-3 rounded-lg focus:outline-none transition-colors"
-              placeholder="Enter your username"
+              placeholder="Enter your email"
               required
             />
           </div>
