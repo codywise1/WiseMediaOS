@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import {
   Play,
@@ -61,7 +61,8 @@ export default function CourseSinglePage() {
   const [showAddLessonModal, setShowAddLessonModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
-  const courseId = '123'; // In real app, get from URL params
+  const { id } = useParams();
+  const courseId = id || '123';
 
   useEffect(() => {
     if (profile) {

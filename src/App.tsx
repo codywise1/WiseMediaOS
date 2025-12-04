@@ -14,6 +14,12 @@ import Proposals from './components/Proposals';
 import Support from './components/Support';
 import Login from './components/Login';
 import { authService, isSupabaseAvailable, clientService, supabase, avatarService } from './lib/supabase';
+import CommunityPage from './pages/CommunityPage';
+import CoursesPage from './pages/CoursesPage';
+import CourseSinglePage from './pages/CourseSinglePage';
+import ProfilePage from './pages/ProfilePage';
+import AdminBackendPage from './pages/AdminBackendPage';
+import { useAuth } from './contexts/AuthContext';
 
 interface User {
   email: string;
@@ -42,6 +48,89 @@ interface User {
   avatar?: string;
   phone?: string;
   company?: string;
+}
+
+function AdminGuard({ children }: { children: React.ReactElement }) {
+  const { profile, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-card neon-glow rounded-2xl p-8">
+          <div className="flex items-center space-x-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
+            <div>
+              <p className="text-white font-medium">Loading Admin...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // In demo mode (no Supabase), allow admin routes
+  if (!isSupabaseAvailable()) {
+    return children;
+  }
+
+  const profileRole = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
+  if (!profileRole || profileRole !== 'admin') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
+          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>Admin Only</h2>
+          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            You need administrator privileges to access this area.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
+function CommunityGuard({ children }: { children: React.ReactElement }) {
+  const { profile, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-card neon-glow rounded-2xl p-8">
+          <div className="flex items-center space-x-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
+            <div>
+              <p className="text-white font-medium">Loading Creator Club...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // In demo mode (no Supabase), allow community routes
+  if (!isSupabaseAvailable()) {
+    return children;
+  }
+
+  // Allow access for admin and creator roles (elite, pro, free). Block generic 'user' or missing profile.
+  const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
+  const allowed = role === 'admin' || role === 'elite' || role === 'pro' || role === 'free';
+
+  if (!allowed) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
+          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>Access Restricted</h2>
+          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            Creator Club is available to Creators and Admins. Please sign in with a Creator account.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
 }
 
 function App() {
@@ -298,6 +387,47 @@ function App() {
           <Route path="/appointments" element={<Appointments currentUser={currentUser} />} />
           <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
           <Route path="/support" element={<Support currentUser={currentUser} />} />
+          {/* Community Module */}
+          <Route
+            path="/community"
+            element={
+              <CommunityGuard>
+                <CommunityPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/courses"
+            element={
+              <CommunityGuard>
+                <CoursesPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/courses/:id"
+            element={
+              <CommunityGuard>
+                <CourseSinglePage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/profile"
+            element={
+              <CommunityGuard>
+                <ProfilePage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/admin"
+            element={
+              <AdminGuard>
+                <AdminBackendPage />
+              </AdminGuard>
+            }
+          />
         </Routes>
       </Layout>
     </Router>

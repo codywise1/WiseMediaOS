@@ -13,7 +13,9 @@ import {
   XMarkIcon,
   DocumentTextIcon,
   LifebuoyIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  ChatBubbleOvalLeftIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline'
 import ProfileModal from './ProfileModal'
 
@@ -37,6 +39,8 @@ const mainNavigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon, adminOnly: false },
   { name: 'Clients', href: '/clients', icon: UserCircleIcon, adminOnly: true },
   { name: 'Projects', href: '/projects', icon: FolderIcon, adminOnly: false },
+  { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon, adminOnly: false },
+  { name: 'Courses', href: '/community/courses', icon: BookOpenIcon, adminOnly: false },
   { name: 'Notes', href: '/notes', icon: DocumentTextIcon, adminOnly: false }
 ]
 
