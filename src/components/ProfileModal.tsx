@@ -205,7 +205,7 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-4"
             />
-            <label className="absolute bottom-0 right-0 w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center border-2 border-white/20 cursor-pointer hover:bg-slate-600 transition-colors">
+            <label className="absolute bottom-0 right-0 w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center border-2 cursor-pointer hover:bg-slate-600 transition-colors">
               <CameraIcon className="h-4 w-4 text-white" />
               <input
                 type="file"
