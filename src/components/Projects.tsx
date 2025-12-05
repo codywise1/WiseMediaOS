@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectService, Project as ProjectType, clientService } from '../lib/supabase';
+import { projectService, clientService, Project as SbProject } from '../lib/supabase';
 import {
   PlusIcon,
   PencilIcon,
@@ -11,23 +11,29 @@ import {
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
+import { useLoadingGuard } from '../hooks/useLoadingGuard';
 
 interface User {
   email: string;
   role: 'admin' | 'user';
   name: string;
+  id?: string;
 }
 
 interface ProjectsProps {
   currentUser: User | null;
 }
 
-interface Project extends Omit<ProjectType, 'budget' | 'due_date' | 'team_size' | 'id'> {
+type ProjectStatus = 'planning' | 'in_progress' | 'completed' | 'on_hold';
+
+interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 'client' | 'status'> {
   id: string;
   budget: string;
   dueDate: string;
   team: number;
   color: string;
+  client: string;
+  status: ProjectStatus;
 }
 
 const kanbanColumns = [
@@ -53,7 +59,9 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  const getStatusColor = (status: string) => {
+  useLoadingGuard(loading, setLoading);
+
+  const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case 'planning': return 'bg-[#3aa3eb]';
       case 'in_progress': return 'bg-[#3aa3eb]';
@@ -82,25 +90,62 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      let data: ProjectType[] = [];
+      let data: SbProject[] = [];
       
-      if (currentUser?.role === 'admin') {
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
+
+      if (currentUser.role === 'admin') {
         data = await projectService.getAll();
-      } else if (currentUser?.id) {
+      } else if (currentUser.id) {
         // For clients, get projects assigned to them
         data = await projectService.getByClientId(currentUser.id);
+      } else {
+        setLoading(false);
+        return;
       }
       
       // Transform data to match component interface
-      const transformedProjects: Project[] = data.map(project => ({
-        ...project,
-        id: project.id,
-        client: project.client?.name || 'Unknown Client',
-        budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
-        dueDate: project.due_date || '',
-        team: project.team_size || 1,
-        color: getStatusColor(project.status)
-      }));
+      const normalized = (status: string | null | undefined): ProjectStatus => {
+        if (status === 'planning' || status === 'in_progress' || status === 'completed' || status === 'on_hold') {
+          return status;
+        }
+        return 'planning';
+      };
+
+      const transformedProjects: Project[] = data.map(project => {
+        const status = normalized(project.status);
+        return {
+          id: project.id,
+          name: project.name,
+          description: project.description,
+          status,
+          progress: project.progress,
+          start_date: project.start_date,
+          due_date: project.due_date,
+          team_size: project.team_size,
+          project_type: project.project_type,
+          priority: project.priority,
+          billing_type: project.billing_type,
+          invoice_link: project.invoice_link,
+          owner: project.owner,
+          assigned_members: project.assigned_members,
+          deliverables: project.deliverables,
+          internal_tags: project.internal_tags,
+          milestones: project.milestones,
+          asset_count: project.asset_count,
+          created_at: project.created_at,
+          updated_at: project.updated_at,
+          client_id: project.client_id,
+          client: project.client?.name || 'Unknown Client',
+          budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
+          dueDate: project.due_date || '',
+          team: project.team_size || 1,
+          color: getStatusColor(status)
+        };
+      });
       
       setProjects(transformedProjects);
     } catch (error) {

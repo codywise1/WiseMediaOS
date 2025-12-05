@@ -27,8 +27,9 @@ export default function PayPalButton({ amount, invoiceId, onSuccess, onError }: 
           label: 'pay',
           height: 40,
         }}
-        createOrder={(data, actions) => {
+        createOrder={(_data, actions) => {
           return actions.order.create({
+            intent: 'CAPTURE',
             purchase_units: [
               {
                 amount: {
@@ -37,6 +38,7 @@ export default function PayPalButton({ amount, invoiceId, onSuccess, onError }: 
                 },
                 description: `Invoice Payment - ${invoiceId}`,
                 invoice_id: invoiceId,
+                custom_id: invoiceId,
               },
             ],
             application_context: {
@@ -49,7 +51,13 @@ export default function PayPalButton({ amount, invoiceId, onSuccess, onError }: 
         onApprove={async (data, actions) => {
           try {
             const details = await actions.order?.capture();
-            onSuccess(details);
+            const captureId = (details as any)?.id;
+            const orderId = (data as any)?.orderID;
+            onSuccess({
+              details,
+              orderId,
+              captureId,
+            });
           } catch (error) {
             onError(error);
           }

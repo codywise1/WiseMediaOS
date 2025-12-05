@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { clientService, appointmentService } from '../lib/supabase';
+import { useToast } from '../contexts/ToastContext';
+import { clientService, appointmentService, UserRole } from '../lib/supabase';
 import { 
   CalendarIcon, 
   ClockIcon,
@@ -17,8 +18,9 @@ import ConfirmDialog from './ConfirmDialog';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface AppointmentsProps {
@@ -143,13 +145,13 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
     setSelectedAppointmentType(null);
   };
 
-  const handleEditAppointment = (appointment: typeof initialAppointments[0]) => {
+  const handleEditAppointment = (appointment: any) => {
     setSelectedAppointment(appointment);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleDeleteAppointment = (appointment: typeof initialAppointments[0]) => {
+  const handleDeleteAppointment = (appointment: any) => {
     setSelectedAppointment(appointment);
     setIsDeleteDialogOpen(true);
   };
@@ -180,7 +182,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         await loadAppointments();
       } catch (error) {
         console.error('Error saving appointment:', error);
-        alert('Error saving appointment. Please try again.');
+        toastError('Error saving appointment. Please try again.');
       }
     };
     
@@ -197,7 +199,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
           setSelectedAppointment(undefined);
         } catch (error) {
           console.error('Error deleting appointment:', error);
-          alert('Error deleting appointment. Please try again.');
+          toastError('Error deleting appointment. Please try again.');
         }
       }
     };
@@ -390,7 +392,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
               <div className="flex items-center space-x-3">
                 <button 
                   onClick={() => {
-                    alert(`Rescheduling appointment: ${appointment.title}\nCurrent: ${appointment.date} at ${appointment.time}\n\nPlease select a new date and time.`);
+                    toastInfo(`Rescheduling appointment: ${appointment.title}\nCurrent: ${appointment.date} at ${appointment.time}\n\nPlease select a new date and time.`, 5000);
                   }}
                   className={`text-white hover:text-blue-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={!isAdmin}
@@ -400,7 +402,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                 <button 
                   onClick={() => {
                     if (confirm(`Are you sure you want to cancel "${appointment.title}"?`)) {
-                      alert('Appointment cancelled successfully.');
+                      toastSuccess('Appointment cancelled successfully.');
                     }
                   }}
                   className={`text-red-400 hover:text-red-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}

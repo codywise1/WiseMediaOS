@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -13,18 +13,21 @@ import Appointments from './components/Appointments';
 import Proposals from './components/Proposals';
 import Support from './components/Support';
 import Login from './components/Login';
-import { authService, isSupabaseAvailable, clientService, supabase, avatarService } from './lib/supabase';
+import { authService, isSupabaseAvailable, clientService, supabase, UserRole } from './lib/supabase';
 import CommunityPage from './pages/CommunityPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseSinglePage from './pages/CourseSinglePage';
 import ProfilePage from './pages/ProfilePage';
 import AdminBackendPage from './pages/AdminBackendPage';
+import CreatorHome from './pages/CreatorHome';
+import AdminFiles from './pages/AdminFiles';
+import Orders from './pages/Orders';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
   id?: string;
   title?: string;
@@ -116,7 +119,7 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
 
   // Allow access for admin and creator roles (elite, pro, free). Block generic 'user' or missing profile.
   const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  const allowed = role === 'admin' || role === 'elite' || role === 'pro' || role === 'free';
+  const allowed = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || role === 'free';
 
   if (!allowed) {
     return (
@@ -167,7 +170,7 @@ function App() {
           const userData: User = {
             id: user.id,
             email: user.email || '',
-            role: user.user_metadata?.role || 'user',
+            role: (user.user_metadata?.role as UserRole) || 'user',
             name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
           };
           setCurrentUser(userData);
@@ -190,8 +193,10 @@ function App() {
     };
   }, []);
 
-  const checkAuthState = async () => {
+  const checkAuthState = useCallback(async () => {
     if (!isSupabaseAvailable()) {
+      // Demo mode or missing Supabase config: don't block the UI
+      setLoading(false);
       return;
     }
 
@@ -201,16 +206,38 @@ function App() {
         const userData: User = {
           id: user.id,
           email: user.email || '',
-          role: user.user_metadata?.role || 'user',
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+          role: (user.user_metadata?.role as UserRole) || 'user',
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+          avatar: user.user_metadata?.avatar
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
       }
     } catch (error) {
       console.error('Auth check error:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  // Re-validate session when returning to the tab; guarantee loading clears even if Supabase hangs
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        setLoading(true);
+        const timeout = setTimeout(() => setLoading(false), 5000); // safety net
+        checkAuthState().finally(() => {
+          clearTimeout(timeout);
+          setLoading(false);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [checkAuthState]);
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!isSupabaseAvailable()) {
@@ -230,6 +257,19 @@ function App() {
         setIsAuthenticated(true);
         console.log('Admin login successful');
         return true;
+      } else if (email.toLowerCase() === 'staff' && password === 'staff') {
+        const userData: User = {
+          id: 'staff-demo-id',
+          email: 'staff@wisemedia.io',
+          role: 'staff',
+          name: 'Demo Staff',
+          phone: '+1 (555) 246-8100',
+          company: 'Wise Media'
+        };
+        setCurrentUser(userData);
+        setIsAuthenticated(true);
+        console.log('Staff login successful');
+        return true;
       } else if (email.toLowerCase() === 'user' && password === 'user') {
         const userData: User = {
           id: 'user-demo-id',
@@ -245,7 +285,7 @@ function App() {
         return true;
       } else {
         console.log('Invalid demo credentials');
-        throw new Error('Invalid credentials. Use admin/admin for admin access or user/user for client access.');
+        throw new Error('Invalid credentials. Use admin/admin, staff/staff, or user/user.');
       }
     } else {
       try {
@@ -254,7 +294,7 @@ function App() {
           const userData: User = {
             id: user.id,
             email: user.email || '',
-            role: user.user_metadata?.role || 'user',
+            role: (user.user_metadata?.role as UserRole) || 'user',
             name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
             phone: user.user_metadata?.phone,
             company: user.user_metadata?.company,
@@ -293,7 +333,7 @@ function App() {
         await clientService.updateByEmail(currentUser.email, clientUpdates);
 
         // Update auth user metadata
-        const { error: authError } = await supabase.auth.updateUser({
+        const { error: authError } = await supabase!.auth.updateUser({
           data: {
             name: userData.name || currentUser.name,
             phone: userData.phone,
@@ -435,6 +475,30 @@ function App() {
               <AdminGuard>
                 <AdminBackendPage />
               </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/files"
+            element={
+              <AdminGuard>
+                <AdminFiles />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <AdminGuard>
+                <Orders />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/creator"
+            element={
+              <CommunityGuard>
+                <CreatorHome />
+              </CommunityGuard>
             }
           />
         </Routes>

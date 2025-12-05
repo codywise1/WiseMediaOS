@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client } from '../lib/supabase';
+import { clientService, Client, UserRole } from '../lib/supabase';
 
 interface Invoice {
   id: string;
@@ -10,6 +10,7 @@ interface Invoice {
   status: string;
   createdDate: string;
   description: string;
+  client_id?: string;
 }
 
 interface InvoiceModalProps {
@@ -18,7 +19,7 @@ interface InvoiceModalProps {
   onSave: (invoice: Omit<Invoice, 'id' | 'createdDate'> | Invoice) => void;
   invoice?: Invoice;
   mode: 'create' | 'edit';
-  currentUser?: { role: 'admin' | 'user' } | null;
+  currentUser?: { role: UserRole } | null;
 }
 
 export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, currentUser }: InvoiceModalProps) {

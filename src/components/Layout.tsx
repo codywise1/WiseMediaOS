@@ -9,19 +9,24 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   PencilIcon,
-  Bars3Icon,
   XMarkIcon,
   DocumentTextIcon,
   LifebuoyIcon,
   EllipsisHorizontalIcon,
   ChatBubbleOvalLeftIcon,
-  BookOpenIcon
+  ChatBubbleLeftRightIcon,
+  BookOpenIcon,
+  DocumentDuplicateIcon,
+  Cog6ToothIcon,
+  Squares2X2Icon
 } from '@heroicons/react/24/outline'
+import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
+import { UserRole } from '../lib/supabase'
 
 interface User {
   email: string
-  role: 'admin' | 'user'
+  role: UserRole
   name: string
   avatar?: string
   phone?: string
@@ -35,31 +40,135 @@ interface LayoutProps {
   onUpdateProfile?: (userData: Partial<User>) => void
 }
 
-const mainNavigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon, adminOnly: false },
-  { name: 'Clients', href: '/clients', icon: UserCircleIcon, adminOnly: true },
-  { name: 'Projects', href: '/projects', icon: FolderIcon, adminOnly: false },
-  { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon, adminOnly: false },
-  { name: 'Courses', href: '/community/courses', icon: BookOpenIcon, adminOnly: false },
-  { name: 'Notes', href: '/notes', icon: DocumentTextIcon, adminOnly: false }
-]
+type IconType = (props: React.ComponentProps<'svg'>) => JSX.Element
 
-const secondaryNavigation = [
-  { name: 'Invoices', href: '/invoices', icon: DocumentIcon, adminOnly: false },
-  { name: 'Appointments', href: '/appointments', icon: CalendarIcon, adminOnly: false },
-  { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon, adminOnly: true },
-  { name: 'Support', href: '/support', icon: LifebuoyIcon, adminOnly: false }
-]
+interface NavItem {
+  name: string
+  href: string
+  icon: IconType
+}
+
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
+type NormalizedRole = 'admin' | 'staff' | 'client' | 'member'
+
+const normalizeRole = (role?: string): NormalizedRole => {
+  const value = (role || '').toLowerCase()
+  if (value === 'admin') return 'admin'
+  if (value === 'staff') return 'staff'
+  if (value === 'elite' || value === 'pro' || value === 'free') return 'member'
+  return 'client'
+}
+
+const roleLabel = (role?: string) => {
+  const value = normalizeRole(role)
+  if (value === 'admin') return 'Administrator'
+  if (value === 'staff') return 'Staff'
+  if (value === 'member') return 'Creator Member'
+  return 'Client'
+}
+
+const navByRole: Record<NormalizedRole, NavGroup[]> = {
+  admin: [
+    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: HomeIcon }] },
+    {
+      label: 'Work',
+      items: [
+        { name: 'Clients', href: '/clients', icon: UserCircleIcon },
+        { name: 'Projects', href: '/projects', icon: FolderIcon },
+        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
+        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon }
+      ]
+    },
+    { label: 'Community', items: [{ name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon }] },
+    {
+      label: 'Money',
+      items: [
+        { name: 'Invoices', href: '/invoices', icon: DocumentIcon },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon }
+      ]
+    },
+    { label: 'Operations', items: [{ name: 'Appointments', href: '/appointments', icon: CalendarIcon }] },
+    {
+      label: 'Support',
+      items: [
+        { name: 'Support', href: '/support', icon: LifebuoyIcon },
+        { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
+      ]
+    }
+  ],
+  staff: [
+    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: HomeIcon }] },
+    {
+      label: 'Work',
+      items: [
+        { name: 'Clients', href: '/clients', icon: UserCircleIcon },
+        { name: 'Projects', href: '/projects', icon: FolderIcon },
+        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
+        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon }
+      ]
+    },
+    { label: 'Community', items: [{ name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon }] },
+    { label: 'Operations', items: [{ name: 'Appointments', href: '/appointments', icon: CalendarIcon }] },
+    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+  ],
+  client: [
+    { label: 'Overview', items: [{ name: 'Home', href: '/', icon: HomeIcon }] },
+    {
+      label: 'Work',
+      items: [
+        { name: 'Projects', href: '/projects', icon: FolderIcon },
+        { name: 'Notes', href: '/notes', icon: DocumentTextIcon }
+      ]
+    },
+    { label: 'Billing', items: [{ name: 'Invoices', href: '/invoices', icon: DocumentIcon }] },
+    {
+      label: 'Community',
+      items: [
+        { name: 'Messages', href: '/support', icon: ChatBubbleLeftRightIcon }
+      ]
+    },
+    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpenIcon }] },
+    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+  ],
+  member: [
+    { label: 'Overview', items: [{ name: 'Creator Home', href: '/creator', icon: HomeIcon }] },
+    {
+      label: 'Community',
+      items: [
+        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
+        { name: 'Direct Messages', href: '/support', icon: ChatBubbleLeftRightIcon }
+      ]
+    },
+    {
+      label: 'Learning',
+      items: [
+        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
+        { name: 'Resources', href: '/community/courses', icon: Squares2X2Icon }
+      ]
+    },
+    {
+      label: 'Marketplace',
+      items: [{ name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }]
+    },
+    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+  ]
+}
 
 export default function Layout({ children, currentUser, onLogout, onUpdateProfile }: LayoutProps) {
   const location = useLocation()
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const isAdmin = currentUser?.role === 'admin'
-
-  const filteredMainNav = mainNavigation.filter(item => !item.adminOnly || isAdmin)
-  const filteredSecondaryNav = secondaryNavigation.filter(item => !item.adminOnly || isAdmin)
+  const normalizedRole = normalizeRole(currentUser?.role)
+  const navGroups = navByRole[normalizedRole]
+  const dockItems = navGroups.flatMap(group => group.items).slice(0, 4)
+  const showSidebarUserActions = false
 
   const handleProfileUpdate = (userData: Partial<User>) => {
     if (onUpdateProfile) {
@@ -99,96 +208,83 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               />
             </div>
 
-            <nav className="space-y-2 flex-1 overflow-y-auto">
-              <div className="space-y-1 mb-6">
-                {filteredMainNav.map(item => {
-                  const isActive = location.pathname === item.href
-                  return (
-                    <NavLink
-                      key={item.name}
-                      to={item.href}
-                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
-                          : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                      }`}
-                    >
-                      <item.icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </NavLink>
-                  )
-                })}
-              </div>
-
-              <div className="border-t border-white/10 pt-4 space-y-1">
-                {filteredSecondaryNav.map(item => {
-                  const isActive = location.pathname === item.href
-                  return (
-                    <NavLink
-                      key={item.name}
-                      to={item.href}
-                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
-                          : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                      }`}
-                    >
-                      <item.icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </NavLink>
-                  )
-                })}
-              </div>
+            <nav className="space-y-6 flex-1 overflow-y-auto">
+              {navGroups.map(group => (
+                <div key={group.label} className="space-y-1">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
+                    {group.label}
+                  </p>
+                  {group.items.map(item => {
+                    const isActive = location.pathname === item.href
+                    return (
+                      <NavLink
+                        key={item.name}
+                        to={item.href}
+                        className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
+                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <item.icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </NavLink>
+                    )
+                  })}
+                </div>
+              ))}
             </nav>
 
-            <div className="mt-auto pt-6 space-y-3">
-              <button
-                onClick={() => setIsProfileModalOpen(true)}
-                className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#3aa3eb]/40 hover:shadow-lg hover:shadow-[#3aa3eb]/20 group"
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Profile
-                    </span>
-                    <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#3aa3eb] transition-colors" />
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={
-                          currentUser?.avatar ||
-                          'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
-                        }
-                        alt={currentUser?.name || 'User'}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-md bg-white p-1"
-                      />
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-900 shadow-sm" />
+            {showSidebarUserActions && (
+              <div className="mt-auto pt-6 space-y-3">
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#3aa3eb]/40 hover:shadow-lg hover:shadow-[#3aa3eb]/20 group"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Profile
+                      </span>
+                      <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#3aa3eb] transition-colors" />
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-base font-bold text-white truncate">
-                        {currentUser?.name}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate mt-0.5">
-                        {isAdmin ? 'Administrator' : 'Client'}
-                      </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={
+                            currentUser?.avatar ||
+                            'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
+                          }
+                          alt={currentUser?.name || 'User'}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-md bg-white p-1"
+                        />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-900 shadow-sm" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-base font-bold text-white truncate">
+                          {currentUser?.name}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          {roleLabel(currentUser?.role)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              <button
-                onClick={onLogout}
-                className="w-full logout-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-white/40 hover:bg-white/10 group"
-              >
-                <div className="flex items-center justify-center space-x-3 p-4">
-                  <ArrowRightOnRectangleIcon className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
-                  <span className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
-                    Sign Out
-                  </span>
-                </div>
-              </button>
-            </div>
+                <button
+                  onClick={onLogout}
+                  className="w-full logout-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-white/40 hover:bg-white/10 group"
+                >
+                  <div className="flex items-center justify-center space-x-3 p-4">
+                    <ArrowRightOnRectangleIcon className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                    <span className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
+                      Sign Out
+                    </span>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -217,53 +313,31 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               </div>
 
               <div className="space-y-6">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">
-                    Main
-                  </p>
-                  {filteredMainNav.map(item => {
-                    const isActive = location.pathname === item.href
-                    return (
-                      <NavLink
-                        key={item.name}
-                        to={item.href}
-                        onClick={closeMobileMenu}
-                        className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                          isActive
-                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
-                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                        }`}
-                      >
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {item.name}
-                      </NavLink>
-                    )
-                  })}
-                </div>
-
-                <div className="border-t border-white/10 pt-4 space-y-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">
-                    More
-                  </p>
-                  {filteredSecondaryNav.map(item => {
-                    const isActive = location.pathname === item.href
-                    return (
-                      <NavLink
-                        key={item.name}
-                        to={item.href}
-                        onClick={closeMobileMenu}
-                        className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                          isActive
-                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
-                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                        }`}
-                      >
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {item.name}
-                      </NavLink>
-                    )
-                  })}
-                </div>
+                {navGroups.map(group => (
+                  <div key={group.label} className="space-y-1">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">
+                      {group.label}
+                    </p>
+                    {group.items.map(item => {
+                      const isActive = location.pathname === item.href
+                      return (
+                        <NavLink
+                          key={item.name}
+                          to={item.href}
+                          onClick={closeMobileMenu}
+                          className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
+                              : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                          }`}
+                        >
+                          <item.icon className="mr-3 h-5 w-5" />
+                          {item.name}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                ))}
 
                 <div className="border-t border-white/10 pt-4 space-y-3">
                   <button
@@ -328,7 +402,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
           <div className="glass-card border-t border-white/10 px-2 py-3 backdrop-blur-xl bg-slate-900/95">
             <div className="flex items-center justify-around max-w-md mx-auto">
-              {filteredMainNav.map(item => {
+              {dockItems.map(item => {
                 const isActive = location.pathname === item.href
                 return (
                   <NavLink
@@ -358,6 +432,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
 
         {/* Main Content */}
         <div className="md:ml-64">
+          <TopNav currentUser={currentUser} onLogout={onLogout} />
           <div className="min-h-screen p-4 md:p-8 pb-24 md:pb-8">
             {children}
           </div>

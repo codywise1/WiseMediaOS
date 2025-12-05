@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { invoiceService, Invoice as InvoiceType } from '../lib/supabase';
+import { invoiceService, Invoice as InvoiceRecord, UserRole } from '../lib/supabase';
 import { 
   DocumentIcon, 
   CreditCardIcon,
@@ -21,19 +21,21 @@ import PaymentModal from './PaymentModal';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface InvoicesProps {
   currentUser: User | null;
 }
 
-interface Invoice extends Omit<InvoiceType, 'created_at' | 'due_date'> {
+type InvoiceView = Omit<InvoiceRecord, 'client' | 'created_at' | 'due_date'> & {
   createdDate: string;
   dueDate: string;
   client: string;
-}
+  client_id: string;
+};
 
 const statusConfig = {
   paid: { color: 'bg-white/30 text-white', icon: CheckCircleIcon },
@@ -44,22 +46,22 @@ const statusConfig = {
 
 export default function Invoices({ currentUser }: InvoicesProps) {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceView[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceView | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadInvoices();
   }, [currentUser]);
 
   const loadInvoices = async () => {
     try {
       setLoading(true);
-      let data: InvoiceType[] = [];
+      let data: InvoiceRecord[] = [];
       
       if (currentUser?.role === 'admin') {
         data = await invoiceService.getAll();
@@ -69,7 +71,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       }
       
       // Transform data to match component interface
-      const transformedInvoices: Invoice[] = data.map(invoice => ({
+      const transformedInvoices: InvoiceView[] = data.map(invoice => ({
         ...invoice,
         client: invoice.client?.name || 'Unknown Client',
         createdDate: invoice.created_at?.split('T')[0] || '',
@@ -95,13 +97,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     setIsModalOpen(true);
   };
 
-  const handleEditInvoice = (invoice: Invoice) => {
+  const handleEditInvoice = (invoice: InvoiceView) => {
     setSelectedInvoice(invoice);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleDeleteInvoice = (invoice: Invoice) => {
+  const handleDeleteInvoice = (invoice: InvoiceView) => {
     setSelectedInvoice(invoice);
     setIsDeleteDialogOpen(true);
   };
@@ -110,8 +112,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     const saveInvoice = async () => {
       try {
         // Transform data for API
-        const apiData = {
-          id: modalMode === 'create' ? `INV-2024-${String(invoices.length + 1).padStart(3, '0')}` : invoiceData.id,
+        const payload = {
           client_id: invoiceData.client_id,
           amount: invoiceData.amount,
           description: invoiceData.description,
@@ -120,9 +121,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         };
 
         if (modalMode === 'create') {
-          await invoiceService.create(apiData);
+          await invoiceService.create(payload);
         } else if (selectedInvoice) {
-          await invoiceService.update(selectedInvoice.id, apiData);
+          await invoiceService.update(selectedInvoice.id, payload as any);
         }
         
         // Reload invoices
@@ -163,24 +164,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     );
   }
 
-  const handlePaymentSuccess = (paymentDetails: any) => {
-    const updateInvoiceStatus = async () => {
-      if (selectedInvoice) {
-        try {
-          await invoiceService.update(selectedInvoice.id, { status: 'paid' });
-          await loadInvoices();
-          
-          // Show success message
-          alert(`Payment successful!\n\nInvoice: ${selectedInvoice.id}\nAmount: $${selectedInvoice.amount.toLocaleString()}\nMethod: ${paymentDetails.method}\n\nThank you for your payment!`);
-        } catch (error) {
-          console.error('Error updating invoice status:', error);
-        }
-      }
-      setIsPaymentModalOpen(false);
-      setSelectedInvoice(undefined);
-    };
-    
-    updateInvoiceStatus();
+  const handlePaymentSuccess = async (_paymentDetails: any) => {
+    // Refresh invoices in the background; the PaymentModal already shows a styled confirmation
+    try {
+      await loadInvoices();
+    } catch (error) {
+      console.error('Error refreshing invoices:', error);
+    }
+    // Modal will close itself via handleSuccessClose after user clicks "Close"
   };
 
   const isAdmin = currentUser?.role === 'admin';

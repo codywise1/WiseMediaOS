@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { projectService, Project as ProjectType } from '../lib/supabase';
+import { projectService, Project as ProjectType, UserRole } from '../lib/supabase';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -20,8 +20,9 @@ import ConfirmDialog from './ConfirmDialog';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface ProjectDetailProps {

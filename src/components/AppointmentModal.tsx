@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client } from '../lib/supabase';
+import { clientService, Client, UserRole } from '../lib/supabase';
 
 interface Appointment {
   id: number;
@@ -21,7 +21,7 @@ interface AppointmentModalProps {
   onSave: (appointment: Omit<Appointment, 'id'> | Appointment) => void;
   appointment?: Appointment;
   mode: 'create' | 'edit';
-  currentUser?: { role: 'admin' | 'user' } | null;
+  currentUser?: { role: UserRole } | null;
 }
 
 export default function AppointmentModal({ isOpen, onClose, onSave, appointment, mode, currentUser }: AppointmentModalProps) {

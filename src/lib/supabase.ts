@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+export type UserRole = 'admin' | 'staff' | 'user' | 'elite' | 'pro' | 'free';
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const forceDemoMode = import.meta.env.VITE_FORCE_DEMO_MODE === 'true';
@@ -19,6 +21,13 @@ export const isSupabaseAvailable = () => {
   return supabase !== null;
 };
 
+const getSupabaseClient = () => {
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+  return supabase;
+};
+
 // Avatar upload service
 export const avatarService = {
   async uploadAvatar(file: File, userId: string): Promise<string> {
@@ -26,11 +35,12 @@ export const avatarService = {
       throw new Error('Supabase not configured');
     }
 
+    const sb = getSupabaseClient();
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await sb.storage
       .from('avatars')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -41,7 +51,7 @@ export const avatarService = {
       throw uploadError;
     }
 
-    const { data } = supabase.storage
+    const { data } = sb.storage
       .from('avatars')
       .getPublicUrl(filePath);
 
@@ -53,10 +63,11 @@ export const avatarService = {
       throw new Error('Supabase not configured');
     }
 
+    const sb = getSupabaseClient();
     const path = avatarUrl.split('/avatars/').pop();
     if (!path) return;
 
-    const { error } = await supabase.storage
+    const { error } = await sb.storage
       .from('avatars')
       .remove([`avatars/${path}`]);
 
@@ -73,10 +84,11 @@ export const authService = {
       throw new Error('Supabase not configured');
     }
 
+    const sb = getSupabaseClient();
     // Automatically make icodywise@gmail.com an admin
     const userRole = email.toLowerCase() === 'icodywise@gmail.com' ? 'admin' : (userData.role || 'user');
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await sb.auth.signUp({
       email,
       password,
       options: {
@@ -97,7 +109,8 @@ export const authService = {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const sb = getSupabaseClient();
+    const { data, error } = await sb.auth.signInWithPassword({
       email,
       password
     });
@@ -111,7 +124,8 @@ export const authService = {
       throw new Error('Supabase not configured');
     }
 
-    const { error } = await supabase.auth.signOut();
+    const sb = getSupabaseClient();
+    const { error } = await sb.auth.signOut();
     if (error) throw error;
   },
 
@@ -120,7 +134,8 @@ export const authService = {
       return null;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const sb = getSupabaseClient();
+    const { data: { user } } = await sb.auth.getUser();
     return user;
   },
 
@@ -129,7 +144,8 @@ export const authService = {
       return { data: { subscription: null } };
     }
 
-    return supabase.auth.onAuthStateChange((event, session) => {
+    const sb = getSupabaseClient();
+    return sb.auth.onAuthStateChange((event, session) => {
       callback(session?.user || null);
     });
   }
@@ -218,6 +234,8 @@ export interface Invoice {
   client?: Client;
 }
 
+export type CreateInvoice = Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'client'>;
+
 export interface Proposal {
   id: string;
   client_id: string;
@@ -296,7 +314,8 @@ export const supportService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('support_tickets')
       .select(`
         *,
@@ -313,7 +332,8 @@ export const supportService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('support_tickets')
       .select(`
         *,
@@ -331,7 +351,8 @@ export const supportService = {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('support_tickets')
       .insert([ticket])
       .select(`
@@ -345,7 +366,12 @@ export const supportService = {
   },
 
   async update(id: string, updates: Partial<SupportTicket>) {
-    const { data, error } = await supabase
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('support_tickets')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -360,7 +386,12 @@ export const supportService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('support_tickets')
       .delete()
       .eq('id', id);
@@ -376,7 +407,8 @@ export const clientService = {
       return mockClients;
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('clients')
       .select('*')
       .order('name');
@@ -392,7 +424,8 @@ export const clientService = {
       return client;
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('clients')
       .select('*')
       .eq('id', id)
@@ -416,15 +449,17 @@ export const clientService = {
       return newClient;
     }
 
+    const sb = getSupabaseClient();
+
     try {
       // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await sb.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated. Please log in to create clients.');
       }
 
       // First, create the user account via Edge Function
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await sb.auth.getSession();
       const token = session?.access_token;
 
       if (token) {
@@ -461,7 +496,7 @@ export const clientService = {
       }
 
       // Then create the client record
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('clients')
         .insert([{
           name: client.name,
@@ -511,7 +546,8 @@ export const clientService = {
       return updatedClient;
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('clients')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -532,7 +568,8 @@ export const clientService = {
       return;
     }
 
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('clients')
       .delete()
       .eq('id', id);
@@ -556,7 +593,8 @@ export const clientService = {
       return updatedClient;
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('clients')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('email', email)
@@ -580,7 +618,8 @@ export const projectService = {
       }));
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('projects')
       .select(`
         *,
@@ -603,7 +642,8 @@ export const projectService = {
         }));
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('projects')
       .select(`
         *,
@@ -635,7 +675,8 @@ export const projectService = {
       };
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('projects')
       .insert([project])
       .select(`
@@ -670,7 +711,8 @@ export const projectService = {
       };
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('projects')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -693,7 +735,8 @@ export const projectService = {
       return;
     }
 
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('projects')
       .delete()
       .eq('id', id);
@@ -709,7 +752,8 @@ export const invoiceService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('invoices')
       .select(`
         *,
@@ -726,7 +770,8 @@ export const invoiceService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('invoices')
       .select(`
         *,
@@ -739,12 +784,13 @@ export const invoiceService = {
     return data as Invoice[];
   },
 
-  async create(invoice: Omit<Invoice, 'created_at' | 'updated_at' | 'client'>) {
+  async create(invoice: CreateInvoice) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('invoices')
       .insert([invoice])
       .select(`
@@ -758,9 +804,10 @@ export const invoiceService = {
   },
 
   async update(id: string, updates: Partial<Invoice>) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('invoices')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...updates })
       .eq('id', id)
       .select(`
         *,
@@ -773,7 +820,8 @@ export const invoiceService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('invoices')
       .delete()
       .eq('id', id);
@@ -789,7 +837,8 @@ export const proposalService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('proposals')
       .select(`
         *,
@@ -806,7 +855,8 @@ export const proposalService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('proposals')
       .select(`
         *,
@@ -824,7 +874,8 @@ export const proposalService = {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('proposals')
       .insert([proposal])
       .select(`
@@ -838,7 +889,8 @@ export const proposalService = {
   },
 
   async update(id: string, updates: Partial<Proposal>) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('proposals')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -853,7 +905,8 @@ export const proposalService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('proposals')
       .delete()
       .eq('id', id);
@@ -869,7 +922,8 @@ export const appointmentService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('appointments')
       .select(`
         *,
@@ -886,7 +940,8 @@ export const appointmentService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('appointments')
       .select(`
         *,
@@ -904,7 +959,8 @@ export const appointmentService = {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('appointments')
       .insert([appointment])
       .select(`
@@ -918,7 +974,8 @@ export const appointmentService = {
   },
 
   async update(id: string, updates: Partial<Appointment>) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('appointments')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -933,7 +990,8 @@ export const appointmentService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('appointments')
       .delete()
       .eq('id', id);
@@ -948,7 +1006,8 @@ export const noteService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('notes')
       .select(`
         *,
@@ -963,7 +1022,8 @@ export const noteService = {
   },
 
   async getById(id: string) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('notes')
       .select(`
         *,
@@ -978,7 +1038,8 @@ export const noteService = {
   },
 
   async getByClient(clientId: string) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('notes')
       .select(`
         *,
@@ -994,7 +1055,8 @@ export const noteService = {
   },
 
   async getByProject(projectId: string) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('notes')
       .select(`
         *,
@@ -1010,9 +1072,10 @@ export const noteService = {
   },
 
   async create(note: Omit<Note, 'id' | 'created_at' | 'updated_at'>) {
-    const { data: userData } = await supabase.auth.getUser();
+    const sb = getSupabaseClient();
+    const { data: userData } = await sb.auth.getUser();
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('notes')
       .insert({
         ...note,
@@ -1032,7 +1095,8 @@ export const noteService = {
   },
 
   async update(id: string, updates: Partial<Note>) {
-    const { data, error } = await supabase
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
       .from('notes')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -1048,7 +1112,8 @@ export const noteService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const sb = getSupabaseClient();
+    const { error } = await sb
       .from('notes')
       .delete()
       .eq('id', id);

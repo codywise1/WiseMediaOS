@@ -16,6 +16,7 @@ import { noteService, clientService, projectService, Note, Client, Project } fro
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { format } from 'date-fns';
+import { useLoadingGuard } from '../hooks/useLoadingGuard';
 
 interface User {
   email: string;
@@ -55,6 +56,8 @@ export default function Notes({ currentUser }: NotesProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   const isAdmin = currentUser?.role === 'admin';
+
+  useLoadingGuard(loading, setLoading);
 
   useEffect(() => {
     loadData();

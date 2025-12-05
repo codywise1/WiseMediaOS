@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import { supportService } from '../lib/supabase';
 import { 
   ChatBubbleLeftRightIcon, 
@@ -19,6 +20,7 @@ import SupportModal from './SupportModal';
 import ConfirmDialog from './ConfirmDialog';
 
 interface User {
+  id(id: any): any[] | PromiseLike<any[]>;
   email: string;
   role: 'admin' | 'user';
   name: string;
@@ -91,7 +93,7 @@ export default function Support({ currentUser }: SupportProps) {
   const loadSupportTickets = async () => {
     try {
       setLoading(true);
-      let data = [];
+      let data: any[] = [];
       
       if (currentUser?.role === 'admin') {
         data = await supportService.getAll();
@@ -164,7 +166,7 @@ export default function Support({ currentUser }: SupportProps) {
         await loadSupportTickets();
       } catch (error) {
         console.error('Error saving support ticket:', error);
-        alert('Error saving support ticket. Please try again.');
+        toastError('Error saving support ticket. Please try again.');
       }
     };
     
@@ -178,9 +180,10 @@ export default function Support({ currentUser }: SupportProps) {
         await loadSupportTickets();
         setIsDeleteDialogOpen(false);
         setSelectedTicket(undefined);
+        toastSuccess('Support ticket deleted successfully.');
       } catch (error) {
         console.error('Error deleting support ticket:', error);
-        alert('Error deleting support ticket. Please try again.');
+        toastError('Error deleting support ticket. Please try again.');
       }
     }
   };
@@ -323,6 +326,14 @@ export default function Support({ currentUser }: SupportProps) {
             const statusInfo = statusConfig[ticket.status as keyof typeof statusConfig];
             const StatusIcon = statusInfo.icon;
             
+            function toastInfo(arg0: string, arg1: number) {
+              throw new Error('Function not implemented.');
+            }
+
+            function toastSuccess(arg0: string) {
+              throw new Error('Function not implemented.');
+            }
+
             return (
               <div key={ticket.id} className="p-6 hover:bg-slate-800/30 transition-colors">
                 <div className="flex items-start justify-between">
@@ -373,7 +384,7 @@ export default function Support({ currentUser }: SupportProps) {
                   <div className="flex items-center space-x-3">
                     <button 
                       onClick={() => {
-                        alert(`Ticket Details:\n\nID: ${ticket.id}\nSubject: ${ticket.subject}\nStatus: ${ticket.status}\nPriority: ${ticket.priority}\nCategory: ${ticket.category}\n\nDescription: ${ticket.description}`);
+                        toastInfo(`Ticket Details:\n\nID: ${ticket.id}\nSubject: ${ticket.subject}\nStatus: ${ticket.status}\nPriority: ${ticket.priority}\nCategory: ${ticket.category}\n\nDescription: ${ticket.description}`, 10000);
                       }}
                       className="text-white hover:text-blue-300 text-sm"
                     >
@@ -383,7 +394,7 @@ export default function Support({ currentUser }: SupportProps) {
                       onClick={() => {
                         const comment = prompt('Add a comment to this ticket:');
                         if (comment) {
-                          alert(`Comment added to ticket ${ticket.id}:\n\n"${comment}"\n\nOur team will respond shortly.`);
+                          toastSuccess(`Comment added to ticket ${ticket.id}:\n\n"${comment}"\n\nOur team will respond shortly.`);
                         }
                       }}
                       className="text-white hover:text-blue-300 text-sm"
@@ -471,4 +482,13 @@ export default function Support({ currentUser }: SupportProps) {
       />
     </div>
   );
+}
+
+function toastError(arg0: string) {
+  throw new Error('Function not implemented.');
+}
+
+
+function toastSuccess(arg0: string) {
+  throw new Error('Function not implemented.');
 }

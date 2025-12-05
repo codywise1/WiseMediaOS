@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useToast } from '../contexts/ToastContext';
 import { UserCircleIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { avatarService, isSupabaseAvailable } from '../lib/supabase';
 
 interface User {
+  id?: string;
   email: string;
+  phone?: string;
   role: 'admin' | 'user';
   name: string;
   avatar?: string;
-  phone?: string;
   company?: string;
   title?: string;
   website?: string;
@@ -39,6 +41,7 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileModalProps) {
+  const { error: toastError, success: toastSuccess } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -102,14 +105,14 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
     
     // Validate required fields
     if (!formData.name.trim() || !formData.email.trim()) {
-      alert('Name and email are required fields.');
+      toastError('Name and email are required fields.');
       return;
     }
     
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert('Please enter a valid email address.');
+      toastError('Please enter a valid email address.');
       return;
     }
     
@@ -156,17 +159,17 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
     if (!file) return;
 
     if (!user?.id) {
-      alert('User ID not found. Please try logging in again.');
+      toastError('User ID not found. Please try logging in again.');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      toastError('File size must be less than 5MB');
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      toastError('Please upload an image file');
       return;
     }
 
@@ -177,7 +180,7 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
           ...prev,
           avatar: avatarUrl
         }));
-        alert('Avatar uploaded successfully!');
+        toastSuccess('Avatar uploaded successfully!');
       } else {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -190,7 +193,7 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert('Failed to upload avatar. Please try again.');
+      toastError('Failed to upload avatar. Please try again.');
     }
   };
 

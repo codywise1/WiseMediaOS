@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
+import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import {
   UserGroupIcon,
   BuildingOfficeIcon,
@@ -20,26 +22,29 @@ import ConfirmDialog from './ConfirmDialog';
 import ClientTableView from './ClientTableView';
 import CategoryBadge from './CategoryBadge';
 import ServiceTag from './ServiceTag';
-import { clientService, Client } from '../lib/supabase';
+import { clientService, Client, UserRole } from '../lib/supabase';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface ClientsProps {
   currentUser: User | null;
 }
 
-const statusConfig = {
+const statusConfig: Record<'active' | 'inactive' | 'prospect' | 'archived', { color: string; label: string }> = {
   active: { color: 'bg-green-900/30 text-green-400', label: 'Active' },
   inactive: { color: 'bg-gray-900/30 text-gray-400', label: 'Inactive' },
   prospect: { color: 'bg-blue-900/30 text-blue-400', label: 'Prospect' },
+  archived: { color: 'bg-amber-900/30 text-amber-300', label: 'Archived' },
 };
 
 export default function Clients({ currentUser }: ClientsProps) {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,6 +57,8 @@ export default function Clients({ currentUser }: ClientsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+
+  useLoadingGuard(loading, setLoading);
 
   useEffect(() => {
     loadClients();
@@ -374,7 +381,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => {
-            const statusInfo = statusConfig[client.status];
+            const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
 
             return (
               <div key={client.id} className="glass-card rounded-xl p-6 card-hover neon-glow">

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   projectService,
   invoiceService,
-  appointmentService
+  appointmentService,
+  UserRole
 } from '../lib/supabase';
 import {
   FolderIcon,
@@ -11,9 +12,6 @@ import {
   CalendarIcon,
   PlusIcon,
   ArrowUpRightIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   MinusIcon
@@ -21,20 +19,14 @@ import {
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface DashboardProps {
   currentUser: User | null;
 }
-
-const stats = [
-  { name: 'Active Projects', value: '12', change: '+2', changeType: 'increase' },
-  { name: 'Pending Invoices', value: '$24,500', change: '+12%', changeType: 'increase' },
-  { name: 'This Month Revenue', value: '$89,200', change: '+18%', changeType: 'increase' },
-  { name: 'Client Satisfaction', value: '98%', change: '+5%', changeType: 'increase' },
-];
 
 const adminQuickActions = [
   {
@@ -117,6 +109,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   }, [currentUser]);
 
   const loadDashboardData = async () => {
+    const safetyTimeout = setTimeout(() => setLoading(false), 6000); // safety net
     try {
       setLoading(true);
       
@@ -228,6 +221,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         previousMonthInvoices: 0
       });
     } finally {
+      clearTimeout(safetyTimeout);
       setLoading(false);
     }
   };
