@@ -278,7 +278,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Client Tier</label>
               <select
@@ -310,9 +310,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                 <option value="Other">Other</option>
               </select>
             </div>
-          </div>
-
-          <div>
+            <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
             <select
               name="status"
@@ -325,6 +323,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
               <option value="prospect">Prospect</option>
               <option value="archived">Archived</option>
             </select>
+          </div>
           </div>
 
           <div>
