@@ -42,6 +42,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<ClientType | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientType | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -66,6 +67,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       const foundClient = clientsData.find(c => c.id === id);
       if (foundClient) {
         setClient(foundClient);
+        setSelectedClient(foundClient);
         setProjects(projectsData.filter(p => p.client_id === id));
       } else {
         navigate('/clients');
@@ -170,7 +172,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 {(client.status || 'active').charAt(0).toUpperCase() + (client.status || 'active').slice(1)}
               </span>
               <button
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={() => {
+                  setSelectedClient(client);
+                  setIsEditModalOpen(true);
+                }}
                 className="p-3 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors"
               >
                 <PencilIcon className="h-5 w-5 text-white" />
@@ -499,14 +504,13 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       </div>
 
       {/* Modals */}
-      {isEditModalOpen && (
-        <ClientModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveClient}
-          client={client}
-        />
-      )}
+      <ClientModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveClient}
+        client={selectedClient || client || undefined}
+        mode="edit"
+      />
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}

@@ -40,7 +40,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
   });
 
   useEffect(() => {
-    if (client && mode === 'edit') {
+    if (client) {
+      // Always hydrate the form from the provided client when editing
       setFormData({
         name: client.name,
         email: client.email,
@@ -58,7 +59,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         facebook: client.facebook || '',
         tiktok: client.tiktok || ''
       });
-    } else {
+    } else if (mode === 'create') {
+      // Only reset to empty defaults when creating a new client
       setFormData({
         name: '',
         email: '',
