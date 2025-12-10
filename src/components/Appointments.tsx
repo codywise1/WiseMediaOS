@@ -13,6 +13,7 @@ import {
   PencilIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
+import { formatAppDate } from '../lib/dateFormat';
 import AppointmentModal from './AppointmentModal';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -477,7 +478,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                 <div className="flex items-center space-x-6">
                   <div className="flex items-center space-x-2">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{appointment.date}</span>
+                    <span className="text-sm text-gray-300">{appointment.date ? formatAppDate(appointment.date) : ''}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <ClockIcon className="h-4 w-4 text-gray-400" />

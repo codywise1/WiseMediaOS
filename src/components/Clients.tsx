@@ -23,6 +23,7 @@ import ClientTableView from './ClientTableView';
 import CategoryBadge from './CategoryBadge';
 import ServiceTag from './ServiceTag';
 import { clientService, Client, UserRole } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 
 interface User {
   email: string;
@@ -458,7 +459,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
                 <div className="flex items-center justify-between pt-4 border-t border-slate-700">
                   <span className="text-xs text-gray-400">
-                    Added {new Date(client.created_at).toLocaleDateString()}
+                    Added {formatAppDate(client.created_at)}
                   </span>
                   <div className="flex items-center space-x-2">
                     <button

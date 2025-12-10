@@ -15,7 +15,7 @@ import {
 import { noteService, clientService, projectService, Note, Client, Project } from '../lib/supabase';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
-import { format } from 'date-fns';
+import { formatAppDate } from '../lib/dateFormat';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 
 interface User {
@@ -305,7 +305,7 @@ export default function Notes({ currentUser }: NotesProps) {
                       </div>
                     )}
                   </div>
-                  <span>{format(new Date(note.updated_at), 'MMM d')}</span>
+                  <span>{formatAppDate(note.updated_at)}</span>
                 </div>
 
                 {isAdmin && (

@@ -6,6 +6,7 @@ import {
   appointmentService,
   UserRole
 } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import {
   FolderIcon,
   DocumentIcon,
@@ -118,7 +119,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     if (diffMinutes < 60) return `${diffMinutes} min ago`;
     if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString();
+    return formatAppDate(date);
   };
 
   const buildRecentActivities = (projects: any[], invoices: any[], appointments: any[]) => {

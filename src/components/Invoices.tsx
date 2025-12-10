@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoiceService, Invoice as InvoiceRecord, UserRole } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import { 
   DocumentIcon, 
   CreditCardIcon,
@@ -76,8 +77,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       const transformedInvoices: InvoiceView[] = data.map(invoice => ({
         ...invoice,
         client: invoice.client?.name || 'Unknown Client',
-        createdDate: invoice.created_at?.split('T')[0] || '',
-        dueDate: invoice.due_date ? invoice.due_date.split('T')[0] : ''
+        createdDate: invoice.created_at || '',
+        dueDate: invoice.due_date || ''
       }));
       
       setInvoices(transformedInvoices);
@@ -297,7 +298,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   
                   <div className="text-right">
                     <p className="text-2xl font-bold text-white">${invoice.amount.toLocaleString()}</p>
-                    <p className="text-sm text-gray-400">Due: {invoice.dueDate}</p>
+                    <p className="text-sm text-gray-400">Due: {invoice.dueDate ? formatAppDate(invoice.dueDate) : '—'}</p>
                     {isAdmin && (
                       <div className="flex items-center justify-end space-x-2 mt-2">
                         <button 
@@ -320,7 +321,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 </div>
                 
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
-                  <p className="text-sm text-gray-400">Created: {invoice.createdDate}</p>
+                  <p className="text-sm text-gray-400">Created: {invoice.createdDate ? formatAppDate(invoice.createdDate) : '—'}</p>
                   
                   <div className="flex items-center space-x-3">
                     <button

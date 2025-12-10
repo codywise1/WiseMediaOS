@@ -14,6 +14,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
 
@@ -409,7 +410,7 @@ export default function MarketplaceProductPage() {
                       {renderStars(review.rating, 16)}
                     </div>
                     <span className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {new Date(review.created_at).toLocaleDateString()}
+                      {formatAppDate(review.created_at)}
                     </span>
                   </div>
                   {review.comment && (

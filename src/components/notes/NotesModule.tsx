@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Pin, Tag, Edit2, Trash2, Save, X } from 'lucide-react';
 import GlassCard from '../GlassCard';
 import { supabase } from '../../lib/supabase';
+import { formatAppDate } from '../../lib/dateFormat';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Note {
@@ -354,7 +355,7 @@ export default function NotesModule() {
                       {selectedNote.title}
                     </h2>
                     <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                      Last updated: {new Date(selectedNote.updated_at).toLocaleDateString()}
+                      Last updated: {formatAppDate(selectedNote.updated_at)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { clientService, projectService, Client as ClientType, Project } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -403,11 +404,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 <p className="text-xs text-gray-400 mb-1">Created</p>
                 <div className="flex items-center space-x-2 text-white">
                   <CalendarIcon className="h-4 w-4 text-gray-400" />
-                  <span>{new Date(client.created_at).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}</span>
+                  <span>{formatAppDate(client.created_at)}</span>
                 </div>
               </div>
             </div>

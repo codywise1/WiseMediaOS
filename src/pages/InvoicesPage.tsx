@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import { formatAppDate } from '../lib/dateFormat';
 import { FileText, Plus, X, DollarSign, Calendar, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -152,9 +153,9 @@ export default function InvoicesPage() {
                       <FileText className="text-[#3AA3EB]" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-lg number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>\${invoice.amount.toFixed(2)}</h3>
+                      <h3 className="text-white font-bold text-lg number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>${invoice.amount.toFixed(2)}</h3>
                       <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                        Due: {new Date(invoice.due_date).toLocaleDateString()}
+                        Due: {formatAppDate(invoice.due_date)}
                       </p>
                     </div>
                   </div>

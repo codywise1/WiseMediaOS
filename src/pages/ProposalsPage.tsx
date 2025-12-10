@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import { FileText, Plus, X, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Proposal {
@@ -111,7 +112,7 @@ export default function ProposalsPage() {
                     </div>
                     <div>
                       <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{proposal.title}</h3>
-                      <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{new Date(proposal.created_at).toLocaleDateString()}</p>
+                      <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{formatAppDate(proposal.created_at)}</p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(proposal.status)}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>

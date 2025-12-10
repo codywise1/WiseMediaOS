@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import { Calendar, Plus, X, Video, Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatAppDateTime } from '../lib/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Appointment {
@@ -169,7 +170,7 @@ export default function AppointmentsPage() {
                       <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{appointment.title}</h3>
                       <div className="flex items-center gap-3 mt-1">
                         <p className="text-gray-400" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '16px' }}>
-                          {new Date(appointment.scheduled_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          {formatAppDateTime(appointment.scheduled_at)}
                         </p>
                         {appointment.meeting_platform && (
                           <span className="flex items-center gap-1 text-blue-400 text-sm">

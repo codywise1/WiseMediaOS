@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import { formatAppDate } from '../lib/dateFormat';
 import {
   User,
   Mail,
@@ -460,7 +461,7 @@ export default function ProfilePage() {
                       <div className="flex-1">
                         <p className="text-sm text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Member Since</p>
                         <p className="font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                          {profile?.created_at ? formatAppDate(profile.created_at) : 'N/A'}
                         </p>
                       </div>
                     </div>

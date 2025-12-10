@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
+import { formatAppDate } from '../lib/dateFormat';
 
 interface User {
   email: string;
@@ -163,8 +164,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No due date';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    return formatAppDate(dateString);
   };
 
   const isAdmin = currentUser?.role === 'admin';

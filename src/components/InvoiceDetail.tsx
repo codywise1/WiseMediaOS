@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
-import { format } from 'date-fns';
+import { formatAppDate } from '../lib/dateFormat';
 
 interface User {
   email: string;
@@ -193,7 +193,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <span className="text-xs text-gray-400">Due Date</span>
             </div>
             <p className="text-sm md:text-base font-medium text-white">
-              {format(new Date(invoice.due_date), 'MMM d, yyyy')}
+              {formatAppDate(invoice.due_date)}
             </p>
           </div>
 
@@ -289,11 +289,11 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Created</p>
-                  <p className="text-white">{format(new Date(invoice.created_at), 'MMM d, yyyy')}</p>
+                  <p className="text-white">{formatAppDate(invoice.created_at)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Last Updated</p>
-                  <p className="text-white">{format(new Date(invoice.updated_at), 'MMM d, yyyy')}</p>
+                  <p className="text-white">{formatAppDate(invoice.updated_at)}</p>
                 </div>
               </div>
             </div>

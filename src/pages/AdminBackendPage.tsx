@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import { formatAppDate } from '../lib/dateFormat';
 import {
   Users,
   ShoppingBag,
@@ -210,7 +211,7 @@ export default function AdminBackendPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {formatAppDate(user.created_at)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button

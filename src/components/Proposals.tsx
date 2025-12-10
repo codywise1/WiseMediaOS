@@ -14,6 +14,7 @@ import {
 import ProposalModal from './ProposalModal';
 import ConfirmDialog from './ConfirmDialog';
 import { proposalService } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 
 interface User {
@@ -69,7 +70,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         status: proposal.status,
         services: proposal.services || [],
         description: proposal.description,
-        createdDate: proposal.created_at?.split('T')[0] || '',
+        createdDate: proposal.created_at || '',
         expiryDate: proposal.expiry_date || ''
       }));
       
@@ -309,11 +310,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 <div className="flex items-center space-x-6">
                   <div className="flex items-center space-x-2">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Created: {proposal.createdDate}</span>
+                    <span className="text-sm text-gray-400">Created: {proposal.createdDate ? formatAppDate(proposal.createdDate) : '—'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Expires: {proposal.expiryDate}</span>
+                    <span className="text-sm text-gray-400">Expires: {proposal.expiryDate ? formatAppDate(proposal.expiryDate) : '—'}</span>
                   </div>
                 </div>
 

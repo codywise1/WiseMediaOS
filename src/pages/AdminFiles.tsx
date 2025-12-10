@@ -1,5 +1,6 @@
 import React from 'react';
 import { DocumentIcon, FolderIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { formatAppDate } from '../lib/dateFormat';
 
 const files = [
   { name: 'Brand Assets.zip', type: 'ZIP', size: '12.4 MB', updated: '2025-05-02', owner: 'Design Team', status: 'Ready' },
@@ -59,7 +60,7 @@ export default function AdminFiles() {
               </div>
               <div className="col-span-2 text-gray-300">{file.type}</div>
               <div className="col-span-2 text-gray-300">{file.size}</div>
-              <div className="col-span-2 text-gray-300">{file.updated}</div>
+              <div className="col-span-2 text-gray-300">{formatAppDate(file.updated)}</div>
               <div className="col-span-1 text-gray-300">{file.owner}</div>
               <div className="col-span-1 flex justify-end">
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[file.status] || 'bg-white/5'}`}>

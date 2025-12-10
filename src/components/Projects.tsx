@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectService, clientService, Project as SbProject } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 import {
   PlusIcon,
   PencilIcon,
@@ -514,7 +515,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-slate-700">
-                      <span className="text-xs text-gray-400">Due: {project.dueDate}</span>
+                      <span className="text-xs text-gray-400">Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
                     </div>
                   </div>
                 ))}

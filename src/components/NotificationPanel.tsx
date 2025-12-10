@@ -2,6 +2,7 @@ import React from 'react';
 import { Bell, UserPlus, FileText, MessageSquare, Clock3, X } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { projectService, invoiceService, appointmentService } from '../lib/supabase';
+import { formatAppDate } from '../lib/dateFormat';
 
 interface Notification {
   id: string;
@@ -32,7 +33,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
     if (diffMinutes < 60) return `${diffMinutes} min ago`;
     if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString();
+    return formatAppDate(date);
   };
 
   const buildNotificationsFromActivity = (projects: any[], invoices: any[], appointments: any[]): Notification[] => {
