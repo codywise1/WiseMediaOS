@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useToast } from '../contexts/ToastContext';
 import { UserCircleIcon, CameraIcon } from '@heroicons/react/24/outline';
-import { avatarService, isSupabaseAvailable } from '../lib/supabase';
+import { avatarService, isSupabaseAvailable, UserRole } from '../lib/supabase';
 
 interface User {
   id?: string;
   email: string;
   phone?: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
   avatar?: string;
   company?: string;

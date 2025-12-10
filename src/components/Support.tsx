@@ -253,12 +253,14 @@ export default function Support({ currentUser }: SupportProps) {
           </div>
           <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Knowledge Base</h3>
           <p className="text-gray-400 text-sm mb-4">Find answers to common questions</p>
-          <button 
-            onClick={() => console.log('Browsing knowledge base')}
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium"
+          <a
+            href="https://wisemedia.io/blogs/"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium inline-flex justify-center"
           >
             Browse Articles
-          </button>
+          </a>
         </div>
 
         <div className="glass-card rounded-xl p-6 card-hover cursor-pointer">

@@ -15,6 +15,7 @@ import Support from './components/Support';
 import Login from './components/Login';
 import { authService, isSupabaseAvailable, clientService, supabase, UserRole } from './lib/supabase';
 import CommunityPage from './pages/CommunityPage';
+import CommunityFeedPage from './pages/CommunityFeedPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseSinglePage from './pages/CourseSinglePage';
 import ProfilePage from './pages/ProfilePage';
@@ -24,6 +25,15 @@ import AdminFiles from './pages/AdminFiles';
 import Orders from './pages/Orders';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
+// import CommunityProPage from './pages/CommunityProPage';
+// import CommunityResourcesPage from './pages/CommunityResourcesPage';
+// import CommunitySettingsPage from './pages/CommunitySettingsPage';
+// import CommunityAdminCoursesPage from './pages/CommunityAdminCoursesPage';
+// import CommunityAdminCourseNewPage from './pages/CommunityAdminCourseNewPage';
+// import CommunityAdminCourseEditPage from './pages/CommunityAdminCourseEditPage';
+// import CommunityAdminLessonEditPage from './pages/CommunityAdminLessonEditPage';
+// import CommunityAdminResourcesPage from './pages/CommunityAdminResourcesPage';
+// import CommunityAdminCategoriesPage from './pages/CommunityAdminCategoriesPage';
 
 interface User {
   email: string;
@@ -86,6 +96,50 @@ function AdminGuard({ children }: { children: React.ReactElement }) {
           <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             You need administrator privileges to access this area.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
+function ProOnlyGuard({ children }: { children: React.ReactElement }) {
+  const { profile, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-card neon-glow rounded-2xl p-8">
+          <div className="flex items-center space-x-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
+            <div>
+              <p className="text-white font-medium">Checking Pro access...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
+  const subscription = (profile as any)?.subscription_type || user?.user_metadata?.subscription_type || 'free';
+  const isPro = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || subscription === 'pro';
+
+  if (!isPro) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10 space-y-4">
+          <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>Pro Creators only</h2>
+          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            This content is exclusive to Pro Creators. Upgrade to unlock it.
+          </p>
+          <a
+            href="/community/pro"
+            className="btn-primary inline-flex justify-center w-full"
+          >
+            Go to Pro upgrade
+          </a>
         </div>
       </div>
     );
@@ -433,6 +487,14 @@ function App() {
             path="/community"
             element={
               <CommunityGuard>
+                <CommunityFeedPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/chat"
+            element={
+              <CommunityGuard>
                 <CommunityPage />
               </CommunityGuard>
             }
@@ -461,6 +523,30 @@ function App() {
               </CommunityGuard>
             }
           />
+          {/* <Route
+            path="/community/pro"
+            element={
+              <CommunityGuard>
+                <CommunityProPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/resources"
+            element={
+              <CommunityGuard>
+                <CommunityResourcesPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/settings"
+            element={
+              <CommunityGuard>
+                <CommunitySettingsPage />
+              </CommunityGuard>
+            } */}
+          {/* /> */}
           <Route
             path="/community/profile"
             element={
@@ -477,6 +563,54 @@ function App() {
               </AdminGuard>
             }
           />
+          {/* <Route
+            path="/community/admin/courses"
+            element={
+              <AdminGuard>
+                <CommunityAdminCoursesPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/admin/courses/new"
+            element={
+              <AdminGuard>
+                <CommunityAdminCourseNewPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/admin/courses/:id/edit"
+            element={
+              <AdminGuard>
+                <CommunityAdminCourseEditPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/admin/lessons/:id/edit"
+            element={
+              <AdminGuard>
+                <CommunityAdminLessonEditPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/admin/resources"
+            element={
+              <AdminGuard>
+                <CommunityAdminResourcesPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/admin/categories"
+            element={
+              <AdminGuard>
+                <CommunityAdminCategoriesPage />
+              </AdminGuard>
+            }
+          /> */}
           <Route
             path="/admin/files"
             element={

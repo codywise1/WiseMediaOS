@@ -22,10 +22,11 @@ interface AppointmentModalProps {
   appointment?: Appointment;
   mode: 'create' | 'edit';
   currentUser?: { role: UserRole } | null;
+  clients?: Client[];
 }
 
-export default function AppointmentModal({ isOpen, onClose, onSave, appointment, mode, currentUser }: AppointmentModalProps) {
-  const [clients, setClients] = useState<Client[]>([]);
+export default function AppointmentModal({ isOpen, onClose, onSave, appointment, mode, currentUser, clients: clientsProp = [] }: AppointmentModalProps) {
+  const [clients, setClients] = useState<Client[]>(clientsProp);
   const [formData, setFormData] = useState({
     title: '',
     client_id: '',
@@ -40,10 +41,14 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
   });
 
   useEffect(() => {
-    if (currentUser?.role === 'admin') {
+    setClients(clientsProp);
+  }, [clientsProp]);
+
+  useEffect(() => {
+    if (currentUser?.role === 'admin' && !clientsProp.length) {
       loadClients();
     }
-  }, [currentUser]);
+  }, [currentUser, clientsProp.length]);
 
   const loadClients = async () => {
     try {

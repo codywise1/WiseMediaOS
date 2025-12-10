@@ -73,28 +73,30 @@ const roleLabel = (role?: string) => {
 
 const navByRole: Record<NormalizedRole, NavGroup[]> = {
   admin: [
-    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: HomeIcon }] },
     {
-      label: 'Work',
+      label: 'Agency',
       items: [
+        { name: 'Dashboard', href: '/', icon: HomeIcon },
         { name: 'Clients', href: '/clients', icon: UserCircleIcon },
         { name: 'Projects', href: '/projects', icon: FolderIcon },
         { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon }
+        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon },
+        { name: 'Meetings', href: '/appointments', icon: CalendarIcon },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
+        { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
       ]
     },
-    { label: 'Community', items: [{ name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon }] },
     {
-      label: 'Money',
+      label: 'Community',
       items: [
-        { name: 'Invoices', href: '/invoices', icon: DocumentIcon },
-        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon }
+        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
+        { name: 'Chat', href: '/support', icon: ChatBubbleLeftRightIcon },
+        { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
+        { name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }
       ]
     },
-    { label: 'Operations', items: [{ name: 'Appointments', href: '/appointments', icon: CalendarIcon }] },
     {
-      label: 'Support',
+      label: 'System',
       items: [
         { name: 'Support', href: '/support', icon: LifebuoyIcon },
         { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
@@ -109,13 +111,29 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Clients', href: '/clients', icon: UserCircleIcon },
         { name: 'Projects', href: '/projects', icon: FolderIcon },
         { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon }
+        { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon },
+        { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
+        { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
       ]
     },
-    { label: 'Community', items: [{ name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon }] },
-    { label: 'Operations', items: [{ name: 'Appointments', href: '/appointments', icon: CalendarIcon }] },
-    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+    {
+      label: 'Community',
+      items: [
+        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
+        { name: 'Chat', href: '/support', icon: ChatBubbleLeftRightIcon },
+        { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
+        { name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }
+      ]
+    },
+    {
+      label: 'System',
+      items: [
+        { name: 'Support', href: '/support', icon: LifebuoyIcon },
+        
+        { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
+      ]
+    }
   ],
   client: [
     { label: 'Overview', items: [{ name: 'Home', href: '/', icon: HomeIcon }] },
