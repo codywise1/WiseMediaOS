@@ -124,6 +124,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   if (!invoice) return null;
 
   const daysUntilDue = getDaysUntilDue(invoice.due_date);
+  const displayClientName = client?.company || client?.name || 'Client';
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -142,10 +143,15 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <DocumentTextIcon className="h-8 w-8 md:h-12 md:w-12 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                Invoice #{invoice.id}
+              <h1
+                className="text-2xl md:text-4xl font-bold text-white mb-2"
+                style={{ fontFamily: 'Integral CF, sans-serif' }}
+              >
+                Invoice for {displayClientName}
               </h1>
-              <p className="text-base md:text-xl text-gray-300">{invoice.description}</p>
+              <p className="text-base md:text-xl text-gray-300">
+                {invoice.description} · ${invoice.amount.toLocaleString()}
+              </p>
             </div>
           </div>
 
@@ -348,7 +354,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             onClose={() => setIsDeleteDialogOpen(false)}
             onConfirm={handleDeleteInvoice}
             title="Delete Invoice"
-            message={`Are you sure you want to delete invoice #${invoice.id}? This action cannot be undone.`}
+            message={`Are you sure you want to delete the invoice for "${displayClientName}" ($${invoice.amount.toLocaleString()})? This action cannot be undone.`}
           />
         </>
       )}

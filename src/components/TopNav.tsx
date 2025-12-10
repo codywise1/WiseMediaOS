@@ -117,12 +117,13 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
 
   return (
     <>
-      {(showQuickActions || showAvatarMenu) && (
+      {(showQuickActions || showAvatarMenu || isSearchFocused) && (
         <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => {
             setShowQuickActions(false);
             setShowAvatarMenu(false);
+            setIsSearchFocused(false);
           }}
         />
       )}
@@ -135,8 +136,13 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              // onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+              onFocus={() => {
+                setShowQuickActions(false);
+                setShowNotifications(false);
+                setShowAvatarMenu(false);
+                setIsSearchFocused(true);
+              }}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
               placeholder="Search clients, projects, invoices, notes..."
               className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
             />
@@ -144,7 +150,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
           </div>
 
           {isSearchFocused && (
-            <div className="absolute top-12 left-0 w-full glass-card border border-white/10 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto">
+            <div className="absolute top-12 left-0 w-full bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto animate-in slide-in-from-top">
               {groupedOrder.map((groupKey) => {
                 const items = filteredResults[groupKey];
                 if (!items || items.length === 0) return null;
@@ -186,6 +192,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
                 onClick={() => {
                   setShowNotifications(false);
                   setShowAvatarMenu(false);
+                  setIsSearchFocused(false);
                   setShowQuickActions((v) => !v);
                 }}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/15 text-white hover:bg-white/10 transition-colors"
@@ -195,7 +202,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
                 <ChevronDown size={16} className={`${showQuickActions ? 'rotate-180' : ''} transition-transform`} />
               </button>
               {showQuickActions && (
-                <div className="absolute right-0 mt-2 w-64 glass-card border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in slide-in-from-top">
                   {quickActions.map((action) => (
                     <button
                       key={action.label}
@@ -215,6 +222,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
             onClick={() => {
               setShowQuickActions(false);
               setShowAvatarMenu(false);
+              setIsSearchFocused(false);
               setShowNotifications(!showNotifications);
             }}
             className="relative p-2 hover:bg-white/10 rounded-lg transition-colors"
@@ -228,6 +236,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
               onClick={() => {
                 setShowQuickActions(false);
                 setShowNotifications(false);
+                setIsSearchFocused(false);
                 setShowAvatarMenu((v) => !v);
               }}
               className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-white/10 hover:bg-white/10 rounded-lg transition-colors p-2"
@@ -261,7 +270,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
             </button>
 
             {showAvatarMenu && (
-              <div className="absolute right-0 mt-2 w-64 glass-card border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in slide-in-from-top">
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleNavigate('/community/profile')}

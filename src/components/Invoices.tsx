@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoiceService, Invoice as InvoiceRecord, UserRole } from '../lib/supabase';
 import { 
@@ -14,6 +14,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline';
 import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
@@ -46,6 +47,7 @@ const statusConfig = {
 
 export default function Invoices({ currentUser }: InvoicesProps) {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess } = useToast();
   const [invoices, setInvoices] = useState<InvoiceView[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,13 +77,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         ...invoice,
         client: invoice.client?.name || 'Unknown Client',
         createdDate: invoice.created_at?.split('T')[0] || '',
-        dueDate: invoice.due_date || ''
+        dueDate: invoice.due_date ? invoice.due_date.split('T')[0] : ''
       }));
       
       setInvoices(transformedInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
       setInvoices([]);
+      toastError('Error loading invoices. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -122,15 +125,17 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
         if (modalMode === 'create') {
           await invoiceService.create(payload);
+          toastSuccess('Invoice created successfully.');
         } else if (selectedInvoice) {
           await invoiceService.update(selectedInvoice.id, payload as any);
+          toastSuccess('Invoice updated successfully.');
         }
         
         // Reload invoices
         await loadInvoices();
       } catch (error) {
         console.error('Error saving invoice:', error);
-        alert('Error saving invoice. Please try again.');
+        toastError('Error saving invoice. Please try again.');
       }
     };
     
@@ -146,7 +151,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         setSelectedInvoice(undefined);
       } catch (error) {
         console.error('Error deleting invoice:', error);
-        alert('Error deleting invoice. Please try again.');
+        toastError('Error deleting invoice. Please try again.');
       }
     }
   };
@@ -275,14 +280,18 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     
                     <div>
                       <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{invoice.id}</h3>
+                        <h3
+                          className="text-lg font-bold text-white"
+                          style={{ fontFamily: 'Integral CF, sans-serif' }}
+                        >
+                          {invoice.client}
+                        </h3>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-400 mt-1">{invoice.client}</p>
-                      <p className="text-sm text-gray-500">{invoice.description}</p>
+                      <p className="text-sm text-gray-400 mt-1">{invoice.description}</p>
                     </div>
                   </div>
                   
@@ -355,10 +364,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     {(invoice.status === 'pending' || invoice.status === 'overdue') && isAdmin && (
                       <button 
                         onClick={() => {
-                          const reminderSent = confirm(`Send payment reminder to ${invoice.client}?\n\nInvoice: ${invoice.id}\nAmount: $${invoice.amount.toLocaleString()}\nDue Date: ${invoice.dueDate}`);
-                          if (reminderSent) {
-                            alert(`Payment reminder sent successfully!\n\nTo: ${invoice.client}\nInvoice: ${invoice.id}\nAmount: $${invoice.amount.toLocaleString()}\n\nThe client will receive an email reminder about this outstanding payment.`);
-                          }
+                          toastSuccess(
+                            `Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()} · Due ${invoice.dueDate}).`
+                          );
                         }}
                         className="btn-action text-sm font-medium flex items-center space-x-1"
                       >
@@ -388,7 +396,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         title="Delete Invoice"
-        message={`Are you sure you want to delete invoice "${selectedInvoice?.id}"? This action cannot be undone.`}
+        message={
+          selectedInvoice
+            ? `Are you sure you want to delete the invoice for "${selectedInvoice.client}" ($${selectedInvoice.amount.toLocaleString()})? This action cannot be undone.`
+            : 'Are you sure you want to delete this invoice? This action cannot be undone.'
+        }
       />
 
       {selectedInvoice && (

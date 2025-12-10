@@ -61,7 +61,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
         onClick={onClose}
       />
       <div className="fixed top-20 right-4 w-96 max-h-[80vh] z-50 animate-in slide-in-from-top">
-        <GlassCard className="overflow-hidden">
+        <GlassCard className="overflow-hidden bg-slate-950 border border-white/10">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Notifications
