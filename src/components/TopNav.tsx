@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Bell, Plus, Search, ChevronDown, User, Settings, LogOut, LayoutGrid, UserPlus, FilePlus2, FileText, StickyNote, GraduationCap } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
@@ -17,7 +17,6 @@ interface TopNavProps {
 export default function TopNav({ currentUser, onLogout }: TopNavProps) {
   const { profile, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -69,21 +68,21 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
     };
   }, [searchData, searchQuery]);
 
-  const quickActions = useMemo(() => {
-    const actions = [
-      { label: 'New client', to: '/clients', roles: ['admin', 'staff'], icon: UserPlus },
-      { label: 'New project', to: '/projects', roles: ['admin', 'staff'], icon: FilePlus2 },
-      { label: 'New invoice', to: '/invoices', roles: ['admin'], icon: FileText },
-      { label: 'New proposal', to: '/proposals', roles: ['admin'], icon: FileText },
-      { label: 'New note', to: '/notes', roles: ['admin', 'staff'], icon: StickyNote },
-      { label: 'New course', to: '/community/courses', roles: ['admin', 'staff'], icon: GraduationCap },
-      { label: 'View invoices', to: '/invoices', roles: ['client'], icon: FileText },
-      { label: 'Upload project file', to: '/projects', roles: ['client'], icon: FilePlus2 },
-      { label: 'Start community post', to: '/community', roles: ['member'], icon: StickyNote },
-      { label: 'Browse courses', to: '/community/courses', roles: ['member'], icon: GraduationCap },
-    ];
-    return actions.filter((action) => action.roles.includes(role));
-  }, [role]);
+  // const quickActions = useMemo(() => {
+  //   const actions = [
+  //     { label: 'New client', to: '/clients', roles: ['admin', 'staff'], icon: UserPlus },
+  //     { label: 'New project', to: '/projects', roles: ['admin', 'staff'], icon: FilePlus2 },
+  //     { label: 'New invoice', to: '/invoices', roles: ['admin'], icon: FileText },
+  //     { label: 'New proposal', to: '/proposals', roles: ['admin'], icon: FileText },
+  //     { label: 'New note', to: '/notes', roles: ['admin', 'staff'], icon: StickyNote },
+  //     { label: 'New course', to: '/community/courses', roles: ['admin', 'staff'], icon: GraduationCap },
+  //     { label: 'View invoices', to: '/invoices', roles: ['client'], icon: FileText },
+  //     { label: 'Upload project file', to: '/projects', roles: ['client'], icon: FilePlus2 },
+  //     { label: 'Start community post', to: '/community', roles: ['member'], icon: StickyNote },
+  //     { label: 'Browse courses', to: '/community/courses', roles: ['member'], icon: GraduationCap },
+  //   ];
+  //   return actions.filter((action) => action.roles.includes(role));
+  // }, [role]);
 
   const groupedOrder: Array<keyof typeof filteredResults> = [
     'clients',
@@ -95,7 +94,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
   ];
 
   const handleNavigate = (to: string) => {
-    setShowQuickActions(false);
+    // setShowQuickActions(false);
     setShowAvatarMenu(false);
     setIsSearchFocused(false);
     setSearchQuery('');
@@ -104,7 +103,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
 
   const handleSignOut = async () => {
     setShowAvatarMenu(false);
-    setShowQuickActions(false);
+    // setShowQuickActions(false);
     setShowNotifications(false);
     if (onLogout) {
       onLogout();
@@ -117,11 +116,11 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
 
   return (
     <>
-      {(showQuickActions || showAvatarMenu || isSearchFocused) && (
+      {(showAvatarMenu || isSearchFocused) && (
         <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => {
-            setShowQuickActions(false);
+            // setShowQuickActions(false);
             setShowAvatarMenu(false);
             setIsSearchFocused(false);
           }}
@@ -137,7 +136,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
-                setShowQuickActions(false);
+                // setShowQuickActions(false);
                 setShowNotifications(false);
                 setShowAvatarMenu(false);
                 setIsSearchFocused(true);
@@ -186,41 +185,8 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
         </div>
 
         <div className="flex items-center gap-2 lg:gap-4">
-          {quickActions.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setShowNotifications(false);
-                  setShowAvatarMenu(false);
-                  setIsSearchFocused(false);
-                  setShowQuickActions((v) => !v);
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/15 text-white hover:bg-white/10 transition-colors"
-              >
-                <Plus size={18} />
-                <span className="text-sm font-semibold hidden sm:inline">Quick actions</span>
-                <ChevronDown size={16} className={`${showQuickActions ? 'rotate-180' : ''} transition-transform`} />
-              </button>
-              {showQuickActions && (
-                <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in slide-in-from-top">
-                  {quickActions.map((action) => (
-                    <button
-                      key={action.label}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleNavigate(action.to)}
-                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-3"
-                    >
-                      <action.icon size={16} className="text-blue-300" />
-                      {action.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
           <button
             onClick={() => {
-              setShowQuickActions(false);
               setShowAvatarMenu(false);
               setIsSearchFocused(false);
               setShowNotifications(!showNotifications);
@@ -234,7 +200,6 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
           <div className="relative">
             <button
               onClick={() => {
-                setShowQuickActions(false);
                 setShowNotifications(false);
                 setIsSearchFocused(false);
                 setShowAvatarMenu((v) => !v);
