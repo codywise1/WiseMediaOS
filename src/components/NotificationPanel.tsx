@@ -19,8 +19,54 @@ interface NotificationPanelProps {
   onNavigate?: (to: string) => void;
 }
 
+const NOTIFICATION_READ_STORAGE_KEY = 'wm_notifications_read';
+
+function loadReadNotificationIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_READ_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as string[];
+    return new Set(parsed);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistReadNotificationIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(
+      NOTIFICATION_READ_STORAGE_KEY,
+      JSON.stringify(Array.from(ids)),
+    );
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export default function NotificationPanel({ isOpen, onClose, onNavigate }: NotificationPanelProps) {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      const readIds = loadReadNotificationIds();
+      readIds.add(id);
+      persistReadNotificationIds(readIds);
+      return next;
+    });
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev.map((n) => ({ ...n, read: true }));
+      const readIds = new Set<string>(next.map((n) => n.id));
+      persistReadNotificationIds(readIds);
+      return next;
+    });
+  };
 
   const formatActivityTime = (date: Date) => {
     const now = new Date();
@@ -36,7 +82,12 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
     return formatAppDate(date);
   };
 
-  const buildNotificationsFromActivity = (projects: any[], invoices: any[], appointments: any[]): Notification[] => {
+  const buildNotificationsFromActivity = (
+    projects: any[],
+    invoices: any[],
+    appointments: any[],
+    readIds: Set<string>,
+  ): Notification[] => {
     type ActivityItem = {
       id: string;
       type: 'project' | 'invoice' | 'appointment';
@@ -108,12 +159,12 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
 
     const top = activities.slice(0, 8);
 
-    return top.map((item, index) => ({
+    return top.map((item) => ({
       id: item.id,
       title: item.title,
       message: item.message,
       time: item.time,
-      read: index > 2,
+      read: readIds.has(item.id),
       to: item.to,
     }));
   };
@@ -133,10 +184,12 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
 
         if (cancelled) return;
 
+        const readIds = loadReadNotificationIds();
         const built = buildNotificationsFromActivity(
           projects as any[],
           invoices as any[],
           appointments as any[],
+          readIds,
         );
         setNotifications(built);
       } catch (error) {
@@ -168,6 +221,14 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
             <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Notifications
             </h3>
+            {notifications.some((n) => !n.read) && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs text-gray-300 hover:text-white underline decoration-dotted mr-2"
+              >
+                Mark all as read
+              </button>
+            )}
             <button
               onClick={() => {
                 onClose();
@@ -195,6 +256,9 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
                     : 'bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20'
                 }`}
                 onClick={() => {
+                  if (!notification.read) {
+                    markNotificationAsRead(notification.id);
+                  }
                   if (notification.to) {
                     onNavigate?.(notification.to);
                   }
