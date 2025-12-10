@@ -14,6 +14,7 @@ import {
 import ProposalModal from './ProposalModal';
 import ConfirmDialog from './ConfirmDialog';
 import { proposalService } from '../lib/supabase';
+import { useToast } from '../contexts/ToastContext';
 
 interface User {
   email: string;
@@ -35,6 +36,7 @@ const statusConfig = {
 
 export default function Proposals({ currentUser }: ProposalsProps) {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess } = useToast();
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,6 +77,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     } catch (error) {
       console.error('Error loading proposals:', error);
       setProposals([]);
+      toastError('Error loading proposals. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -104,13 +107,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const handleSaveProposal = (proposalData: any) => {
     const saveProposal = async () => {
       try {
-        const currentYear = new Date().getFullYear();
-        const proposalId = modalMode === 'create'
-          ? `PROP-${currentYear}-${String(proposals.length + 1).padStart(3, '0')}`
-          : proposalData.id;
-
         const apiData = {
-          id: proposalId,
           client_id: proposalData.client_id,
           title: proposalData.title,
           description: proposalData.description,
@@ -122,15 +119,17 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
         if (modalMode === 'create') {
           await proposalService.create(apiData);
+          toastSuccess('Proposal created successfully.');
         } else if (selectedProposal) {
           await proposalService.update(selectedProposal.id, apiData);
+          toastSuccess('Proposal updated successfully.');
         }
 
         await loadProposals();
         setIsModalOpen(false);
       } catch (error) {
         console.error('Error saving proposal:', error);
-        alert('Error saving proposal. Please try again.');
+        toastError('Error saving proposal. Please try again.');
       }
     };
 
@@ -145,9 +144,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           await loadProposals();
           setIsDeleteDialogOpen(false);
           setSelectedProposal(undefined);
+          toastSuccess('Proposal deleted successfully.');
         } catch (error) {
           console.error('Error deleting proposal:', error);
-          alert('Error deleting proposal. Please try again.');
+          toastError('Error deleting proposal. Please try again.');
         }
       }
     };
@@ -321,7 +321,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                   {proposal.status === 'draft' && (
                     <button
                       onClick={() => {
-                        alert(`Sending proposal for review: ${proposal.title}\nClient: ${proposal.client}\n\nProposal sent successfully!`);
+                        toastSuccess(`Proposal "${proposal.title}" sent for review for ${proposal.client}.`);
                       }}
                       className="btn-action text-sm font-medium"
                     >

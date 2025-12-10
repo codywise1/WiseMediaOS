@@ -870,7 +870,7 @@ export const proposalService = {
     return data as Proposal[];
   },
 
-  async create(proposal: Omit<Proposal, 'created_at' | 'updated_at' | 'client'>) {
+  async create(proposal: Omit<Proposal, 'id' | 'created_at' | 'updated_at' | 'client'>) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
     }
