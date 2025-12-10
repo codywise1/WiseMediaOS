@@ -84,8 +84,6 @@ const userQuickActions = [
   },
 ];
 
-const recentActivities: any[] = [];
-
 export default function Dashboard({ currentUser }: DashboardProps) {
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = React.useState({
@@ -103,10 +101,84 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     previousMonthInvoices: 0
   });
   const [loading, setLoading] = React.useState(true);
+  const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     loadDashboardData();
   }, [currentUser]);
+
+  const formatActivityTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+  };
+
+  const buildRecentActivities = (projects: any[], invoices: any[], appointments: any[]) => {
+    const activities: any[] = [];
+
+    projects.forEach((p) => {
+      if (!p) return;
+      const date = new Date(p.updated_at || p.created_at || Date.now());
+      activities.push({
+        id: `project-${p.id}`,
+        type: 'project',
+        icon: FolderIcon,
+        status: p.status === 'completed' ? 'completed' : 'pending',
+        title:
+          p.status === 'completed'
+            ? `Project "${p.name}" completed`
+            : `Project "${p.name}" updated`,
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+      });
+    });
+
+    invoices.forEach((inv) => {
+      if (!inv) return;
+      const date = new Date(inv.created_at || Date.now());
+      const status = inv.status;
+      const statusKey =
+        status === 'paid' ? 'success' : status === 'pending' ? 'pending' : status === 'overdue' ? 'error' : 'pending';
+      activities.push({
+        id: `invoice-${inv.id}`,
+        type: 'invoice',
+        icon: DocumentIcon,
+        status: statusKey,
+        title: `Invoice for ${inv.client?.name || 'Client'} (${status})`,
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+      });
+    });
+
+    appointments.forEach((appt) => {
+      if (!appt) return;
+      const dateStr = `${appt.appointment_date}T${appt.appointment_time || '00:00'}`;
+      const date = new Date(dateStr);
+      const status = appt.status;
+      const statusKey =
+        status === 'confirmed' ? 'success' : status === 'pending' ? 'pending' : status === 'cancelled' ? 'error' : 'pending';
+      activities.push({
+        id: `appointment-${appt.id}`,
+        type: 'appointment',
+        icon: CalendarIcon,
+        status: statusKey,
+        title: `Appointment with ${appt.client?.name || 'Client'} (${appt.type})`,
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+      });
+    });
+
+    activities.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    setRecentActivities(activities.slice(0, 8));
+  };
 
   const loadDashboardData = async () => {
     const safetyTimeout = setTimeout(() => setLoading(false), 6000); // safety net
@@ -159,6 +231,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             previousMonthProjects: previousMonthProjects.length,
             previousMonthInvoices: previousMonthInvoices.length
           });
+          buildRecentActivities(projects as any[], invoices as any[], appointments as any[]);
         } else if (currentUser?.id) {
           // Client sees only their data
           const [projects, invoices, appointments] = await Promise.all([
@@ -184,6 +257,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             previousMonthProjects: 0,
             previousMonthInvoices: 0
           });
+          buildRecentActivities(projects as any[], invoices as any[], appointments as any[]);
         }
       } catch (dbError) {
         console.log('Database not available, using empty data:', dbError);
@@ -202,6 +276,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           previousMonthProjects: 0,
           previousMonthInvoices: 0
         });
+        setRecentActivities([]);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -220,6 +295,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         previousMonthProjects: 0,
         previousMonthInvoices: 0
       });
+      setRecentActivities([]);
     } finally {
       clearTimeout(safetyTimeout);
       setLoading(false);
