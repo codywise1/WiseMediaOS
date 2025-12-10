@@ -134,22 +134,6 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
     };
   }, [searchData, searchQuery]);
 
-  // const quickActions = useMemo(() => {
-  //   const actions = [
-  //     { label: 'New client', to: '/clients', roles: ['admin', 'staff'], icon: UserPlus },
-  //     { label: 'New project', to: '/projects', roles: ['admin', 'staff'], icon: FilePlus2 },
-  //     { label: 'New invoice', to: '/invoices', roles: ['admin'], icon: FileText },
-  //     { label: 'New proposal', to: '/proposals', roles: ['admin'], icon: FileText },
-  //     { label: 'New note', to: '/notes', roles: ['admin', 'staff'], icon: StickyNote },
-  //     { label: 'New course', to: '/community/courses', roles: ['admin', 'staff'], icon: GraduationCap },
-  //     { label: 'View invoices', to: '/invoices', roles: ['client'], icon: FileText },
-  //     { label: 'Upload project file', to: '/projects', roles: ['client'], icon: FilePlus2 },
-  //     { label: 'Start community post', to: '/community', roles: ['member'], icon: StickyNote },
-  //     { label: 'Browse courses', to: '/community/courses', roles: ['member'], icon: GraduationCap },
-  //   ];
-  //   return actions.filter((action) => action.roles.includes(role));
-  // }, [role]);
-
   const groupedOrder: Array<keyof typeof filteredResults> = [
     'clients',
     'projects',
@@ -186,7 +170,6 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
         <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => {
-            // setShowQuickActions(false);
             setShowAvatarMenu(false);
             setIsSearchFocused(false);
           }}
@@ -195,23 +178,21 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
       <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/20 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3 lg:gap-4" />
 
-        <div className="hidden md:flex items-center w-full max-w-2xl mx-6 relative">
+        <div className="hidden md:flex items-center w-2/3 max-w-xl mx-6 relative">
           <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-blue-500/70 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all backdrop-blur">
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
-                // setShowQuickActions(false);
                 setShowNotifications(false);
                 setShowAvatarMenu(false);
                 setIsSearchFocused(true);
               }}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
-              placeholder="Search clients, projects, invoices, notes..."
+              placeholder="Find"
               className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
             />
-            <span className="text-xs text-gray-500 px-2 py-1 rounded-md border border-white/10">⌘ K</span>
           </div>
 
           {isSearchFocused && (

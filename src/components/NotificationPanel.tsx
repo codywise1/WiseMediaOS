@@ -1,5 +1,7 @@
+import React from 'react';
 import { Bell, UserPlus, FileText, MessageSquare, Clock3, X } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { projectService, invoiceService, appointmentService } from '../lib/supabase';
 
 interface Notification {
   id: string;
@@ -17,40 +19,139 @@ interface NotificationPanelProps {
 }
 
 export default function NotificationPanel({ isOpen, onClose, onNavigate }: NotificationPanelProps) {
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      title: 'New client created',
-      message: 'Acme Corp has been added to the CRM',
-      time: '5m ago',
-      read: false,
-      to: '/clients'
-    },
-    {
-      id: '2',
-      title: 'Invoice paid',
-      message: 'INV-2041 paid • $4,800 received',
-      time: '1h ago',
-      read: true,
-      to: '/invoices'
-    },
-    {
-      id: '3',
-      title: 'Community reply',
-      message: 'New comment on your post in #design',
-      time: '2h ago',
-      read: true,
-      to: '/community'
-    },
-    {
-      id: '4',
-      title: 'Course enrollment',
-      message: 'Creator Funnels 101 • 1 new student',
-      time: '1d ago',
-      read: true,
-      to: '/community/courses'
-    },
-  ];
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
+
+  const formatActivityTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+  };
+
+  const buildNotificationsFromActivity = (projects: any[], invoices: any[], appointments: any[]): Notification[] => {
+    type ActivityItem = {
+      id: string;
+      type: 'project' | 'invoice' | 'appointment';
+      title: string;
+      message: string;
+      time: string;
+      timestamp: number;
+      to: string;
+    };
+
+    const activities: ActivityItem[] = [];
+
+    projects.forEach((p) => {
+      if (!p) return;
+      const date = new Date(p.updated_at || p.created_at || Date.now());
+      const clientName = p.client?.name || p.client || 'Client';
+      const statusLabel = p.status ? String(p.status).replace(/_/g, ' ') : '';
+
+      activities.push({
+        id: `project-${p.id}`,
+        type: 'project',
+        title: p.status === 'completed' ? `Project "${p.name}" completed` : `Project "${p.name}" updated`,
+        message: [clientName, statusLabel].filter(Boolean).join(' • '),
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+        to: '/projects',
+      });
+    });
+
+    invoices.forEach((inv) => {
+      if (!inv) return;
+      const date = new Date(inv.created_at || Date.now());
+      const status = inv.status;
+      const clientName = inv.client?.name || 'Client';
+      const amountText =
+        typeof inv.amount === 'number' ? `$${inv.amount.toLocaleString()}` : undefined;
+      const statusLabel = status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : '';
+
+      activities.push({
+        id: `invoice-${inv.id}`,
+        type: 'invoice',
+        title: `Invoice for ${clientName} (${status})`,
+        message: [amountText, statusLabel].filter(Boolean).join(' • '),
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+        to: '/invoices',
+      });
+    });
+
+    appointments.forEach((appt) => {
+      if (!appt) return;
+      const dateStr = `${appt.appointment_date}T${appt.appointment_time || '00:00'}`;
+      const date = new Date(dateStr);
+      const clientName = appt.client?.name || 'Client';
+      const typeLabel = appt.type || 'Appointment';
+
+      activities.push({
+        id: `appointment-${appt.id}`,
+        type: 'appointment',
+        title: `Appointment with ${clientName} (${typeLabel})`,
+        message: date.toLocaleString(),
+        time: formatActivityTime(date),
+        timestamp: date.getTime(),
+        to: '/appointments',
+      });
+    });
+
+    activities.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    const top = activities.slice(0, 8);
+
+    return top.map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      message: item.message,
+      time: item.time,
+      read: index > 2,
+      to: item.to,
+    }));
+  };
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+
+    const loadNotifications = async () => {
+      try {
+        const [projects, invoices, appointments] = await Promise.all([
+          projectService.getAll().catch(() => []),
+          invoiceService.getAll().catch(() => []),
+          appointmentService.getAll().catch(() => []),
+        ]);
+
+        if (cancelled) return;
+
+        const built = buildNotificationsFromActivity(
+          projects as any[],
+          invoices as any[],
+          appointments as any[],
+        );
+        setNotifications(built);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+        if (!cancelled) {
+          setNotifications([]);
+        }
+      }
+    };
+
+    loadNotifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
