@@ -409,7 +409,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 <div className="flex flex-wrap gap-2 mb-3">
                   {client.category && <CategoryBadge category={client.category} />}
                   {client.location && (
-                    <span className="px-3 py-1 rounded-md text-xs font-medium bg-slate-700 text-gray-300">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-slate-700/50 text-gray-300 border border-slate-600/50">
                       {client.location}
                     </span>
                   )}

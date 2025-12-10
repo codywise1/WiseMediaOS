@@ -190,7 +190,7 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
                 setIsSearchFocused(true);
               }}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
-              placeholder="Find"
+              placeholder="Search clients, projects, invoices, notes..."
               className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
             />
           </div>
