@@ -25,6 +25,35 @@ interface AppointmentModalProps {
   clients?: Client[];
 }
 
+const TIME_OPTIONS_15M = Array.from({ length: 24 * 4 }, (_, index) => {
+  const totalMinutes = index * 15;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+});
+
+const normalizeTimeTo24h = (value: string) => {
+  if (!value) return '';
+
+  const basic = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (basic) {
+    const [, h, m] = basic;
+    return `${h.padStart(2, '0')}:${m}`;
+  }
+
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return value;
+
+  let [, h, m, period] = match;
+  let hour = parseInt(h, 10);
+  const isPM = period.toUpperCase() === 'PM';
+
+  if (isPM && hour < 12) hour += 12;
+  if (!isPM && hour === 12) hour = 0;
+
+  return `${String(hour).padStart(2, '0')}:${m}`;
+};
+
 export default function AppointmentModal({ isOpen, onClose, onSave, appointment, mode, currentUser, clients: clientsProp = [] }: AppointmentModalProps) {
   const [clients, setClients] = useState<Client[]>(clientsProp);
   const [formData, setFormData] = useState({
@@ -66,7 +95,7 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
         client_id: appointment.client_id || '',
         client_name: appointment.client || '',
         date: appointment.date,
-        time: appointment.time,
+        time: normalizeTimeTo24h(appointment.time),
         duration: appointment.duration,
         type: appointment.type,
         status: appointment.status,
@@ -175,14 +204,20 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
-            <input
-              type="time"
+            <select
               name="time"
               value={formData.time}
               onChange={handleChange}
               className="form-input w-full px-4 py-3 rounded-lg"
               required
-            />
+            >
+              <option value="">Select time</option>
+              {TIME_OPTIONS_15M.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Duration</label>
