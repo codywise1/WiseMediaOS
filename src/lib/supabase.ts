@@ -182,6 +182,7 @@ export interface Client {
   twitter?: string;
   instagram?: string;
   facebook?: string;
+  tiktok?: string;
   github?: string;
   notes?: string;
   status: 'active' | 'inactive' | 'prospect' | 'archived';

@@ -394,8 +394,8 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                         {client.company || client.name}
                       </h3>
-                      {client.first_name && (
-                        <p className="text-sm text-gray-400">{client.first_name}</p>
+                      {client.name && (
+                        <p className="text-sm text-gray-400">{client.name}</p>
                       )}
                     </div>
                   </div>
