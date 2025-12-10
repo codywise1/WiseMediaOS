@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
+import { clientService, projectService, invoiceService, proposalService, noteService } from '../lib/supabase';
 
 interface TopNavProps {
   currentUser?: {
@@ -13,6 +14,21 @@ interface TopNavProps {
   } | null;
   onLogout?: () => void;
 }
+
+type SearchItem = {
+  title: string;
+  meta: string;
+  to: string;
+};
+
+type SearchGroups = {
+  clients: SearchItem[];
+  projects: SearchItem[];
+  invoices: SearchItem[];
+  proposals: SearchItem[];
+  notes: SearchItem[];
+  courses: SearchItem[];
+};
 
 export default function TopNav({ currentUser, onLogout }: TopNavProps) {
   const { profile, signOut } = useAuth();
@@ -25,33 +41,83 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
   const role = (profile?.role || currentUser?.role || '').toLowerCase();
   const displayName = profile?.full_name || currentUser?.name || profile?.email || currentUser?.email || 'User';
   const displayAvatar = profile?.avatar_url || currentUser?.avatar;
+  const [searchData, setSearchData] = useState<SearchGroups>({
+    clients: [],
+    projects: [],
+    invoices: [],
+    proposals: [],
+    notes: [],
+    courses: [],
+  });
 
-  const searchData = useMemo(
-    () => ({
-      clients: [
-        { title: 'Acme Corp', meta: 'Active • SaaS', to: '/clients' },
-        { title: 'Nova Labs', meta: 'VIP • Web3', to: '/clients' },
-      ],
-      projects: [
-        { title: 'Brand Refresh', meta: 'In Progress • Acme', to: '/projects' },
-        { title: 'Ecommerce Build', meta: 'Planning • Nova', to: '/projects' },
-      ],
-      invoices: [
-        { title: 'INV-2041', meta: 'Pending • $4,800', to: '/invoices' },
-        { title: 'INV-2038', meta: 'Paid • $12,400', to: '/invoices' },
-      ],
-      proposals: [
-        { title: 'Performance Ads Package', meta: 'Draft • $9,500', to: '/proposals' },
-      ],
-      notes: [
-        { title: 'Q1 Growth Plan', meta: 'Tag: Strategy', to: '/notes' },
-      ],
-      courses: [
-        { title: 'Creator Funnels 101', meta: 'Course • 12 lessons', to: '/community/courses' },
-      ],
-    }),
-    []
-  );
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSearchData = async () => {
+      try {
+        const [clients, projects, invoices, proposals, notes] = await Promise.all([
+          clientService.getAll().catch(() => []),
+          projectService.getAll().catch(() => []),
+          invoiceService.getAll().catch(() => []),
+          proposalService.getAll().catch(() => []),
+          noteService.getAll().catch(() => []),
+        ]);
+
+        if (cancelled) return;
+
+        const groups: SearchGroups = {
+          clients: (clients as any[]).map((c) => ({
+            title: c.company || c.name || c.email,
+            meta: [c.status, c.email].filter(Boolean).join(' \u2022 '),
+            to: `/clients/${c.id}`,
+          })),
+          projects: (projects as any[]).map((p) => ({
+            title: p.name,
+            meta: [p.client?.name || p.client, p.status].filter(Boolean).join(' \u2022 '),
+            to: `/projects/${p.id}`,
+          })),
+          invoices: (invoices as any[]).map((inv) => ({
+            title: inv.description || `Invoice ${inv.id}`,
+            meta: [
+              inv.client?.name,
+              inv.status && inv.status.charAt(0).toUpperCase() + inv.status.slice(1),
+              typeof inv.amount === 'number' ? `$${inv.amount.toLocaleString()}` : undefined,
+            ]
+              .filter(Boolean)
+              .join(' \u2022 '),
+            to: `/invoices/${inv.id}`,
+          })),
+          proposals: (proposals as any[]).map((p) => ({
+            title: p.title,
+            meta: [p.client?.name, p.status].filter(Boolean).join(' \u2022 '),
+            to: '/proposals',
+          })),
+          notes: (notes as any[]).map((n) => ({
+            title: n.title,
+            meta: [n.category, n.client?.name, n.project?.name].filter(Boolean).join(' \u2022 '),
+            to: '/notes',
+          })),
+          courses: [
+            {
+              title: 'Courses',
+              meta: 'Browse all courses',
+              to: '/community/courses',
+            },
+          ],
+        };
+
+        setSearchData(groups);
+      } catch (error) {
+        console.error('Error loading search data:', error);
+      }
+    };
+
+    loadSearchData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredResults = useMemo(() => {
     if (!searchQuery.trim()) return searchData;
