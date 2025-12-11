@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -65,22 +65,7 @@ interface User {
 }
 
 function AdminGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card neon-glow rounded-2xl p-8">
-          <div className="flex items-center space-x-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
-            <div>
-              <p className="text-white font-medium">Loading Admin...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const { profile, user } = useAuth();
 
   // In demo mode (no Supabase), allow admin routes
   if (!isSupabaseAvailable()) {
@@ -105,22 +90,7 @@ function AdminGuard({ children }: { children: React.ReactElement }) {
 }
 
 function ProOnlyGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card neon-glow rounded-2xl p-8">
-          <div className="flex items-center space-x-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
-            <div>
-              <p className="text-white font-medium">Checking Pro access...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const { profile, user } = useAuth();
 
   const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
   const subscription = (profile as any)?.subscription_type || user?.user_metadata?.subscription_type || 'free';
@@ -149,22 +119,7 @@ function ProOnlyGuard({ children }: { children: React.ReactElement }) {
 }
 
 function CommunityGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card neon-glow rounded-2xl p-8">
-          <div className="flex items-center space-x-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb]"></div>
-            <div>
-              <p className="text-white font-medium">Loading Creator Club...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const { profile, user } = useAuth();
 
   // In demo mode (no Supabase), allow community routes
   if (!isSupabaseAvailable()) {
@@ -191,10 +146,85 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
   return children;
 }
 
+import { useLoadingGuard } from './hooks/useLoadingGuard';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Track current user ID to avoid unnecessary updates when switching tabs
+  const currentUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    currentUserIdRef.current = currentUser?.id || null;
+  }, [currentUser?.id]);
+
+  useLoadingGuard(loading, setLoading, 10000);
+
+  const updateCurrentUserFromAuth = useCallback(
+    (user: any | null) => {
+      if (!user) {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        return;
+      }
+
+      const next: User = {
+        id: user.id,
+        email: user.email || '',
+        role: (user.user_metadata?.role as UserRole) || 'user',
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        avatar: user.user_metadata?.avatar,
+        phone: user.user_metadata?.phone,
+        company: user.user_metadata?.company,
+        title: user.user_metadata?.title,
+        website: user.user_metadata?.website,
+        linkedin: user.user_metadata?.linkedin,
+        twitter: user.user_metadata?.twitter,
+        instagram: user.user_metadata?.instagram,
+        facebook: user.user_metadata?.facebook,
+        github: user.user_metadata?.github,
+        address: user.user_metadata?.address,
+        city: user.user_metadata?.city,
+        state: user.user_metadata?.state,
+        zipCode: user.user_metadata?.zipCode,
+        country: user.user_metadata?.country,
+        timezone: user.user_metadata?.timezone,
+        bio: user.user_metadata?.bio,
+        industry: user.user_metadata?.industry,
+        companySize: user.user_metadata?.companySize,
+        budget: user.user_metadata?.budget,
+        referralSource: user.user_metadata?.referralSource,
+        notes: user.user_metadata?.notes
+      };
+
+      setCurrentUser(prev => {
+        if (prev && JSON.stringify(prev) === JSON.stringify(next)) {
+          return prev;
+        }
+        return next;
+      });
+      setIsAuthenticated(true);
+    },
+    [setCurrentUser, setIsAuthenticated]
+  );
+
+  const checkAuthState = useCallback(async () => {
+    if (!isSupabaseAvailable()) {
+      // Demo mode or missing Supabase config: don't block the UI
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const user = await authService.getCurrentUser();
+      updateCurrentUserFromAuth(user);
+    } catch (error) {
+      console.error('Auth check error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [updateCurrentUserFromAuth]);
 
   useEffect(() => {
     if (!isSupabaseAvailable()) {
@@ -219,19 +249,18 @@ function App() {
     // Listen for auth state changes only if Supabase is available
     let subscription: any = null;
     if (isSupabaseAvailable()) {
-      const { data: { subscription: sub } } = authService.onAuthStateChange((user) => {
+      const { data: { subscription: sub } } = authService.onAuthStateChange(user => {
         if (user) {
-          const userData: User = {
-            id: user.id,
-            email: user.email || '',
-            role: (user.user_metadata?.role as UserRole) || 'user',
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-          };
-          setCurrentUser(userData);
+          // Only update if user changed (avoid re-renders when switching tabs)
+          if (currentUserIdRef.current !== user.id) {
+            updateCurrentUserFromAuth(user);
+          }
+          // Always ensure authenticated state is set
           setIsAuthenticated(true);
         } else {
           setCurrentUser(null);
           setIsAuthenticated(false);
+          currentUserIdRef.current = null;
         }
         setLoading(false);
       });
@@ -245,53 +274,7 @@ function App() {
         subscription.unsubscribe();
       }
     };
-  }, []);
-
-  const checkAuthState = useCallback(async () => {
-    if (!isSupabaseAvailable()) {
-      // Demo mode or missing Supabase config: don't block the UI
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        const userData: User = {
-          id: user.id,
-          email: user.email || '',
-          role: (user.user_metadata?.role as UserRole) || 'user',
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          avatar: user.user_metadata?.avatar
-        };
-        setCurrentUser(userData);
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Re-validate session when returning to the tab; guarantee loading clears even if Supabase hangs
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        setLoading(true);
-        const timeout = setTimeout(() => setLoading(false), 5000); // safety net
-        checkAuthState().finally(() => {
-          clearTimeout(timeout);
-          setLoading(false);
-        });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [checkAuthState]);
+  }, [checkAuthState, updateCurrentUserFromAuth]);
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!isSupabaseAvailable()) {
@@ -446,6 +429,7 @@ function App() {
   };
 
   if (loading) {
+    console.log('[App] rendering global loading spinner', { loading, isAuthenticated });
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="glass-card neon-glow rounded-2xl p-8">

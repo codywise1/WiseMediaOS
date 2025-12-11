@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import { supportService } from '../lib/supabase';
+import { supportService, UserRole } from '../lib/supabase';
 import { 
   ChatBubbleLeftRightIcon, 
   TicketIcon,
@@ -20,10 +20,10 @@ import SupportModal from './SupportModal';
 import ConfirmDialog from './ConfirmDialog';
 
 interface User {
-  id(id: any): any[] | PromiseLike<any[]>;
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
+  id?: string;
 }
 
 interface SupportProps {
@@ -88,11 +88,13 @@ export default function Support({ currentUser }: SupportProps) {
 
   React.useEffect(() => {
     loadSupportTickets();
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadSupportTickets = async () => {
     try {
-      setLoading(true);
+      if (supportTickets.length === 0) {
+        setLoading(true);
+      }
       let data: any[] = [];
       
       if (currentUser?.role === 'admin') {
@@ -116,7 +118,9 @@ export default function Support({ currentUser }: SupportProps) {
       setSupportTickets(transformedTickets);
     } catch (error) {
       console.error('Error loading support tickets:', error);
-      setSupportTickets([]);
+      if (supportTickets.length === 0) {
+        setSupportTickets([]);
+      }
     } finally {
       setLoading(false);
     }

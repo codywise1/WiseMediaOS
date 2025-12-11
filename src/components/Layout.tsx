@@ -389,7 +389,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                             {currentUser?.name}
                           </p>
                           <p className="text-xs text-gray-400 truncate mt-0.5">
-                            {isAdmin ? 'Administrator' : 'Client'}
+                            {roleLabel(currentUser?.role)}
                           </p>
                         </div>
                       </div>

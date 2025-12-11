@@ -104,9 +104,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const [loading, setLoading] = React.useState(true);
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
 
+  const hasLoadedRef = React.useRef(false);
+
   React.useEffect(() => {
+    console.log('[Dashboard] effect triggered, loading dashboard data', { currentUser });
     loadDashboardData();
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const formatActivityTime = (date: Date) => {
     const now = new Date();
@@ -182,9 +185,18 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   };
 
   const loadDashboardData = async () => {
-    const safetyTimeout = setTimeout(() => setLoading(false), 6000); // safety net
+    const isFirstLoad = !hasLoadedRef.current;
+    console.log('[Dashboard] loadDashboardData start', { currentUser, isFirstLoad });
+    const safetyTimeout = setTimeout(() => {
+      if (isFirstLoad) {
+        setLoading(false);
+        console.log('[Dashboard] safety timeout fired');
+      }
+    }, 6000); // safety net for initial load
     try {
-      setLoading(true);
+      if (isFirstLoad) {
+        setLoading(true);
+      }
       
       // Always try to load from Supabase, fallback to empty data if not available
       try {
@@ -262,7 +274,29 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         }
       } catch (dbError) {
         console.log('Database not available, using empty data:', dbError);
-        // Set empty data when database is not available
+        // Only wipe data if we don't have any data yet (first load)
+        if (isFirstLoad) {
+          setDashboardData({
+            projects: 0,
+            invoices: 0,
+            appointments: 0,
+            supportTickets: 0,
+            pendingInvoices: 0,
+            overdueInvoices: 0,
+            revenue: 0,
+            completedProjects: 0,
+            activeClients: 0,
+            previousMonthRevenue: 0,
+            previousMonthProjects: 0,
+            previousMonthInvoices: 0
+          });
+          setRecentActivities([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Only wipe data on first load error
+      if (isFirstLoad) {
         setDashboardData({
           projects: 0,
           invoices: 0,
@@ -279,27 +313,13 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         });
         setRecentActivities([]);
       }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      // Fallback to empty data on any error
-      setDashboardData({
-        projects: 0,
-        invoices: 0,
-        appointments: 0,
-        supportTickets: 0,
-        pendingInvoices: 0,
-        overdueInvoices: 0,
-        revenue: 0,
-        completedProjects: 0,
-        activeClients: 0,
-        previousMonthRevenue: 0,
-        previousMonthProjects: 0,
-        previousMonthInvoices: 0
-      });
-      setRecentActivities([]);
     } finally {
       clearTimeout(safetyTimeout);
-      setLoading(false);
+      if (isFirstLoad) {
+        setLoading(false);
+        hasLoadedRef.current = true;
+        console.log('[Dashboard] loadDashboardData finished');
+      }
     }
   };
 
@@ -465,6 +485,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   };
 
   if (loading) {
+    console.log('[Dashboard] rendering local loading spinner', { loading });
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>

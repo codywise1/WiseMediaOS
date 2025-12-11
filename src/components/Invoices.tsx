@@ -59,11 +59,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   useEffect(() => {
     loadInvoices();
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadInvoices = async () => {
     try {
-      setLoading(true);
+      if (invoices.length === 0) {
+        setLoading(true);
+      }
       let data: InvoiceRecord[] = [];
       
       if (currentUser?.role === 'admin') {
@@ -84,7 +86,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       setInvoices(transformedInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
-      setInvoices([]);
+      if (invoices.length === 0) {
+        setInvoices([]);
+      }
       toastError('Error loading invoices. Please try again.');
     } finally {
       setLoading(false);
@@ -157,8 +161,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  const handlePayInvoice = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+  const handlePayInvoice = (invoice: InvoiceRecord) => {
+    setSelectedInvoice(invoice as InvoiceView);
     setIsPaymentModalOpen(true);
   };
 

@@ -14,8 +14,7 @@ import {
   EyeIcon,
   Squares2X2Icon,
   Bars3Icon,
-  MagnifyingGlassIcon,
-  FunnelIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -63,20 +62,25 @@ export default function Clients({ currentUser }: ClientsProps) {
 
   useEffect(() => {
     loadClients();
-  }, []);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadClients = async () => {
     try {
-      setLoading(true);
+      if (clients.length === 0) {
+        setLoading(true);
+      }
       const data = await clientService.getAll();
       setClients(data);
       console.log('Clients loaded:', data.length);
     } catch (error) {
       console.error('Error loading clients:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Error loading clients: ${errorMessage}\n\nUsing offline mode.`);
-      // Set empty array as fallback
-      setClients([]);
+      
+      // Only wipe data and show alert if we have no data yet
+      if (clients.length === 0) {
+        alert(`Error loading clients: ${errorMessage}\n\nUsing offline mode.`);
+        setClients([]);
+      }
     } finally {
       setLoading(false);
     }

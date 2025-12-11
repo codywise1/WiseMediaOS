@@ -77,7 +77,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
     if (currentUser?.role === 'admin') {
       loadClients();
     }
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadClients = async () => {
     try {
@@ -89,8 +89,12 @@ export default function Projects({ currentUser }: ProjectsProps) {
   };
 
   const loadProjects = async () => {
-    try {
+    // Only set loading true if we have no projects yet
+    if (projects.length === 0) {
       setLoading(true);
+    }
+    
+    try {
       let data: SbProject[] = [];
       
       if (!currentUser) {
@@ -151,7 +155,10 @@ export default function Projects({ currentUser }: ProjectsProps) {
       setProjects(transformedProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
-      setProjects([]);
+      // Only set empty array if we really have no data to show and it's the first load
+      if (projects.length === 0) {
+        setProjects([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -247,15 +254,18 @@ export default function Projects({ currentUser }: ProjectsProps) {
   }
 
   const moveProject = async (projectId: string, newStatus: string) => {
+    // Cast string to ProjectStatus for local update
+    const status = newStatus as ProjectStatus;
+    
     try {
-      console.log('Moving project:', projectId, 'to status:', newStatus);
+      console.log('Moving project:', projectId, 'to status:', status);
 
       // Update the project in the local state immediately for better UX
       setProjects(prevProjects => {
         const updated = prevProjects.map(p => {
           if (p.id === projectId) {
-            console.log('Updating project:', p.id, 'from', p.status, 'to', newStatus);
-            return { ...p, status: newStatus, color: getStatusColor(newStatus) };
+            console.log('Updating project:', p.id, 'from', p.status, 'to', status);
+            return { ...p, status: status, color: getStatusColor(status) };
           }
           return p;
         });
@@ -263,7 +273,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
       });
 
       // Update in the backend
-      await projectService.update(projectId, { status: newStatus });
+      await projectService.update(projectId, { status: status });
       console.log('Project updated successfully in backend');
     } catch (error) {
       console.error('Error updating project status:', error);

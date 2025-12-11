@@ -47,11 +47,13 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   React.useEffect(() => {
     loadProposals();
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadProposals = async () => {
     try {
-      setLoading(true);
+      if (proposals.length === 0) {
+        setLoading(true);
+      }
       let data = [];
       
       if (currentUser?.role === 'admin') {
@@ -77,7 +79,9 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       setProposals(transformedProposals);
     } catch (error) {
       console.error('Error loading proposals:', error);
-      setProposals([]);
+      if (proposals.length === 0) {
+        setProposals([]);
+      }
       toastError('Error loading proposals. Please try again.');
     } finally {
       setLoading(false);

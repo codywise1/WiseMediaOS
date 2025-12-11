@@ -146,6 +146,10 @@ export const authService = {
 
     const sb = getSupabaseClient();
     return sb.auth.onAuthStateChange((event, session) => {
+      // Skip events that shouldn't trigger UI updates when switching tabs
+      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        return;
+      }
       callback(session?.user || null);
     });
   }

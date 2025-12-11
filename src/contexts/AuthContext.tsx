@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 
@@ -19,6 +19,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(true);
+  
+  // Use ref to track current profile in callbacks without stale closure
+  const profileRef = useRef<Profile | null>(null);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
   useEffect(() => {
     let mounted = true;
@@ -73,7 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Unexpected error loading profile:', error);
         if (mounted) {
-          setProfile(null);
+          // Don't wipe profile on error if we already have one, to avoid UI flash
+          if (!profile) {
+            setProfile(null);
+          }
           setLoading(false);
         }
       }
@@ -118,7 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
 
-      if (!mounted || initializing) return;
+      if (!mounted) return;
+
+      // Skip events that shouldn't trigger UI updates when switching tabs
+      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        return;
+      }
 
       if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -128,9 +142,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        setUser(session.user);
-        setLoading(true);
-        await loadProfile(session.user.id);
+        // Only reload profile if user changed
+        setUser(prev => {
+          if (prev?.id === session.user.id) return prev;
+          return session.user;
+        });
+        // Don't set loading if we already have a profile for this user (use ref to avoid stale closure)
+        const currentProfile = profileRef.current;
+        if (!currentProfile || currentProfile.id !== session.user.id) {
+          setLoading(true);
+          await loadProfile(session.user.id);
+        }
       } else {
         setUser(null);
         setProfile(null);
@@ -142,7 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [initializing]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function fetchProfile(userId: string) {
     try {

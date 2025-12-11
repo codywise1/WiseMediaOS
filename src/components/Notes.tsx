@@ -61,11 +61,13 @@ export default function Notes({ currentUser }: NotesProps) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      if (notes.length === 0) {
+        setLoading(true);
+      }
       const [notesData, clientsData, projectsData] = await Promise.all([
         noteService.getAll(),
         clientService.getAll(),
@@ -76,6 +78,10 @@ export default function Notes({ currentUser }: NotesProps) {
       setProjects(projectsData);
     } catch (error) {
       console.error('Error loading data:', error);
+      if (notes.length === 0) {
+        // Only wipe if we have no data to show
+         // We might want to keep empty arrays if it failed initially
+      }
     } finally {
       setLoading(false);
     }

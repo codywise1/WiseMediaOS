@@ -119,11 +119,13 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
     loadClients().then(clientData => {
       loadAppointments(clientData);
     });
-  }, [isAdmin]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const loadAppointments = async (clientListParam?: Client[]) => {
     try {
-      setLoading(true);
+      if (appointments.length === 0) {
+        setLoading(true);
+      }
       let data: AppointmentApi[] = [];
       const clientList = clientListParam || clients;
       
@@ -134,7 +136,8 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         if (clientForUser?.id) {
           data = (await appointmentService.getByClientId(clientForUser.id)) as AppointmentApi[];
         } else {
-          setAppointments([]);
+          // If no client profile found for user yet, don't wipe appointments if we had them (though likely empty anyway)
+          if (appointments.length === 0) setAppointments([]);
           setLoading(false);
           return;
         }
@@ -158,7 +161,10 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
       setAppointments(transformedAppointments);
     } catch (error) {
       console.error('Error loading appointments:', error);
-      setAppointments([]);
+      // Only wipe if we have no data
+      if (appointments.length === 0) {
+        setAppointments([]);
+      }
     } finally {
       setLoading(false);
     }
