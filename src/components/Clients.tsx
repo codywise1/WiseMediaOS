@@ -178,8 +178,7 @@ export default function Clients({ currentUser }: ClientsProps) {
     const matchesSearch =
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.company?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (client.first_name?.toLowerCase().includes(searchQuery.toLowerCase()));
+      (client.company?.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCategory = categoryFilter === 'all' || client.category === categoryFilter;
     const matchesLocation = locationFilter === 'all' || client.location === locationFilter;

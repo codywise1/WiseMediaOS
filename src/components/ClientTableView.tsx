@@ -18,7 +18,7 @@ interface ClientTableViewProps {
   onDelete: (client: Client) => void;
 }
 
-type SortField = 'company' | 'first_name' | 'category' | 'email' | 'location';
+type SortField = 'company' | 'name' | 'category' | 'email' | 'location';
 type SortDirection = 'asc' | 'desc';
 
 export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDelete }: ClientTableViewProps) {
@@ -43,9 +43,9 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
         aValue = a.company || a.name || '';
         bValue = b.company || b.name || '';
         break;
-      case 'first_name':
-        aValue = a.first_name || '';
-        bValue = b.first_name || '';
+      case 'name':
+        aValue = a.name || '';
+        bValue = b.name || '';
         break;
       case 'category':
         aValue = a.category || '';
@@ -91,11 +91,11 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
               </th>
               <th
                 className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('first_name')}
+                onClick={() => handleSort('name')}
               >
                 <div className="flex items-center space-x-2">
-                  <span>First Name</span>
-                  <SortIcon field="first_name" />
+                  <span>Name</span>
+                  <SortIcon field="name" />
                 </div>
               </th>
               <th
@@ -152,7 +152,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.first_name || '-'}</span>
+                  <span className="text-sm text-gray-300">{client.name || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   {client.category ? (
