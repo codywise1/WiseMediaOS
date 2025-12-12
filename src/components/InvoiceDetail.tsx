@@ -130,7 +130,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
     <div className="space-y-6 pb-20 md:pb-8">
       <button
         onClick={() => navigate('/invoices')}
-        className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+        className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors shrink-glow-button"
       >
         <ArrowLeftIcon className="h-5 w-5" />
         <span>Back to Invoices</span>
@@ -162,13 +162,13 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               </span>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="p-3 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors"
+                className="p-3 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-colors shrink-glow-button"
               >
                 <PencilIcon className="h-5 w-5 text-white" />
               </button>
               <button
                 onClick={() => setIsDeleteDialogOpen(true)}
-                className="p-3 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition-colors"
+                className="p-3 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition-colors shrink-glow-button"
               >
                 <TrashIcon className="h-5 w-5 text-red-400" />
               </button>
@@ -266,7 +266,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => navigate(`/clients/${client.id}`)}
-                    className="flex-1 btn-secondary py-2 rounded-lg text-sm"
+                    className="flex-1 btn-secondary py-2 rounded-lg text-sm shrink-glow-button"
                   >
                     View Client Profile
                   </button>
@@ -305,17 +305,17 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Actions</h2>
               <div className="space-y-3">
-                <button className="w-full btn-primary py-3 rounded-xl flex items-center justify-center space-x-2">
+                <button className="w-full btn-primary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
                   <DocumentArrowDownIcon className="h-5 w-5" />
                   <span>Download PDF</span>
                 </button>
-                <button className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2">
+                <button className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
                   <EnvelopeIcon className="h-5 w-5" />
                   <span>Send to Client</span>
                 </button>
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="w-full bg-slate-800/50 hover:bg-slate-700/50 text-white py-3 rounded-xl transition-colors"
+                  className="w-full bg-slate-800/50 hover:bg-slate-700/50 text-white py-3 rounded-xl transition-colors shrink-glow-button"
                 >
                   Edit Invoice
                 </button>

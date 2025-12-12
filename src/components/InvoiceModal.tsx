@@ -185,13 +185,13 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary"
+            className="btn-secondary shrink-glow-button"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn-primary"
+            className="btn-primary shrink-glow-button"
           >
             {mode === 'create' ? 'Create Invoice' : 'Update Invoice'}
           </button>

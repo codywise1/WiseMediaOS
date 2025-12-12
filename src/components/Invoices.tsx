@@ -201,7 +201,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           {isAdmin && (
             <button 
               onClick={handleNewInvoice}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
             >
               <PlusIcon className="h-5 w-5" />
               New Invoice
@@ -307,14 +307,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       <div className="flex items-center justify-end space-x-2 mt-2">
                         <button 
                           onClick={() => handleEditInvoice(invoice)}
-                          className="text-blue-500 hover:text-white p-1"
+                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                           title="Edit Invoice"
                         >
                           <PencilIcon className="h-4 w-4 text-blue-500" />
                         </button>
                         <button 
                           onClick={() => handleDeleteInvoice(invoice)}
-                          className="text-blue-500 hover:text-red-400 p-1"
+                          className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                           title="Delete Invoice"
                         >
                           <TrashIcon className="h-4 w-4 text-blue-500" />
@@ -330,7 +330,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => navigate(`/invoices/${invoice.id}`)}
-                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm"
+                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm shrink-glow-button"
                     >
                       <EyeIcon className="h-4 w-4 text-white" />
                       View
@@ -339,7 +339,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       onClick={() => {
                         generateInvoicePDF(invoice);
                       }}
-                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm"
+                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm shrink-glow-button"
                     >
                       <ArrowDownTrayIcon className="h-4 w-4 text-white" />
                       Download
@@ -349,7 +349,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1"
+                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
                       >
                         <CreditCardIcon className="h-4 w-4 text-white" />
                         Pay Now
@@ -360,7 +360,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1"
+                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
                       >
                         <ExclamationTriangleIcon className="h-4 w-4 text-white" />
                         Pay Now
@@ -373,7 +373,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             `Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()} · Due ${invoice.dueDate}).`
                           );
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1"
+                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
                       >
                         <EnvelopeIcon className="h-4 w-4 text-white" />
                         Send Reminder
