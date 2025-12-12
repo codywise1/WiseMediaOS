@@ -294,13 +294,13 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary"
+            className="btn-secondary shrink-glow-button"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn-primary"
+            className="btn-primary shrink-glow-button"
           >
             {mode === 'create' ? 'Book Appointment' : 'Update Appointment'}
           </button>
