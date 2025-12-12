@@ -386,7 +386,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
           {isAdmin && (
             <button 
               onClick={handleNewAppointment}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
+              className="btn-primary text-white font-medium flex items-center space-x-2 glass-button shrink-glow-button"
             >
               <PlusIcon className="h-5 w-5" />
               Book Meeting
@@ -407,7 +407,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
               <p className="text-gray-400 text-sm mb-4">{type.duration}</p>
               <button
                 onClick={() => handleBookAppointmentType(type)}
-                className="btn-secondary w-full text-sm font-medium"
+                className="btn-secondary w-full text-sm font-medium shrink-glow-button"
               >
                 Book Now
               </button>
@@ -427,7 +427,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                 <h3 className="text-xl font-bold text-white title-font">Select Client for {selectedAppointmentType.name}</h3>
                 <button
                   onClick={() => setShowClientSelector(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors shrink-glow-button"
                 >
                   ×
                 </button>
@@ -438,7 +438,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   <button
                     key={client.id}
                     onClick={() => handleClientSelect(client)}
-                    className="w-full p-4 text-left bg-slate-800/50 hover:bg-slate-800/70 rounded-lg transition-colors"
+                    className="w-full p-4 text-left bg-slate-800/50 hover:bg-slate-800/70 rounded-lg transition-colors shrink-glow-button"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -459,7 +459,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   <p className="text-gray-400">No clients found. Add clients first to book appointments.</p>
                   <button 
                     onClick={() => navigate('/clients')}
-                    className="btn-primary mt-4"
+                    className="btn-primary mt-4 shrink-glow-button"
                   >
                     Add Clients
                   </button>
@@ -476,14 +476,14 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         <div className="flex items-center space-x-2">
           <button 
             onClick={() => setViewMode('list')}
-            className={`btn-secondary text-sm font-medium ${viewMode === 'list' ? 'border-white/60' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-secondary text-sm font-medium ${viewMode === 'list' ? 'border-white/60' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button`}
             disabled={!isAdmin}
           >
             List View
           </button>
           <button 
             onClick={() => setViewMode('calendar')}
-            className={`btn-primary text-sm ${viewMode === 'calendar' ? 'ring-2 ring-white/40' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-primary text-sm ${viewMode === 'calendar' ? 'ring-2 ring-white/40' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button`}
             disabled={!isAdmin}
           >
             Calendar View
@@ -528,14 +528,14 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   <div className="flex items-center space-x-2 ml-4">
                     <button 
                       onClick={() => handleEditAppointment(appointment)}
-                      className="text-blue-500 hover:text-white p-1"
+                      className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                       title="Edit Appointment"
                     >
                       <PencilIcon className="h-4 w-4 text-blue-500" />
                     </button>
                     <button 
                       onClick={() => handleDeleteAppointment(appointment)}
-                      className="text-blue-500 hover:text-red-400 p-1"
+                      className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                       title="Delete Appointment"
                     >
                       <TrashIcon className="h-4 w-4 text-blue-500" />
@@ -578,7 +578,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                         toastSuccess('Appointment cancelled successfully.');
                       }
                     }}
-                    className={`text-red-400 hover:text-red-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`text-red-400 hover:text-red-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button` }
                     disabled={!isAdmin}
                   >
                     Cancel
@@ -588,7 +588,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                       onClick={() => {
                         window.open('https://meet.google.com/sample-meeting-link', '_blank');
                       }}
-                      className="btn-action text-sm font-medium"
+                      className="btn-action text-sm font-medium shrink-glow-button"
                     >
                       Join Meeting
                     </button>
