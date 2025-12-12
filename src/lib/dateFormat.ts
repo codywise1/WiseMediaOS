@@ -8,8 +8,8 @@ export function formatAppDate(input: string | number | Date | null | undefined):
   const day = date.getDate();
   const year = date.getFullYear();
 
-  // Format: "Dec. 10. 2025"
-  return `${month}. ${day}. ${year}`;
+  // Format: "Dec. 10, 2025"
+  return `${month}. ${day}, ${year}`;
 }
 
 export function formatAppDateTime(input: string | number | Date | null | undefined): string {
