@@ -30,7 +30,7 @@ export default function AdminFiles() {
               Central resources, contracts, and deliverables organized by team. Preview or download quickly.
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 hover:border-white/40 transition">
+          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 hover:border-white/40 transition shrink-glow-button">
             <ArrowDownTrayIcon className="h-5 w-5" />
             Upload file
           </button>
