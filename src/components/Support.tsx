@@ -213,7 +213,7 @@ export default function Support({ currentUser }: SupportProps) {
           </div>
           <button 
             onClick={handleNewTicket}
-            className="btn-primary px-6 py-3 rounded-lg text-white font-medium flex items-center space-x-2"
+            className="btn-primary px-6 py-3 rounded-lg text-white font-medium flex items-center space-x-2 shrink-glow-button"
           >
             <PlusIcon className="h-5 w-5" />
             <span>New Ticket</span>
@@ -231,7 +231,7 @@ export default function Support({ currentUser }: SupportProps) {
           <p className="text-gray-400 text-sm mb-4">Get instant help from our team</p>
           <button 
             onClick={() => console.log('Starting live chat')}
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button"
           >
             Start Chat
           </button>
@@ -245,7 +245,7 @@ export default function Support({ currentUser }: SupportProps) {
           <p className="text-gray-400 text-sm mb-4">Create a detailed support request</p>
           <button 
             onClick={handleNewTicket}
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button"
           >
             New Ticket
           </button>
@@ -261,7 +261,7 @@ export default function Support({ currentUser }: SupportProps) {
             href="https://wisemedia.io/blogs/"
             target="_blank"
             rel="noreferrer"
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium inline-flex justify-center"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button"
           >
             Browse Articles
           </a>
@@ -275,7 +275,7 @@ export default function Support({ currentUser }: SupportProps) {
           <p className="text-gray-400 text-sm mb-4">Book a consultation with our team</p>
           <button 
             onClick={() => navigate('/appointments')}
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button"
           >
             Book Call
           </button>
