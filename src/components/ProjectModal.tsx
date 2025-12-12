@@ -212,12 +212,12 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               >
                 <option value="Website">Website</option>
-                <option value="Brand Identity">Brand Identity</option>
                 <option value="Landing Page">Landing Page</option>
-                <option value="CRM Build">CRM Build</option>
-                <option value="Ad Campaign">Ad Campaign</option>
-                <option value="Custom">Custom</option>
-              </select>
+                <option value="Web App">Web App</option>
+                <option value="SEO">SEO</option>
+                <option value="Brand Identity">Brand Identity</option>
+                <option value="Video Editing">Video Editing</option>
+                <option value="Graphic Design">Graphic Design</option>              </select>
             </div>
 
             <div>
