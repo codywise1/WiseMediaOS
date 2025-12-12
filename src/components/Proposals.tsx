@@ -185,7 +185,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           {isAdmin && (
             <button 
               onClick={handleNewProposal}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
             >
               <PlusIcon className="h-5 w-5" />
               New Proposal
@@ -281,14 +281,14 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                     <div className="flex items-center justify-end space-x-2 mt-2">
                       <button 
                         onClick={() => handleEditProposal(proposal)}
-                        className="text-blue-500 hover:text-white p-1"
+                        className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                         title="Edit Proposal"
                       >
                         <PencilIcon className="h-4 w-4 text-blue-500" />
                       </button>
                       <button 
                         onClick={() => handleDeleteProposal(proposal)}
-                        className="text-blue-500 hover:text-red-400 p-1"
+                        className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                         title="Delete Proposal"
                       >
                         <TrashIcon className="h-4 w-4 text-blue-500" />
@@ -328,7 +328,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       onClick={() => {
                         toastSuccess(`Proposal "${proposal.title}" sent for review for ${proposal.client}.`);
                       }}
-                      className="btn-action text-sm font-medium"
+                      className="btn-action text-sm font-medium shrink-glow-button"
                     >
                       Send for Review
                     </button>
