@@ -157,7 +157,7 @@ export default function Notes({ currentUser }: NotesProps) {
         {isAdmin && (
           <button
             onClick={handleCreateNote}
-            className="btn-primary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl"
+            className="btn-primary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl shrink-glow-button"
           >
             <PlusIcon className="h-5 w-5" />
             <span>New Note</span>
@@ -179,7 +179,7 @@ export default function Notes({ currentUser }: NotesProps) {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="btn-secondary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl md:w-auto"
+            className="btn-secondary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl md:w-auto shrink-glow-button"
           >
             <FunnelIcon className="h-5 w-5" />
             <span>Filters</span>
@@ -321,7 +321,7 @@ export default function Notes({ currentUser }: NotesProps) {
                         e.stopPropagation();
                         handleEditNote(note);
                       }}
-                      className="flex-1 btn-secondary text-xs py-2 rounded-lg"
+                      className="flex-1 btn-secondary text-xs py-2 rounded-lg shrink-glow-button"
                     >
                       <PencilIcon className="h-4 w-4 inline mr-1" />
                       Edit
@@ -331,7 +331,7 @@ export default function Notes({ currentUser }: NotesProps) {
                         e.stopPropagation();
                         handleDeleteNote(note);
                       }}
-                      className="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 text-xs py-2 rounded-lg transition-colors"
+                      className="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 text-xs py-2 rounded-lg transition-colors shrink-glow-button"
                     >
                       <TrashIcon className="h-4 w-4 inline mr-1" />
                       Delete
@@ -597,7 +597,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             <button
               type="button"
               onClick={handleAddTag}
-              className="btn-secondary px-4 py-2 rounded-lg"
+              className="btn-secondary px-4 py-2 rounded-lg shrink-glow-button"
             >
               Add
             </button>
@@ -612,7 +612,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
-                  className="hover:text-white"
+                  className="hover:text-white shrink-glow-button"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -654,7 +654,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(idx)}
-                    className="p-1 hover:bg-slate-700 rounded"
+                    className="p-1 hover:bg-slate-700 rounded shrink-glow-button"
                   >
                     <XMarkIcon className="h-4 w-4 text-red-400" />
                   </button>
@@ -689,14 +689,14 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary px-6 py-3 rounded-xl"
+            className="btn-secondary px-6 py-3 rounded-xl shrink-glow-button"
             disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn-primary px-6 py-3 rounded-xl"
+            className="btn-primary px-6 py-3 rounded-xl shrink-glow-button"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Note' : 'Save Changes'}
