@@ -376,7 +376,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <button
                   type="button"
                   onClick={addMember}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shrink-glow-button"
                 >
                   Add
                 </button>
@@ -411,7 +411,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <button
                   type="button"
                   onClick={addInternalTag}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shrink-glow-button"
                 >
                   Add
                 </button>
@@ -450,13 +450,13 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all"
+            className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all shrink-glow-button"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shrink-glow-button"
           >
             {mode === 'create' ? 'Create Project' : 'Update Project'}
           </button>

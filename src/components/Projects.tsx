@@ -387,7 +387,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
           {isAdmin && (
             <button
               onClick={handleNewProject}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
             >
               <PlusIcon className="h-5 w-5 text-white" />
               <span>New Project</span>
