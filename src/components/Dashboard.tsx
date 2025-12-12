@@ -507,7 +507,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           {currentUser?.role === 'admin' && (
             <button 
               onClick={() => navigate('/projects')}
-              className="btn-primary text-white font-medium flex items-center space-x-2"
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
             >
               <PlusIcon className="h-5 w-5" />
               Start New Project
@@ -580,7 +580,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 <button
                   key={index}
                   onClick={() => handleQuickAction(actionItem, action.route)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-700/50 btn-pill transition-all duration-200"
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-700/50 btn-pill transition-all duration-200 shrink-glow-button"
                 >
                   {actionItem}
                   <ArrowUpRightIcon className="h-4 w-4" />
@@ -597,7 +597,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Activity</h2>
           <button 
             onClick={() => console.log('View all activities')}
-            className="text-blue-400 hover:text-blue-300 text-sm font-medium btn-pill px-4 py-2 hover:bg-blue-900/20"
+            className="text-blue-400 hover:text-blue-300 text-sm font-medium btn-pill px-4 py-2 hover:bg-blue-900/20 shrink-glow-button" 
           >
             View All
           </button>
