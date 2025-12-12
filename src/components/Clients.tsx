@@ -220,7 +220,9 @@ export default function Clients({ currentUser }: ClientsProps) {
                   viewMode === 'cards'
                     ? 'bg-[#3aa3eb] text-white'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                }
+                shrink-glow-button
+                `}
                 title="Card View"
               >
                 <Squares2X2Icon className="h-5 w-5" />
@@ -231,7 +233,9 @@ export default function Clients({ currentUser }: ClientsProps) {
                   viewMode === 'table'
                     ? 'bg-[#3aa3eb] text-white'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                }
+                shrink-glow-button
+                `}
                 title="Table View"
               >
                 <Bars3Icon className="h-5 w-5" />
@@ -241,7 +245,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             {isAdmin && (
               <button
                 onClick={handleNewClient}
-                className="btn-primary text-white font-medium flex items-center space-x-2"
+                className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
               >
                 <PlusIcon className="h-5 w-5" />
                 <span>Add Client</span>
@@ -315,7 +319,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 setCategoryFilter('all');
                 setLocationFilter('all');
               }}
-              className="text-[#3aa3eb] hover:text-blue-300 font-medium"
+              className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
             >
               Clear all
             </button>
@@ -468,7 +472,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleViewClient(client)}
-                      className="text-white hover:text-blue-300 p-1"
+                      className="text-white hover:text-blue-300 p-1 shrink-glow-button"
                       title="View Client"
                     >
                       <EyeIcon className="h-4 w-4" />
@@ -477,14 +481,14 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <>
                         <button
                           onClick={() => handleEditClient(client)}
-                          className="text-blue-500 hover:text-white p-1"
+                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                           title="Edit Client"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteClient(client)}
-                          className="text-blue-500 hover:text-red-400 p-1"
+                          className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                           title="Delete Client"
                         >
                           <TrashIcon className="h-4 w-4" />
@@ -512,7 +516,7 @@ export default function Clients({ currentUser }: ClientsProps) {
               setCategoryFilter('all');
               setLocationFilter('all');
             }}
-            className="btn-primary"
+            className="btn-primary shrink-glow-button"
           >
             Clear Filters
           </button>
@@ -534,7 +538,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           {isAdmin && !loading && (
             <button
               onClick={handleNewClient}
-              className="btn-primary"
+              className="btn-primary shrink-glow-button"
             >
               Add Your First Client
             </button>

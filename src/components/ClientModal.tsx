@@ -394,13 +394,13 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary shrink-glow-button"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="btn-primary shrink-glow-button"
               disabled={isSubmitting}
             >
               {isSubmitting
