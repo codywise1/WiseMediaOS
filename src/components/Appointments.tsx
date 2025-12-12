@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import { clientService, appointmentService, UserRole, Client } from '../lib/supabase';
+import { clientService, appointmentService, UserRole, Client, supabase, isSupabaseAvailable } from '../lib/supabase';
 import { 
   CalendarIcon, 
   ClockIcon,
@@ -64,6 +64,42 @@ const formatTo12h = (raw: string | null | undefined) => {
 
   const hh = hours.toString();
   return `${hh}:${m} ${suffix}`;
+};
+
+const GOOGLE_TIME_OFFSET = '-06:00'; // Central Time (adjust if needed)
+
+const parseDurationMinutes = (duration: string | null | undefined): number => {
+  if (!duration) return 30;
+  const match = duration.match(/(\d+)/);
+  if (!match) return 30;
+  const minutes = parseInt(match[1], 10);
+  return Number.isFinite(minutes) && minutes > 0 ? minutes : 30;
+};
+
+const buildGoogleDateTimes = (date: string, time: string, duration: string) => {
+  if (!date || !time) return null;
+
+  const [hStr, mStr] = time.split(':');
+  const startHour = parseInt(hStr, 10);
+  const startMinute = parseInt(mStr, 10);
+  if (!Number.isFinite(startHour) || !Number.isFinite(startMinute)) return null;
+
+  const startDate = new Date(date + 'T' + time + ':00');
+  const minutes = parseDurationMinutes(duration);
+  const endDate = new Date(startDate.getTime() + minutes * 60_000);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  const startStr = `${date}T${pad(startHour)}:${pad(startMinute)}:00${GOOGLE_TIME_OFFSET}`;
+
+  const endYear = endDate.getFullYear();
+  const endMonth = pad(endDate.getMonth() + 1);
+  const endDay = pad(endDate.getDate());
+  const endHour = pad(endDate.getHours());
+  const endMinute = pad(endDate.getMinutes());
+  const endStr = `${endYear}-${endMonth}-${endDay}T${endHour}:${endMinute}:00${GOOGLE_TIME_OFFSET}`;
+
+  return { start: startStr, end: endStr };
 };
 
 const appointmentTypes = [
@@ -267,6 +303,36 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
 
         if (modalMode === 'create') {
           await appointmentService.create(apiData);
+
+          // After successful creation, sync with Google Calendar via Supabase Edge Function
+          if (isSupabaseAvailable() && supabase) {
+            const dateTimes = buildGoogleDateTimes(
+              apiData.appointment_date,
+              apiData.appointment_time,
+              apiData.duration
+            );
+
+            if (dateTimes) {
+              try {
+                const client = clients.find(c => c.id === clientId);
+                const attendeeEmail = client?.email || currentUser?.email;
+
+                await supabase.functions.invoke('google-calendar', {
+                  body: {
+                    title: apiData.title,
+                    description: apiData.description,
+                    start: dateTimes.start,
+                    end: dateTimes.end,
+                    location: apiData.location,
+                    
+                  }
+                });
+              } catch (calendarError) {
+                console.error('Error syncing with Google Calendar:', calendarError);
+                // No interrumpir el flujo principal si falla el calendario
+              }
+            }
+          }
         } else if (selectedAppointment) {
           await appointmentService.update(selectedAppointment.id, apiData);
         }
@@ -436,7 +502,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
             />
           </div>
           <p className="text-xs text-gray-400 mt-3">
-            Para sincronizar, usa el enlace de inserción público de tu calendario de Google (Configurar &gt; Integrar calendario).
+            To sync, use the public embed link for your Google Calendar (Settings &gt; Integrate Calendar).
           </p>
         </div>
       ) : (
