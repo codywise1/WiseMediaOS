@@ -583,13 +583,13 @@ export default function ProfileModal({ isOpen, onClose, onSave, user }: ProfileM
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary"
+            className="btn-secondary shrink-glow-button"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn-primary"
+            className="btn-primary shrink-glow-button"
           >
             Save Profile
           </button>

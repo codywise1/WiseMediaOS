@@ -159,7 +159,7 @@ export default function ProfilePage() {
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="absolute top-4 right-4 px-5 py-2.5 bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white rounded-lg transition-all font-medium border border-white/30"
+            className="absolute top-4 right-4 px-5 py-2.5 bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white rounded-lg transition-all font-medium border border-white/30 shrink-glow-button"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
             Edit Profile
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                     </div>
                   )}
                   {isEditing && (
-                    <button className="absolute bottom-0 right-0 p-3 bg-[#3AA3EB] rounded-full text-white hover:bg-[#2a92da] transition-colors shadow-lg">
+                    <button className="absolute bottom-0 right-0 p-3 bg-[#3AA3EB] rounded-full text-white hover:bg-[#2a92da] transition-colors shadow-lg shrink-glow-button">
                       <Camera size={18} />
                     </button>
                   )}
@@ -363,7 +363,7 @@ export default function ProfilePage() {
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium shadow-lg"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium shadow-lg shrink-glow-button"
                       style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                       <Save size={20} />
@@ -372,7 +372,7 @@ export default function ProfilePage() {
                     <button
                       onClick={handleCancel}
                       disabled={saving}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors shrink-glow-button"
                       style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                       <X size={20} />
