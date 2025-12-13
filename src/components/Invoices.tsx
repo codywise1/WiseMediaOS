@@ -192,16 +192,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Invoices</h1>
             <p className="text-gray-300">Manage payments and track outstanding balances</p>
           </div>
           {isAdmin && (
             <button 
               onClick={handleNewInvoice}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
+              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
               <PlusIcon className="h-5 w-5" />
               New Invoice
@@ -277,79 +277,85 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             
             return (
               <div key={invoice.id} className="p-6 hover:bg-slate-800/30 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4 min-w-0">
                     <div className="p-2 rounded-lg bg-slate-700">
                       <DocumentIcon className="h-6 w-6 text-gray-300" />
                     </div>
                     
-                    <div>
-                      <div className="flex items-center space-x-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
                         <h3
-                          className="text-lg font-bold text-white"
+                          className="text-lg font-bold text-white min-w-0 truncate"
                           style={{ fontFamily: 'Integral CF, sans-serif' }}
                         >
                           {invoice.client}
                         </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}> 
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-400 mt-1">{invoice.description}</p>
+                      <p className="text-sm text-gray-400 mt-1 line-clamp-2">{invoice.description}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <button
+                          onClick={() => navigate(`/invoices/${invoice.id}`)}
+                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
+                          title="View Invoice"
+                          aria-label="View Invoice"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            generateInvoicePDF(invoice);
+                          }}
+                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
+                          title="Download Invoice"
+                          aria-label="Download Invoice"
+                        >
+                          <ArrowDownTrayIcon className="h-4 w-4" />
+                        </button>
+                        {isAdmin && (
+                          <>
+                            <button 
+                              onClick={() => handleEditInvoice(invoice)}
+                              className="text-blue-500 hover:text-white p-1 shrink-glow-button"
+                              title="Edit Invoice"
+                              aria-label="Edit Invoice"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteInvoice(invoice)}
+                              className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
+                              title="Delete Invoice"
+                              aria-label="Delete Invoice"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="text-2xl font-bold text-white">${invoice.amount.toLocaleString()}</p>
                     <p className="text-sm text-gray-400">Due: {invoice.dueDate ? formatAppDate(invoice.dueDate) : '—'}</p>
-                    {isAdmin && (
-                      <div className="flex items-center justify-end space-x-2 mt-2">
-                        <button 
-                          onClick={() => handleEditInvoice(invoice)}
-                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
-                          title="Edit Invoice"
-                        >
-                          <PencilIcon className="h-4 w-4 text-blue-500" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteInvoice(invoice)}
-                          className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
-                          title="Delete Invoice"
-                        >
-                          <TrashIcon className="h-4 w-4 text-blue-500" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
+                <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-700 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-gray-400">Created: {invoice.createdDate ? formatAppDate(invoice.createdDate) : '—'}</p>
                   
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() => navigate(`/invoices/${invoice.id}`)}
-                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm shrink-glow-button"
-                    >
-                      <EyeIcon className="h-4 w-4 text-white" />
-                      View
-                    </button>
-                    <button 
-                      onClick={() => {
-                        generateInvoicePDF(invoice);
-                      }}
-                      className="flex items-center space-x-1 text-white hover:text-blue-300 text-sm shrink-glow-button"
-                    >
-                      <ArrowDownTrayIcon className="h-4 w-4 text-white" />
-                      Download
-                    </button>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
                     {invoice.status === 'pending' && !isAdmin && (
                       <button 
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
+                        className="btn-action text-sm font-medium flex items-center justify-center space-x-1 shrink-glow-button w-full sm:w-auto"
                       >
                         <CreditCardIcon className="h-4 w-4 text-white" />
                         Pay Now
@@ -360,7 +366,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
+                        className="btn-action text-sm font-medium flex items-center justify-center space-x-1 shrink-glow-button w-full sm:w-auto"
                       >
                         <ExclamationTriangleIcon className="h-4 w-4 text-white" />
                         Pay Now
@@ -373,7 +379,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             `Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()} · Due ${invoice.dueDate}).`
                           );
                         }}
-                        className="btn-action text-sm font-medium flex items-center space-x-1 shrink-glow-button"
+                        className="btn-action text-sm font-medium flex items-center justify-center space-x-1 shrink-glow-button w-full sm:w-auto"
                       >
                         <EnvelopeIcon className="h-4 w-4 text-white" />
                         Send Reminder
