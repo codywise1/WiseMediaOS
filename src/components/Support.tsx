@@ -9,7 +9,6 @@ import {
   BookOpenIcon,
   PhoneIcon,
   EnvelopeIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
   PlusIcon,
@@ -79,6 +78,7 @@ const priorityConfig = {
 
 export default function Support({ currentUser }: SupportProps) {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess, info: toastInfo } = useToast();
   const [supportTickets, setSupportTickets] = useState(initialSupportTickets);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -200,20 +200,18 @@ export default function Support({ currentUser }: SupportProps) {
     );
   }
 
-  const isAdmin = currentUser?.role === 'admin';
-
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Support Center</h1>
             <p className="text-gray-300">Get help, submit tickets, and access resources</p>
           </div>
           <button 
             onClick={handleNewTicket}
-            className="btn-primary px-6 py-3 rounded-lg text-white font-medium flex items-center space-x-2 shrink-glow-button"
+            className="btn-primary px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
           >
             <PlusIcon className="h-5 w-5" />
             <span>New Ticket</span>
@@ -261,7 +259,7 @@ export default function Support({ currentUser }: SupportProps) {
             href="https://wisemedia.io/blogs/"
             target="_blank"
             rel="noreferrer"
-            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button"
+            className="btn-secondary w-full py-2 rounded-lg text-sm font-medium shrink-glow-button flex items-center justify-center text-center"
           >
             Browse Articles
           </a>
@@ -331,68 +329,63 @@ export default function Support({ currentUser }: SupportProps) {
           {supportTickets.map((ticket) => {
             const statusInfo = statusConfig[ticket.status as keyof typeof statusConfig];
             const StatusIcon = statusInfo.icon;
-            
-            function toastInfo(arg0: string, arg1: number) {
-              throw new Error('Function not implemented.');
-            }
-
-            function toastSuccess(arg0: string) {
-              throw new Error('Function not implemented.');
-            }
 
             return (
               <div key={ticket.id} className="p-6 hover:bg-slate-800/30 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
+                <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-4 min-w-0">
                     <div className="p-2 rounded-lg bg-slate-700">
                       <TicketIcon className="h-6 w-6 text-gray-300" />
                     </div>
                     
-                    <div>
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{ticket.subject}</h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                    <div className="min-w-0">
+                      <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
+                        <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{ticket.subject}</h3>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {statusInfo.label}
                         </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityConfig[ticket.priority as keyof typeof priorityConfig]}`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${priorityConfig[ticket.priority as keyof typeof priorityConfig]}`}>
                           {ticket.priority.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-400 mt-1">{ticket.category} • {ticket.id}</p>
-                      <p className="text-sm text-gray-500 mt-2">{ticket.description}</p>
+                      <p className="text-sm text-gray-400 mt-1 truncate">{ticket.category} • {ticket.id}</p>
+                      <p className="text-sm text-gray-500 mt-2 line-clamp-2">{ticket.description}</p>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <button 
+                          onClick={() => handleEditTicket(ticket)}
+                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
+                          title="Edit Ticket"
+                          aria-label="Edit Ticket"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteTicket(ticket)}
+                          className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
+                          title="Delete Ticket"
+                          aria-label="Delete Ticket"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={() => handleEditTicket(ticket)}
-                      className="text-blue-500 hover:text-white p-1"
-                      title="Edit Ticket"
-                    >
-                      <PencilIcon className="h-4 w-4 text-blue-500" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteTicket(ticket)}
-                      className="text-blue-500 hover:text-red-400 p-1"
-                      title="Delete Ticket"
-                    >
-                      <TrashIcon className="h-4 w-4 text-blue-500" />
-                    </button>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
-                  <div className="flex items-center space-x-6">
+                <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-700 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                     <p className="text-sm text-gray-400">Created: {ticket.created}</p>
                     <p className="text-sm text-gray-400">Updated: {ticket.lastUpdate}</p>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
                     <button 
                       onClick={() => {
                         toastInfo(`Ticket Details:\n\nID: ${ticket.id}\nSubject: ${ticket.subject}\nStatus: ${ticket.status}\nPriority: ${ticket.priority}\nCategory: ${ticket.category}\n\nDescription: ${ticket.description}`, 10000);
                       }}
-                      className="text-white hover:text-blue-300 text-sm"
+                      className="text-white hover:text-blue-300 text-sm shrink-glow-button w-full sm:w-auto"
                     >
                       View Details
                     </button>
@@ -403,7 +396,7 @@ export default function Support({ currentUser }: SupportProps) {
                           toastSuccess(`Comment added to ticket ${ticket.id}:\n\n"${comment}"\n\nOur team will respond shortly.`);
                         }
                       }}
-                      className="text-white hover:text-blue-300 text-sm"
+                      className="text-white hover:text-blue-300 text-sm shrink-glow-button w-full sm:w-auto"
                     >
                       Add Comment
                     </button>
@@ -488,13 +481,4 @@ export default function Support({ currentUser }: SupportProps) {
       />
     </div>
   );
-}
-
-function toastError(arg0: string) {
-  throw new Error('Function not implemented.');
-}
-
-
-function toastSuccess(arg0: string) {
-  throw new Error('Function not implemented.');
 }
