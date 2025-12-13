@@ -204,15 +204,15 @@ export default function Clients({ currentUser }: ClientsProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Clients</h1>
             <p className="text-gray-300">Manage your client relationships and information</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
             {/* View Toggle */}
-            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1">
+            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1 shrink-0">
               <button
                 onClick={() => handleViewModeChange('cards')}
                 className={`p-2 rounded transition-colors ${
@@ -244,7 +244,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             {isAdmin && (
               <button
                 onClick={handleNewClient}
-                className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
+                className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
               >
                 <PlusIcon className="h-5 w-5" />
                 <span>Add Client</span>
@@ -295,7 +295,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
         {/* Active Filters Display */}
         {(searchQuery || categoryFilter !== 'all' || locationFilter !== 'all') && (
-          <div className="flex items-center space-x-2 mt-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
             <span className="text-gray-400">Active filters:</span>
             {searchQuery && (
               <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
@@ -393,23 +393,23 @@ export default function Clients({ currentUser }: ClientsProps) {
 
             return (
               <div key={client.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
+                <div className="flex items-start gap-3 mb-4 min-w-0">
+                  <div className="flex items-center space-x-3 min-w-0">
                     <div className="p-3 rounded-lg bg-slate-700">
                       <UserGroupIcon className="h-6 w-6 text-[#3aa3eb]" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold text-white truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                         {client.company || client.name}
                       </h3>
                       {client.name && (
-                        <p className="text-sm text-gray-400">{client.name}</p>
+                        <p className="text-sm text-gray-400 truncate">{client.name}</p>
                       )}
+                      <span className={`inline-flex mt-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                        {statusInfo.label}
+                      </span>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                    {statusInfo.label}
-                  </span>
                 </div>
 
                 {/* Category and Location */}
@@ -423,24 +423,24 @@ export default function Clients({ currentUser }: ClientsProps) {
                 </div>
 
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{client.email}</span>
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <EnvelopeIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                    <span className="text-sm text-gray-300 min-w-0 flex-1 truncate">{client.email}</span>
                   </div>
                   {client.phone && (
-                    <div className="flex items-center space-x-2">
-                      <PhoneIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-300">{client.phone}</span>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <PhoneIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                      <span className="text-sm text-gray-300 min-w-0 flex-1 truncate">{client.phone}</span>
                     </div>
                   )}
                   {client.website && (
-                    <div className="flex items-center space-x-2">
-                      <GlobeAltIcon className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <GlobeAltIcon className="h-4 w-4 text-gray-400 shrink-0" />
                       <a
                         href={client.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-400 hover:text-blue-300"
+                        className="text-sm text-blue-400 hover:text-blue-300 min-w-0 flex-1 truncate"
                       >
                         {client.website}
                       </a>
@@ -464,11 +464,11 @@ export default function Clients({ currentUser }: ClientsProps) {
                   <p className="text-sm text-gray-500 mb-4 line-clamp-2">{client.notes}</p>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                  <span className="text-xs text-gray-400">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-700">
+                  <span className="text-xs text-gray-400 min-w-0 truncate">
                     Added {formatAppDate(client.created_at)}
                   </span>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 shrink-0">
                     <button
                       onClick={() => handleViewClient(client)}
                       className="text-white hover:text-blue-300 p-1 shrink-glow-button"

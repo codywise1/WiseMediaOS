@@ -215,38 +215,51 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
-      <div className="fixed top-20 right-4 w-96 max-h-[80vh] z-50 animate-in slide-in-from-top">
+      <div className="fixed z-50 animate-in slide-in-from-top left-0 right-0 top-20 px-3 sm:left-auto sm:right-4 sm:px-0 sm:w-96">
         <GlassCard className="overflow-hidden bg-slate-950 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Notifications
-            </h3>
-            {notifications.some((n) => !n.read) && (
+          <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3 min-w-0">
+              <h3 className="text-white font-bold text-lg truncate" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Notifications
+              </h3>
               <button
-                onClick={markAllAsRead}
-                className="text-xs text-gray-300 hover:text-white underline decoration-dotted mr-2"
+                onClick={onClose}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white shrink-0 sm:hidden"
+                aria-label="Close notifications"
               >
-                Mark all as read
+                <X size={20} />
               </button>
-            )}
-            <button
-              onClick={() => {
-                onClose();
-                onNavigate?.('/notifications');
-              }}
-              className="text-xs text-blue-300 hover:text-blue-200 underline decoration-dotted"
-            >
-              View all
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-            >
-              <X size={20} />
-            </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {notifications.some((n) => !n.read) && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-xs text-gray-300 hover:text-white underline decoration-dotted"
+                >
+                  Mark all as read
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  onClose();
+                  onNavigate?.('/notifications');
+                }}
+                className="text-xs text-blue-300 hover:text-blue-200 underline decoration-dotted"
+              >
+                View all
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white hidden sm:inline-flex"
+                aria-label="Close notifications"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-8rem)] sm:max-h-[60vh]">
             {notifications.map((notification) => (
               <div
                 key={notification.id}

@@ -378,16 +378,16 @@ export default function Projects({ currentUser }: ProjectsProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
             <p className="text-gray-300">Manage and track all your active projects</p>
           </div>
           {isAdmin && (
             <button
               onClick={handleNewProject}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
             >
               <PlusIcon className="h-5 w-5 text-white" />
               <span>New Project</span>
@@ -482,9 +482,9 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       }
                     }}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="text-white font-medium text-sm">{project.name}</h4>
-                      <div className="flex items-center space-x-1">
+                    <div className="flex flex-col gap-2 mb-2 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                      <h4 className="text-white font-medium text-sm min-w-0 flex-1 truncate">{project.name}</h4>
+                      <div className="flex items-center space-x-1 shrink-0 self-end sm:self-auto">
                         <button 
                           onClick={() => handleViewProject(project)}
                           className="text-white hover:text-blue-300 p-1"
@@ -513,15 +513,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       </div>
                     </div>
                     
-                    <p className="text-gray-400 text-xs mb-2">{project.client}</p>
+                    <p className="text-gray-400 text-xs mb-2 min-w-0 truncate">{project.client}</p>
                     <p className="text-gray-500 text-xs mb-3 line-clamp-2">{project.description}</p>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <div className="flex items-center space-x-2 min-w-0">
                         <UserGroupIcon className="h-3 w-3 text-blue-500" />
                         <span className="text-xs text-gray-400">{project.team}</span>
                       </div>
-                      <span className="text-xs font-medium text-green-400">{project.budget}</span>
+                      <span className="text-xs font-medium text-green-400 shrink-0">{project.budget}</span>
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-slate-700">

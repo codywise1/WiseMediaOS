@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   HomeIcon,
@@ -40,7 +40,7 @@ interface LayoutProps {
   onUpdateProfile?: (userData: Partial<User>) => void
 }
 
-type IconType = (props: React.ComponentProps<'svg'>) => JSX.Element
+type IconType = React.ElementType
 
 interface NavItem {
   name: string
@@ -199,6 +199,17 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
     setIsMobileMenuOpen(false)
   }
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeMobileMenu()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMobileMenuOpen])
+
   return (
     <div className="min-h-screen relative">
       {/* Background image */}
@@ -313,7 +324,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
             onClick={closeMobileMenu}
           >
             <div
-              className="fixed inset-y-0 right-0 w-80 max-w-[85vw] glass-card p-6 transform transition-transform duration-300 ease-out overflow-y-auto"
+              className="fixed inset-y-0 left-0 w-80 max-w-[85vw] glass-card p-6 transform transition-transform duration-300 ease-out overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-8">
@@ -417,7 +428,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         )}
 
         {/* Mobile Bottom Dock */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
+        <div className="hidden md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
           <div className="glass-card border-t border-white/10 px-2 py-3 backdrop-blur-xl bg-slate-900/95">
             <div className="flex items-center justify-around max-w-md mx-auto">
               {dockItems.map(item => {
@@ -450,8 +461,12 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
 
         {/* Main Content */}
         <div className="md:ml-64">
-          <TopNav currentUser={currentUser} onLogout={onLogout} />
-          <div className="min-h-screen p-4 md:p-8 pb-24 md:pb-8">
+          <TopNav
+            currentUser={currentUser}
+            onLogout={onLogout}
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          />
+          <div className="min-h-screen p-4 md:p-8 pb-8 md:pb-8">
             {children}
           </div>
         </div>

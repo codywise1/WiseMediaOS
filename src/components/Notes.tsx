@@ -292,30 +292,30 @@ export default function Notes({ currentUser }: NotesProps) {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-gray-400 border-t border-slate-700/50 pt-3">
-                  <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 border-t border-slate-700/50 pt-3 min-w-0">
+                  <div className="flex flex-wrap items-center gap-3 min-w-0">
                     {note.client && (
-                      <div className="flex items-center space-x-1">
-                        <UserIcon className="h-4 w-4" />
-                        <span className="truncate max-w-[100px]">
+                      <div className="flex items-center space-x-1 min-w-0">
+                        <UserIcon className="h-4 w-4 shrink-0" />
+                        <span className="truncate max-w-[160px] sm:max-w-[100px]">
                           {note.client.company || note.client.name}
                         </span>
                       </div>
                     )}
                     {note.project && (
-                      <div className="flex items-center space-x-1">
-                        <FolderIcon className="h-4 w-4" />
-                        <span className="truncate max-w-[100px]">
+                      <div className="flex items-center space-x-1 min-w-0">
+                        <FolderIcon className="h-4 w-4 shrink-0" />
+                        <span className="truncate max-w-[160px] sm:max-w-[100px]">
                           {note.project.name}
                         </span>
                       </div>
                     )}
                   </div>
-                  <span>{formatAppDate(note.updated_at)}</span>
+                  <span className="shrink-0">{formatAppDate(note.updated_at)}</span>
                 </div>
 
                 {isAdmin && (
-                  <div className="flex items-center space-x-2 mt-3 pt-3 border-t border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity sm:flex-row sm:items-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -685,7 +685,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
           </label>
         </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onClose}

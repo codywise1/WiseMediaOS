@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
@@ -13,6 +13,7 @@ interface TopNavProps {
     avatar?: string;
   } | null;
   onLogout?: () => void;
+  onOpenMobileMenu?: () => void;
 }
 
 type SearchItem = {
@@ -30,7 +31,7 @@ type SearchGroups = {
   courses: SearchItem[];
 };
 
-export default function TopNav({ currentUser, onLogout }: TopNavProps) {
+export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopNavProps) {
   const { profile, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -176,7 +177,21 @@ export default function TopNav({ currentUser, onLogout }: TopNavProps) {
         />
       )}
       <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/20 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-3 lg:gap-4" />
+        <div className="flex items-center gap-3 lg:gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setShowNotifications(false);
+              setShowAvatarMenu(false);
+              setIsSearchFocused(false);
+              onOpenMobileMenu?.();
+            }}
+            className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu size={22} className="text-white" />
+          </button>
+        </div>
 
         <div className="hidden md:flex items-center w-2/3 max-w-xl mx-6 relative">
           <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-blue-500/70 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all backdrop-blur">
