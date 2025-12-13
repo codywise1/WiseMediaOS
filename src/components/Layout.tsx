@@ -367,61 +367,6 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                     })}
                   </div>
                 ))}
-
-                <div className="border-t border-white/10 pt-4 space-y-3">
-                  <button
-                    onClick={() => {
-                      setIsProfileModalOpen(true)
-                      closeMobileMenu()
-                    }}
-                    className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#3aa3eb]/40 group"
-                  >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Profile
-                        </span>
-                        <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#3aa3eb] transition-colors" />
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="relative flex-shrink-0">
-                          <img
-                            src={
-                              currentUser?.avatar ||
-                              'https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp'
-                            }
-                            alt={currentUser?.name || 'User'}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-md bg-white p-1"
-                          />
-                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-900 shadow-sm" />
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <p className="text-base font-bold text-white truncate">
-                            {currentUser?.name}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate mt-0.5">
-                            {roleLabel(currentUser?.role)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onLogout()
-                      closeMobileMenu()
-                    }}
-                    className="w-full logout-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-white/40 hover:bg-white/10 group"
-                  >
-                    <div className="flex items-center justify-center space-x-3 p-4">
-                      <ArrowRightOnRectangleIcon className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
-                      <span className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
-                        Sign Out
-                      </span>
-                    </div>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
