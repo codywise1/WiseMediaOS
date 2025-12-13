@@ -377,16 +377,16 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Appointments</h1>
             <p className="text-gray-300">Schedule and manage your meetings and consultations</p>
           </div>
           {isAdmin && (
             <button 
               onClick={handleNewAppointment}
-              className="btn-primary text-white font-medium flex items-center space-x-2 glass-button shrink-glow-button"
+              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 glass-button shrink-glow-button shrink-0 w-full sm:w-auto"
             >
               <PlusIcon className="h-5 w-5" />
               Book Meeting
@@ -471,9 +471,9 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
       )}
 
       {/* Calendar View Toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Upcoming Appointments</h2>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button 
             onClick={() => setViewMode('list')}
             className={`btn-secondary text-sm font-medium ${viewMode === 'list' ? 'border-white/60' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button`}
@@ -509,65 +509,67 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         <div className="space-y-4">
           {appointments.map((appointment) => (
             <div key={appointment.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col gap-3 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-4 min-w-0">
                   <div className="p-3 rounded-lg bg-slate-700">
                     {appointment.type === 'video' && <VideoCameraIcon className="h-6 w-6 text-[#3aa3eb]" />}
                     {appointment.type === 'phone' && <PhoneIcon className="h-6 w-6 text-[#3aa3eb]" />}
                     {appointment.type === 'in-person' && <MapPinIcon className="h-6 w-6 text-[#3aa3eb]" />}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{appointment.title}</h3>
-                    <p className="text-sm text-gray-400">{appointment.client}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-white truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{appointment.title}</h3>
+                    <p className="text-sm text-gray-400 truncate">{appointment.client}</p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[appointment.status as keyof typeof statusColors]}`}>
-                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                </span>
-                {isAdmin && (
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button 
-                      onClick={() => handleEditAppointment(appointment)}
-                      className="text-blue-500 hover:text-white p-1 shrink-glow-button"
-                      title="Edit Appointment"
-                    >
-                      <PencilIcon className="h-4 w-4 text-blue-500" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteAppointment(appointment)}
-                      className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
-                      title="Delete Appointment"
-                    >
-                      <TrashIcon className="h-4 w-4 text-blue-500" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${statusColors[appointment.status as keyof typeof statusColors]}`}>
+                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  </span>
+                  {isAdmin && (
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        onClick={() => handleEditAppointment(appointment)}
+                        className="text-blue-500 hover:text-white p-1 shrink-glow-button"
+                        title="Edit Appointment"
+                      >
+                        <PencilIcon className="h-4 w-4 text-blue-500" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteAppointment(appointment)}
+                        className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
+                        title="Delete Appointment"
+                      >
+                        <TrashIcon className="h-4 w-4 text-blue-500" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <p className="text-gray-300 mb-4">{appointment.description}</p>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <div className="flex items-center space-x-2 min-w-0">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{appointment.date ? formatAppDate(appointment.date) : ''}</span>
+                    <span className="text-sm text-gray-300 truncate">{appointment.date ? formatAppDate(appointment.date) : ''}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 min-w-0">
                     <ClockIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{appointment.time} ({appointment.duration})</span>
+                    <span className="text-sm text-gray-300 truncate">{appointment.time} ({appointment.duration})</span>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 min-w-0">
                     <MapPinIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-300">{appointment.location}</span>
+                    <span className="text-sm text-gray-300 truncate">{appointment.location}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
                   <button 
                     onClick={() => {
                       toastInfo(`Rescheduling appointment: ${appointment.title}\nCurrent: ${appointment.date} at ${appointment.time}\n\nPlease select a new date and time.`, 5000);
                     }}
-                    className={`text-white hover:text-blue-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`text-white hover:text-blue-300 text-sm w-full sm:w-auto ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={!isAdmin}
                   >
                     Reschedule
@@ -578,7 +580,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                         toastSuccess('Appointment cancelled successfully.');
                       }
                     }}
-                    className={`text-red-400 hover:text-red-300 text-sm ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button` }
+                    className={`text-red-400 hover:text-red-300 text-sm w-full sm:w-auto ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button` }
                     disabled={!isAdmin}
                   >
                     Cancel
@@ -588,7 +590,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                       onClick={() => {
                         window.open('https://meet.google.com/sample-meeting-link', '_blank');
                       }}
-                      className="btn-action text-sm font-medium shrink-glow-button"
+                      className="btn-action text-sm font-medium shrink-glow-button w-full sm:w-auto"
                     >
                       Join Meeting
                     </button>
