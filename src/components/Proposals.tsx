@@ -176,16 +176,16 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Proposals</h1>
             <p className="text-gray-300">Create, track, and manage project proposals</p>
           </div>
           {isAdmin && (
             <button 
               onClick={handleNewProposal}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
+              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
               <PlusIcon className="h-5 w-5" />
               New Proposal
@@ -256,29 +256,27 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           
           return (
             <div key={proposal.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col gap-4 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-4 min-w-0">
                   <div className="p-3 rounded-lg bg-slate-700">
                     <ClipboardDocumentListIcon className="h-6 w-6 text-gray-300" />
                   </div>
-                  <div>
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{proposal.title}</h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                  <div className="min-w-0">
+                    <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
+                      <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{proposal.title}</h3>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
                         <StatusIcon className="h-3 w-3 mr-1" />
                         {statusInfo.label}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>
-                    <p className="text-sm text-gray-500">{proposal.description}</p>
+                    <p className="text-sm text-gray-400 mt-1 truncate">{proposal.client}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2">{proposal.description}</p>
                   </div>
                 </div>
                 
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-white">${proposal.value.toLocaleString()}</p>
-                  <p className="text-sm text-gray-400">{proposal.id}</p>
+                <div className="text-left sm:text-right">
                   {isAdmin && (
-                    <div className="flex items-center justify-end space-x-2 mt-2">
+                    <div className="flex items-center justify-start sm:justify-end space-x-2 mb-2">
                       <button 
                         onClick={() => handleEditProposal(proposal)}
                         className="text-blue-500 hover:text-white p-1 shrink-glow-button"
@@ -295,6 +293,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       </button>
                     </div>
                   )}
+                  <p className="text-2xl font-bold text-white">${proposal.value.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -311,28 +310,30 @@ export default function Proposals({ currentUser }: ProposalsProps) {
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <div className="flex items-center space-x-2">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-400">Created: {proposal.createdDate ? formatAppDate(proposal.createdDate) : '—'}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
+                    </div>
+                    <div className="flex items-center space-x-2">
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-400">Expires: {proposal.expiryDate ? formatAppDate(proposal.expiryDate) : '—'}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center space-x-3">
+                  <div className="flex items-center sm:justify-end">
                   {proposal.status === 'draft' && (
                     <button
                       onClick={() => {
                         toastSuccess(`Proposal "${proposal.title}" sent for review for ${proposal.client}.`);
                       }}
-                      className="btn-action text-sm font-medium shrink-glow-button"
+                      className="btn-action text-sm font-medium shrink-glow-button w-full sm:w-auto"
                     >
                       Send for Review
                     </button>
                   )}
+                  </div>
                 </div>
               </div>
             </div>
