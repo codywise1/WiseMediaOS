@@ -497,8 +497,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     <div className="space-y-8">
       {/* Header */}
       <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}!</span>
             </h1>
@@ -507,7 +507,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           {currentUser?.role === 'admin' && (
             <button 
               onClick={() => navigate('/projects')}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button"
+              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
               <PlusIcon className="h-5 w-5" />
               Start New Project
