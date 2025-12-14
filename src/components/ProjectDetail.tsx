@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { projectService, Project as ProjectType, UserRole } from '../lib/supabase';
 import {
@@ -199,23 +199,23 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       </button>
 
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               {project.name}
             </h1>
-            <div className="flex items-center space-x-4 text-gray-400">
-              <span className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-400 min-w-0">
+              <span className="flex items-center space-x-2 min-w-0">
                 <BuildingOfficeIcon className="h-4 w-4" />
-                <span>{project.client?.name || 'Unknown Client'}</span>
+                <span className="min-w-0 truncate">{project.client?.name || 'Unknown Client'}</span>
               </span>
-              <span className="text-gray-600">•</span>
-              <span>{project.project_type || 'Website'}</span>
+              <span className="text-gray-600 shrink-0">•</span>
+              <span className="shrink-0">{project.project_type || 'Website'}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <span className={`px-4 py-2 rounded-full text-sm font-medium text-white ${getStatusColor(project.status)} flex items-center space-x-2`}>
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+            <span className={`px-4 py-2 rounded-full text-sm font-medium text-white ${getStatusColor(project.status)} flex items-center space-x-2 shrink-0`}>
               <div className="w-2 h-2 rounded-full bg-white"></div>
               <span>{project.status.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</span>
             </span>
@@ -223,21 +223,21 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <>
                 <button
                   onClick={handleEditProject}
-                  className="p-2 glass-card hover:bg-blue-500/20 rounded-lg transition-all"
+                  className="p-2 glass-card hover:bg-blue-500/20 rounded-lg transition-all shrink-0"
                   title="Edit Project"
                 >
                   <PencilIcon className="h-5 w-5 text-blue-400" />
                 </button>
                 <button
                   onClick={handleDuplicate}
-                  className="p-2 glass-card hover:bg-blue-500/20 rounded-lg transition-all"
+                  className="p-2 glass-card hover:bg-blue-500/20 rounded-lg transition-all shrink-0"
                   title="Duplicate Project"
                 >
                   <DocumentDuplicateIcon className="h-5 w-5 text-blue-400" />
                 </button>
                 <button
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="p-2 glass-card hover:bg-red-500/20 rounded-lg transition-all"
+                  className="p-2 glass-card hover:bg-red-500/20 rounded-lg transition-all shrink-0"
                   title="Delete Project"
                 >
                   <TrashIcon className="h-5 w-5 text-red-400" />
@@ -249,12 +249,12 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       </div>
 
       {/* Main Details Grid */}
-      <div className="glass-card neon-glow rounded-2xl p-8">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Row 1 - Status & Client */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <FlagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Status</p>
               <span className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium text-white ${getStatusColor(project.status)}`}>
                 <div className="w-2 h-2 rounded-full bg-white"></div>
@@ -263,55 +263,55 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <BuildingOfficeIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Client</p>
-              <p className="text-white font-medium">{project.client?.name || 'Unknown Client'}</p>
+              <p className="text-white font-medium min-w-0 truncate">{project.client?.name || 'Unknown Client'}</p>
             </div>
           </div>
 
           {/* Row 2 - Value & Due Date */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <CurrencyDollarIcon className="h-6 w-6 text-green-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Project Value</p>
               <p className="text-white font-medium text-lg">${project.budget?.toLocaleString() || '0'}</p>
               <p className="text-xs text-gray-500 mt-1">{project.billing_type || 'Fixed'}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <CalendarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Due Date</p>
               <p className="text-white font-medium">{formatDate(project.due_date)}</p>
             </div>
           </div>
 
           {/* Row 3 - Owner & Priority */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <UserIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Owner</p>
-              <p className="text-white font-medium">{project.owner || 'Unassigned'}</p>
+              <p className="text-white font-medium min-w-0 truncate">{project.owner || 'Unassigned'}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <FlagIcon className="h-6 w-6 text-orange-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Priority</p>
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium text-white ${getPriorityColor(project.priority)}`}>
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium text-white ${getPriorityColor(project.priority)} break-words`}>
                 {project.priority || 'Medium'}
               </span>
             </div>
           </div>
 
           {/* Row 4 - Internal Tags & Progress */}
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <TagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-2">Internal Tags</p>
               {project.internal_tags && project.internal_tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -327,18 +327,18 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-2">Progress</p>
-              <div className="flex items-center space-x-3">
-                <div className="flex-1 bg-slate-700 rounded-full h-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="w-full bg-slate-700 rounded-full h-2 sm:flex-1">
                   <div
                     className={`h-2 rounded-full ${getStatusColor(project.status)}`}
                     style={{ width: `${project.progress || 0}%` }}
                   ></div>
                 </div>
-                <span className="text-white font-medium text-sm">{project.progress || 0}%</span>
+                <span className="text-white font-medium text-sm shrink-0 self-end sm:self-auto">{project.progress || 0}%</span>
               </div>
             </div>
           </div>
@@ -347,11 +347,11 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Description */}
       {description && (
-        <div className="glass-card neon-glow rounded-2xl p-8">
+        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
           <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Description
           </h2>
-          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
             {displayDescription}
           </p>
           {shouldTruncate && (
