@@ -145,8 +145,8 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
       {/* Header Card */}
       <div className="glass-card rounded-2xl p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-6">
+        <div className="flex flex-col gap-4 mb-6 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4 min-w-0 sm:items-center sm:gap-6">
             <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-[#3aa3eb] to-[#2d8bc7] flex items-center justify-center overflow-hidden">
               {client.company ? (
                 <span className="text-3xl font-bold text-white">
@@ -156,19 +156,19 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 <UserIcon className="h-12 w-12 text-white" />
               )}
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <div className="min-w-0">
+              <h1 className="text-4xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 {client.company || client.name}
               </h1>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-                <span className="text-xl text-gray-300">{client.name}</span>
+                <span className="text-xl text-gray-300 min-w-0 truncate">{client.name}</span>
               </div>
             </div>
           </div>
 
           {isAdmin && (
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
               <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(client.status || 'active')} text-white`}>
                 {(client.status || 'active').charAt(0).toUpperCase() + (client.status || 'active').slice(1)}
               </span>
@@ -264,24 +264,24 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               Contact Information
             </h2>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
                   <EnvelopeIcon className="h-5 w-5 text-[#3aa3eb]" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400">Email</p>
-                  <a href={`mailto:${client.email}`} className="text-white hover:text-[#3aa3eb] transition-colors">
+                  <a href={`mailto:${client.email}`} className="text-white hover:text-[#3aa3eb] transition-colors break-all">
                     {client.email}
                   </a>
                 </div>
               </div>
 
               {client.phone && (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
                     <PhoneIcon className="h-5 w-5 text-[#3aa3eb]" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-400">Phone</p>
                     <a href={`tel:${client.phone}`} className="text-white hover:text-[#3aa3eb] transition-colors">
                       {client.phone}
@@ -291,29 +291,29 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               )}
 
               {(client.address || client.location) && (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
                     <MapPinIcon className="h-5 w-5 text-[#3aa3eb]" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-400">Location</p>
-                    <p className="text-white">{client.location || client.address}</p>
+                    <p className="text-white break-words">{client.location || client.address}</p>
                   </div>
                 </div>
               )}
 
               {client.website && (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
                     <GlobeAltIcon className="h-5 w-5 text-[#3aa3eb]" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-400">Website</p>
                     <a
                       href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white hover:text-[#3aa3eb] transition-colors"
+                      className="text-white hover:text-[#3aa3eb] transition-colors break-all"
                     >
                       {client.website}
                     </a>
@@ -354,9 +354,9 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     onClick={() => navigate(`/projects/${project.id}`)}
                     className="w-full p-4 bg-slate-800/30 hover:bg-slate-800/50 rounded-xl transition-all text-left border border-transparent hover:border-[#3aa3eb]/30"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-white">{project.name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    <div className="flex flex-col gap-2 mb-2 min-w-0 sm:flex-row sm:items-center sm:justify-between">
+                      <h3 className="font-bold text-white min-w-0 truncate">{project.name}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 self-start sm:self-auto ${
                         project.status === 'completed' ? 'bg-green-600/20 text-green-300' :
                         project.status === 'in_progress' ? 'bg-blue-600/20 text-blue-300' :
                         project.status === 'on_hold' ? 'bg-yellow-600/20 text-yellow-300' :
@@ -387,14 +387,14 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               {client.source && (
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Source</p>
-                  <p className="text-white">{client.source}</p>
+                  <p className="text-white break-words">{client.source}</p>
                 </div>
               )}
 
               {client.service_type && (
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Service Type</p>
-                  <span className="inline-block px-3 py-1 bg-slate-800/50 rounded-lg text-sm text-white">
+                  <span className="inline-block px-3 py-1 bg-slate-800/50 rounded-lg text-sm text-white break-words">
                     {client.service_type}
                   </span>
                 </div>
@@ -420,10 +420,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.website}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">Website</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">Website</span>
                   </a>
                 )}
 
@@ -432,10 +432,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.linkedin.startsWith('http') ? client.linkedin : `https://linkedin.com/in/${client.linkedin}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.linkedin}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">LinkedIn</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">LinkedIn</span>
                   </a>
                 )}
 
@@ -444,10 +444,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.twitter.startsWith('http') ? client.twitter : `https://twitter.com/${client.twitter}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.twitter}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">Twitter/X</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">Twitter/X</span>
                   </a>
                 )}
 
@@ -456,10 +456,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.instagram.startsWith('http') ? client.instagram : `https://instagram.com/${client.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.instagram}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">Instagram</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">Instagram</span>
                   </a>
                 )}
 
@@ -468,10 +468,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.facebook.startsWith('http') ? client.facebook : `https://facebook.com/${client.facebook}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.facebook}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">Facebook</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">Facebook</span>
                   </a>
                 )}
 
@@ -480,10 +480,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                     href={client.github.startsWith('http') ? client.github : `https://github.com/${client.github}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group"
+                    className="flex items-center space-x-3 p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg transition-all group min-w-0"
                   >
                     <span className="text-2xl">{socialIcons.github}</span>
-                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors">GitHub</span>
+                    <span className="text-white group-hover:text-[#3aa3eb] transition-colors min-w-0 truncate">GitHub</span>
                   </a>
                 )}
               </div>
@@ -494,7 +494,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
           {client.notes && (
             <div className="glass-card rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Notes</h2>
-              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{client.notes}</p>
             </div>
           )}
         </div>
