@@ -217,11 +217,11 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
       />
       <div className="fixed z-50 animate-in slide-in-from-top left-0 right-0 top-20 px-3 sm:left-auto sm:right-4 sm:px-0 sm:w-96">
         <GlassCard className="overflow-hidden bg-slate-950 border border-white/10">
-          <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between sm:pr-10">
             <div className="flex items-center justify-between gap-3 min-w-0">
-              <h3 className="text-white font-bold text-lg truncate" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {/* <h3 className="text-white font-bold text-lg truncate" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Notifications
-              </h3>
+              </h3> */}
               <button
                 onClick={onClose}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white shrink-0 sm:hidden"
@@ -251,7 +251,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
               </button>
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white hidden sm:inline-flex"
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white hidden sm:inline-flex sm:absolute sm:top-0 sm:right-0"
                 aria-label="Close notifications"
               >
                 <X size={20} />
