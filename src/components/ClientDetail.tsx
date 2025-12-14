@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { clientService, projectService, Client as ClientType, Project } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';

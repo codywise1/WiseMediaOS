@@ -1,4 +1,4 @@
-import React from 'react';
+ 
 import { DocumentIcon, FolderIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
 
@@ -18,21 +18,16 @@ const statusColors: Record<string, string> = {
 
 export default function AdminFiles() {
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="glass-card rounded-2xl p-6 border border-white/10">
+    <div className="space-y-8">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-sm text-[#8AB5EB] font-medium">Admin / Files</p>
-            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
-              Internal library
-            </h1>
-            <p className="text-gray-400 mt-2 max-w-2xl">
-              Central resources, contracts, and deliverables organized by team. Preview or download quickly.
-            </p>
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Files</h1>
+            <p className="text-gray-300">Central resources, contracts, and deliverables organized by team</p>
           </div>
-          <button className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 hover:border-white/40 transition shrink-glow-button shrink-0 w-full sm:w-auto">
+          <button className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto">
             <ArrowDownTrayIcon className="h-5 w-5" />
-            Upload file
+            <span>Upload file</span>
           </button>
         </div>
       </div>

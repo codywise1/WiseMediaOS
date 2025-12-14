@@ -19,6 +19,7 @@ import { formatAppDate } from '../lib/dateFormat';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 
 interface User {
+  id?: string;
   email: string;
   role: 'admin' | 'user';
   name: string;
@@ -149,20 +150,25 @@ export default function Notes({ currentUser }: NotesProps) {
   }
 
   return (
-    <div className="space-y-6 pb-20 md:pb-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-          Notes
-        </h1>
-        {isAdmin && (
-          <button
-            onClick={handleCreateNote}
-            className="btn-primary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl shrink-glow-button"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span>New Note</span>
-          </button>
-        )}
+    <div className="space-y-8 pb-20 md:pb-8">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              Notes
+            </h1>
+            <p className="text-gray-300">Create and manage your notes and documentation</p>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={handleCreateNote}
+              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span>New Note</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl p-4 md:p-6">
