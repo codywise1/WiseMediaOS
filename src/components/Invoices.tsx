@@ -32,11 +32,11 @@ interface InvoicesProps {
   currentUser: User | null;
 }
 
-type InvoiceView = Omit<InvoiceRecord, 'client' | 'created_at' | 'due_date'> & {
+type InvoiceView = Omit<InvoiceRecord, 'client'> & {
   createdDate: string;
   dueDate: string;
   client: string;
-  client_id: string;
+  clientRecord?: InvoiceRecord['client'];
 };
 
 const statusConfig = {
@@ -70,14 +70,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       
       if (currentUser?.role === 'admin') {
         data = await invoiceService.getAll();
-      } else if (currentUser?.id) {
-        // For clients, get invoices assigned to them
-        data = await invoiceService.getByClientId(currentUser.id);
+      } else if (currentUser) {
+        // For clients, rely on RLS to return only their invoices.
+        // currentUser.id is the auth user id and does not match invoices.client_id (clients.id).
+        data = await invoiceService.getForCurrentUser();
       }
       
       // Transform data to match component interface
       const transformedInvoices: InvoiceView[] = data.map(invoice => ({
         ...invoice,
+        clientRecord: invoice.client,
         client: invoice.client?.name || 'Unknown Client',
         createdDate: invoice.created_at || '',
         dueDate: invoice.due_date || ''
@@ -161,8 +163,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  const handlePayInvoice = (invoice: InvoiceRecord) => {
-    setSelectedInvoice(invoice as InvoiceView);
+  const handlePayInvoice = (invoice: InvoiceView) => {
+    setSelectedInvoice(invoice);
     setIsPaymentModalOpen(true);
   };
 

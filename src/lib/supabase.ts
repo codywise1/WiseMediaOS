@@ -752,6 +752,24 @@ export const projectService = {
 
 // Invoice operations
 export const invoiceService = {
+  async getForCurrentUser() {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('invoices')
+      .select(`
+        *,
+        client:clients(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Invoice[];
+  },
+
   async getAll() {
     if (!isSupabaseAvailable()) {
       return [];

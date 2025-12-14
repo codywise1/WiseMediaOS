@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from './Modal';
 import PayPalButton from './PayPalButton';
 import { useToast } from '../contexts/ToastContext';
@@ -35,6 +35,9 @@ export default function PaymentModal({ isOpen, onClose, invoice, onPaymentSucces
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'card' | 'bank' | 'solana'>('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationPhase, setVerificationPhase] = useState<'verifying' | 'pending' | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const [completedMethod, setCompletedMethod] = useState<'paypal' | 'card' | 'bank' | 'solana' | null>(null);
   const [paymentMeta, setPaymentMeta] = useState<{
     signature?: string;
@@ -83,8 +86,137 @@ export default function PaymentModal({ isOpen, onClose, invoice, onPaymentSucces
     setPaymentComplete(false);
     setCompletedMethod(null);
     setPaymentMeta(null);
+    setIsVerifying(false);
+    setVerificationPhase(null);
+    setVerificationError(null);
     onClose();
   };
+
+  const pollingRef = useRef<{ timeoutId: number | null; attempts: number }>(
+    { timeoutId: null, attempts: 0 }
+  );
+
+  const clearPolling = () => {
+    if (pollingRef.current.timeoutId) {
+      window.clearTimeout(pollingRef.current.timeoutId);
+      pollingRef.current.timeoutId = null;
+    }
+    pollingRef.current.attempts = 0;
+  };
+
+  const verifyPayPalPayment = async (payload: any) => {
+    if (!isSupabaseAvailable() || !supabase) {
+      throw new Error('Supabase not configured');
+    }
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (sessionError || !accessToken) {
+      throw new Error('Missing access token');
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-paypal-payment`;
+    const res = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    let json: any = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = null;
+    }
+
+    if (!res.ok) {
+      const msg = json?.error || text || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return json;
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearPolling();
+      setIsVerifying(false);
+      setVerificationPhase(null);
+      setVerificationError(null);
+      return;
+    }
+
+    return () => {
+      clearPolling();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isVerifying || verificationPhase !== 'pending') {
+      return;
+    }
+
+    const maxAttempts = 24; // ~2 minutes at 5s interval
+    const intervalMs = 5000;
+
+    const tick = async () => {
+      pollingRef.current.attempts += 1;
+
+      if (pollingRef.current.attempts > maxAttempts) {
+        setIsVerifying(false);
+        setVerificationPhase(null);
+        setIsProcessing(false);
+        setVerificationError('The payment is still PENDING. Please try again in a few minutes.');
+        toastInfo('The payment is still PENDING. Please try again in a few minutes.');
+        clearPolling();
+        return;
+      }
+
+      try {
+        const json = await verifyPayPalPayment({ invoiceId: invoice.id, amount: invoice.amount, currency: 'USD' });
+        if (json?.status === 'paid') {
+          setIsVerifying(false);
+          setVerificationPhase(null);
+          setVerificationError(null);
+          setIsProcessing(false);
+
+          setCompletedMethod('paypal');
+          setPaymentMeta({ methodLabel: 'PayPal' });
+          setPaymentComplete(true);
+
+          onPaymentSuccess({
+            invoiceId: invoice.id,
+            amount: invoice.amount,
+            method: 'PayPal',
+            status: 'COMPLETED',
+          });
+
+          clearPolling();
+          return;
+        }
+
+        setVerificationPhase('pending');
+      } catch (e: any) {
+        setIsVerifying(false);
+        setVerificationPhase(null);
+        setIsProcessing(false);
+        setVerificationError(e?.message || 'Error verificando el pago.');
+        toastError(e?.message || 'Error verificando el pago.');
+        clearPolling();
+        return;
+      }
+
+      pollingRef.current.timeoutId = window.setTimeout(tick, intervalMs);
+    };
+
+    pollingRef.current.timeoutId = window.setTimeout(tick, intervalMs);
+    return () => {
+      clearPolling();
+    };
+  }, [isOpen, isVerifying, verificationPhase, invoice.id, invoice.amount, onPaymentSuccess, toastError, toastInfo]);
 
   const generateReceiptContent = () => {
     const date = new Date().toLocaleString();
@@ -220,30 +352,38 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
 
   const handlePayPalSuccess = async (details: any) => {
     setIsProcessing(true);
+    setIsVerifying(true);
+    setVerificationPhase('verifying');
+    setVerificationError(null);
     try {
       const orderId = details?.orderId;
       const captureId = details?.captureId;
 
-      if (isSupabaseAvailable() && supabase) {
-        const { data, error } = await supabase.functions.invoke('verify-paypal-payment', {
-          body: {
-            invoiceId: invoice.id,
-            amount: invoice.amount,
-            currency: 'USD',
-            orderId,
-            captureId,
-          }
-        });
+      const payload = {
+        invoiceId: invoice.id,
+        amount: invoice.amount,
+        currency: 'USD',
+        orderId,
+        captureId,
+      };
 
-        if (error || !data?.success) {
-          console.error('Verification failed:', error || data);
-          alert('No se pudo verificar el pago con el servidor. Por favor, contacta soporte.');
-          setIsProcessing(false);
-          return;
-        }
+      console.log('[PayPal] verify-paypal-payment payload', payload);
+
+      const json = await verifyPayPalPayment(payload);
+      if (!json?.success) {
+        throw new Error(json?.error || 'Verification failed');
+      }
+
+      if (json?.status === 'pending') {
+        setVerificationPhase('pending');
+        setIsProcessing(true);
+        return;
       }
 
       setIsProcessing(false);
+      setIsVerifying(false);
+      setVerificationPhase(null);
+      setVerificationError(null);
       setCompletedMethod('paypal');
       setPaymentMeta({ methodLabel: 'PayPal' });
       setPaymentComplete(true);
@@ -257,14 +397,17 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
 
     } catch (e) {
       console.error('Error verifying PayPal payment:', e);
-      alert('Ocurrió un error al verificar el pago. Intenta nuevamente.');
       setIsProcessing(false);
+      setIsVerifying(false);
+      setVerificationPhase(null);
+      setVerificationError((e as any)?.message || 'Ocurrió un error al verificar el pago.');
+      toastError((e as any)?.message || 'Ocurrió un error al verificar el pago.');
     }
   };
 
   const handlePayPalError = (error: any) => {
     console.error('Payment failed:', error);
-    alert('Payment failed. Please try again or contact support.');
+    toastError('Payment failed. Please try again or contact support.');
   };
 
   const detectWallets = () => {
@@ -700,11 +843,28 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
           </div>
         </div>
 
+        {verificationError && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+            {verificationError}
+          </div>
+        )}
+
         {/* Payment Processing */}
         {isProcessing && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3aa3eb] mx-auto mb-2"></div>
-            <p className="text-gray-300">Processing payment...</p>
+          <div className="text-center py-6">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3aa3eb] mx-auto mb-3"></div>
+            {isVerifying && verificationPhase === 'verifying' && (
+              <p className="text-gray-200">Verificando pago...</p>
+            )}
+            {isVerifying && verificationPhase === 'pending' && (
+              <p className="text-gray-200">Payment pending. Waiting for confirmation...</p>
+            )}
+            {!isVerifying && (
+              <p className="text-gray-300">Processing payment...</p>
+            )}
+            {isVerifying && verificationPhase === 'pending' && (
+              <p className="text-xs text-gray-400 mt-2">This may take a moment (PayPal PENDING).</p>
+            )}
           </div>
         )}
 

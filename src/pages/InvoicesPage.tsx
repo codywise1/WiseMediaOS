@@ -28,14 +28,27 @@ export default function InvoicesPage() {
   }, [profile]);
 
   async function fetchInvoices() {
-    if (!profile) return;
+    if (!profile) {
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
+
+    if (!supabase) {
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const { data, error } = await supabase
+      const role = String((profile as any).role || '').toLowerCase();
+
+      const query = supabase
         .from('invoices')
         .select('*')
-        .or(`admin_id.eq.${profile.id},client_id.eq.${profile.id}`)
         .order('created_at', { ascending: false });
+
+      const { data, error } = role === 'admin' ? await query : await query;
 
       if (error) throw error;
       setInvoices(data || []);
@@ -48,6 +61,11 @@ export default function InvoicesPage() {
 
   async function handleSave() {
     if (!profile || !formData.amount || !formData.due_date) return;
+
+    if (!supabase) {
+      alert('Supabase not configured');
+      return;
+    }
 
     setSaving(true);
     try {
