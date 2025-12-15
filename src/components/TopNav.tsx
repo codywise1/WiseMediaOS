@@ -39,6 +39,16 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const navigate = useNavigate();
 
+  const normalizeSearchText = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   const role = (profile?.role || currentUser?.role || '').toLowerCase();
   const displayName = profile?.full_name || currentUser?.name || profile?.email || currentUser?.email || 'User';
   const displayAvatar = profile?.avatar_url || currentUser?.avatar;
@@ -69,7 +79,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
         const groups: SearchGroups = {
           clients: (clients as any[]).map((c) => ({
             title: c.company || c.name || c.email,
-            meta: [c.status, c.email].filter(Boolean).join(' \u2022 '),
+            meta: [c.name, c.status, c.email].filter(Boolean).join(' \u2022 '),
             to: `/clients/${c.id}`,
           })),
           projects: (projects as any[]).map((p) => ({
@@ -122,9 +132,11 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
 
   const filteredResults = useMemo(() => {
     if (!searchQuery.trim()) return searchData;
-    const term = searchQuery.toLowerCase();
+    const term = normalizeSearchText(searchQuery);
     const filterGroup = (items: { title: string; meta: string; to: string }[]) =>
-      items.filter((item) => item.title.toLowerCase().includes(term) || item.meta.toLowerCase().includes(term));
+      items.filter((item) =>
+        normalizeSearchText(item.title).includes(term) || normalizeSearchText(item.meta).includes(term)
+      );
     return {
       clients: filterGroup(searchData.clients),
       projects: filterGroup(searchData.projects),

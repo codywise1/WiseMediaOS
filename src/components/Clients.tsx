@@ -174,11 +174,64 @@ export default function Clients({ currentUser }: ClientsProps) {
     navigate(`/clients/${client.id}`);
   };
 
+  const confusableCharMap: Record<string, string> = {
+    а: 'a',
+    в: 'b',
+    д: 'd',
+    е: 'e',
+    г: 'r',
+    н: 'h',
+    о: 'o',
+    п: 'n',
+    р: 'p',
+    с: 'c',
+    ѕ: 's',
+    һ: 'h',
+    х: 'x',
+    у: 'y',
+    к: 'k',
+    л: 'l',
+    м: 'm',
+    т: 't',
+    і: 'i',
+    ј: 'j',
+    ν: 'v',
+    ο: 'o',
+    ρ: 'p',
+    χ: 'x',
+    υ: 'y',
+    α: 'a'
+  };
+
+  const normalizeText = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/\u00A0/g, ' ')
+      .replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[авдегнопсѕһхуктліјνορχυα]/gu, (ch) => confusableCharMap[ch] ?? ch)
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^\p{Letter}\p{Number}\s]+/gu, ' ')
+      .replace(/\s+/g, ' ');
+  };
+
   const filteredClients = clients.filter(client => {
+    const q = normalizeText(searchQuery);
+    const tokens = q.split(' ').filter(Boolean);
+    const searchableText = [client.name, client.email, client.company]
+      .map(normalizeText)
+      .join(' ');
+
+    const qCompact = q.replace(/\s+/g, '');
+    const searchableCompact = searchableText.replace(/\s+/g, '');
+
     const matchesSearch =
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.company?.toLowerCase().includes(searchQuery.toLowerCase()));
+      tokens.length === 0 ||
+      searchableText.includes(q) ||
+      tokens.every(token => searchableText.includes(token)) ||
+      (qCompact.length > 0 && searchableCompact.includes(qCompact));
 
     const matchesCategory = categoryFilter === 'all' || client.category === categoryFilter;
     const matchesLocation = locationFilter === 'all' || client.location === locationFilter;
