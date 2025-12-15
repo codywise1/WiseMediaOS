@@ -113,7 +113,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       
       // Validate required fields
       if (!clientData.name || !clientData.email) {
-        alert('Name and email are required fields.');
+        toastError('Name and email are required fields.');
         setLoading(false);
         return;
       }
@@ -123,7 +123,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         console.log('Client created:', newClient);
         setClients(prevClients => [...prevClients, newClient]);
         setIsModalOpen(false);
-        alert('Client created successfully!');
+        toastSuccess('Client created successfully.');
       } else if (selectedClient) {
         const updatedClient = await clientService.update(selectedClient.id, clientData);
         console.log('Client updated:', updatedClient);
@@ -131,18 +131,18 @@ export default function Clients({ currentUser }: ClientsProps) {
           prevClients.map(c => c.id === selectedClient.id ? updatedClient : c)
         );
         setIsModalOpen(false);
-        alert('Client updated successfully!');
+        toastSuccess('Client updated successfully.');
       }
     } catch (error) {
       console.error('Error saving client:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
       if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
-        alert('A client with this email already exists. Please use a different email address.');
+        toastError('A client with this email already exists. Please use a different email address.');
       } else if (errorMessage.includes('Database error')) {
-        alert(`Database error: ${errorMessage}\n\nPlease check your Supabase connection.`);
+        toastError(`Database error: ${errorMessage}. Please check your Supabase connection.`);
       } else {
-        alert(`Error saving client: ${errorMessage}`);
+        toastError(`Failed to save client: ${errorMessage}`);
       }
     } finally {
       setLoading(false);
