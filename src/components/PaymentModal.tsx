@@ -56,7 +56,7 @@ export default function PaymentModal({ isOpen, onClose, invoice, onPaymentSucces
   const solanaNetwork: 'mainnet' | 'devnet' = (import.meta.env.VITE_SOLANA_NETWORK || 'mainnet') === 'devnet' ? 'devnet' : 'mainnet';
 
   const walletLogos: Record<string, string> = {
-    phantom: 'src/media/Phantom_SVG_Icon.svg',
+    phantom: 'https://wiseos.s3.us-east-2.amazonaws.com/Phantom_SVG_Icon.svg',
     solflare: 'https://www.solflare.com/wp-content/uploads/2024/11/App-Icon.svg',
     backpack: 'https://backpack.app/favicon.ico',
     glow: 'https://glow.app/favicon-32x32.png',
