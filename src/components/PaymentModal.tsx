@@ -609,10 +609,6 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
     }, 2000);
   };
 
-  const handleBankTransfer = () => {
-    alert(`Bank Transfer Instructions:\n\nAccount: Wise Media LLC\nRouting: 123456789\nAccount: 987654321\nAmount: $${invoice.amount.toLocaleString()}\nReference: ${invoice.id}\n\nPlease include the invoice ID in your transfer reference.`);
-  };
-
   if (paymentComplete) {
     const receiptDate = new Date().toLocaleString();
     const receiptId = `RCP-${Date.now()}`;
@@ -804,25 +800,6 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
             </button>
 
             <button
-              onClick={() => setPaymentMethod('bank')}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                paymentMethod === 'bank'
-                  ? 'border-[#3aa3eb] bg-[#3aa3eb]/10'
-                  : 'border-slate-600 hover:border-slate-500'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-purple-600">
-                  <BanknotesIcon className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Bank Transfer</p>
-                  <p className="text-gray-400 text-sm">Direct bank transfer</p>
-                </div>
-              </div>
-            </button>
-
-            <button
               onClick={() => setPaymentMethod('solana')}
               className={`p-4 rounded-lg border-2 transition-all ${
                 paymentMethod === 'solana'
@@ -854,7 +831,7 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
           <div className="text-center py-6">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3aa3eb] mx-auto mb-3"></div>
             {isVerifying && verificationPhase === 'verifying' && (
-              <p className="text-gray-200">Verificando pago...</p>
+              <p className="text-gray-200">Verifying payment...</p>
             )}
             {isVerifying && verificationPhase === 'pending' && (
               <p className="text-gray-200">Payment pending. Waiting for confirmation...</p>
@@ -898,18 +875,7 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
               </div>
             )}
 
-            {paymentMethod === 'bank' && (
-              <div>
-                <p className="text-gray-300 mb-4">Bank Transfer Instructions:</p>
-                <button
-                  onClick={handleBankTransfer}
-                  className="w-full btn-primary font-medium"
-                >
-                  Show Instructions
-                </button>
-              </div>
-            )}
-
+            
             {paymentMethod === 'solana' && (
               <div>
                 {!walletAddress ? (
