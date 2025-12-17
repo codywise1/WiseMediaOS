@@ -312,6 +312,20 @@ export interface Note {
   project?: Project;
 }
 
+export interface DocumentRecord {
+  id: string;
+  bucket_id: string;
+  path: string;
+  filename: string;
+  content_type?: string | null;
+  size_bytes?: number | null;
+  owner_team?: string | null;
+  status?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Support operations
 export const supportService = {
   async getAll() {
@@ -1165,4 +1179,143 @@ export const noteService = {
   async togglePin(id: string, isPinned: boolean) {
     return this.update(id, { is_pinned: isPinned });
   }
+};
+
+// Documents (Supabase Storage + metadata)
+let mockDocuments: DocumentRecord[] = JSON.parse(localStorage.getItem('wise_media_documents') || '[]');
+
+export const documentsService = {
+  async list() {
+    if (!isSupabaseAvailable()) {
+      return mockDocuments;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('documents')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as DocumentRecord[]) || [];
+  },
+
+  async upload(file: File, meta?: { owner_team?: string; status?: string }) {
+    if (!isSupabaseAvailable()) {
+      const id = generateId();
+      const now = new Date().toISOString();
+      const record: DocumentRecord = {
+        id,
+        bucket_id: 'documents',
+        path: id,
+        filename: file.name,
+        content_type: file.type,
+        size_bytes: file.size,
+        owner_team: meta?.owner_team || null,
+        status: meta?.status || null,
+        created_by: null,
+        created_at: now,
+        updated_at: now,
+      };
+      mockDocuments = [record, ...mockDocuments];
+      saveToStorage('wise_media_documents', mockDocuments);
+      return record;
+    }
+
+    const sb = getSupabaseClient();
+    const fileExt = file.name.split('.').pop();
+    const randomPart = (globalThis.crypto && 'randomUUID' in globalThis.crypto)
+      ? (globalThis.crypto as Crypto).randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const fileName = fileExt ? `${randomPart}.${fileExt}` : randomPart;
+    const filePath = `uploads/${fileName}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: inserted, error: insertError } = await sb
+      .from('documents')
+      .insert([
+        {
+          bucket_id: 'documents',
+          path: filePath,
+          filename: file.name,
+          content_type: file.type || null,
+          size_bytes: file.size,
+          owner_team: meta?.owner_team || null,
+          status: meta?.status || null,
+        },
+      ])
+      .select('*')
+      .single();
+
+    if (insertError) throw insertError;
+    return inserted as DocumentRecord;
+  },
+
+  async update(id: string, patch: Partial<Pick<DocumentRecord, 'status' | 'owner_team' | 'filename'>>) {
+    if (!id) throw new Error('Document id is required');
+
+    if (!isSupabaseAvailable()) {
+      mockDocuments = mockDocuments.map(d =>
+        d.id === id
+          ? {
+              ...d,
+              ...patch,
+              updated_at: new Date().toISOString(),
+            }
+          : d
+      );
+      saveToStorage('wise_media_documents', mockDocuments);
+      return mockDocuments.find(d => d.id === id) || null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('documents')
+      .update({
+        ...patch,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return (data as DocumentRecord) || null;
+  },
+
+  async getSignedUrl(path: string, expiresInSeconds = 60) {
+    if (!isSupabaseAvailable()) {
+      return null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb.storage.from('documents').createSignedUrl(path, expiresInSeconds);
+    if (error) throw error;
+    return data.signedUrl;
+  },
+
+  async delete(record: Pick<DocumentRecord, 'id' | 'path'>) {
+    if (!isSupabaseAvailable()) {
+      mockDocuments = mockDocuments.filter(d => d.id !== record.id);
+      saveToStorage('wise_media_documents', mockDocuments);
+      return;
+    }
+
+    const sb = getSupabaseClient();
+
+    const { error: storageError } = await sb.storage.from('documents').remove([record.path]);
+    if (storageError) throw storageError;
+
+    const { error: dbError } = await sb.from('documents').delete().eq('id', record.id);
+    if (dbError) throw dbError;
+  },
 };
