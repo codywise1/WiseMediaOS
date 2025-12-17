@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import { supportService, UserRole } from '../lib/supabase';
+import { clientService, supportService, UserRole } from '../lib/supabase';
 import { 
   ChatBubbleLeftRightIcon, 
   TicketIcon,
@@ -100,7 +100,11 @@ export default function Support({ currentUser }: SupportProps) {
       if (currentUser?.role === 'admin') {
         data = await supportService.getAll();
       } else if (currentUser?.id) {
-        data = await supportService.getByClientId(currentUser.id);
+        // Resolve clients.id by email (schema uses support_tickets.client_id -> clients.id)
+        // Fallback to auth user id for legacy schemas using profiles.id
+        const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+        const effectiveClientId = clientRecord?.id || currentUser.id;
+        data = await supportService.getByClientId(effectiveClientId);
       }
       
       // Transform data to match component interface

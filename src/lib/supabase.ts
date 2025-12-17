@@ -422,6 +422,24 @@ export const clientService = {
     return data as Client[];
   },
 
+  async getByEmail(email: string) {
+    if (!email) return null;
+
+    if (!isSupabaseAvailable()) {
+      return mockClients.find(c => c.email?.toLowerCase() === email.toLowerCase()) || null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('clients')
+      .select('*')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as Client) || null;
+  },
+
   async getById(id: string) {
     if (!isSupabaseAvailable()) {
       const client = mockClients.find(c => c.id === id);

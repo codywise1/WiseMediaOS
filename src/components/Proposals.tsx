@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import ProposalModal from './ProposalModal';
 import ConfirmDialog from './ConfirmDialog';
-import { proposalService } from '../lib/supabase';
+import { clientService, proposalService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 
@@ -59,7 +59,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       if (currentUser?.role === 'admin') {
         data = await proposalService.getAll();
       } else if (currentUser?.id) {
-        data = await proposalService.getByClientId(currentUser.id);
+        // Resolve clients.id by email (schema uses proposals.client_id -> clients.id)
+        // Fallback to auth user id for legacy schemas using profiles.id
+        const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+        const effectiveClientId = clientRecord?.id || currentUser.id;
+        data = await proposalService.getByClientId(effectiveClientId);
       }
       
       // Transform data to match component interface

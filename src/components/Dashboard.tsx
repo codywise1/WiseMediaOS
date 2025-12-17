@@ -4,6 +4,7 @@ import {
   projectService,
   invoiceService,
   appointmentService,
+  clientService,
   UserRole
 } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
@@ -247,10 +248,14 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           buildRecentActivities(projects as any[], invoices as any[], appointments as any[]);
         } else if (currentUser?.id) {
           // Client sees only their data
+          // Resolve clients.id by email (schema uses *_tables.client_id -> clients.id)
+          // Fallback to auth user id for legacy schemas using profiles.id
+          const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+          const effectiveClientId = clientRecord?.id || currentUser.id;
           const [projects, invoices, appointments] = await Promise.all([
-            projectService.getByClientId(currentUser.id),
-            invoiceService.getByClientId(currentUser.id),
-            appointmentService.getByClientId(currentUser.id)
+            projectService.getByClientId(effectiveClientId),
+            invoiceService.getByClientId(effectiveClientId),
+            appointmentService.getByClientId(effectiveClientId)
           ]);
           
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);

@@ -105,8 +105,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
       if (currentUser.role === 'admin') {
         data = await projectService.getAll();
       } else if (currentUser.id) {
-        // For clients, get projects assigned to them
-        data = await projectService.getByClientId(currentUser.id);
+        // For clients, resolve the clients.id by email (schema uses projects.client_id -> clients.id)
+        // Fallback to auth user id for legacy schemas using profiles.id
+        const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+        const effectiveClientId = clientRecord?.id || currentUser.id;
+        data = await projectService.getByClientId(effectiveClientId);
       } else {
         setLoading(false);
         return;
