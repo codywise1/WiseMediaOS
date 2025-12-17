@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import GlassCard from '../components/GlassCard';
 import { Send, Hash, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
 
 interface Channel {
   id: string;
@@ -44,6 +44,7 @@ export default function CommunityPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isSupabaseAvailable()) return;
     fetchChannels();
     fetchAllUsers();
   }, []);
@@ -51,7 +52,8 @@ export default function CommunityPage() {
   useEffect(() => {
     if (selectedChannel) {
       fetchMessages();
-      const subscription = supabase
+      if (!isSupabaseAvailable()) return;
+      const subscription = supabase!
         .channel(`chat:${selectedChannel.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -72,7 +74,8 @@ export default function CommunityPage() {
   useEffect(() => {
     if (selectedUser && profile) {
       fetchPrivateMessages();
-      const subscription = supabase
+      if (!isSupabaseAvailable()) return;
+      const subscription = supabase!
         .channel(`private:${profile.id}:${selectedUser.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -94,7 +97,8 @@ export default function CommunityPage() {
   }, [messages, privateMessages]);
 
   async function fetchChannels() {
-    const { data } = await supabase
+    if (!isSupabaseAvailable()) return;
+    const { data } = await supabase!
       .from('chat_channels')
       .select('*')
       .eq('type', 'general')
@@ -107,7 +111,8 @@ export default function CommunityPage() {
   }
 
   async function fetchAllUsers() {
-    const { data } = await supabase
+    if (!isSupabaseAvailable()) return;
+    const { data } = await supabase!
       .from('profiles')
       .select('id, full_name, avatar_url, role')
       .neq('id', profile?.id || '');
@@ -123,6 +128,7 @@ export default function CommunityPage() {
 
   async function fetchMessages() {
     if (!selectedChannel) return;
+    if (!isSupabaseAvailable()) return;
 
     try {
       const { data, error } = await supabase
@@ -141,8 +147,9 @@ export default function CommunityPage() {
 
   async function fetchPrivateMessages() {
     if (!selectedUser || !profile) return;
+    if (!isSupabaseAvailable()) return;
 
-    const { data } = await supabase
+    const { data } = await supabase!
       .from('private_messages')
       .select('*')
       .or(`and(sender_id.eq.${profile.id},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${profile.id})`)
@@ -151,7 +158,7 @@ export default function CommunityPage() {
 
     if (data) setPrivateMessages(data);
 
-    await supabase
+    await supabase!
       .from('private_messages')
       .update({ read: true })
       .eq('recipient_id', profile.id)
@@ -161,17 +168,18 @@ export default function CommunityPage() {
 
   async function sendMessage() {
     if (!newMessage.trim() || !profile) return;
+    if (!isSupabaseAvailable()) return;
 
     setSending(true);
     try {
       if (view === 'channels' && selectedChannel) {
-        await supabase.from('chat_messages').insert({
+        await supabase!.from('chat_messages').insert({
           channel_id: selectedChannel.id,
           user_id: profile.id,
           message: newMessage.trim(),
         });
       } else if (view === 'private' && selectedUser) {
-        await supabase.from('private_messages').insert({
+        await supabase!.from('private_messages').insert({
           sender_id: profile.id,
           recipient_id: selectedUser.id,
           message: newMessage.trim(),
@@ -197,6 +205,21 @@ export default function CommunityPage() {
       default: return 'text-gray-400';
     }
   };
+
+  if (!isSupabaseAvailable()) {
+    return (
+      <div className="space-y-6">
+        <div className="glass-card p-6 rounded-2xl border border-white/10">
+          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+            Creator Club Chat
+          </h1>
+          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            Chat requires Supabase to be configured (Realtime + database). Enable Supabase to use channels and direct messages.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-180px)] flex flex-col lg:flex-row gap-6">

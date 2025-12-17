@@ -2,6 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 
 export type UserRole = 'admin' | 'staff' | 'user' | 'elite' | 'pro' | 'free';
 
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  avatar_url: string | null;
+  subscription_type?: string | null;
+  location?: string | null;
+  website?: string | null;
+  twitter?: string | null;
+  instagram?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const forceDemoMode = import.meta.env.VITE_FORCE_DEMO_MODE === 'true';
