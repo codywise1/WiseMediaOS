@@ -18,7 +18,9 @@ import {
   BookOpenIcon,
   DocumentDuplicateIcon,
   Cog6ToothIcon,
-  Squares2X2Icon
+  Squares2X2Icon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
@@ -182,6 +184,13 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
   const location = useLocation()
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem('wisemedia_sidebar_collapsed') === '1'
+    } catch {
+      return false
+    }
+  })
 
   const normalizedRole = normalizeRole(currentUser?.role)
   const navGroups = navByRole[normalizedRole]
@@ -210,6 +219,14 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isMobileMenuOpen])
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('wisemedia_sidebar_collapsed', isSidebarCollapsed ? '1' : '0')
+    } catch {
+      return
+    }
+  }, [isSidebarCollapsed])
+
   return (
     <div className="min-h-screen relative">
       {/* Background image */}
@@ -222,25 +239,55 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
       />
 
       {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/75 backdrop-blur-sm -z-10" />
 
       {/* App content */}
       <div className="relative z-10">
         {/* Desktop Sidebar */}
-        <div className="hidden md:block fixed inset-y-0 left-0 z-50 w-64">
-          <div className="glass-card h-full p-6 flex flex-col">
-            <div className="flex items-center mb-8">
-              <img
-                src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg"
-                alt="Wise Media"
-                className="h-10 w-auto"
-              />
+        <div
+          className={`hidden md:block fixed inset-y-0 left-0 z-50 ${
+            isSidebarCollapsed ? 'w-20' : 'w-64'
+          }`}
+        >
+          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-4' : 'p-6'} flex flex-col`}>
+            <div
+              className={`flex items-center mb-8 ${
+                isSidebarCollapsed ? 'justify-center' : 'justify-between'
+              }`}
+            >
+              {isSidebarCollapsed ? (
+                <div className="h-10" />
+              ) : (
+                <img
+                  src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg"
+                  alt="Wise Media"
+                  className="h-10 w-auto"
+                />
+              )}
+
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(v => !v)}
+                aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${
+                  isSidebarCollapsed ? 'absolute top-4 right-4' : ''
+                }`}
+              >
+                {isSidebarCollapsed ? (
+                  <ChevronRightIcon className="h-5 w-5" />
+                ) : (
+                  <ChevronLeftIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             <nav className="space-y-6 flex-1 overflow-y-auto">
               {navGroups.map(group => (
                 <div key={group.label} className="space-y-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
+                  <p
+                    className={`text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1 ${
+                      isSidebarCollapsed ? 'hidden' : ''
+                    }`}
+                  >
                     {group.label}
                   </p>
                   {group.items.map(item => {
@@ -249,14 +296,19 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                       <NavLink
                         key={item.name}
                         to={item.href}
-                        className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        title={isSidebarCollapsed ? item.name : undefined}
+                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          isSidebarCollapsed ? 'justify-center px-3' : 'px-4'
+                        } ${
                           isActive
-                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
+                            ? isSidebarCollapsed
+                              ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
+                              : 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
                             : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {item.name}
+                        <item.icon className={`${isSidebarCollapsed ? 'h-6 w-6' : 'mr-3 h-5 w-5'}`} />
+                        {!isSidebarCollapsed && item.name}
                       </NavLink>
                     )
                   })}
@@ -405,7 +457,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         </div>
 
         {/* Main Content */}
-        <div className="md:ml-64">
+        <div className={isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}>
           <TopNav
             currentUser={currentUser}
             onLogout={onLogout}
