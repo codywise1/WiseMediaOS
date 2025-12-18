@@ -146,6 +146,7 @@ export default function PaymentModal({ isOpen, onClose, invoice, onPaymentSucces
       setIsVerifying(false);
       setVerificationPhase(null);
       setVerificationError(null);
+      setIsWalletModalOpen(false);
       return;
     }
 
@@ -464,6 +465,7 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
         .catch(() => setSolPriceUSD(null));
       detectWallets();
       setTimeout(detectWallets, 300); // re-scan shortly after in case extensions inject late
+      setIsWalletModalOpen(false);
     }
   }, [paymentMethod]);
 
@@ -475,20 +477,24 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
     return () => window.removeEventListener('focus', onFocus);
   }, [isWalletModalOpen]);
 
-  const getSelectedProvider = () => {
+  const getSelectedProvider = (walletId?: string) => {
     const w: any = window as any;
     const providers = Array.isArray(w.solana?.providers) ? w.solana.providers : (w.solana ? [w.solana] : []);
-    if (selectedWallet === 'phantom') return w.phantom?.solana || providers.find((p: any) => p?.isPhantom) || null;
-    if (selectedWallet === 'solflare') return w.solflare || providers.find((p: any) => p?.isSolflare) || null;
-    if (selectedWallet === 'backpack') return w.backpack?.solana || providers.find((p: any) => p?.isBackpack) || null;
-    if (selectedWallet === 'glow') return w.glow?.solana || w.glow || null;
-    if (selectedWallet === 'exodus') return w.exodus?.solana || providers.find((p: any) => p?.isExodus) || null;
-    if (selectedWallet === 'coinbase') return w.coinbaseWallet?.solana || providers.find((p: any) => p?.isCoinbaseWallet) || null;
+    const pick = walletId || selectedWallet;
+    if (pick === 'phantom') return w.phantom?.solana || providers.find((p: any) => p?.isPhantom) || null;
+    if (pick === 'solflare') return w.solflare || providers.find((p: any) => p?.isSolflare) || null;
+    if (pick === 'backpack') return w.backpack?.solana || providers.find((p: any) => p?.isBackpack) || null;
+    if (pick === 'glow') return w.glow?.solana || w.glow || null;
+    if (pick === 'exodus') return w.exodus?.solana || providers.find((p: any) => p?.isExodus) || null;
+    if (pick === 'coinbase') return w.coinbaseWallet?.solana || providers.find((p: any) => p?.isCoinbaseWallet) || null;
     return w.solana || null;
   };
 
-  const connectWallet = async () => {
-    const provider = getSelectedProvider();
+  const connectWallet = async (walletId?: string) => {
+    if (walletId) {
+      setSelectedWallet(walletId);
+    }
+    const provider = getSelectedProvider(walletId);
     if (!provider) {
       alert('No compatible Solana wallet found.');
       return;
@@ -898,6 +904,15 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
                     <button onClick={handleSolanaPayment} className="w-full btn-primary font-medium" disabled={!solPriceUSD || !treasuryAddress}>
                       Pay with Solana
                     </button>
+                    <button
+                      onClick={() => {
+                        setWalletAddress(null);
+                        setIsWalletModalOpen(true);
+                      }}
+                      className="w-full btn-secondary font-medium shrink-glow-button"
+                    >
+                      Change Wallet
+                    </button>
                   </div>
                 )}
               </div>
@@ -907,39 +922,51 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
 
         {/* Wallet Selection Modal */}
         {isWalletModalOpen && (
-          <Modal isOpen={isWalletModalOpen} onClose={() => setIsWalletModalOpen(false)} title="Select Wallet" maxWidth="max-w-xl">
-            <div className="space-y-6 text-center">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-gray-300">Choose a wallet to continue with Solana payments.</p>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-white font-semibold">Select Wallet</p>
+                <p className="text-gray-400 text-sm">Choose a wallet to continue with Solana payments.</p>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={detectWallets}
                   className="text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-300 hover:text-white hover:border-white/30 transition-colors"
                 >
                   Refresh
                 </button>
+                <button
+                  onClick={() => setIsWalletModalOpen(false)}
+                  className="text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+                >
+                  Back
+                </button>
               </div>
-              <div className="grid grid-cols-1 gap-4 place-items-center">
-                {availableWallets.map((w) => (
-                  <button
-                    key={w.id}
-                    onClick={async () => {
-                      setSelectedWallet(w.id);
-                      await connectWallet();
-                      setIsWalletModalOpen(false);
-                    }}
-                    className="w-full h-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-md px-4 py-5 hover:border-[#3aa3eb]/70 hover:bg-[#3aa3eb]/10 hover:shadow-[0_10px_40px_-12px_rgba(58,163,235,0.45)] transition-all duration-200 text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/60 focus:ring-offset-0 active:scale-[0.98]"
-                  >
-                    {renderWalletIcon(w.id, w.label)}
-                    <span className="font-semibold">{w.label}</span>
-                    <span className="text-xs text-gray-400">Connect with {w.label}</span>
-                  </button>
-                ))}
-              </div>
-              {availableWallets.length === 0 && (
-                <div className="text-center text-gray-400 text-sm">No wallets detected. Open your Solana wallet extension and try again.</div>
-              )}
             </div>
-          </Modal>
+
+            <div className="grid grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-1">
+              {availableWallets.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={async () => {
+                    await connectWallet(w.id);
+                    setIsWalletModalOpen(false);
+                  }}
+                  className="w-full flex items-center gap-4 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-md px-4 py-4 hover:border-[#3aa3eb]/70 hover:bg-[#3aa3eb]/10 hover:shadow-[0_10px_40px_-12px_rgba(58,163,235,0.45)] transition-all duration-200 text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/60 focus:ring-offset-0 active:scale-[0.99]"
+                >
+                  {renderWalletIcon(w.id, w.label)}
+                  <div className="text-left">
+                    <div className="font-semibold">{w.label}</div>
+                    <div className="text-xs text-gray-400">Connect with {w.label}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {availableWallets.length === 0 && (
+              <div className="text-center text-gray-400 text-sm">No wallets detected. Open your Solana wallet extension and try again.</div>
+            )}
+          </div>
         )}
 
         {/* Footer */}

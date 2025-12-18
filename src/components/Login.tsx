@@ -21,7 +21,7 @@ export default function Login({ onLogin }: LoginProps) {
     setLoading(true);
     setError('');
 
-    console.log('Login attempt:', { email, password, isSupabaseAvailable: isSupabaseAvailable() });
+    console.log('Login attempt:', { email, isSupabaseAvailable: isSupabaseAvailable() });
     try {
       const success = await onLogin(email, password);
       if (!success) {

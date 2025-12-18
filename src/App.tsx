@@ -279,7 +279,7 @@ function App() {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!isSupabaseAvailable()) {
       // Demo mode authentication
-      console.log('Demo mode login attempt:', { email, password });
+      console.log('Demo mode login attempt:', { email });
       
       if (email.toLowerCase() === 'admin' && password === 'admin') {
         const userData: User = {

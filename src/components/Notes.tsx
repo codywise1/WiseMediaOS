@@ -12,7 +12,7 @@ import {
   UserIcon,
   FolderIcon
 } from '@heroicons/react/24/outline';
-import { noteService, clientService, projectService, Note, Client, Project } from '../lib/supabase';
+import { noteService, clientService, projectService, Note, Client, Project, UserRole } from '../lib/supabase';
 import Modal from './Modal';
 import ConfirmDialog from './ConfirmDialog';
 import { formatAppDate } from '../lib/dateFormat';
@@ -21,7 +21,7 @@ import { useLoadingGuard } from '../hooks/useLoadingGuard';
 interface User {
   id?: string;
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
 }
 
@@ -56,7 +56,7 @@ export default function Notes({ currentUser }: NotesProps) {
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'staff';
 
   useLoadingGuard(loading, setLoading);
 
@@ -69,8 +69,18 @@ export default function Notes({ currentUser }: NotesProps) {
       if (notes.length === 0) {
         setLoading(true);
       }
+      const notesPromise = isAdmin
+        ? noteService.getAll()
+        : (async () => {
+            if (!currentUser?.email) return [];
+            const client = await clientService.getByEmail(currentUser.email);
+            if (!client?.id) return [];
+            const clientNotes = await noteService.getByClient(client.id);
+            return clientNotes.filter(note => note.is_shared_with_client);
+          })();
+
       const [notesData, clientsData, projectsData] = await Promise.all([
-        noteService.getAll(),
+        notesPromise,
         clientService.getAll(),
         projectService.getAll()
       ]);
@@ -358,6 +368,7 @@ export default function Notes({ currentUser }: NotesProps) {
         mode={modalMode}
         clients={clients}
         projects={projects}
+        readOnly={!isAdmin}
       />
 
       <ConfirmDialog
@@ -379,9 +390,10 @@ interface NoteModalProps {
   mode: 'create' | 'edit';
   clients: Client[];
   projects: Project[];
+  readOnly?: boolean;
 }
 
-function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: NoteModalProps) {
+function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects, readOnly = false }: NoteModalProps) {
   const [formData, setFormData] = useState<NoteFormData>({
     title: '',
     content: '',
@@ -429,6 +441,10 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) {
+      onClose();
+      return;
+    }
     if (isSubmitting) return;
 
     if (!formData.title.trim()) {
@@ -530,6 +546,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             className="form-input w-full px-4 py-3 rounded-lg"
             placeholder="Note title..."
             required
+            disabled={readOnly}
           />
         </div>
 
@@ -540,6 +557,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
             className="form-input w-full px-4 py-3 rounded-lg min-h-[200px]"
             placeholder="Write your note here..."
+            disabled={readOnly}
           />
         </div>
 
@@ -552,6 +570,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
               className="form-input w-full px-4 py-3 rounded-lg"
               placeholder="Meeting, Idea, Task..."
+              disabled={readOnly}
             />
           </div>
 
@@ -561,6 +580,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
               value={formData.client_id}
               onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
               className="form-input w-full px-4 py-3 rounded-lg"
+              disabled={readOnly}
             >
               <option value="">No Client</option>
               {clients.map(client => (
@@ -578,7 +598,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             value={formData.project_id}
             onChange={(e) => setFormData(prev => ({ ...prev, project_id: e.target.value }))}
             className="form-input w-full px-4 py-3 rounded-lg"
-            disabled={!formData.client_id}
+            disabled={readOnly || !formData.client_id}
           >
             <option value="">No Project</option>
             {filteredProjects.map(project => (
@@ -599,11 +619,13 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
               className="form-input flex-1 px-4 py-2 rounded-lg"
               placeholder="Add tag..."
+              disabled={readOnly}
             />
             <button
               type="button"
               onClick={handleAddTag}
               className="btn-secondary px-4 py-2 rounded-lg shrink-glow-button"
+              disabled={readOnly}
             >
               Add
             </button>
@@ -635,10 +657,11 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             onChange={handleFileUpload}
             className="hidden"
             id="file-upload"
+            disabled={readOnly}
           />
           <label
             htmlFor="file-upload"
-            className="flex items-center justify-center space-x-2 w-full px-4 py-3 border-2 border-dashed border-slate-700 hover:border-[#3aa3eb]/50 rounded-lg cursor-pointer transition-colors"
+            className={`flex items-center justify-center space-x-2 w-full px-4 py-3 border-2 border-dashed border-slate-700 rounded-lg transition-colors ${readOnly ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'hover:border-[#3aa3eb]/50 cursor-pointer'}`}
           >
             <DocumentArrowUpIcon className="h-5 w-5 text-gray-400" />
             <span className="text-gray-400">Click to upload files</span>
@@ -677,6 +700,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
               checked={formData.is_pinned}
               onChange={(e) => setFormData(prev => ({ ...prev, is_pinned: e.target.checked }))}
               className="form-checkbox h-5 w-5 text-[#3aa3eb] rounded"
+              disabled={readOnly}
             />
             <span className="text-gray-300">Pin this note</span>
           </label>
@@ -686,6 +710,7 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
               checked={formData.is_shared_with_client}
               onChange={(e) => setFormData(prev => ({ ...prev, is_shared_with_client: e.target.checked }))}
               className="form-checkbox h-5 w-5 text-[#3aa3eb] rounded"
+              disabled={readOnly}
             />
             <span className="text-gray-300">Share with client</span>
           </label>
@@ -698,15 +723,17 @@ function NoteModal({ isOpen, onClose, onSave, note, mode, clients, projects }: N
             className="btn-secondary px-6 py-3 rounded-xl shrink-glow-button"
             disabled={isSubmitting}
           >
-            Cancel
+            {readOnly ? 'Close' : 'Cancel'}
           </button>
-          <button
-            type="submit"
-            className="btn-primary px-6 py-3 rounded-xl shrink-glow-button"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Note' : 'Save Changes'}
-          </button>
+          {!readOnly && (
+            <button
+              type="submit"
+              className="btn-primary px-6 py-3 rounded-xl shrink-glow-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Note' : 'Save Changes'}
+            </button>
+          )}
         </div>
       </form>
     </Modal>

@@ -1149,6 +1149,7 @@ export const noteService = {
       .from('notes')
       .insert({
         ...note,
+        admin_id: (userData?.user?.id || ''),
         created_by: userData?.user?.id || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
