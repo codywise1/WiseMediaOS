@@ -565,26 +565,6 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
-                  <button 
-                    onClick={() => {
-                      toastInfo(`Rescheduling appointment: ${appointment.title}\nCurrent: ${appointment.date} at ${appointment.time}\n\nPlease select a new date and time.`, 5000);
-                    }}
-                    className={`text-white hover:text-blue-300 text-sm w-full sm:w-auto ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!isAdmin}
-                  >
-                    Reschedule
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to cancel "${appointment.title}"?`)) {
-                        toastSuccess('Appointment cancelled successfully.');
-                      }
-                    }}
-                    className={`text-red-400 hover:text-red-300 text-sm w-full sm:w-auto ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button` }
-                    disabled={!isAdmin}
-                  >
-                    Cancel
-                  </button>
                   {appointment.type === 'video' && (
                     <button 
                       onClick={() => {
