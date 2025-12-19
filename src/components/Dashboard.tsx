@@ -12,11 +12,11 @@ import {
   FolderIcon,
   DocumentIcon,
   CalendarIcon,
-  PlusIcon,
-  ArrowUpRightIcon,
+
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  MinusIcon
+  MinusIcon,
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
 
 interface User {
@@ -198,7 +198,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       if (isFirstLoad) {
         setLoading(true);
       }
-      
+
       // Always try to load from Supabase, fallback to empty data if not available
       try {
         if (currentUser?.role === 'admin') {
@@ -208,29 +208,29 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             invoiceService.getAll(),
             appointmentService.getAll()
           ]);
-          
+
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
           const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
           const revenue = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
           const completedProjects = projects.filter(p => p.status === 'completed').length;
-          
+
           // Calculate previous month data for percentage changes
           const currentDate = new Date();
           const previousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
           const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-          
+
           const previousMonthInvoices = invoices.filter(inv => {
             const invoiceDate = new Date(inv.created_at);
             return invoiceDate >= previousMonth && invoiceDate <= previousMonthEnd && inv.status === 'paid';
           });
-          
+
           const previousMonthProjects = projects.filter(p => {
             const projectDate = new Date(p.created_at);
             return projectDate >= previousMonth && projectDate <= previousMonthEnd;
           });
-          
+
           const previousMonthRevenue = previousMonthInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-          
+
           setDashboardData({
             projects: projects.length,
             invoices: invoices.length,
@@ -257,10 +257,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             invoiceService.getByClientId(effectiveClientId),
             appointmentService.getByClientId(effectiveClientId)
           ]);
-          
+
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
           const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
-          
+
           setDashboardData({
             projects: projects.length,
             invoices: invoices.length,
@@ -329,7 +329,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   };
 
   const quickActions = currentUser?.role === 'admin' ? adminQuickActions : userQuickActions;
-  
+
   // Update quick actions with real data
   const updatedQuickActions = quickActions.map(action => {
     switch (action.name) {
@@ -392,45 +392,45 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
   // Update stats with real data and working percentages
   const updatedStats = currentUser?.role === 'admin' ? [
-    { 
-      name: 'Active Projects', 
-      value: dashboardData.projects.toString(), 
+    {
+      name: 'Active Projects',
+      value: dashboardData.projects.toString(),
       change: projectsChange,
       subtitle: `${dashboardData.completedProjects} completed`,
       description: 'Total active projects'
     },
-    { 
-      name: 'Monthly Revenue', 
-      value: `$${dashboardData.revenue.toLocaleString()}`, 
+    {
+      name: 'Monthly Revenue',
+      value: `$${dashboardData.revenue.toLocaleString()}`,
       change: revenueChange,
       subtitle: `$${dashboardData.pendingInvoices.toLocaleString()} pending`,
       description: 'Revenue this month'
     },
-    { 
-      name: 'Total Invoices', 
-      value: dashboardData.invoices.toString(), 
+    {
+      name: 'Total Invoices',
+      value: dashboardData.invoices.toString(),
       change: invoicesChange,
       subtitle: `$${dashboardData.overdueInvoices.toLocaleString()} overdue`,
       description: 'Invoices generated'
     },
-    { 
-      name: 'Success Rate', 
-      value: `${completionRate}%`, 
+    {
+      name: 'Success Rate',
+      value: `${completionRate}%`,
       change: completionRate >= 90 ? 5 : completionRate >= 70 ? 0 : -5,
       subtitle: `${dashboardData.completedProjects}/${dashboardData.projects} completed`,
       description: 'Project completion rate'
     },
   ] : [
-    { 
-      name: 'My Projects', 
-      value: dashboardData.projects.toString(), 
+    {
+      name: 'My Projects',
+      value: dashboardData.projects.toString(),
       change: 0,
       subtitle: `${dashboardData.completedProjects} completed`,
       description: 'Your assigned projects'
     },
-    { 
-      name: 'Outstanding', 
-      value: `$${dashboardData.pendingInvoices.toLocaleString()}`, 
+    {
+      name: 'Outstanding',
+      value: `$${dashboardData.pendingInvoices.toLocaleString()}`,
       change: dashboardData.overdueInvoices > 0 ? -10 : 0,
       subtitle: `${dashboardData.invoices} total invoices`,
       description: 'Pending payments'
@@ -510,12 +510,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             <p className="text-gray-300">Here's what's happening with your projects today.</p>
           </div>
           {currentUser?.role === 'admin' && (
-            <button 
+            <button
               onClick={() => navigate('/projects')}
               className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
-              <PlusIcon className="h-5 w-5" />
               Start New Project
+              <ArrowRightIcon className="h-4 w-4 ml-1" />
             </button>
           )}
         </div>
@@ -526,7 +526,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         {updatedStats.map((stat) => {
           const trendInfo = getTrendInfo(stat.change);
           const TrendIcon = trendInfo.icon;
-          
+
           return (
             <div key={stat.name} className="glass-card rounded-xl p-6 card-hover neon-glow">
               <div className="flex items-start justify-between mb-4">
@@ -542,23 +542,22 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   <span>{trendInfo.prefix}{Math.abs(stat.change)}%</span>
                 </div>
               </div>
-              
+
               {/* Progress bar for percentage-based stats */}
               {stat.name.includes('Rate') && (
                 <div className="mt-3">
                   <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-1000 ${
-                        parseInt(stat.value) >= 90 ? 'bg-green-500' :
+                    <div
+                      className={`h-2 rounded-full transition-all duration-1000 ${parseInt(stat.value) >= 90 ? 'bg-green-500' :
                         parseInt(stat.value) >= 70 ? 'bg-[#3aa3eb]' :
-                        'bg-red-500'
-                      }`}
+                          'bg-red-500'
+                        }`}
                       style={{ width: `${parseInt(stat.value)}%` }}
                     ></div>
                   </div>
                 </div>
               )}
-              
+
               <p className="text-xs text-gray-500 mt-2">{stat.description}</p>
             </div>
           );
@@ -575,20 +574,19 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               </div>
               <span className="text-2xl font-bold text-white">{action.count}</span>
             </div>
-            
+
             <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{action.name}</h3>
             <p className="text-gray-400 mb-1">{action.description}</p>
             <p className="text-sm text-blue-400 mb-4">{action.status}</p>
-            
+
             <div className="space-y-2">
               {action.actions.map((actionItem, index) => (
                 <button
                   key={index}
                   onClick={() => handleQuickAction(actionItem, action.route)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-700/50 btn-pill transition-all duration-200 shrink-glow-button"
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-700/50 btn-pill transition-all duration-200 shrink-glow-button"
                 >
                   {actionItem}
-                  <ArrowUpRightIcon className="h-4 w-4" />
                 </button>
               ))}
             </div>
@@ -600,18 +598,18 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       <div className="glass-card rounded-xl p-6 neon-glow">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Activity</h2>
-          <button 
+          <button
             onClick={() => console.log('View all activities')}
-            className="text-blue-400 hover:text-blue-300 text-sm font-medium btn-pill px-4 py-2 hover:bg-blue-900/20 shrink-glow-button" 
+            className="text-blue-400 hover:text-blue-300 text-sm font-medium btn-pill px-4 py-2 hover:bg-blue-900/20 shrink-glow-button"
           >
             View All
           </button>
         </div>
-        
+
         <div className="space-y-4">
           {recentActivities.length > 0 ? recentActivities.map((activity) => (
-            <div 
-              key={activity.id} 
+            <div
+              key={activity.id}
               className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-800/30 transition-colors cursor-pointer"
               onClick={() => {
                 if (activity.type === 'project') navigate('/projects');
@@ -620,18 +618,16 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 else if (activity.type === 'proposal') navigate('/proposals');
               }}
             >
-              <div className={`p-2 rounded-lg ${
-                activity.status === 'completed' ? 'bg-green-900/30' :
+              <div className={`p-2 rounded-lg ${activity.status === 'completed' ? 'bg-green-900/30' :
                 activity.status === 'success' ? 'bg-green-900/30' :
-                activity.status === 'pending' ? 'bg-yellow-900/30' :
-                'bg-red-900/30'
-              }`}>
-                <activity.icon className={`h-5 w-5 text-white ${
-                  activity.status === 'completed' ? 'text-green-400' :
+                  activity.status === 'pending' ? 'bg-yellow-900/30' :
+                    'bg-red-900/30'
+                }`}>
+                <activity.icon className={`h-5 w-5 text-white ${activity.status === 'completed' ? 'text-green-400' :
                   activity.status === 'success' ? 'text-green-400' :
-                  activity.status === 'pending' ? 'text-yellow-400' :
-                  'text-red-400'
-                }`} />
+                    activity.status === 'pending' ? 'text-yellow-400' :
+                      'text-red-400'
+                  }`} />
               </div>
               <div className="flex-1">
                 <p className="text-white font-medium">{activity.title}</p>
