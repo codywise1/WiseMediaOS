@@ -232,16 +232,18 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
 
   return (
     <div className="min-h-screen relative">
-      {/* Background image */}
+      {/* Fixed background for both mobile and desktop */}
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20 transform-gpu"
         style={{
           backgroundImage:
-            "url('https://codywise.io/wp-content/uploads/2025/09/Wise-Media-OS-Wallpaper.webp')"
+            "url('https://codywise.io/wp-content/uploads/2025/02/IMG-4-Wise-Media.webp')"
         }}
       />
 
-      {/* Dark overlay */}
+      {/* Background overlay for readability */}
+      <div className="fixed inset-0 bg-black/20 -z-10 pointer-events-none" />
+
 
       {/* App content */}
       <div className="relative z-10">
