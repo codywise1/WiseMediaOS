@@ -214,26 +214,70 @@ export default function CommunityPage() {
       if (!isSupabaseAvailable()) return;
       if (!profile) return;
 
-      // Use resolvedRecipientId if available, otherwise use selectedUser.id
-      const recipientId = resolvedRecipientId || selectedUser.id;
+      let cancelled = false;
+      let subscription: any;
 
-      const subscription = supabase!
-        .channel(`private:${profile.id}:${selectedUser.id}`)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'private_messages',
-          filter: `or(and(sender_id.eq.${profile.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${profile.id}))`,
-        }, () => {
+      const setupSubscription = async () => {
+        let recipientId = resolvedRecipientId || selectedUser.id;
+
+        const client = clients.find(c => c.id === selectedUser.id);
+        if (client && !resolvedRecipientId) {
+          const { data: profileData } = await supabase!
+            .from('profiles')
+            .select('id')
+            .eq('email', client.email)
+            .maybeSingle();
+
+          if (cancelled) return;
+
+          if (profileData?.id) {
+            recipientId = profileData.id;
+            setResolvedRecipientId(profileData.id);
+          } else {
+            setResolvedRecipientId(null);
+            return;
+          }
+        }
+
+        const handleInsert = (payload: any) => {
+          const msg = payload?.new;
+          if (!msg) return;
+
+          const otherPartyId = msg.sender_id === profile.id ? msg.recipient_id : msg.sender_id;
+          if (otherPartyId !== recipientId) {
+            fetchAllUsers();
+            return;
+          }
+
           fetchPrivateMessages();
-        })
-        .subscribe();
+          fetchAllUsers();
+        };
+
+        subscription = supabase!
+          .channel(`private:${profile.id}:${recipientId}`)
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'private_messages',
+            filter: `sender_id=eq.${profile.id}`,
+          }, handleInsert)
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'private_messages',
+            filter: `recipient_id=eq.${profile.id}`,
+          }, handleInsert)
+          .subscribe();
+      };
+
+      setupSubscription();
 
       return () => {
-        subscription.unsubscribe();
+        cancelled = true;
+        subscription?.unsubscribe?.();
       };
     }
-  }, [selectedUser, profile, resolvedRecipientId]);
+  }, [selectedUser, profile, resolvedRecipientId, clients]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -482,6 +526,9 @@ export default function CommunityPage() {
           // Update conversation list to include this new conversation
           await fetchAllUsers();
 
+          // Sync messages in case realtime is delayed/missed
+          await fetchPrivateMessages();
+
           // Successful send - the real-time subscription will replace the optimistic message
           return;
         }
@@ -509,7 +556,7 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-180px)] flex flex-col lg:flex-row gap-6">
+    <div className="h-full overflow-hidden flex flex-col lg:flex-row gap-6">
       <div className="lg:w-80 flex-shrink-0">
         <GlassCard className="h-full flex flex-col">
           <div className="flex gap-2 mb-4">
@@ -752,6 +799,13 @@ export default function CommunityPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto py-4 space-y-4">
+            {view === 'channels' && selectedChannel && messages.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  No messages yet. Be the first to say hi.
+                </p>
+              </div>
+            )}
             {view === 'channels' && messages.map((msg) => (
               <div key={msg.id} className="flex gap-3">
                 {msg.profiles?.avatar_url ? (
@@ -784,6 +838,13 @@ export default function CommunityPage() {
               </div>
             ))}
 
+            {view === 'private' && selectedUser && privateMessages.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  No messages yet. Send the first message.
+                </p>
+              </div>
+            )}
             {view === 'private' && privateMessages.map((msg) => {
               const isMyMessage = msg.sender_id === profile?.id;
 
