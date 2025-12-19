@@ -58,11 +58,11 @@ body::before {
 }
 
 .neon-glow {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 20px rgba(89, 161, 229, 0.15), 0 0 40px rgba(89, 161, 229, 0.1);
 }
 
 .neon-glow:hover {
-  box-shadow: 0 0 30px rgba(59, 130, 246, 0.25), 0 0 60px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 30px rgba(89, 161, 229, 0.25), 0 0 60px rgba(89, 161, 229, 0.15);
 }
 
 .gradient-text {
@@ -261,7 +261,7 @@ body::before {
 .profile-card:hover {
   background: rgba(30, 41, 59, 1);
   color: #ffffff;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(58, 163, 235, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(89, 161, 229, 0.15);
 }
 
 .logout-card {
@@ -274,7 +274,7 @@ body::before {
 
 .logout-card:hover {
   background: rgba(30, 41, 59, 1);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(89, 161, 229, 0.15);
 }
 
 /* Enhanced border utilities */

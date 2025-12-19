@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid, Menu } from 'lucide-react';
+import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
@@ -35,6 +35,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
   const { profile, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const navigate = useNavigate();
@@ -160,6 +161,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
     // setShowQuickActions(false);
     setShowAvatarMenu(false);
     setIsSearchFocused(false);
+    setShowMobileSearch(false);
     setSearchQuery('');
     navigate(to);
   };
@@ -179,12 +181,13 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
 
   return (
     <>
-      {(showAvatarMenu || isSearchFocused) && (
+      {(showAvatarMenu || isSearchFocused || showMobileSearch) && (
         <div
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={() => {
             setShowAvatarMenu(false);
             setIsSearchFocused(false);
+            setShowMobileSearch(false);
           }}
         />
       )}
@@ -206,7 +209,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
         </div>
 
         <div className="hidden md:flex items-center w-2/3 max-w-xl mx-6 relative">
-          <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-blue-500/70 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all backdrop-blur">
+          <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               value={searchQuery}
@@ -217,7 +220,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
                 setIsSearchFocused(true);
               }}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
-              placeholder="Search clients, projects, invoices, notes..."
+              placeholder="Search workplace"
               className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
             />
           </div>
@@ -258,7 +261,78 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
           )}
         </div>
 
+        {/* Mobile Search Overlay */}
+        {showMobileSearch && (
+          <div className="md:hidden absolute top-20 left-0 w-full bg-slate-950/95 backdrop-blur-xl border-b border-white/10 p-4 z-50 animate-in slide-in-from-top">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
+                <Search size={18} className="text-gray-400 mr-2" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search workplace"
+                  className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={() => setShowMobileSearch(false)}
+                className="p-2 text-gray-400 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              {searchQuery.trim() && (
+                <>
+                  {groupedOrder.map((groupKey) => {
+                    const items = filteredResults[groupKey];
+                    if (!items || items.length === 0) return null;
+                    return (
+                      <div key={groupKey} className="mb-4">
+                        <p className="text-xs uppercase tracking-wide text-gray-400 mb-2 px-1">
+                          {groupKey}
+                        </p>
+                        <div className="space-y-1">
+                          {items.map((item) => (
+                            <button
+                              key={item.title}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => handleNavigate(item.to)}
+                              className="w-full text-left flex items-center justify-between px-3 py-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+                            >
+                              <div>
+                                <p className="text-sm text-white font-medium">{item.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{item.meta}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {Object.values(filteredResults).every((arr) => !arr || arr.length === 0) && (
+                    <div className="py-8 text-center text-sm text-gray-400">No results found</div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 lg:gap-4">
+          <button
+            onClick={() => {
+              setShowNotifications(false);
+              setShowAvatarMenu(false);
+              setShowMobileSearch((prev) => !prev);
+            }}
+            className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Search size={20} className="text-white" />
+          </button>
+
           <button
             onClick={() => {
               setShowAvatarMenu(false);

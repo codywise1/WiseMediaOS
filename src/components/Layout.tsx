@@ -132,7 +132,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'System',
       items: [
         { name: 'Support', href: '/support', icon: LifebuoyIcon },
-        
+
         { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
       ]
     }
@@ -244,15 +244,13 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
       <div className="relative z-10">
         {/* Desktop Sidebar */}
         <div
-          className={`hidden md:block fixed inset-y-0 left-0 z-50 ${
-            isSidebarCollapsed ? 'w-20' : 'w-64'
-          }`}
+          className={`hidden md:block fixed inset-y-0 left-0 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'
+            }`}
         >
           <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-4' : 'p-6'} flex flex-col`}>
             <div
-              className={`flex items-center mb-8 ${
-                isSidebarCollapsed ? 'justify-center' : 'justify-between'
-              }`}
+              className={`flex items-center mb-8 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
+                }`}
             >
               {isSidebarCollapsed ? (
                 <div className="h-10" />
@@ -268,9 +266,8 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                 type="button"
                 onClick={() => setIsSidebarCollapsed(v => !v)}
                 aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${
-                  isSidebarCollapsed ? 'absolute top-4 right-4' : ''
-                }`}
+                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${isSidebarCollapsed ? 'absolute top-4 right-4' : ''
+                  }`}
               >
                 {isSidebarCollapsed ? (
                   <ChevronRightIcon className="h-5 w-5" />
@@ -284,9 +281,8 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               {navGroups.map(group => (
                 <div key={group.label} className="space-y-1">
                   <p
-                    className={`text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1 ${
-                      isSidebarCollapsed ? 'hidden' : ''
-                    }`}
+                    className={`text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1 ${isSidebarCollapsed ? 'hidden' : ''
+                      }`}
                   >
                     {group.label}
                   </p>
@@ -297,15 +293,13 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                         key={item.name}
                         to={item.href}
                         title={isSidebarCollapsed ? item.name : undefined}
-                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                          isSidebarCollapsed ? 'justify-center px-3' : 'px-4'
-                        } ${
-                          isActive
+                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center px-3' : 'px-4'
+                          } ${isActive
                             ? isSidebarCollapsed
-                              ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
-                              : 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-l-4 border-[#3aa3eb] rounded-l-none'
+                              ? 'bg-[#59a1e5]/20 text-[#59a1e5]'
+                              : 'bg-[#59a1e5]/20 text-[#59a1e5] border-l-4 border-[#59a1e5] rounded-l-none'
                             : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                        }`}
+                          }`}
                       >
                         <item.icon className={`${isSidebarCollapsed ? 'h-6 w-6' : 'mr-3 h-5 w-5'}`} />
                         {!isSidebarCollapsed && item.name}
@@ -320,14 +314,14 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               <div className="mt-auto pt-6 space-y-3">
                 <button
                   onClick={() => setIsProfileModalOpen(true)}
-                  className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#3aa3eb]/40 hover:shadow-lg hover:shadow-[#3aa3eb]/20 group"
+                  className="w-full profile-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-[#59a1e5]/40 hover:shadow-lg hover:shadow-[#59a1e5]/20 group"
                 >
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                         Profile
                       </span>
-                      <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#3aa3eb] transition-colors" />
+                      <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#59a1e5] transition-colors" />
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="relative flex-shrink-0">
@@ -406,11 +400,10 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                           key={item.name}
                           to={item.href}
                           onClick={closeMobileMenu}
-                          className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                            isActive
+                          className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
                               ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
                               : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
-                          }`}
+                            }`}
                         >
                           <item.icon className="mr-3 h-5 w-5" />
                           {item.name}
@@ -434,11 +427,10 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={`flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 min-w-[70px] ${
-                      isActive
+                    className={`flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 min-w-[70px] ${isActive
                         ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] scale-105'
                         : 'text-gray-400 hover:text-white active:scale-95'
-                    }`}
+                      }`}
                   >
                     <item.icon className={`h-6 w-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
                     <span className="text-xs font-medium">{item.name}</span>
