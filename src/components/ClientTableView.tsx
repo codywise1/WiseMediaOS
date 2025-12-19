@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   PencilIcon,
   TrashIcon,
@@ -82,7 +82,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
           <thead>
             <tr className="border-b border-slate-700">
               <th
-                className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('company')}
               >
                 <div className="flex items-center space-x-2">
@@ -91,7 +91,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center space-x-2">
@@ -100,7 +100,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('category')}
               >
                 <div className="flex items-center space-x-2">
@@ -109,7 +109,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('email')}
               >
                 <div className="flex items-center space-x-2">
@@ -121,7 +121,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 Phone
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('location')}
               >
                 <div className="flex items-center space-x-2">
@@ -152,23 +152,23 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.name || '-'}</span>
+                  <span className="text-sm text-gray-200 font-medium">{client.name || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   {client.category ? (
                     <CategoryBadge category={client.category} size="sm" />
                   ) : (
-                    <span className="text-sm text-gray-500">-</span>
+                    <span className="text-sm text-gray-400 font-medium">-</span>
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.email}</span>
+                  <span className="text-sm text-gray-200 font-medium">{client.email}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
+                  <span className="text-sm text-gray-200 font-medium">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.location || '-'}</span>
+                  <span className="text-sm text-gray-200 font-medium">{client.location || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
@@ -177,10 +177,10 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                         <ServiceTag key={idx} service={service} size="sm" />
                       ))
                     ) : (
-                      <span className="text-sm text-gray-500">-</span>
+                      <span className="text-sm text-gray-400 font-medium">-</span>
                     )}
                     {client.services_requested && client.services_requested.length > 2 && (
-                      <span className="text-xs text-gray-400 ml-1">
+                      <span className="text-xs text-gray-300 font-bold ml-1">
                         +{client.services_requested.length - 2}
                       </span>
                     )}
@@ -190,7 +190,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={() => onView(client)}
-                      className="text-gray-400 hover:text-white p-1 transition-colors"
+                      className="text-gray-300 hover:text-white p-1 transition-colors"
                       title="View"
                     >
                       <EyeIcon className="h-4 w-4" />

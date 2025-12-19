@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
@@ -441,7 +441,6 @@ export default function Clients({ currentUser }: ClientsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
-            const initials = (client.company || client.name).substring(0, 2).toUpperCase();
 
             return (
               <div key={client.id} className="glass-card hover-glow rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
@@ -455,7 +454,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                     <h3 className="text-xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
-                    <p className="text-gray-400 text-sm font-medium mb-3 truncate">
+                    <p className="text-gray-300 text-sm font-semibold mb-3 truncate">
                       {client.name}
                     </p>
 
@@ -498,8 +497,8 @@ export default function Clients({ currentUser }: ClientsProps) {
                   {/* Email */}
                   <a href={`mailto:${client.email}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <EnvelopeIcon className="h-5 w-5 text-gray-400 group-hover/item:text-white transition-colors shrink-0" />
-                      <span className="text-sm text-gray-300 group-hover/item:text-white truncate font-medium">
+                      <EnvelopeIcon className="h-5 w-5 text-gray-300 group-hover/item:text-white transition-colors shrink-0" />
+                      <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-semibold">
                         {client.email}
                       </span>
                     </div>
@@ -510,8 +509,8 @@ export default function Clients({ currentUser }: ClientsProps) {
                   {client.phone && (
                     <a href={`tel:${client.phone}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <PhoneIcon className="h-5 w-5 text-gray-400 group-hover/item:text-white transition-colors shrink-0" />
-                        <span className="text-sm text-gray-300 group-hover/item:text-white truncate font-medium">
+                        <PhoneIcon className="h-5 w-5 text-gray-300 group-hover/item:text-white transition-colors shrink-0" />
+                        <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-semibold">
                           {formatPhoneNumber(client.phone)}
                         </span>
                       </div>
@@ -527,7 +526,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <h4 className="text-sm font-medium text-white mb-3">Services</h4>
                       <div className="flex flex-wrap gap-2">
                         {client.services_requested.map((service, idx) => (
-                          <span key={idx} className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-gray-300 hover:text-white hover:border-slate-600 transition-colors cursor-default">
+                          <span key={idx} className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-gray-200 hover:text-white hover:border-slate-600 transition-colors cursor-default font-medium">
                             {service}
                           </span>
                         ))}
@@ -540,14 +539,14 @@ export default function Clients({ currentUser }: ClientsProps) {
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
-                  <span className="text-xs text-gray-500 font-medium">
+                  <span className="text-xs text-gray-400 font-semibold">
                     Added {formatAppDate(client.created_at)}
                   </span>
 
                   <div className="flex items-center gap-3">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewClient(client); }}
-                      className="text-gray-500 hover:text-white transition-colors p-1"
+                      className="text-gray-400 hover:text-white transition-colors p-1"
                       title="View Details"
                     >
                       <EyeIcon className="h-5 w-5" />
@@ -556,14 +555,14 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditClient(client); }}
-                          className="text-gray-500 hover:text-[#3aa3eb] transition-colors p-1"
+                          className="text-gray-400 hover:text-[#3aa3eb] transition-colors p-1"
                           title="Edit"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteClient(client); }}
-                          className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                          className="text-gray-400 hover:text-red-400 transition-colors p-1"
                           title="Delete"
                         >
                           <TrashIcon className="h-5 w-5" />

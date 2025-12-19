@@ -531,13 +531,13 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             <div key={stat.name} className="glass-card rounded-xl p-6 card-hover neon-glow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-300 mb-1">{stat.name}</p>
+                  <p className="text-sm font-medium text-gray-200 mb-1">{stat.name}</p>
                   <p className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                     {stat.value}
                   </p>
-                  <p className="text-xs text-gray-400">{stat.subtitle}</p>
+                  <p className="text-xs text-gray-300 font-medium">{stat.subtitle}</p>
                 </div>
-                <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${trendInfo.color}`}>
+                <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-bold ${trendInfo.color}`}>
                   <TrendIcon className="h-3 w-3" />
                   <span>{trendInfo.prefix}{Math.abs(stat.change)}%</span>
                 </div>
@@ -558,7 +558,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 </div>
               )}
 
-              <p className="text-xs text-gray-500 mt-2">{stat.description}</p>
+              <p className="text-xs text-gray-400 mt-2">{stat.description}</p>
             </div>
           );
         })}
@@ -576,8 +576,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             </div>
 
             <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{action.name}</h3>
-            <p className="text-gray-400 mb-1">{action.description}</p>
-            <p className="text-sm text-blue-400 mb-4">{action.status}</p>
+            <p className="text-gray-300 mb-1">{action.description}</p>
+            <p className="text-sm text-[#59a1e5] font-semibold mb-4">{action.status}</p>
 
             <div className="space-y-2">
               {action.actions.map((actionItem, index) => (
@@ -630,8 +630,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   }`} />
               </div>
               <div className="flex-1">
-                <p className="text-white font-medium">{activity.title}</p>
-                <p className="text-gray-400 text-sm">{activity.time}</p>
+                <p className="text-white font-semibold">{activity.title}</p>
+                <p className="text-gray-300 text-sm">{activity.time}</p>
               </div>
             </div>
           )) : (
