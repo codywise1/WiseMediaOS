@@ -7,7 +7,6 @@ import {
   BuildingOfficeIcon,
   PhoneIcon,
   EnvelopeIcon,
-  GlobeAltIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -21,9 +20,9 @@ import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
 import ClientTableView from './ClientTableView';
 import CategoryBadge from './CategoryBadge';
-import ServiceTag from './ServiceTag';
 import { clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
+import { formatPhoneNumber } from '../lib/phoneFormat';
 
 interface User {
   email: string;
@@ -380,7 +379,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
       {/* Client Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-card rounded-xl p-6">
+        <div className="glass-card hover-glow rounded-xl p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-[#3aa3eb]">
               <UserGroupIcon className="h-6 w-6 text-white" />
@@ -392,7 +391,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-6">
+        <div className="glass-card hover-glow rounded-xl p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-[#3aa3eb]">
               <UserGroupIcon className="h-6 w-6 text-white" />
@@ -404,7 +403,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-6">
+        <div className="glass-card hover-glow rounded-xl p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-[#3aa3eb]">
               <UserGroupIcon className="h-6 w-6 text-white" />
@@ -416,7 +415,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-6">
+        <div className="glass-card hover-glow rounded-xl p-6">
           <div className="flex items-center">
             <div className="p-3 rounded-lg bg-[#3aa3eb]">
               <BuildingOfficeIcon className="h-6 w-6 text-white" />
@@ -445,25 +444,14 @@ export default function Clients({ currentUser }: ClientsProps) {
             const initials = (client.company || client.name).substring(0, 2).toUpperCase();
 
             return (
-              <div key={client.id} className="glass-card rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
+              <div key={client.id} className="glass-card hover-glow rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
                 {/* Background Glow Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
                 {/* Header Section */}
-                <div className="flex items-start gap-4 mb-8 relative z-10">
-                  {/* Logo/Avatar */}
-                  <div className="shrink-0 relative">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-900 to-black border border-white/20 flex items-center justify-center shadow-lg shadow-black/50 overflow-hidden group-hover:border-[#3aa3eb]/50 transition-colors">
-                      <img
-                        src={client.avatar || "https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp"}
-                        alt={client.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
+                <div className="mb-8 relative z-10">
                   {/* Info */}
-                  <div className="flex-1 min-w-0 pt-1">
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
@@ -474,12 +462,31 @@ export default function Clients({ currentUser }: ClientsProps) {
                     <div className="flex flex-wrap gap-2 items-center">
                       {client.category && <CategoryBadge category={client.category} />}
                       {client.location && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-gray-300 border border-slate-700/50">
+                        <span
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.33)',
+                            border: '1px solid rgba(255, 255, 255, 1)',
+                            color: 'white'
+                          }}
+                        >
                           {client.location}
                         </span>
                       )}
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-white/5 ${statusInfo.color.replace('text-', 'bg-').split(' ')[0]} bg-opacity-10 text-gray-300`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${statusInfo.color.replace('text-', 'bg-').split(' ')[0]}`}></span>
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: client.status === 'active' ? 'rgba(71, 234, 59, 0.33)' : 'rgba(234, 59, 59, 0.33)',
+                          border: client.status === 'active' ? '1px solid rgba(71, 234, 59, 1)' : '1px solid rgba(234, 59, 59, 1)',
+                          color: client.status === 'active' ? '#47ea3b' : '#ea3b3b'
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full mr-2"
+                          style={{
+                            backgroundColor: client.status === 'active' ? '#47ea3b' : '#ea3b3b'
+                          }}
+                        ></span>
                         {statusInfo.label}
                       </span>
                     </div>
@@ -505,7 +512,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <div className="flex items-center gap-3 overflow-hidden">
                         <PhoneIcon className="h-5 w-5 text-gray-400 group-hover/item:text-white transition-colors shrink-0" />
                         <span className="text-sm text-gray-300 group-hover/item:text-white truncate font-medium">
-                          {client.phone}
+                          {formatPhoneNumber(client.phone)}
                         </span>
                       </div>
                       <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-white transition-colors" />

@@ -178,7 +178,8 @@ export default function CommunityPage() {
             setView('private');
             setSelectedUser(matchingUser);
           } else {
-            // Create temporary mock user for demo chat
+            // Create temporary mock user for demo chat (don't add to conversations yet)
+            // They'll be added when the first message is sent
             const newMockUser: PrivateConversation = {
               id: client.id,
               full_name: client.name,
@@ -186,7 +187,7 @@ export default function CommunityPage() {
               role: 'user',
               unreadCount: 0
             };
-            setPrivateConversations(prev => [...prev, newMockUser]);
+
             setView('private');
             setSelectedUser(newMockUser);
           }
@@ -739,7 +740,8 @@ export default function CommunityPage() {
                                 if (existingConvo) {
                                   setSelectedUser(existingConvo);
                                 } else {
-                                  // Create temporary user object for client
+                                  // Create temporary user object for client (don't add to conversations yet)
+                                  // They'll be added when the first message is sent
                                   const clientUser: PrivateConversation = {
                                     id: client.id,
                                     full_name: client.name,
@@ -747,7 +749,7 @@ export default function CommunityPage() {
                                     role: 'user',
                                     unreadCount: 0
                                   };
-                                  setPrivateConversations(prev => [...prev, clientUser]);
+
                                   setSelectedUser(clientUser);
                                 }
                               }}

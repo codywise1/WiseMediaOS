@@ -9,6 +9,7 @@ import {
 import { Client } from '../lib/supabase';
 import CategoryBadge from './CategoryBadge';
 import ServiceTag from './ServiceTag';
+import { formatPhoneNumber } from '../lib/phoneFormat';
 
 interface ClientTableViewProps {
   clients: Client[];
@@ -140,9 +141,8 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
             {sortedClients.map((client, index) => (
               <tr
                 key={client.id}
-                className={`border-b border-slate-800 hover:bg-slate-800/30 transition-colors ${
-                  index % 2 === 0 ? 'bg-slate-900/20' : ''
-                }`}
+                className={`border-b border-slate-800 hover:bg-slate-800/30 transition-colors ${index % 2 === 0 ? 'bg-slate-900/20' : ''
+                  }`}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
@@ -165,7 +165,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   <span className="text-sm text-gray-300">{client.email}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{client.phone || '-'}</span>
+                  <span className="text-sm text-gray-300">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-gray-300">{client.location || '-'}</span>

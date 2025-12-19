@@ -65,6 +65,15 @@ body::before {
   box-shadow: 0 0 30px rgba(89, 161, 229, 0.25), 0 0 60px rgba(89, 161, 229, 0.15);
 }
 
+.hover-glow {
+  box-shadow: none;
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(89, 161, 229, 0.25), 0 0 60px rgba(89, 161, 229, 0.15);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   -webkit-background-clip: text;
@@ -214,6 +223,7 @@ body::before {
 
 /* Responsive button sizing */
 @media (max-width: 640px) {
+
   .btn-primary,
   .btn-secondary,
   .btn-action,
@@ -222,6 +232,7 @@ body::before {
     font-size: 14px;
   }
 }
+
 /* Input field styling to match the design */
 .form-input {
   background: rgba(255, 255, 255, 0.1);
@@ -325,15 +336,11 @@ input[type="range"].slider::-moz-range-thumb:hover {
   box-shadow: 0 4px 12px rgba(58, 163, 235, 0.6);
 }
 
-/* Hover shrink effect for interactive elements */
-button:hover,
-a:hover {
-  transform: scale(0.98);
-  transition: transform 0.2s ease;
-}
+
 
 /* Touch interactions for mobile */
 @media (hover: none) and (pointer: coarse) {
+
   button:active,
   a:active {
     transform: scale(0.95);
