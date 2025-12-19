@@ -14,7 +14,8 @@ import {
   EyeIcon,
   Squares2X2Icon,
   Bars3Icon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -75,7 +76,7 @@ export default function Clients({ currentUser }: ClientsProps) {
     } catch (error) {
       console.error('Error loading clients:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       // Only wipe data and show alert if we have no data yet
       if (clients.length === 0) {
         alert(`Error loading clients: ${errorMessage}\n\nUsing offline mode.`);
@@ -106,18 +107,18 @@ export default function Clients({ currentUser }: ClientsProps) {
   const handleSaveClient = async (clientData: any) => {
     // Prevent duplicate submissions
     if (loading) return;
-    
+
     try {
       setLoading(true);
       console.log('Saving client data:', clientData);
-      
+
       // Validate required fields
       if (!clientData.name || !clientData.email) {
         toastError('Name and email are required fields.');
         setLoading(false);
         return;
       }
-      
+
       if (modalMode === 'create') {
         const newClient = await clientService.create(clientData);
         console.log('Client created:', newClient);
@@ -127,7 +128,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       } else if (selectedClient) {
         const updatedClient = await clientService.update(selectedClient.id, clientData);
         console.log('Client updated:', updatedClient);
-        setClients(prevClients => 
+        setClients(prevClients =>
           prevClients.map(c => c.id === selectedClient.id ? updatedClient : c)
         );
         setIsModalOpen(false);
@@ -136,7 +137,7 @@ export default function Clients({ currentUser }: ClientsProps) {
     } catch (error) {
       console.error('Error saving client:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
         toastError('A client with this email already exists. Please use a different email address.');
       } else if (errorMessage.includes('Database error')) {
@@ -268,11 +269,10 @@ export default function Clients({ currentUser }: ClientsProps) {
             <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1 shrink-0">
               <button
                 onClick={() => handleViewModeChange('cards')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'cards'
-                    ? 'bg-[#3aa3eb] text-white'
-                    : 'text-gray-400 hover:text-white'
-                }
+                className={`p-2 rounded transition-colors ${viewMode === 'cards'
+                  ? 'bg-[#3aa3eb] text-white'
+                  : 'text-gray-400 hover:text-white'
+                  }
                 shrink-glow-button
                 `}
                 title="Card View"
@@ -281,11 +281,10 @@ export default function Clients({ currentUser }: ClientsProps) {
               </button>
               <button
                 onClick={() => handleViewModeChange('table')}
-                className={`p-2 rounded transition-colors ${
-                  viewMode === 'table'
-                    ? 'bg-[#3aa3eb] text-white'
-                    : 'text-gray-400 hover:text-white'
-                }
+                className={`p-2 rounded transition-colors ${viewMode === 'table'
+                  ? 'bg-[#3aa3eb] text-white'
+                  : 'text-gray-400 hover:text-white'
+                  }
                 shrink-glow-button
                 `}
                 title="Table View"
@@ -443,107 +442,124 @@ export default function Clients({ currentUser }: ClientsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
+            const initials = (client.company || client.name).substring(0, 2).toUpperCase();
 
             return (
-              <div key={client.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-                <div className="flex items-start gap-3 mb-4 min-w-0">
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="p-3 rounded-lg bg-slate-700">
-                      <UserGroupIcon className="h-6 w-6 text-[#3aa3eb]" />
+              <div key={client.id} className="glass-card rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
+                {/* Background Glow Effect */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                {/* Header Section */}
+                <div className="flex items-start gap-4 mb-8 relative z-10">
+                  {/* Logo/Avatar */}
+                  <div className="shrink-0 relative">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-900 to-black border border-white/20 flex items-center justify-center shadow-lg shadow-black/50 overflow-hidden group-hover:border-[#3aa3eb]/50 transition-colors">
+                      <img
+                        src={client.avatar || "https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Favicon-Wise-Media.webp"}
+                        alt={client.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-white truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                        {client.company || client.name}
-                      </h3>
-                      {client.name && (
-                        <p className="text-sm text-gray-400 truncate">{client.name}</p>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 pt-1">
+                    <h3 className="text-xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                      {client.company || client.name}
+                    </h3>
+                    <p className="text-gray-400 text-sm font-medium mb-3 truncate">
+                      {client.name}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {client.category && <CategoryBadge category={client.category} />}
+                      {client.location && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-gray-300 border border-slate-700/50">
+                          {client.location}
+                        </span>
                       )}
-                      <span className={`inline-flex mt-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-white/5 ${statusInfo.color.replace('text-', 'bg-').split(' ')[0]} bg-opacity-10 text-gray-300`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${statusInfo.color.replace('text-', 'bg-').split(' ')[0]}`}></span>
                         {statusInfo.label}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Category and Location */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {client.category && <CategoryBadge category={client.category} />}
-                  {client.location && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-slate-700/50 text-gray-300 border border-slate-600/50">
-                      {client.location}
-                    </span>
-                  )}
-                </div>
+                {/* Contact Info Section */}
+                <div className="space-y-3 mb-6 relative z-10">
+                  {/* Email */}
+                  <a href={`mailto:${client.email}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <EnvelopeIcon className="h-5 w-5 text-gray-400 group-hover/item:text-white transition-colors shrink-0" />
+                      <span className="text-sm text-gray-300 group-hover/item:text-white truncate font-medium">
+                        {client.email}
+                      </span>
+                    </div>
+                    <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-white transition-colors" />
+                  </a>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center space-x-2 min-w-0">
-                    <EnvelopeIcon className="h-4 w-4 text-gray-400 shrink-0" />
-                    <span className="text-sm text-gray-300 min-w-0 flex-1 truncate">{client.email}</span>
-                  </div>
+                  {/* Phone */}
                   {client.phone && (
-                    <div className="flex items-center space-x-2 min-w-0">
-                      <PhoneIcon className="h-4 w-4 text-gray-400 shrink-0" />
-                      <span className="text-sm text-gray-300 min-w-0 flex-1 truncate">{client.phone}</span>
-                    </div>
-                  )}
-                  {client.website && (
-                    <div className="flex items-center space-x-2 min-w-0">
-                      <GlobeAltIcon className="h-4 w-4 text-gray-400 shrink-0" />
-                      <a
-                        href={client.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-400 hover:text-blue-300 min-w-0 flex-1 truncate"
-                      >
-                        {client.website}
-                      </a>
-                    </div>
+                    <a href={`tel:${client.phone}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <PhoneIcon className="h-5 w-5 text-gray-400 group-hover/item:text-white transition-colors shrink-0" />
+                        <span className="text-sm text-gray-300 group-hover/item:text-white truncate font-medium">
+                          {client.phone}
+                        </span>
+                      </div>
+                      <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-white transition-colors" />
+                    </a>
                   )}
                 </div>
 
-                {/* Services Requested */}
-                {client.services_requested && client.services_requested.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-400 mb-2">Services Requested:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {client.services_requested.map((service, idx) => (
-                        <ServiceTag key={idx} service={service} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Services Section */}
+                <div className="mb-6 relative z-10">
+                  {client.services_requested && client.services_requested.length > 0 ? (
+                    <>
+                      <h4 className="text-sm font-medium text-white mb-3">Services</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {client.services_requested.map((service, idx) => (
+                          <span key={idx} className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-gray-300 hover:text-white hover:border-slate-600 transition-colors cursor-default">
+                            {service}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="h-4"></div> /* Spacer to maintain height consistency if no services */
+                  )}
+                </div>
 
-                {client.notes && (
-                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{client.notes}</p>
-                )}
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-700">
-                  <span className="text-xs text-gray-400 min-w-0 truncate">
+                {/* Footer Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
+                  <span className="text-xs text-gray-500 font-medium">
                     Added {formatAppDate(client.created_at)}
                   </span>
-                  <div className="flex items-center space-x-2 shrink-0">
+
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => handleViewClient(client)}
-                      className="text-white hover:text-blue-300 p-1 shrink-glow-button"
-                      title="View Client"
+                      onClick={(e) => { e.stopPropagation(); handleViewClient(client); }}
+                      className="text-gray-500 hover:text-white transition-colors p-1"
+                      title="View Details"
                     >
-                      <EyeIcon className="h-4 w-4" />
+                      <EyeIcon className="h-5 w-5" />
                     </button>
                     {isAdmin && (
                       <>
                         <button
-                          onClick={() => handleEditClient(client)}
-                          className="text-blue-500 hover:text-white p-1 shrink-glow-button"
-                          title="Edit Client"
+                          onClick={(e) => { e.stopPropagation(); handleEditClient(client); }}
+                          className="text-gray-500 hover:text-[#3aa3eb] transition-colors p-1"
+                          title="Edit"
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteClient(client)}
-                          className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
-                          title="Delete Client"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClient(client); }}
+                          className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                          title="Delete"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-5 w-5" />
                         </button>
                       </>
                     )}

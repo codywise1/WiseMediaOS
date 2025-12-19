@@ -21,10 +21,10 @@ const categoryColors: Record<string, string> = {
 
 export default function CategoryBadge({ category, size = 'md' }: CategoryBadgeProps) {
   const colorClass = categoryColors[category] || 'bg-gray-700/40 text-gray-300 border-gray-600/50';
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm';
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-xs font-medium';
 
   return (
-    <span className={`inline-flex items-center rounded-lg font-medium border ${colorClass} ${sizeClass}`}>
+    <span className={`inline-flex items-center rounded-full font-medium border ${colorClass} ${sizeClass}`}>
       {category}
     </span>
   );

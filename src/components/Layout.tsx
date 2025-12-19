@@ -247,7 +247,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           className={`hidden md:block fixed inset-y-0 left-0 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'
             }`}
         >
-          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-4' : 'p-6'} flex flex-col`}>
+          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
             <div
               className={`flex items-center mb-8 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
                 }`}
@@ -293,7 +293,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                         key={item.name}
                         to={item.href}
                         title={isSidebarCollapsed ? item.name : undefined}
-                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center px-3' : 'px-4'
+                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-4'
                           } ${isActive
                             ? isSidebarCollapsed
                               ? 'bg-[#59a1e5]/20 text-[#59a1e5]'
@@ -401,8 +401,8 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                           to={item.href}
                           onClick={closeMobileMenu}
                           className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                              ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
-                              : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
+                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
                             }`}
                         >
                           <item.icon className="mr-3 h-5 w-5" />
@@ -428,8 +428,8 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                     key={item.name}
                     to={item.href}
                     className={`flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 min-w-[70px] ${isActive
-                        ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] scale-105'
-                        : 'text-gray-400 hover:text-white active:scale-95'
+                      ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] scale-105'
+                      : 'text-gray-400 hover:text-white active:scale-95'
                       }`}
                   >
                     <item.icon className={`h-6 w-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
@@ -454,6 +454,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
             currentUser={currentUser}
             onLogout={onLogout}
             onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            isSidebarCollapsed={isSidebarCollapsed}
           />
           <div className="min-h-screen p-4 md:p-8 pb-8 md:pb-8">
             {children}

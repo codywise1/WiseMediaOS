@@ -128,7 +128,7 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
 
   // Allow access for admin and creator roles (elite, pro, free). Block generic 'user' or missing profile.
   const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  const allowed = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || role === 'free';
+  const allowed = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || role === 'free' || role === 'user';
 
   if (!allowed) {
     return (
@@ -152,7 +152,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Track current user ID to avoid unnecessary updates when switching tabs
   const currentUserIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -280,7 +280,7 @@ function App() {
     if (!isSupabaseAvailable()) {
       // Demo mode authentication
       console.log('Demo mode login attempt:', { email });
-      
+
       if (email.toLowerCase() === 'admin' && password === 'admin') {
         const userData: User = {
           id: 'admin-demo-id',
@@ -423,7 +423,7 @@ function App() {
     }
     setIsAuthenticated(false);
     setCurrentUser(null);
-    
+
     // Clear user from localStorage
     localStorage.removeItem('wise_media_current_user');
   };

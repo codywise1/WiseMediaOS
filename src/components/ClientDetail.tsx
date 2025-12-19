@@ -15,7 +15,8 @@ import {
   FolderIcon,
   DocumentTextIcon,
   UserIcon,
-  CalendarIcon
+  CalendarIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -173,6 +174,13 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 {(client.status || 'active').charAt(0).toUpperCase() + (client.status || 'active').slice(1)}
               </span>
               <button
+                onClick={() => navigate(`/community/chat?clientId=${client.id}`)}
+                className="p-3 bg-[#59a1e5]/20 hover:bg-[#59a1e5]/40 rounded-lg transition-colors border border-[#59a1e5]/50"
+                title="Message Client"
+              >
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#59a1e5]" />
+              </button>
+              <button
                 onClick={() => {
                   setSelectedClient(client);
                   setIsEditModalOpen(true);
@@ -206,12 +214,11 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <DocumentTextIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Status</span>
             </div>
-            <span className={`inline-block px-3 py-1 rounded-lg text-sm font-medium ${
-              client.status === 'active' ? 'bg-green-600/20 text-green-300' :
+            <span className={`inline-block px-3 py-1 rounded-lg text-sm font-medium ${client.status === 'active' ? 'bg-green-600/20 text-green-300' :
               client.status === 'prospect' ? 'bg-blue-600/20 text-blue-300' :
-              client.status === 'inactive' ? 'bg-gray-600/20 text-gray-300' :
-              'bg-red-600/20 text-red-300'
-            }`}>
+                client.status === 'inactive' ? 'bg-gray-600/20 text-gray-300' :
+                  'bg-red-600/20 text-red-300'
+              }`}>
               {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
             </span>
           </div>
@@ -356,12 +363,11 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   >
                     <div className="flex flex-col gap-2 mb-2 min-w-0 sm:flex-row sm:items-center sm:justify-between">
                       <h3 className="font-bold text-white min-w-0 truncate">{project.name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 self-start sm:self-auto ${
-                        project.status === 'completed' ? 'bg-green-600/20 text-green-300' :
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 self-start sm:self-auto ${project.status === 'completed' ? 'bg-green-600/20 text-green-300' :
                         project.status === 'in_progress' ? 'bg-blue-600/20 text-blue-300' :
-                        project.status === 'on_hold' ? 'bg-yellow-600/20 text-yellow-300' :
-                        'bg-gray-600/20 text-gray-300'
-                      }`}>
+                          project.status === 'on_hold' ? 'bg-yellow-600/20 text-yellow-300' :
+                            'bg-gray-600/20 text-gray-300'
+                        }`}>
                         {project.status.replace('_', ' ')}
                       </span>
                     </div>

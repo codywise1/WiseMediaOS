@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
-import { Send, Hash, MessageSquare } from 'lucide-react';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight } from 'lucide-react';
+
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseAvailable } from '../lib/supabase';
+import { supabase, isSupabaseAvailable, clientService, Client } from '../lib/supabase';
 
 interface Channel {
   id: string;
@@ -30,29 +32,164 @@ interface PrivateConversation {
   unreadCount: number;
 }
 
+// Mock Data for Demo Mode
+const mockChannels: Channel[] = [
+  { id: '1', name: 'general', description: 'General discussion for all creators', type: 'general' },
+  { id: '2', name: 'announcements', description: 'Official updates and news', type: 'general' },
+  { id: '3', name: 'wins', description: 'Share your wins and successes!', type: 'general' },
+  { id: '4', name: 'help', description: 'Get help with your projects', type: 'general' },
+  { id: '5', name: 'collabs', description: 'Find people to collaborate with so you can grow together', type: 'general' },
+];
+
+const mockUsers: PrivateConversation[] = [
+  { id: 'u1', full_name: 'Sarah Connor', avatar_url: null, role: 'admin', unreadCount: 2 },
+  { id: 'u2', full_name: 'John Wick', avatar_url: null, role: 'pro', unreadCount: 0 },
+  { id: 'u3', full_name: 'Tony Stark', avatar_url: null, role: 'elite', unreadCount: 5 },
+];
+
+const mockChannelMessages: Record<string, Message[]> = {
+  '1': [
+    { id: 'm1', message: 'Welcome to the new community chat!', created_at: new Date(Date.now() - 86400000).toISOString(), profiles: { full_name: 'System', avatar_url: null, role: 'admin' } },
+    { id: 'm2', message: 'This is looking great!', created_at: new Date(Date.now() - 3600000).toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
+  ],
+  '2': [
+    { id: 'm3', message: 'New course dropping soon!', created_at: new Date().toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
+  ],
+};
+
 export default function CommunityPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [view, setView] = useState<'channels' | 'private'>('channels');
+  const [clients, setClients] = useState<Client[]>([]);
   const [privateConversations, setPrivateConversations] = useState<PrivateConversation[]>([]);
   const [selectedUser, setSelectedUser] = useState<PrivateConversation | null>(null);
   const [privateMessages, setPrivateMessages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchParams] = useSearchParams();
+  const [showDirectMessages, setShowDirectMessages] = useState(true);
+  const [showClients, setShowClients] = useState(true);
+  const [resolvedRecipientId, setResolvedRecipientId] = useState<string | null>(null);
+
+
+  // Use a ref to persist mock messages during session in demo mode
+  const localMessagesRef = useRef(mockChannelMessages);
+  const [localUpdate, setLocalUpdate] = useState(0); // Force re-render for local mocks
 
   useEffect(() => {
-    if (!isSupabaseAvailable()) return;
     fetchChannels();
     fetchAllUsers();
+    fetchClients();
   }, []);
+
+  async function fetchClients() {
+    try {
+      const data = await clientService.getAll();
+      setClients(data);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  }
+
+  // Handle direct message linking
+  // Handle direct message linking
+  useEffect(() => {
+    const userId = searchParams.get('userId');
+    const clientId = searchParams.get('clientId');
+
+    const handleUserSelection = async (targetId: string) => {
+      // First check if user is already in visible list
+      const targetUser = privateConversations.find(u => u.id === targetId);
+      if (targetUser) {
+        setView('private');
+        setSelectedUser(targetUser);
+        return;
+      }
+
+      // If not, fetch them
+      if (isSupabaseAvailable()) {
+        const { data, error } = await supabase!
+          .from('profiles')
+          .select('id, full_name, avatar_url, role')
+          .eq('id', targetId)
+          .single();
+
+        if (data && !error) {
+          const newUser: PrivateConversation = { ...data, unreadCount: 0 };
+          setPrivateConversations(prev => [...prev, newUser]);
+          setView('private');
+          setSelectedUser(newUser);
+        }
+      } else {
+        // Demo mode fallback
+        const mockUser = privateConversations.find(u => u.id === targetId);
+        if (mockUser) {
+          setView('private');
+          setSelectedUser(mockUser);
+        }
+      }
+    };
+
+    if (userId) {
+      handleUserSelection(userId);
+    } else if (clientId) {
+      if (isSupabaseAvailable()) {
+        // Resolve Client ID to User ID via Email
+        supabase!
+          .from('clients')
+          .select('email')
+          .eq('id', clientId)
+          .single()
+          .then(({ data: clientData }) => {
+            if (clientData?.email) {
+              supabase!
+                .from('profiles')
+                .select('id')
+                .eq('email', clientData.email)
+                .single()
+                .then(({ data: profileData }) => {
+                  if (profileData?.id) {
+                    handleUserSelection(profileData.id);
+                  }
+                });
+            }
+          });
+      } else {
+        // Demo Mode: Link by Name or Create Mock
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          const matchingUser = privateConversations.find(u => u.full_name === client.name);
+          if (matchingUser) {
+            setView('private');
+            setSelectedUser(matchingUser);
+          } else {
+            // Create temporary mock user for demo chat
+            const newMockUser: PrivateConversation = {
+              id: client.id,
+              full_name: client.name,
+              avatar_url: null,
+              role: 'user',
+              unreadCount: 0
+            };
+            setPrivateConversations(prev => [...prev, newMockUser]);
+            setView('private');
+            setSelectedUser(newMockUser);
+          }
+        }
+      }
+    }
+  }, [searchParams, privateConversations, clients]);
+
 
   useEffect(() => {
     if (selectedChannel) {
       fetchMessages();
       if (!isSupabaseAvailable()) return;
+
       const subscription = supabase!
         .channel(`chat:${selectedChannel.id}`)
         .on('postgres_changes', {
@@ -69,18 +206,24 @@ export default function CommunityPage() {
         subscription.unsubscribe();
       };
     }
-  }, [selectedChannel]);
+  }, [selectedChannel, localUpdate]);
 
   useEffect(() => {
-    if (selectedUser && profile) {
+    if (selectedUser) {
       fetchPrivateMessages();
       if (!isSupabaseAvailable()) return;
+      if (!profile) return;
+
+      // Use resolvedRecipientId if available, otherwise use selectedUser.id
+      const recipientId = resolvedRecipientId || selectedUser.id;
+
       const subscription = supabase!
         .channel(`private:${profile.id}:${selectedUser.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'private_messages',
+          filter: `or(and(sender_id.eq.${profile.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${profile.id}))`,
         }, () => {
           fetchPrivateMessages();
         })
@@ -90,14 +233,19 @@ export default function CommunityPage() {
         subscription.unsubscribe();
       };
     }
-  }, [selectedUser, profile]);
+  }, [selectedUser, profile, resolvedRecipientId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, privateMessages]);
 
   async function fetchChannels() {
-    if (!isSupabaseAvailable()) return;
+    if (!isSupabaseAvailable()) {
+      setChannels(mockChannels);
+      setSelectedChannel(mockChannels[0]);
+      return;
+    }
+
     const { data } = await supabase!
       .from('chat_channels')
       .select('*')
@@ -111,11 +259,42 @@ export default function CommunityPage() {
   }
 
   async function fetchAllUsers() {
-    if (!isSupabaseAvailable()) return;
+    if (!isSupabaseAvailable()) {
+      setPrivateConversations(mockUsers);
+      return;
+    }
+
+    if (!profile) return;
+
+    // Get all private messages where the current user is sender or recipient
+    const { data: messagesData } = await supabase!
+      .from('private_messages')
+      .select('sender_id, recipient_id')
+      .or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
+      .limit(1000);
+
+    if (!messagesData || messagesData.length === 0) {
+      setPrivateConversations([]);
+      return;
+    }
+
+    // Get unique user IDs from conversations
+    const userIds = new Set<string>();
+    messagesData.forEach(msg => {
+      if (msg.sender_id !== profile.id) userIds.add(msg.sender_id);
+      if (msg.recipient_id !== profile.id) userIds.add(msg.recipient_id);
+    });
+
+    if (userIds.size === 0) {
+      setPrivateConversations([]);
+      return;
+    }
+
+    // Fetch profile details for these users
     const { data } = await supabase!
       .from('profiles')
       .select('id, full_name, avatar_url, role')
-      .neq('id', profile?.id || '');
+      .in('id', Array.from(userIds));
 
     if (data) {
       const conversations = data.map(user => ({
@@ -128,10 +307,16 @@ export default function CommunityPage() {
 
   async function fetchMessages() {
     if (!selectedChannel) return;
-    if (!isSupabaseAvailable()) return;
+
+    if (!isSupabaseAvailable()) {
+      // Get messages from local ref
+      const msgs = localMessagesRef.current[selectedChannel.id] || [];
+      setMessages(msgs);
+      return;
+    }
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('chat_messages')
         .select('*, profiles(full_name, avatar_url, role)')
         .eq('channel_id', selectedChannel.id)
@@ -146,13 +331,45 @@ export default function CommunityPage() {
   }
 
   async function fetchPrivateMessages() {
-    if (!selectedUser || !profile) return;
-    if (!isSupabaseAvailable()) return;
+    if (!selectedUser) return;
+
+    if (!isSupabaseAvailable()) {
+      // Mock private messages logic could go here, for now just empty or static
+      setPrivateMessages([]);
+      return;
+    }
+
+    if (!profile) return;
+
+    // Check if selectedUser is a client and resolve to profile ID
+    const client = clients.find(c => c.id === selectedUser.id);
+    let recipientId = selectedUser.id;
+
+    if (client) {
+      // This might be a client - try to find their profile by email
+      const { data: profileData } = await supabase!
+        .from('profiles')
+        .select('id')
+        .eq('email', client.email)
+        .maybeSingle();
+
+      if (profileData) {
+        recipientId = profileData.id;
+        setResolvedRecipientId(recipientId); // Store for subscription
+      } else {
+        // Client doesn't have a profile yet, no messages to fetch
+        setPrivateMessages([]);
+        setResolvedRecipientId(null);
+        return;
+      }
+    } else {
+      setResolvedRecipientId(recipientId);
+    }
 
     const { data } = await supabase!
       .from('private_messages')
       .select('*')
-      .or(`and(sender_id.eq.${profile.id},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${profile.id})`)
+      .or(`and(sender_id.eq.${profile.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${profile.id})`)
       .order('created_at', { ascending: true })
       .limit(100);
 
@@ -162,32 +379,117 @@ export default function CommunityPage() {
       .from('private_messages')
       .update({ read: true })
       .eq('recipient_id', profile.id)
-      .eq('sender_id', selectedUser.id)
+      .eq('sender_id', recipientId)
       .eq('read', false);
   }
 
   async function sendMessage() {
-    if (!newMessage.trim() || !profile) return;
-    if (!isSupabaseAvailable()) return;
+    if (!newMessage.trim()) return;
+
+    const currentUserProfile = profile || {
+      id: 'demo-user',
+      full_name: user?.user_metadata?.name || 'Demo User',
+      avatar_url: null,
+      role: 'user'
+    };
 
     setSending(true);
     try {
       if (view === 'channels' && selectedChannel) {
-        await supabase!.from('chat_messages').insert({
-          channel_id: selectedChannel.id,
-          user_id: profile.id,
-          message: newMessage.trim(),
-        });
+        if (!isSupabaseAvailable()) {
+          // Add to local mock state
+          const newMsg: Message = {
+            id: Date.now().toString(),
+            message: newMessage.trim(),
+            created_at: new Date().toISOString(),
+            profiles: {
+              full_name: currentUserProfile.full_name || 'User',
+              avatar_url: currentUserProfile.avatar_url,
+              role: currentUserProfile.role
+            }
+          };
+
+          const currentMsgs = localMessagesRef.current[selectedChannel.id] || [];
+          localMessagesRef.current = {
+            ...localMessagesRef.current,
+            [selectedChannel.id]: [...currentMsgs, newMsg]
+          };
+
+          setLocalUpdate(prev => prev + 1); // Trigger re-render
+        } else {
+          if (profile) {
+            await supabase!.from('chat_messages').insert({
+              channel_id: selectedChannel.id,
+              user_id: profile.id,
+              message: newMessage.trim(),
+            });
+          }
+        }
       } else if (view === 'private' && selectedUser) {
-        await supabase!.from('private_messages').insert({
-          sender_id: profile.id,
-          recipient_id: selectedUser.id,
-          message: newMessage.trim(),
-        });
+        if (!isSupabaseAvailable()) {
+          // Mock private message sending - just adding to local state for display would require more mock structure
+          // For now, let's just clear the input to simulate sending
+        } else if (profile) {
+          // Check if selectedUser is a client (no profile yet)
+          // Try to resolve client email to profile ID
+          const client = clients.find(c => c.id === selectedUser.id);
+          let recipientId = selectedUser.id;
+
+          if (client) {
+            // This might be a client - try to find their profile by email
+            const { data: profileData } = await supabase!
+              .from('profiles')
+              .select('id')
+              .eq('email', client.email)
+              .maybeSingle();
+
+            if (profileData) {
+              recipientId = profileData.id;
+            } else {
+              // Client doesn't have a profile yet
+              alert(`Cannot send message: ${client.name} hasn't created their account yet. Please ask them to sign up first.`);
+              setSending(false);
+              return;
+            }
+          }
+
+          // Optimistic update - add message to UI immediately
+          const optimisticMessage = {
+            id: `temp-${Date.now()}`,
+            sender_id: profile.id,
+            recipient_id: recipientId,
+            message: newMessage.trim(),
+            created_at: new Date().toISOString(),
+            read: false
+          };
+
+          setPrivateMessages(prev => [...prev, optimisticMessage]);
+          setNewMessage('');
+
+          // Then send to server
+          const { error } = await supabase!.from('private_messages').insert({
+            sender_id: profile.id,
+            recipient_id: recipientId,
+            message: newMessage.trim(),
+          });
+
+          if (error) {
+            // Remove optimistic message if send failed
+            setPrivateMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
+            throw error;
+          }
+
+          // Update conversation list to include this new conversation
+          await fetchAllUsers();
+
+          // Successful send - the real-time subscription will replace the optimistic message
+          return;
+        }
       }
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }
@@ -201,25 +503,10 @@ export default function CommunityPage() {
     switch (role) {
       case 'admin': return 'text-red-400';
       case 'elite': return 'text-yellow-400';
-      case 'pro': return 'text-blue-400';
+      case 'pro': return 'text-[#59a1e5]'; // Updated blue
       default: return 'text-gray-400';
     }
   };
-
-  if (!isSupabaseAvailable()) {
-    return (
-      <div className="space-y-6">
-        <div className="glass-card p-6 rounded-2xl border border-white/10">
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
-            Creator Club Chat
-          </h1>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            Chat requires Supabase to be configured (Realtime + database). Enable Supabase to use channels and direct messages.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-[calc(100vh-180px)] flex flex-col lg:flex-row gap-6">
@@ -228,11 +515,10 @@ export default function CommunityPage() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setView('channels')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${
-                view === 'channels'
-                  ? 'bg-[#3AA3EB] text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
+              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'channels'
+                ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
             >
               <Hash className="inline mr-2" size={16} />
@@ -240,11 +526,10 @@ export default function CommunityPage() {
             </button>
             <button
               onClick={() => setView('private')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${
-                view === 'private'
-                  ? 'bg-[#3AA3EB] text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
+              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'private'
+                ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
             >
               <MessageSquare className="inline mr-2" size={16} />
@@ -258,14 +543,13 @@ export default function CommunityPage() {
                 <button
                   key={channel.id}
                   onClick={() => setSelectedChannel(channel)}
-                  className={`w-full text-left p-3 rounded-lg transition-all ${
-                    selectedChannel?.id === channel.id
-                      ? 'bg-[#3AA3EB]/20 border border-[#3AA3EB]/50'
-                      : 'bg-white/5 hover:bg-white/10'
-                  }`}
+                  className={`w-full text-left p-3 rounded-lg transition-all ${selectedChannel?.id === channel.id
+                    ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                    : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                    }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#3AA3EB]' : 'text-gray-400'} />
+                    <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
                     <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
                       {channel.name}
                     </span>
@@ -278,41 +562,146 @@ export default function CommunityPage() {
                 </button>
               ))
             ) : (
-              privateConversations.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => setSelectedUser(user)}
-                  className={`w-full text-left p-3 rounded-lg transition-all ${
-                    selectedUser?.id === user.id
-                      ? 'bg-[#3AA3EB]/20 border border-[#3AA3EB]/50'
-                      : 'bg-white/5 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.full_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
+              <div className="space-y-1">
+                {/* Direct Messages Section */}
+                <div>
+                  <button
+                    onClick={() => setShowDirectMessages(!showDirectMessages)}
+                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
+                  >
+                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Direct Messages
+                    </span>
+                    {showDirectMessages ? (
+                      <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#3AA3EB] to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {getInitials(user.full_name)}
-                      </div>
+                      <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          {user.full_name}
-                        </span>
-                        <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          {user.role.toUpperCase()}
-                        </span>
-                      </div>
+                  </button>
+                  {showDirectMessages && (
+                    <div className="mt-1 space-y-1">
+                      {privateConversations.length > 0 ? (
+                        privateConversations.map((user) => (
+                          <button
+                            key={user.id}
+                            onClick={() => setSelectedUser(user)}
+                            className={`w-full text-left p-3 rounded-lg transition-all ${selectedUser?.id === user.id
+                              ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                              : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                              }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              {user.avatar_url ? (
+                                <img
+                                  src={user.avatar_url}
+                                  alt={user.full_name}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                  {getInitials(user.full_name)}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    {user.full_name}
+                                  </span>
+                                  <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    {user.role.toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center">
+                          <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            No conversations yet
+                          </p>
+                          <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Start a chat from Clients below
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </button>
-              ))
+                  )}
+                </div>
+
+                {/* Clients Section */}
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowClients(!showClients)}
+                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
+                  >
+                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Clients ({clients.length})
+                    </span>
+                    {showClients ? (
+                      <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                    ) : (
+                      <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                    )}
+                  </button>
+                  {showClients && (
+                    <div className="mt-1 space-y-1">
+                      {clients.map((client) => {
+                        // Check if this client is currently selected
+                        const isSelected = selectedUser?.id === client.id ||
+                          (selectedUser && privateConversations.find(u => u.id === selectedUser.id && u.full_name === client.name));
+
+                        return (
+                          <button
+                            key={client.id}
+                            onClick={() => {
+                              // Find or create a conversation entry for this client
+                              const existingConvo = privateConversations.find(u => u.full_name === client.name || u.id === client.id);
+                              if (existingConvo) {
+                                setSelectedUser(existingConvo);
+                              } else {
+                                // Create temporary user object for client
+                                const clientUser: PrivateConversation = {
+                                  id: client.id,
+                                  full_name: client.name,
+                                  avatar_url: null,
+                                  role: 'user',
+                                  unreadCount: 0
+                                };
+                                setPrivateConversations(prev => [...prev, clientUser]);
+                                setSelectedUser(clientUser);
+                              }
+                            }}
+                            className={`w-full text-left p-3 rounded-lg transition-all ${isSelected
+                              ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                              : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                              }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-gray-300 font-bold text-sm">
+                                {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    {client.name}
+                                  </span>
+                                  {client.status === 'active' && (
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                  )}
+                                </div>
+                                <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                  {client.company || client.email}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </GlassCard>
@@ -324,7 +713,7 @@ export default function CommunityPage() {
             {view === 'channels' && selectedChannel ? (
               <div>
                 <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
-                  <Hash size={24} className="text-[#3AA3EB]" />
+                  <Hash size={24} className="text-[#59a1e5]" />
                   {selectedChannel.name}
                 </h2>
                 {selectedChannel.description && (
@@ -342,7 +731,7 @@ export default function CommunityPage() {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#3AA3EB] to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                     {getInitials(selectedUser.full_name)}
                   </div>
                 )}
@@ -372,7 +761,7 @@ export default function CommunityPage() {
                     className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#3AA3EB] to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                     {getInitials(msg.profiles?.full_name || 'User')}
                   </div>
                 )}
@@ -408,17 +797,16 @@ export default function CommunityPage() {
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#3AA3EB] to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                         {getInitials(selectedUser.full_name)}
                       </div>
                     )
                   )}
                   <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
-                    <div className={`p-3 rounded-lg ${
-                      isMyMessage
-                        ? 'bg-[#3AA3EB] text-white'
-                        : 'bg-white/10 text-gray-300'
-                    }`}>
+                    <div className={`p-3 rounded-lg ${isMyMessage
+                      ? 'bg-[#59a1e5] text-white shadow-lg'
+                      : 'bg-white/10 text-gray-300'
+                      }`}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
                         {msg.message}
                       </p>
@@ -448,14 +836,14 @@ export default function CommunityPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : selectedUser?.full_name}...`}
-                  className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+                  className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
                   style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={sending || !newMessage.trim()}
-                  className="px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium shadow-lg flex items-center gap-2"
+                  className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
                   style={{ fontFamily: 'Montserrat, sans-serif' }}
                 >
                   <Send size={20} />

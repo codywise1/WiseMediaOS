@@ -241,15 +241,6 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
                 </button>
               )}
               <button
-                onClick={() => {
-                  onClose();
-                  onNavigate?.('/notifications');
-                }}
-                className="text-xs text-blue-300 hover:text-blue-200 underline decoration-dotted"
-              >
-                View all
-              </button>
-              <button
                 onClick={onClose}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white hidden sm:inline-flex sm:absolute sm:top-0 sm:right-0"
                 aria-label="Close notifications"
@@ -263,11 +254,10 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg transition-colors cursor-pointer ${
-                  notification.read
+                className={`p-4 rounded-lg transition-colors cursor-pointer ${notification.read
                     ? 'bg-white/5 hover:bg-white/10'
                     : 'bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20'
-                }`}
+                  }`}
                 onClick={() => {
                   if (!notification.read) {
                     markNotificationAsRead(notification.id);

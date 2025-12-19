@@ -14,6 +14,7 @@ interface TopNavProps {
   } | null;
   onLogout?: () => void;
   onOpenMobileMenu?: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
 type SearchItem = {
@@ -31,7 +32,7 @@ type SearchGroups = {
   courses: SearchItem[];
 };
 
-export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopNavProps) {
+export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSidebarCollapsed }: TopNavProps) {
   const { profile, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -191,7 +192,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
           }}
         />
       )}
-      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/20 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-50">
+      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/20 px-4 lg:px-8 flex items-center sticky top-0 z-50">
         <div className="flex items-center gap-3 lg:gap-4">
           <button
             type="button"
@@ -206,10 +207,16 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
           >
             <Menu size={22} className="text-white" />
           </button>
+
+          <img
+            src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg"
+            alt="Wise Media"
+            className={`h-8 w-auto ${isSidebarCollapsed ? '' : 'md:hidden'}`}
+          />
         </div>
 
-        <div className="hidden md:flex items-center w-2/3 max-w-xl mx-6 relative">
-          <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
+        <div className="hidden md:flex items-center flex-1 max-w-xl ml-4 relative">
+          <div className="flex items-center w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               value={searchQuery}
@@ -241,7 +248,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
                           key={item.title}
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => handleNavigate(item.to)}
-                          className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                          className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
                         >
                           <div>
                             <p className="text-sm text-white font-medium">{item.title}</p>
@@ -265,7 +272,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
         {showMobileSearch && (
           <div className="md:hidden absolute top-20 left-0 w-full bg-slate-950/95 backdrop-blur-xl border-b border-white/10 p-4 z-50 animate-in slide-in-from-top">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
+              <div className="flex-1 flex items-center bg-black/20 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
                 <Search size={18} className="text-gray-400 mr-2" />
                 <input
                   autoFocus
@@ -300,7 +307,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
                               key={item.title}
                               onMouseDown={(e) => e.preventDefault()}
                               onClick={() => handleNavigate(item.to)}
-                              className="w-full text-left flex items-center justify-between px-3 py-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+                              className="w-full text-left flex items-center justify-between px-3 py-3 rounded-lg hover:bg-white/10 transition-colors border border-transparent hover:border-white/10"
                             >
                               <div>
                                 <p className="text-sm text-white font-medium">{item.title}</p>
@@ -321,7 +328,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu }: TopN
           </div>
         )}
 
-        <div className="flex items-center gap-2 lg:gap-4">
+        <div className="flex items-center gap-2 lg:gap-4 ml-auto">
           <button
             onClick={() => {
               setShowNotifications(false);

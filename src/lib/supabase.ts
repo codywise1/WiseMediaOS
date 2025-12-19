@@ -22,12 +22,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const forceDemoMode = import.meta.env.VITE_FORCE_DEMO_MODE === 'true';
 
 // Check if Supabase is configured
-const isSupabaseConfigured = !forceDemoMode && supabaseUrl && supabaseAnonKey && 
-  supabaseUrl !== 'your_supabase_url' && 
+const isSupabaseConfigured = !forceDemoMode && supabaseUrl && supabaseAnonKey &&
+  supabaseUrl !== 'your_supabase_url' &&
   supabaseAnonKey !== 'your_supabase_anon_key' &&
   supabaseUrl.includes('supabase.co');
 
-export const supabase = isSupabaseConfigured 
+export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
@@ -211,6 +211,7 @@ export interface Client {
   first_name?: string;
   category?: 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex';
   location?: string;
+  avatar?: string;
   services_requested?: string[];
   created_at: string;
   updated_at: string;
@@ -356,7 +357,7 @@ export const supportService = {
         client:clients(*)
       `)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as SupportTicket[];
   },
@@ -375,7 +376,7 @@ export const supportService = {
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as SupportTicket[];
   },
@@ -394,7 +395,7 @@ export const supportService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as SupportTicket;
   },
@@ -414,7 +415,7 @@ export const supportService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as SupportTicket;
   },
@@ -429,7 +430,7 @@ export const supportService = {
       .from('support_tickets')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   }
 };
@@ -446,7 +447,7 @@ export const clientService = {
       .from('clients')
       .select('*')
       .order('name');
-    
+
     if (error) throw error;
     return data as Client[];
   },
@@ -482,7 +483,7 @@ export const clientService = {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
     return data as Client;
   },
@@ -586,7 +587,7 @@ export const clientService = {
     if (!isSupabaseAvailable()) {
       const clientIndex = mockClients.findIndex(c => c.id === id);
       if (clientIndex === -1) throw new Error('Client not found');
-      
+
       const updatedClient = {
         ...mockClients[clientIndex],
         ...updates,
@@ -605,7 +606,7 @@ export const clientService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data as Client;
   },
@@ -678,7 +679,7 @@ export const projectService = {
         client:clients(*)
       `)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Project[];
   },
@@ -703,7 +704,7 @@ export const projectService = {
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Project[];
   },
@@ -718,7 +719,7 @@ export const projectService = {
       };
       mockProjects.push(newProject);
       saveToStorage('wise_media_projects', mockProjects);
-      
+
       // Return with client data
       const clients = await clientService.getAll();
       return {
@@ -736,7 +737,7 @@ export const projectService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Project;
   },
@@ -745,7 +746,7 @@ export const projectService = {
     if (!isSupabaseAvailable()) {
       const projectIndex = mockProjects.findIndex(p => p.id === id);
       if (projectIndex === -1) throw new Error('Project not found');
-      
+
       const updatedProject = {
         ...mockProjects[projectIndex],
         ...updates,
@@ -754,7 +755,7 @@ export const projectService = {
       };
       mockProjects[projectIndex] = updatedProject;
       saveToStorage('wise_media_projects', mockProjects);
-      
+
       // Return with client data
       const clients = await clientService.getAll();
       return {
@@ -773,7 +774,7 @@ export const projectService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Project;
   },
@@ -792,7 +793,7 @@ export const projectService = {
       .from('projects')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   }
 };
@@ -830,7 +831,7 @@ export const invoiceService = {
         client:clients(*)
       `)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Invoice[];
   },
@@ -849,7 +850,7 @@ export const invoiceService = {
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Invoice[];
   },
@@ -868,7 +869,7 @@ export const invoiceService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Invoice;
   },
@@ -884,7 +885,7 @@ export const invoiceService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Invoice;
   },
@@ -895,7 +896,7 @@ export const invoiceService = {
       .from('invoices')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   }
 };
@@ -915,7 +916,7 @@ export const proposalService = {
         client:clients(*)
       `)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Proposal[];
   },
@@ -934,7 +935,7 @@ export const proposalService = {
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Proposal[];
   },
@@ -953,7 +954,7 @@ export const proposalService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Proposal;
   },
@@ -969,7 +970,7 @@ export const proposalService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Proposal;
   },
@@ -980,7 +981,7 @@ export const proposalService = {
       .from('proposals')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   }
 };
@@ -1000,7 +1001,7 @@ export const appointmentService = {
         client:clients(*)
       `)
       .order('appointment_date', { ascending: true });
-    
+
     if (error) throw error;
     return data as Appointment[];
   },
@@ -1019,7 +1020,7 @@ export const appointmentService = {
       `)
       .eq('client_id', clientId)
       .order('appointment_date', { ascending: true });
-    
+
     if (error) throw error;
     return data as Appointment[];
   },
@@ -1038,7 +1039,7 @@ export const appointmentService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Appointment;
   },
@@ -1054,7 +1055,7 @@ export const appointmentService = {
         client:clients(*)
       `)
       .single();
-    
+
     if (error) throw error;
     return data as Appointment;
   },
@@ -1283,10 +1284,10 @@ export const documentsService = {
       mockDocuments = mockDocuments.map(d =>
         d.id === id
           ? {
-              ...d,
-              ...patch,
-              updated_at: new Date().toISOString(),
-            }
+            ...d,
+            ...patch,
+            updated_at: new Date().toISOString(),
+          }
           : d
       );
       saveToStorage('wise_media_documents', mockDocuments);
