@@ -25,6 +25,7 @@ import {
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
 import { UserRole } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 interface User {
   email: string
@@ -182,6 +183,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
 
 export default function Layout({ children, currentUser, onLogout, onUpdateProfile }: LayoutProps) {
   const location = useLocation()
+  const { profile } = useAuth()
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -192,7 +194,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
     }
   })
 
-  const normalizedRole = normalizeRole(currentUser?.role)
+  const normalizedRole = normalizeRole(profile?.role || currentUser?.role)
   const navGroups = navByRole[normalizedRole]
   const dockItems = navGroups.flatMap(group => group.items).slice(0, 4)
   const showSidebarUserActions = false

@@ -27,6 +27,7 @@ interface Message {
 interface PrivateConversation {
   id: string;
   full_name: string;
+  email?: string | null;
   avatar_url: string | null;
   role: string;
   unreadCount: number;
@@ -42,9 +43,9 @@ const mockChannels: Channel[] = [
 ];
 
 const mockUsers: PrivateConversation[] = [
-  { id: 'u1', full_name: 'Sarah Connor', avatar_url: null, role: 'admin', unreadCount: 2 },
-  { id: 'u2', full_name: 'John Wick', avatar_url: null, role: 'pro', unreadCount: 0 },
-  { id: 'u3', full_name: 'Tony Stark', avatar_url: null, role: 'elite', unreadCount: 5 },
+  { id: 'u1', full_name: 'Sarah Connor', email: 'sarah@example.com', avatar_url: null, role: 'admin', unreadCount: 2 },
+  { id: 'u2', full_name: 'John Wick', email: 'john@example.com', avatar_url: null, role: 'pro', unreadCount: 0 },
+  { id: 'u3', full_name: 'Tony Stark', email: 'tony@example.com', avatar_url: null, role: 'elite', unreadCount: 5 },
 ];
 
 const mockChannelMessages: Record<string, Message[]> = {
@@ -80,11 +81,20 @@ export default function CommunityPage() {
   const localMessagesRef = useRef(mockChannelMessages);
   const [localUpdate, setLocalUpdate] = useState(0); // Force re-render for local mocks
 
+  const canViewClients = (profile?.role || user?.user_metadata?.role || '').toLowerCase() === 'admin';
+
   useEffect(() => {
     fetchChannels();
     fetchAllUsers();
-    fetchClients();
   }, []);
+
+  useEffect(() => {
+    if (!canViewClients) {
+      setClients([]);
+      return;
+    }
+    fetchClients();
+  }, [canViewClients]);
 
   async function fetchClients() {
     try {
@@ -114,7 +124,7 @@ export default function CommunityPage() {
       if (isSupabaseAvailable()) {
         const { data, error } = await supabase!
           .from('profiles')
-          .select('id, full_name, avatar_url, role')
+          .select('id, full_name, email, avatar_url, role')
           .eq('id', targetId)
           .single();
 
@@ -137,6 +147,7 @@ export default function CommunityPage() {
     if (userId) {
       handleUserSelection(userId);
     } else if (clientId) {
+      if (!canViewClients) return;
       if (isSupabaseAvailable()) {
         // Resolve Client ID to User ID via Email
         supabase!
@@ -337,7 +348,7 @@ export default function CommunityPage() {
     // Fetch profile details for these users
     const { data } = await supabase!
       .from('profiles')
-      .select('id, full_name, avatar_url, role')
+      .select('id, full_name, email, avatar_url, role')
       .in('id', Array.from(userIds));
 
     if (data) {
@@ -546,6 +557,24 @@ export default function CommunityPage() {
     return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
   };
 
+  const getConversationName = (conversation: PrivateConversation | null) => {
+    if (!conversation) return '';
+    const fullName = (conversation.full_name || '').trim();
+    if (fullName) return fullName;
+
+    const email = (conversation.email || '').trim();
+    if (email) {
+      const matchingClient = clients.find(c => c.email === email);
+      if (matchingClient?.name) return matchingClient.name;
+      return email;
+    }
+
+    const matchingClient = clients.find(c => c.id === conversation.id);
+    if (matchingClient?.name) return matchingClient.name;
+
+    return 'User';
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin': return 'text-red-400';
@@ -641,18 +670,18 @@ export default function CommunityPage() {
                               {user.avatar_url ? (
                                 <img
                                   src={user.avatar_url}
-                                  alt={user.full_name}
+                                  alt={getConversationName(user)}
                                   className="w-10 h-10 rounded-full object-cover"
                                 />
                               ) : (
                                 <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                  {getInitials(user.full_name)}
+                                  {getInitials(getConversationName(user))}
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {user.full_name}
+                                    {getConversationName(user)}
                                   </span>
                                   <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
                                     {user.role.toUpperCase()}
@@ -667,9 +696,11 @@ export default function CommunityPage() {
                           <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                             No conversations yet
                           </p>
-                          <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            Start a chat from Clients below
-                          </p>
+                          {canViewClients && (
+                            <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              Start a chat from Clients below
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -677,77 +708,79 @@ export default function CommunityPage() {
                 </div>
 
                 {/* Clients Section */}
-                <div className="mt-3">
-                  <button
-                    onClick={() => setShowClients(!showClients)}
-                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
-                  >
-                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Clients ({clients.length})
-                    </span>
-                    {showClients ? (
-                      <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
-                    ) : (
-                      <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
-                    )}
-                  </button>
-                  {showClients && (
-                    <div className="mt-1 space-y-1">
-                      {clients.map((client) => {
-                        // Check if this client is currently selected
-                        const isSelected = selectedUser?.id === client.id ||
-                          (selectedUser && privateConversations.find(u => u.id === selectedUser.id && u.full_name === client.name));
+                {canViewClients && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowClients(!showClients)}
+                      className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
+                    >
+                      <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Clients ({clients.length})
+                      </span>
+                      {showClients ? (
+                        <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                      ) : (
+                        <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                      )}
+                    </button>
+                    {showClients && (
+                      <div className="mt-1 space-y-1">
+                        {clients.map((client) => {
+                          // Check if this client is currently selected
+                          const isSelected = selectedUser?.id === client.id ||
+                            (selectedUser && privateConversations.find(u => u.id === selectedUser.id && u.full_name === client.name));
 
-                        return (
-                          <button
-                            key={client.id}
-                            onClick={() => {
-                              // Find or create a conversation entry for this client
-                              const existingConvo = privateConversations.find(u => u.full_name === client.name || u.id === client.id);
-                              if (existingConvo) {
-                                setSelectedUser(existingConvo);
-                              } else {
-                                // Create temporary user object for client
-                                const clientUser: PrivateConversation = {
-                                  id: client.id,
-                                  full_name: client.name,
-                                  avatar_url: null,
-                                  role: 'user',
-                                  unreadCount: 0
-                                };
-                                setPrivateConversations(prev => [...prev, clientUser]);
-                                setSelectedUser(clientUser);
-                              }
-                            }}
-                            className={`w-full text-left p-3 rounded-lg transition-all ${isSelected
-                              ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
-                              : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                              }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-gray-300 font-bold text-sm">
-                                {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-0.5">
-                                  <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {client.name}
-                                  </span>
-                                  {client.status === 'active' && (
-                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                  )}
+                          return (
+                            <button
+                              key={client.id}
+                              onClick={() => {
+                                // Find or create a conversation entry for this client
+                                const existingConvo = privateConversations.find(u => u.full_name === client.name || u.id === client.id);
+                                if (existingConvo) {
+                                  setSelectedUser(existingConvo);
+                                } else {
+                                  // Create temporary user object for client
+                                  const clientUser: PrivateConversation = {
+                                    id: client.id,
+                                    full_name: client.name,
+                                    avatar_url: null,
+                                    role: 'user',
+                                    unreadCount: 0
+                                  };
+                                  setPrivateConversations(prev => [...prev, clientUser]);
+                                  setSelectedUser(clientUser);
+                                }
+                              }}
+                              className={`w-full text-left p-3 rounded-lg transition-all ${isSelected
+                                ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                                : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                                }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-gray-300 font-bold text-sm">
+                                  {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                                 </div>
-                                <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                  {client.company || client.email}
-                                </p>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                      {client.name}
+                                    </span>
+                                    {client.status === 'active' && (
+                                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    )}
+                                  </div>
+                                  <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    {client.company || client.email}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -774,17 +807,17 @@ export default function CommunityPage() {
                 {selectedUser.avatar_url ? (
                   <img
                     src={selectedUser.avatar_url}
-                    alt={selectedUser.full_name}
+                    alt={getConversationName(selectedUser)}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-12 h-12 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {getInitials(selectedUser.full_name)}
+                    {getInitials(getConversationName(selectedUser))}
                   </div>
                 )}
                 <div>
                   <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
-                    {selectedUser.full_name}
+                    {getConversationName(selectedUser)}
                   </h2>
                   <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {selectedUser.role.toUpperCase()}
@@ -854,12 +887,12 @@ export default function CommunityPage() {
                     selectedUser.avatar_url ? (
                       <img
                         src={selectedUser.avatar_url}
-                        alt={selectedUser.full_name}
+                        alt={getConversationName(selectedUser)}
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
                       <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {getInitials(selectedUser.full_name)}
+                        {getInitials(getConversationName(selectedUser))}
                       </div>
                     )
                   )}
@@ -896,7 +929,7 @@ export default function CommunityPage() {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : selectedUser?.full_name}...`}
+                  placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
                   className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
                   style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
                   disabled={sending}

@@ -89,6 +89,32 @@ function AdminGuard({ children }: { children: React.ReactElement }) {
   return children;
 }
 
+function StaffOrAdminGuard({ children }: { children: React.ReactElement }) {
+  const { profile, user } = useAuth();
+
+  // In demo mode (no Supabase), allow staff/admin routes
+  if (!isSupabaseAvailable()) {
+    return children;
+  }
+
+  const profileRole = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
+  const isAllowed = profileRole === 'admin' || profileRole === 'staff';
+  if (!isAllowed) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
+          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>Staff Only</h2>
+          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            You don't have access to the client list.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
 function ProOnlyGuard({ children }: { children: React.ReactElement }) {
   const { profile, user } = useAuth();
 
@@ -456,8 +482,22 @@ function App() {
       <Layout currentUser={currentUser} onLogout={handleLogout} onUpdateProfile={handleUpdateProfile}>
         <Routes>
           <Route path="/" element={<Dashboard currentUser={currentUser} />} />
-          <Route path="/clients" element={<Clients currentUser={currentUser} />} />
-          <Route path="/clients/:id" element={<ClientDetail currentUser={currentUser} />} />
+          <Route
+            path="/clients"
+            element={
+              <StaffOrAdminGuard>
+                <Clients currentUser={currentUser} />
+              </StaffOrAdminGuard>
+            }
+          />
+          <Route
+            path="/clients/:id"
+            element={
+              <StaffOrAdminGuard>
+                <ClientDetail currentUser={currentUser} />
+              </StaffOrAdminGuard>
+            }
+          />
           <Route path="/projects" element={<Projects currentUser={currentUser} />} />
           <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
           <Route path="/notes" element={<Notes currentUser={currentUser} />} />

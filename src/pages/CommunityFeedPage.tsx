@@ -10,6 +10,7 @@ type Visibility = 'all' | 'pro';
 
 interface PostAuthor {
   full_name: string | null;
+  email?: string | null;
   avatar_url: string | null;
   role: string;
 }
@@ -56,6 +57,14 @@ const getInitials = (name?: string | null) => {
     .slice(0, 2)
     .map(part => part[0]?.toUpperCase())
     .join('');
+};
+
+const getAuthorLabel = (author?: PostAuthor) => {
+  const name = (author?.full_name || '').trim();
+  if (name) return name;
+  const email = (author?.email || '').trim();
+  if (email) return email;
+  return 'User';
 };
 
 const isImageUrl = (url: string) => {
@@ -123,7 +132,7 @@ export default function CommunityFeedPage() {
     try {
       const { data, error } = await supabase!
         .from('community_posts')
-        .select('id,user_id,title,body,content,tags,visibility,attachments,created_at, profiles:profiles!community_posts_user_id_fkey(full_name, avatar_url, role)')
+        .select('id,user_id,title,body,content,tags,visibility,attachments,created_at, profiles(full_name, email, avatar_url, role)')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -241,7 +250,7 @@ export default function CommunityFeedPage() {
     try {
       const { data, error } = await supabase!
         .from('community_comments')
-        .select('id,post_id,user_id,body,parent_id,created_at, profiles:profiles!community_comments_user_id_fkey(full_name, avatar_url, role)')
+        .select('id,post_id,user_id,body,parent_id,created_at, profiles(full_name, email, avatar_url, role)')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
       if (error) throw error;
@@ -442,7 +451,7 @@ export default function CommunityFeedPage() {
       ) : (
         <div className="space-y-6">
           {visiblePosts.map(post => {
-            const authorName = post.profiles?.full_name || 'Creator';
+            const authorName = getAuthorLabel(post.profiles);
             const likes = reactionCounts[post.id] || 0;
             const comments = commentCounts[post.id] || 0;
             const liked = !!likedByMe[post.id];
@@ -564,7 +573,7 @@ export default function CommunityFeedPage() {
                     <div className="pt-3 border-t border-white/10 space-y-4">
                       <div className="space-y-3">
                         {(commentsByPost[post.id] || []).map(comment => {
-                          const name = comment.profiles?.full_name || 'Creator';
+                          const name = getAuthorLabel(comment.profiles);
                           return (
                             <div key={comment.id} className="flex gap-3">
                               {comment.profiles?.avatar_url ? (
