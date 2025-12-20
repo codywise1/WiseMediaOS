@@ -398,6 +398,16 @@ export default function Projects({ currentUser }: ProjectsProps) {
     return visibleProjects.filter(p => p.status === status);
   };
 
+
+  const getColumnTotal = (status: string) => {
+    return visibleProjects
+      .filter(p => p.status === status)
+      .reduce((sum, p) => {
+        const budget = parseFloat(p.budget.replace(/[^0-9.]/g, '')) || 0;
+        return sum + budget;
+      }, 0);
+  };
+
   return (
     <div className="h-full flex flex-col space-y-6">
       <ScrollbarStyles />
@@ -441,10 +451,9 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               >
                 <option value="all">All Status</option>
-                <option value="planning">Planning</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="on_hold">On Hold</option>
+                {kanbanColumns.map(col => (
+                  <option key={col.id} value={col.id}>{col.title}</option>
+                ))}
               </select>
             </div>
             {isAdmin && (
@@ -481,21 +490,23 @@ export default function Projects({ currentUser }: ProjectsProps) {
               onDragLeave={isAdmin ? handleDragLeave : undefined}
               onDrop={isAdmin ? (e) => handleDrop(e, column.id) : undefined}
             >
-              <div className="flex-shrink-0 flex items-center space-x-2 mb-4">
-                <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                  {column.title}
-                </h3>
-                <span className="text-sm text-gray-400">({getProjectsByStatus(column.id).length})</span>
+              <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
+                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    {column.title}
+                  </h3>
+                </div>
+                <span className="text-sm font-bold text-gray-400 tabular-nums">
+                  ${getColumnTotal(column.id).toLocaleString()}
+                </span>
               </div>
 
               <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-4">
                 {getProjectsByStatus(column.id).map((project) => (
                   <div
                     key={project.id}
-                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${draggedProject?.id === project.id
-                      ? 'opacity-40 scale-95 shadow-none'
-                      : 'border-2 border-slate-700/50 hover:border-blue-400/50'
+                    className={`group bg-[#0d1117] border border-gray-800/50 hover:border-blue-500/30 rounded-2xl p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''
                       }`}
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
@@ -509,62 +520,48 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       }
                     }}
                   >
-                    <div className="space-y-3">
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <h4 className="text-white font-bold text-base min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{project.name}</h4>
-                        <p className="text-[#3aa3eb] text-xs font-bold uppercase tracking-wider truncate">{project.client}</p>
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                          {project.name}
+                        </h4>
+                        <p className="text-gray-400 text-xs font-medium truncate">
+                          {project.client}
+                        </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Service</span>
-                          <span className="text-xs text-gray-300 font-medium truncate">{project.project_type || 'General'}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Due Date</span>
-                          <span className="text-xs text-gray-300 font-medium">{project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Value</span>
-                          <span className="text-sm font-bold text-green-400">{project.budget}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 shrink-0">
+                      <div className="flex items-center justify-between">
+                        <span className="px-3 py-1 bg-[#3ba3ea]/10 border border-[#3ba3ea]/30 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                          {project.project_type || 'General'}
+                        </span>
+                        {/* Action hints - shown on hover */}
+                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleViewProject(project); }}
-                            className="text-gray-400 hover:text-white p-1 transition-colors"
-                            title="View Project"
+                            onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
+                            className="text-gray-500 hover:text-blue-400 p-1"
                           >
-                            <EyeIcon className="h-4 w-4" />
+                            <PencilIcon className="h-3.5 w-3.5" />
                           </button>
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
-                                className="text-gray-400 hover:text-blue-400 p-1 transition-colors"
-                                title="Edit Project"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
-                                className="text-gray-400 hover:text-red-400 p-1 transition-colors"
-                                title="Delete Project"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
+                            className="text-gray-500 hover:text-red-400 p-1"
+                          >
+                            <TrashIcon className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
 
-                      <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Income Balance</span>
-                          <span className={`text-sm font-bold ${project.income_balance > 0 ? 'text-blue-400' : 'text-gray-400'}`}>
-                            ${project.income_balance.toLocaleString()}
+                      <div className="pt-4 border-t border-gray-800/50 flex items-center justify-between">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Due Date</span>
+                          <span className="text-xs text-gray-300 font-bold">
+                            {project.dueDate ? formatAppDate(project.dueDate) : '—'}
+                          </span>
+                        </div>
+                        <div className="text-right flex flex-col gap-0.5">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Value</span>
+                          <span className="text-sm font-black text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                            {project.budget}
                           </span>
                         </div>
                       </div>
@@ -605,6 +602,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
         title="Delete Project"
         message={`Are you sure you want to delete "${selectedProject?.name}"? This action cannot be undone.`}
       />
-    </div>
+    </div >
   );
 }
