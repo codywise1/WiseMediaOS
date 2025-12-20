@@ -551,16 +551,16 @@ export default function Projects({ currentUser }: ProjectsProps) {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-800/50 flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Due Date</span>
-                          <span className="text-xs text-gray-300 font-bold">
-                            {project.dueDate ? formatAppDate(project.dueDate) : '—'}
+                          {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Due Date</span> */}
+                          <span className="text-xs text-gray-300">
+                            Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}
                           </span>
                         </div>
                         <div className="text-right flex flex-col gap-0.5">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Value</span>
-                          <span className="text-sm font-black text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                          {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Value</span> */}
+                          <span className="text-xs text-gray-300">
                             {project.budget}
                           </span>
                         </div>
