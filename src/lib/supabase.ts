@@ -204,9 +204,9 @@ export interface Client {
   tiktok?: string;
   github?: string;
   notes?: string;
-  status: 'active' | 'inactive' | 'prospect' | 'archived';
+  status: 'prospect' | 'active' | 'vip' | 'past' | 'archived';
   service_type?: 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other';
-  client_tier?: 'Lead' | 'Active' | 'Past' | 'VIP';
+  client_tier?: string; // Deprecated: replaced by status
   source?: 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other';
   first_name?: string;
   category?: 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex';

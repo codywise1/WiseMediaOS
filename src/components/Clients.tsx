@@ -35,10 +35,11 @@ interface ClientsProps {
   currentUser: User | null;
 }
 
-const statusConfig: Record<'active' | 'inactive' | 'prospect' | 'archived', { color: string; label: string }> = {
-  active: { color: 'bg-green-900/30 text-green-400', label: 'Active' },
-  inactive: { color: 'bg-gray-900/30 text-gray-400', label: 'Inactive' },
+const statusConfig: Record<Client['status'], { color: string; label: string }> = {
   prospect: { color: 'bg-blue-900/30 text-blue-400', label: 'Prospect' },
+  active: { color: 'bg-green-900/30 text-green-400', label: 'Active' },
+  vip: { color: 'bg-purple-900/30 text-purple-400', label: 'VIP' },
+  past: { color: 'bg-gray-900/30 text-gray-400', label: 'Past' },
   archived: { color: 'bg-amber-900/30 text-amber-300', label: 'Archived' },
 };
 
@@ -55,8 +56,7 @@ export default function Clients({ currentUser }: ClientsProps) {
     return (localStorage.getItem('clients_view_mode') as 'cards' | 'table') || 'cards';
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [stateFilter, setStateFilter] = useState<string>('all');
 
   useLoadingGuard(loading, setLoading);
 
@@ -233,14 +233,11 @@ export default function Clients({ currentUser }: ClientsProps) {
       tokens.every(token => searchableText.includes(token)) ||
       (qCompact.length > 0 && searchableCompact.includes(qCompact));
 
-    const matchesCategory = categoryFilter === 'all' || client.category === categoryFilter;
-    const matchesLocation = locationFilter === 'all' || client.location === locationFilter;
+    const matchesState = stateFilter === 'all' || client.status === stateFilter;
 
-    return matchesSearch && matchesCategory && matchesLocation;
+    return matchesSearch && matchesState;
   });
 
-  const uniqueCategories = Array.from(new Set(clients.map(c => c.category).filter(Boolean)));
-  const uniqueLocations = Array.from(new Set(clients.map(c => c.location).filter(Boolean)));
 
   if (loading) {
     return (
@@ -318,34 +315,21 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
 
           <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent md:col-span-2"
           >
-            <option value="all">All Categories</option>
-            {uniqueCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
-          >
-            <option value="all">All Locations</option>
-            {uniqueLocations.map((location) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ))}
+            <option value="all">All States</option>
+            <option value="prospect">Prospect</option>
+            <option value="active">Active</option>
+            <option value="vip">VIP</option>
+            <option value="past">Past</option>
+            <option value="archived">Archived</option>
           </select>
         </div>
 
         {/* Active Filters Display */}
-        {(searchQuery || categoryFilter !== 'all' || locationFilter !== 'all') && (
+        {(searchQuery || stateFilter !== 'all') && (
           <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
             <span className="text-gray-400">Active filters:</span>
             {searchQuery && (
@@ -353,21 +337,15 @@ export default function Clients({ currentUser }: ClientsProps) {
                 Search: {searchQuery}
               </span>
             )}
-            {categoryFilter !== 'all' && (
+            {stateFilter !== 'all' && (
               <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
-                Category: {categoryFilter}
-              </span>
-            )}
-            {locationFilter !== 'all' && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
-                Location: {locationFilter}
+                State: {stateFilter.charAt(0).toUpperCase() + stateFilter.slice(1)}
               </span>
             )}
             <button
               onClick={() => {
                 setSearchQuery('');
-                setCategoryFilter('all');
-                setLocationFilter('all');
+                setStateFilter('all');
               }}
               className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
             >
@@ -399,6 +377,18 @@ export default function Clients({ currentUser }: ClientsProps) {
             <div className="ml-4">
               <p className="text-sm text-white">Active Clients</p>
               <p className="text-2xl font-bold text-white">{activeClients}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card hover-glow rounded-xl p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-lg bg-[#3aa3eb]">
+              <UserGroupIcon className="h-6 w-6 text-white" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-white">VIP Clients</p>
+              <p className="text-2xl font-bold text-white">{clients.filter(c => c.status === 'vip').length}</p>
             </div>
           </div>
         </div>
@@ -445,7 +435,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             return (
               <div key={client.id} className="glass-card hover-glow rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
                 {/* Background Glow Effect */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                 {/* Header Section */}
                 <div className="mb-8 relative z-10">
@@ -473,17 +463,17 @@ export default function Clients({ currentUser }: ClientsProps) {
                         </span>
                       )}
                       <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
                         style={{
-                          backgroundColor: client.status === 'active' ? 'rgba(71, 234, 59, 0.33)' : 'rgba(234, 59, 59, 0.33)',
-                          border: client.status === 'active' ? '1px solid rgba(71, 234, 59, 1)' : '1px solid rgba(234, 59, 59, 1)',
-                          color: client.status === 'active' ? '#47ea3b' : '#ea3b3b'
+                          backgroundColor: statusInfo.color.split(' ')[0],
+                          border: `1px solid ${statusInfo.color.split(' ')[1].replace('text-', '')}`,
+                          color: statusInfo.color.split(' ')[1].replace('text-', '')
                         }}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full mr-2"
                           style={{
-                            backgroundColor: client.status === 'active' ? '#47ea3b' : '#ea3b3b'
+                            backgroundColor: statusInfo.color.split(' ')[1].replace('text-', '')
                           }}
                         ></span>
                         {statusInfo.label}

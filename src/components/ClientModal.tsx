@@ -29,9 +29,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     category: '' as '' | 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex',
     location: '',
     services_requested: [] as string[],
-    client_tier: '' as '' | 'Lead' | 'Active' | 'Past' | 'VIP',
     source: '' as '' | 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other',
-    status: 'active' as 'active' | 'inactive' | 'prospect' | 'archived',
+    status: 'prospect' as 'prospect' | 'active' | 'vip' | 'past' | 'archived',
     linkedin: '',
     twitter: '',
     instagram: '',
@@ -50,7 +49,6 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         category: client.category || '',
         location: client.location || '',
         services_requested: client.services_requested || [],
-        client_tier: client.client_tier || '',
         source: client.source || '',
         status: client.status,
         linkedin: client.linkedin || '',
@@ -69,9 +67,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         category: '',
         location: '',
         services_requested: [],
-        client_tier: '',
         source: '',
-        status: 'active',
+        status: 'prospect',
         linkedin: '',
         twitter: '',
         instagram: '',
@@ -100,6 +97,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     setIsSubmitting(true);
 
     const clientData = {
+      ...(mode === 'edit' && client ? client : {}),
+      ...formData,
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
       phone: formData.phone.trim() || null,
@@ -107,16 +106,12 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
       category: formData.category || null,
       location: formData.location.trim() || null,
       services_requested: formData.services_requested.length > 0 ? formData.services_requested : null,
-      client_tier: formData.client_tier || null,
-      source: formData.source || null,
-      status: formData.status,
       linkedin: formData.linkedin.trim() || null,
       twitter: formData.twitter.trim() || null,
       instagram: formData.instagram.trim() || null,
       facebook: formData.facebook.trim() || null,
       tiktok: formData.tiktok.trim() || null,
-      ...(mode === 'edit' && client ? { id: client.id, created_at: client.created_at, updated_at: client.updated_at } : {})
-    };
+    } as Client;
 
     onSave(clientData);
 
@@ -280,52 +275,36 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Client Tier</label>
-              <select
-                name="client_tier"
-                value={formData.client_tier}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-              >
-                <option value="">Select tier...</option>
-                <option value="Lead">Lead</option>
-                <option value="Active">Active</option>
-                <option value="Past">Past</option>
-                <option value="VIP">VIP</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
-              <select
-                name="source"
-                value={formData.source}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-              >
-                <option value="">Select source...</option>
-                <option value="Referral">Referral</option>
-                <option value="Instagram">Instagram</option>
-                <option value="X">X</option>
-                <option value="Repeat">Repeat</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">Client State</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="form-input w-full px-4 py-3 rounded-lg"
+              className="form-input w-full px-4 py-3 rounded-lg text-white"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
               <option value="prospect">Prospect</option>
+              <option value="active">Active</option>
+              <option value="vip">VIP</option>
+              <option value="past">Past</option>
               <option value="archived">Archived</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
+            <select
+              name="source"
+              value={formData.source}
+              onChange={handleChange}
+              className="form-input w-full px-4 py-3 rounded-lg text-white"
+            >
+              <option value="">Select source...</option>
+              <option value="Referral">Referral</option>
+              <option value="Instagram">Instagram</option>
+              <option value="X">X</option>
+              <option value="Repeat">Repeat</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div>

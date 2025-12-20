@@ -584,7 +584,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 <button
                   key={index}
                   onClick={() => handleQuickAction(actionItem, action.route)}
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-700/50 btn-pill transition-all duration-200 shrink-glow-button"
+                  className="w-full btn-pill shrink-glow-button"
                 >
                   {actionItem}
                 </button>
@@ -600,7 +600,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Activity</h2>
           <button
             onClick={() => console.log('View all activities')}
-            className="text-blue-400 hover:text-blue-300 text-sm font-medium btn-pill px-4 py-2 hover:bg-blue-900/20 shrink-glow-button"
+            className="btn-pill shrink-glow-button"
           >
             View All
           </button>
