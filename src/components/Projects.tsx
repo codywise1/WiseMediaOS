@@ -468,123 +468,125 @@ export default function Projects({ currentUser }: ProjectsProps) {
       </div>
 
       {/* Kanban Board - Scrollable Area */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {kanbanColumns.map((column) => (
-          <div
-            key={column.id}
-            className={`glass-card rounded-xl p-4 h-full flex flex-col transition-all duration-300 ${dragOverColumn === column.id
-              ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
-              : 'border-2 border-slate-700/50'
-              }`}
-            onDragOver={isAdmin ? (e) => handleDragOver(e, column.id) : undefined}
-            onDragLeave={isAdmin ? handleDragLeave : undefined}
-            onDrop={isAdmin ? (e) => handleDrop(e, column.id) : undefined}
-          >
-            <div className="flex-shrink-0 flex items-center space-x-2 mb-4">
-              <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-              <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                {column.title}
-              </h3>
-              <span className="text-sm text-gray-400">({getProjectsByStatus(column.id).length})</span>
-            </div>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-6 overflow-x-auto pb-4 custom-scrollbar lg:overflow-x-visible">
+          {kanbanColumns.map((column) => (
+            <div
+              key={column.id}
+              className={`glass-card rounded-xl p-4 h-full min-h-0 min-w-[300px] lg:min-w-0 flex flex-col transition-all duration-300 ${dragOverColumn === column.id
+                ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
+                : 'border-2 border-slate-700/50'
+                }`}
+              onDragOver={isAdmin ? (e) => handleDragOver(e, column.id) : undefined}
+              onDragLeave={isAdmin ? handleDragLeave : undefined}
+              onDrop={isAdmin ? (e) => handleDrop(e, column.id) : undefined}
+            >
+              <div className="flex-shrink-0 flex items-center space-x-2 mb-4">
+                <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
+                <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  {column.title}
+                </h3>
+                <span className="text-sm text-gray-400">({getProjectsByStatus(column.id).length})</span>
+              </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
-              {getProjectsByStatus(column.id).map((project) => (
-                <div
-                  key={project.id}
-                  className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${draggedProject?.id === project.id
-                    ? 'opacity-40 scale-95 shadow-none'
-                    : 'border-2 border-slate-700/50 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]'
-                    }`}
-                  draggable={isAdmin}
-                  onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
-                  onDragEnd={isAdmin ? handleDragEnd : undefined}
-                  onClick={(e) => {
-                    if (!isDragging) {
-                      handleViewProject(project);
-                    } else {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                  }}
-                >
-                  <div className="space-y-3">
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <h4 className="text-white font-bold text-base min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{project.name}</h4>
-                      <p className="text-[#3aa3eb] text-xs font-bold uppercase tracking-wider truncate">{project.client}</p>
-                    </div>
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+                {getProjectsByStatus(column.id).map((project) => (
+                  <div
+                    key={project.id}
+                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${draggedProject?.id === project.id
+                      ? 'opacity-40 scale-95 shadow-none'
+                      : 'border-2 border-slate-700/50 hover:border-blue-400/50'
+                      }`}
+                    draggable={isAdmin}
+                    onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
+                    onDragEnd={isAdmin ? handleDragEnd : undefined}
+                    onClick={(e) => {
+                      if (!isDragging) {
+                        handleViewProject(project);
+                      } else {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <h4 className="text-white font-bold text-base min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{project.name}</h4>
+                        <p className="text-[#3aa3eb] text-xs font-bold uppercase tracking-wider truncate">{project.client}</p>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Service</span>
-                        <span className="text-xs text-gray-300 font-medium truncate">{project.project_type || 'General'}</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Service</span>
+                          <span className="text-xs text-gray-300 font-medium truncate">{project.project_type || 'General'}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Due Date</span>
+                          <span className="text-xs text-gray-300 font-medium">{project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Due Date</span>
-                        <span className="text-xs text-gray-300 font-medium">{project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Value</span>
-                        <span className="text-sm font-bold text-green-400">{project.budget}</span>
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Value</span>
+                          <span className="text-sm font-bold text-green-400">{project.budget}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleViewProject(project); }}
+                            className="text-gray-400 hover:text-white p-1 transition-colors"
+                            title="View Project"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
+                                className="text-gray-400 hover:text-blue-400 p-1 transition-colors"
+                                title="Edit Project"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
+                                className="text-gray-400 hover:text-red-400 p-1 transition-colors"
+                                title="Delete Project"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2 shrink-0">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleViewProject(project); }}
-                          className="text-gray-400 hover:text-white p-1 transition-colors"
-                          title="View Project"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
-                        {isAdmin && (
-                          <>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
-                              className="text-gray-400 hover:text-blue-400 p-1 transition-colors"
-                              title="Edit Project"
-                            >
-                              <PencilIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
-                              className="text-gray-400 hover:text-red-400 p-1 transition-colors"
-                              title="Delete Project"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Income Balance</span>
-                        <span className={`text-sm font-bold ${project.income_balance > 0 ? 'text-blue-400' : 'text-gray-400'}`}>
-                          ${project.income_balance.toLocaleString()}
-                        </span>
+                      <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Income Balance</span>
+                          <span className={`text-sm font-bold ${project.income_balance > 0 ? 'text-blue-400' : 'text-gray-400'}`}>
+                            ${project.income_balance.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              {getProjectsByStatus(column.id).length === 0 && (
-                <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
-                  ? 'border-blue-400 bg-blue-500/5'
-                  : 'border-slate-700/30'
-                  }`}>
-                  <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
-                  {isAdmin && (
-                    <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
-                  )}
-                </div>
-              )}
+                {getProjectsByStatus(column.id).length === 0 && (
+                  <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
+                    ? 'border-blue-400 bg-blue-500/5'
+                    : 'border-slate-700/30'
+                    }`}>
+                    <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
+                    {isAdmin && (
+                      <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <ProjectModal
