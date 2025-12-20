@@ -68,12 +68,24 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="glass-card neon-glow rounded-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Fixed background for both mobile and desktop */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20 transform-gpu"
+        style={{
+          backgroundImage:
+            "url('https://codywise.io/wp-content/uploads/2025/02/IMG-4-Wise-Media.webp')"
+        }}
+      />
+
+      {/* Background overlay for readability */}
+      <div className="fixed inset-0 bg-black/20 -z-10 pointer-events-none" />
+
+      <div className="glass-card neon-glow rounded-2xl p-8 w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg" 
+          <img
+            src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg"
             alt="Wise Media"
             className="h-12 w-auto mx-auto mb-4"
           />
@@ -85,7 +97,7 @@ export default function Login({ onLogin }: LoginProps) {
           </p>
         </div>
 
-      
+
         {/* Error Message */}
         {error && (
           <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
