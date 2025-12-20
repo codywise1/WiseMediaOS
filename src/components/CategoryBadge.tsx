@@ -14,7 +14,7 @@ export default function CategoryBadge({ category, size = 'md' }: CategoryBadgePr
       style={{
         backgroundColor: 'rgba(59, 163, 234, 0.33)',
         border: '1px solid rgba(59, 163, 234, 1)',
-        color: '#3ba3ea'
+        color: '#ffffff'
       }}
     >
       {category}

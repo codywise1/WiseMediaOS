@@ -36,7 +36,7 @@ interface ClientsProps {
 
 const statusConfig: Record<Client['status'], { color: string; label: string }> = {
   prospect: { color: 'rgba(34,197,94,0.1) text-white border-#22c55e', label: 'Prospect' },
-  active: { color: 'rgba(59,163,234,0.1) text-white border-#3ba3ea', label: 'Active' },
+  active: { color: 'rgba(59,163,234,0.1) text-white border-#40ac40', label: 'Active' },
   vip: { color: 'rgba(168,85,247,0.1) text-white border-#a855f7', label: 'VIP' },
   past: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Past' },
   archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
