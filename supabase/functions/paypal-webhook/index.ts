@@ -86,7 +86,9 @@ Deno.serve(async (req: Request) => {
       const captureId = res.id;
       const amount = parseFloat(res.amount?.value || "0");
       const currency = res.amount?.currency_code || "USD";
-      const invoiceId = res.invoice_id || res.custom_id || res?.supplementary_data?.related_ids?.order_id || null;
+      // Prefer custom_id because we store our internal invoice uuid there.
+      // invoice_id may be a unique PayPal invoice id (string) and not a uuid.
+      const invoiceId = res.custom_id || res.invoice_id || res?.supplementary_data?.related_ids?.order_id || null;
 
       if (invoiceId) {
         // Insert payment and mark invoice as paid

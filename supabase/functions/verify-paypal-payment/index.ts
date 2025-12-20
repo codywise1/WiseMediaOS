@@ -62,9 +62,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = (await req.json()) as VerifyRequest;
-    const { invoiceId, amount: clientAmount, currency = "USD", orderId, captureId } = body;
-    if (!invoiceId || (!orderId && !captureId)) {
-      return new Response(JSON.stringify({ error: "invoiceId and orderId or captureId are required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    let { invoiceId, amount: clientAmount, currency = "USD", orderId, captureId } = body;
+    if (!invoiceId) {
+      return new Response(JSON.stringify({ error: "invoiceId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Fetch invoice to verify amount
@@ -75,6 +75,23 @@ Deno.serve(async (req: Request) => {
       .single();
     if (invErr || !invoice) {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!orderId && !captureId) {
+      const { data: latestPayment, error: payLookupErr } = await supabaseAdmin
+        .from("payments")
+        .select("provider_txn_id")
+        .eq("invoice_id", invoiceId)
+        .eq("provider", "paypal")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (payLookupErr || !latestPayment?.provider_txn_id) {
+        return new Response(JSON.stringify({ error: "orderId or captureId required (no prior PayPal payment found for invoice)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      captureId = latestPayment.provider_txn_id;
     }
 
     // Get PayPal token
@@ -90,13 +107,60 @@ Deno.serve(async (req: Request) => {
       const res = await fetch(`${baseUrl}/v2/payments/captures/${captureId}`, {
         headers: { Authorization: `Bearer ${ppToken}` },
       });
+
       if (!res.ok) {
         const txt = await res.text();
-        return new Response(JSON.stringify({ error: `PayPal capture fetch failed`, detail: txt }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const paypalDebugId = res.headers.get('paypal-debug-id');
+
+        // Fallback: some merchants/apps may not have permission to read capture details,
+        // but can still read the order. Try orderId if available.
+        if (orderId) {
+          const orderRes = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}`, {
+            headers: { Authorization: `Bearer ${ppToken}` },
+          });
+
+          if (!orderRes.ok) {
+            const orderTxt = await orderRes.text();
+            const orderDebugId = orderRes.headers.get('paypal-debug-id');
+            return new Response(
+              JSON.stringify({
+                error: `PayPal capture fetch failed`,
+                detail: txt,
+                paypal_debug_id: paypalDebugId,
+                baseUrl,
+                captureId,
+                order_fallback_error: `PayPal order fetch failed`,
+                order_fallback_detail: orderTxt,
+                order_paypal_debug_id: orderDebugId,
+                orderId,
+              }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          paypalPayload = await orderRes.json();
+          status = paypalPayload.status || "pending";
+          const units = paypalPayload.purchase_units?.[0];
+          verifiedAmount = parseFloat(units?.amount?.value || "0");
+          const cap = units?.payments?.captures?.[0];
+          if (cap?.id) providerTxnId = cap.id;
+        } else {
+          return new Response(
+            JSON.stringify({
+              error: `PayPal capture fetch failed`,
+              detail: txt,
+              paypal_debug_id: paypalDebugId,
+              baseUrl,
+              captureId,
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        paypalPayload = await res.json();
+        status = paypalPayload.status || paypalPayload?.status_code || "pending";
+        verifiedAmount = parseFloat(paypalPayload?.amount?.value || "0");
       }
-      paypalPayload = await res.json();
-      status = paypalPayload.status || paypalPayload?.status_code || "pending";
-      verifiedAmount = parseFloat(paypalPayload?.amount?.value || "0");
     } else if (orderId) {
       const res = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${ppToken}` },
@@ -123,42 +187,80 @@ Deno.serve(async (req: Request) => {
       // Not fatal: some endpoints (order fetch) may not show captured amount yet. Continue but mark warning.
     }
 
-    const isCompleted = ["COMPLETED", "captured", "completed"].includes(String(status).toUpperCase());
-    if (!isCompleted) {
+    const statusUpper = String(status || "").toUpperCase();
+    const isCompleted = ["COMPLETED", "CAPTURED"].includes(statusUpper);
+    const isPending = statusUpper === "PENDING";
+    if (!isCompleted && !isPending) {
       return new Response(JSON.stringify({ error: "Payment not completed", status }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Insert payment record and update invoice
-    const { data: payment, error: payErr } = await supabaseAdmin
+    const paymentStatus = isCompleted ? "completed" : "pending";
+
+    // Insert/update payment record (avoid duplicates if client retries verification)
+    const { data: existingPayment } = await supabaseAdmin
       .from("payments")
-      .insert({
-        invoice_id: invoiceId,
-        provider: "paypal",
-        provider_txn_id: providerTxnId,
-        amount: expectedAmount,
-        currency,
-        status: "completed",
-        payer_email: paypalPayload?.payer?.email_address || paypalPayload?.payment_source?.paypal?.email_address || null,
-        raw_payload: paypalPayload,
-      })
-      .select()
-      .single();
-    if (payErr) {
-      return new Response(JSON.stringify({ error: payErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+      .select("id, status")
+      .eq("provider", "paypal")
+      .eq("provider_txn_id", providerTxnId)
+      .maybeSingle();
 
-    // Update invoice to paid if not already
-    if (invoice.status !== "paid") {
-      const { error: updErr } = await supabaseAdmin
-        .from("invoices")
-        .update({ status: "paid" })
-        .eq("id", invoiceId);
-      if (updErr) {
-        return new Response(JSON.stringify({ error: updErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    let payment: any = null;
+
+    if (existingPayment?.id) {
+      const { data: updated, error: updPayErr } = await supabaseAdmin
+        .from("payments")
+        .update({
+          status: paymentStatus,
+          invoice_id: invoiceId,
+          amount: expectedAmount,
+          currency,
+          payer_email: paypalPayload?.payer?.email_address || paypalPayload?.payment_source?.paypal?.email_address || null,
+          raw_payload: paypalPayload,
+        })
+        .eq("id", existingPayment.id)
+        .select()
+        .single();
+      if (updPayErr) {
+        return new Response(JSON.stringify({ error: updPayErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+      payment = updated;
+    } else {
+      const { data: inserted, error: insPayErr } = await supabaseAdmin
+        .from("payments")
+        .insert({
+          invoice_id: invoiceId,
+          provider: "paypal",
+          provider_txn_id: providerTxnId,
+          amount: expectedAmount,
+          currency,
+          status: paymentStatus,
+          payer_email: paypalPayload?.payer?.email_address || paypalPayload?.payment_source?.paypal?.email_address || null,
+          raw_payload: paypalPayload,
+        })
+        .select()
+        .single();
+      if (insPayErr) {
+        return new Response(JSON.stringify({ error: insPayErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      payment = inserted;
     }
 
-    return new Response(JSON.stringify({ success: true, payment, status: "paid" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (isCompleted) {
+      // Update invoice to paid if not already
+      if (invoice.status !== "paid") {
+        const { error: updInvErr } = await supabaseAdmin
+          .from("invoices")
+          .update({ status: "paid" })
+          .eq("id", invoiceId);
+        if (updInvErr) {
+          return new Response(JSON.stringify({ error: updInvErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, payment, status: "paid" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ success: true, payment, status: "pending" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || "Internal error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
