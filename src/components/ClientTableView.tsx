@@ -81,6 +81,9 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700">
+              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
+                Status
+              </th>
               <th
                 className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('company')}
@@ -110,6 +113,15 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
               </th>
               <th
                 className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleSort('location')}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>Location</span>
+                  <SortIcon field="location" />
+                </div>
+              </th>
+              <th
+                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('email')}
               >
                 <div className="flex items-center space-x-2">
@@ -119,15 +131,6 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
                 Phone
-              </th>
-              <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('location')}
-              >
-                <div className="flex items-center space-x-2">
-                  <span>Location</span>
-                  <SortIcon field="location" />
-                </div>
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
                 Service Requested
@@ -144,6 +147,20 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 className={`border-b border-slate-800 hover:bg-slate-800/30 transition-colors ${index % 2 === 0 ? 'bg-slate-900/20' : ''
                   }`}
               >
+                <td className="px-6 py-4">
+                  {['prospect', 'active', 'vip'].includes(client.status) ? (
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${client.status === 'prospect' ? 'bg-green-900/30 text-green-400' :
+                        client.status === 'active' ? 'bg-green-900/30 text-green-400' :
+                          'bg-purple-900/30 text-purple-400'
+                        }`}
+                    >
+                      {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-500 font-medium capitalize">{client.status}</span>
+                  )}
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-medium text-white">
@@ -162,13 +179,13 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   )}
                 </td>
                 <td className="px-6 py-4">
+                  <span className="text-sm text-gray-200 font-medium">{client.location || '-'}</span>
+                </td>
+                <td className="px-6 py-4">
                   <span className="text-sm text-gray-200 font-medium">{client.email}</span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-gray-200 font-medium">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-200 font-medium">{client.location || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">

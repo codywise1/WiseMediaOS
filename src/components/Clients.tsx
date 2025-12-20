@@ -4,7 +4,6 @@ import { useToast } from '../contexts/ToastContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import {
   UserGroupIcon,
-  BuildingOfficeIcon,
   PhoneIcon,
   EnvelopeIcon,
   PlusIcon,
@@ -36,7 +35,7 @@ interface ClientsProps {
 }
 
 const statusConfig: Record<Client['status'], { color: string; label: string }> = {
-  prospect: { color: 'bg-blue-900/30 text-blue-400', label: 'Prospect' },
+  prospect: { color: 'bg-green-900/30 text-green-400', label: 'Prospect' },
   active: { color: 'bg-green-900/30 text-green-400', label: 'Active' },
   vip: { color: 'bg-purple-900/30 text-purple-400', label: 'VIP' },
   past: { color: 'bg-gray-900/30 text-gray-400', label: 'Past' },
@@ -57,6 +56,8 @@ export default function Clients({ currentUser }: ClientsProps) {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [stateFilter, setStateFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
 
   useLoadingGuard(loading, setLoading);
 
@@ -234,9 +235,14 @@ export default function Clients({ currentUser }: ClientsProps) {
       (qCompact.length > 0 && searchableCompact.includes(qCompact));
 
     const matchesState = stateFilter === 'all' || client.status === stateFilter;
+    const matchesCategory = categoryFilter === 'all' || client.category === categoryFilter;
+    const matchesLocation = locationFilter === 'all' || client.location === locationFilter;
 
-    return matchesSearch && matchesState;
+    return matchesSearch && matchesState && matchesCategory && matchesLocation;
   });
+
+  const uniqueCategories = Array.from(new Set(clients.map(c => c.category).filter(Boolean)));
+  const uniqueLocations = Array.from(new Set(clients.map(c => c.location).filter(Boolean)));
 
 
   if (loading) {
@@ -249,7 +255,6 @@ export default function Clients({ currentUser }: ClientsProps) {
 
   const activeClients = clients.filter(c => c.status === 'active').length;
   const prospects = clients.filter(c => c.status === 'prospect').length;
-  const companiesCount = clients.filter(c => c.company).length;
 
   return (
     <div className="space-y-8">
@@ -302,34 +307,68 @@ export default function Clients({ currentUser }: ClientsProps) {
         </div>
 
         {/* Search and Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+              />
+            </div>
           </div>
 
-          <select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent md:col-span-2"
-          >
-            <option value="all">All States</option>
-            <option value="prospect">Prospect</option>
-            <option value="active">Active</option>
-            <option value="vip">VIP</option>
-            <option value="past">Past</option>
-            <option value="archived">Archived</option>
-          </select>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client State</label>
+            <select
+              value={stateFilter}
+              onChange={(e) => setStateFilter(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            >
+              <option value="all">All States</option>
+              <option value="prospect">Prospect</option>
+              <option value="active">Active</option>
+              <option value="vip">VIP</option>
+              <option value="past">Past</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Industry</label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            >
+              <option value="all">All Categories</option>
+              {uniqueCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Location</label>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            >
+              <option value="all">All Locations</option>
+              {uniqueLocations.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Active Filters Display */}
-        {(searchQuery || stateFilter !== 'all') && (
+        {(searchQuery || stateFilter !== 'all' || categoryFilter !== 'all' || locationFilter !== 'all') && (
           <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
             <span className="text-gray-400">Active filters:</span>
             {searchQuery && (
@@ -342,10 +381,22 @@ export default function Clients({ currentUser }: ClientsProps) {
                 State: {stateFilter.charAt(0).toUpperCase() + stateFilter.slice(1)}
               </span>
             )}
+            {categoryFilter !== 'all' && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Category: {categoryFilter}
+              </span>
+            )}
+            {locationFilter !== 'all' && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Location: {locationFilter}
+              </span>
+            )}
             <button
               onClick={() => {
                 setSearchQuery('');
                 setStateFilter('all');
+                setCategoryFilter('all');
+                setLocationFilter('all');
               }}
               className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
             >
@@ -357,62 +408,74 @@ export default function Clients({ currentUser }: ClientsProps) {
 
       {/* Client Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-card hover-glow rounded-xl p-6">
+        <div
+          onClick={() => setStateFilter('all')}
+          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'all'
+            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
+            : 'hover-glow border-white/10'
+            }`}
+        >
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
+            <div className={`p-3 rounded-lg ${stateFilter === 'all' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
               <UserGroupIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-white">Total Clients</p>
+              <p className="text-sm text-white font-medium">Total Clients</p>
               <p className="text-2xl font-bold text-white">{clients.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="glass-card hover-glow rounded-xl p-6">
+        <div
+          onClick={() => setStateFilter('active')}
+          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'active'
+            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
+            : 'hover-glow border-white/10'
+            }`}
+        >
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
+            <div className={`p-3 rounded-lg ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
               <UserGroupIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-white">Active Clients</p>
+              <p className="text-sm text-white font-medium">Active Clients</p>
               <p className="text-2xl font-bold text-white">{activeClients}</p>
             </div>
           </div>
         </div>
 
-        <div className="glass-card hover-glow rounded-xl p-6">
+        <div
+          onClick={() => setStateFilter('vip')}
+          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'vip'
+            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
+            : 'hover-glow border-white/10'
+            }`}
+        >
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
+            <div className={`p-3 rounded-lg ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
               <UserGroupIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-white">VIP Clients</p>
+              <p className="text-sm text-white font-medium">VIP Clients</p>
               <p className="text-2xl font-bold text-white">{clients.filter(c => c.status === 'vip').length}</p>
             </div>
           </div>
         </div>
 
-        <div className="glass-card hover-glow rounded-xl p-6">
+        <div
+          onClick={() => setStateFilter('prospect')}
+          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'prospect'
+            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
+            : 'hover-glow border-white/10'
+            }`}
+        >
           <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
+            <div className={`p-3 rounded-lg ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
               <UserGroupIcon className="h-6 w-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-white">Prospects</p>
+              <p className="text-sm text-white font-medium">Prospects</p>
               <p className="text-2xl font-bold text-white">{prospects}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card hover-glow rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <BuildingOfficeIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Companies</p>
-              <p className="text-2xl font-bold text-white">{companiesCount}</p>
             </div>
           </div>
         </div>
@@ -449,6 +512,24 @@ export default function Clients({ currentUser }: ClientsProps) {
                     </p>
 
                     <div className="flex flex-wrap gap-2 items-center">
+                      {['prospect', 'active', 'vip'].includes(client.status) && (
+                        <span
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{
+                            backgroundColor: statusInfo.color.split(' ')[0],
+                            border: `1px solid ${statusInfo.color.split(' ')[1].replace('text-', '')}`,
+                            color: statusInfo.color.split(' ')[1].replace('text-', '')
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full mr-2"
+                            style={{
+                              backgroundColor: statusInfo.color.split(' ')[1].replace('text-', '')
+                            }}
+                          ></span>
+                          {statusInfo.label}
+                        </span>
+                      )}
                       {client.category && <CategoryBadge category={client.category} />}
                       {client.location && (
                         <span
@@ -462,22 +543,6 @@ export default function Clients({ currentUser }: ClientsProps) {
                           {client.location}
                         </span>
                       )}
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: statusInfo.color.split(' ')[0],
-                          border: `1px solid ${statusInfo.color.split(' ')[1].replace('text-', '')}`,
-                          color: statusInfo.color.split(' ')[1].replace('text-', '')
-                        }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full mr-2"
-                          style={{
-                            backgroundColor: statusInfo.color.split(' ')[1].replace('text-', '')
-                          }}
-                        ></span>
-                        {statusInfo.label}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -577,6 +642,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           <button
             onClick={() => {
               setSearchQuery('');
+              setStateFilter('all');
               setCategoryFilter('all');
               setLocationFilter('all');
             }}

@@ -233,7 +233,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           </div>
 
           {isSearchFocused && (
-            <div className="absolute top-12 left-0 w-full bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto animate-in slide-in-from-top">
+            <div className="absolute top-12 left-0 w-full bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto">
               {groupedOrder.map((groupKey) => {
                 const items = filteredResults[groupKey];
                 if (!items || items.length === 0) return null;
@@ -390,7 +390,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
             </button>
 
             {showAvatarMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in slide-in-from-top">
+              <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleNavigate('/community/profile')}

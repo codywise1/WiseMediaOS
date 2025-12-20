@@ -215,7 +215,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
-      <div className="fixed z-50 animate-in slide-in-from-top left-0 right-0 top-20 px-3 sm:left-auto sm:right-4 sm:px-0 sm:w-96">
+      <div className="fixed z-50 left-0 right-0 top-20 px-3 sm:left-auto sm:right-4 sm:px-0 sm:w-96">
         <GlassCard className="overflow-hidden bg-slate-950 border border-white/10">
           <div className="relative flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between sm:pr-10">
             <div className="flex items-center justify-between gap-3 min-w-0">
@@ -255,8 +255,8 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
               <div
                 key={notification.id}
                 className={`p-4 rounded-lg transition-colors cursor-pointer ${notification.read
-                    ? 'bg-white/5 hover:bg-white/10'
-                    : 'bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20'
+                  ? 'bg-white/5 hover:bg-white/10'
+                  : 'bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20'
                   }`}
                 onClick={() => {
                   if (!notification.read) {
