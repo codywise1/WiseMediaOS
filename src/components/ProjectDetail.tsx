@@ -11,7 +11,6 @@ import {
   CalendarIcon,
   UserIcon,
   FlagIcon,
-  ClipboardDocumentListIcon,
   ChartBarIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
@@ -88,7 +87,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         deliverables: projectData.deliverables || [],
         internal_tags: projectData.internal_tags || [],
         milestones: projectData.milestones || [],
-        asset_count: projectData.asset_count || 0
+        asset_count: projectData.asset_count || 0,
+        income_balance: projectData.income_balance || 0
       };
 
       await projectService.update(id!, apiData);
@@ -107,7 +107,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         name: `${project.name} (Copy)`,
         client_id: project.client_id,
         description: project.description,
-        status: 'planning',
+        status: 'planning' as const,
         progress: 0,
         budget: project.budget,
         due_date: project.due_date,
@@ -282,6 +282,14 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           </div>
 
           <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
+            <CurrencyDollarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-400 mb-1">Income Balance</p>
+              <p className="text-white font-medium text-lg">${(project.income_balance || 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
             <CalendarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Due Date</p>
@@ -391,7 +399,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           deliverables: project.deliverables,
           internal_tags: project.internal_tags,
           milestones: project.milestones,
-          asset_count: project.asset_count
+          asset_count: project.asset_count,
+          income_balance: project.income_balance
         }}
         mode="edit"
         currentUser={currentUser}

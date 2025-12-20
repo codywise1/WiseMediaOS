@@ -198,7 +198,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
   const navGroups = navByRole[normalizedRole]
   const dockItems = navGroups.flatMap(group => group.items).slice(0, 4)
   const showSidebarUserActions = false
-  const isChatRoute = location.pathname.startsWith('/community/chat')
+  const isFixedHeightRoute = location.pathname.startsWith('/community/chat') || location.pathname === '/projects'
 
   const handleProfileUpdate = (userData: Partial<User>) => {
     if (onUpdateProfile) {
@@ -463,7 +463,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           />
           <div
             className={
-              isChatRoute
+              isFixedHeightRoute
                 ? 'h-[calc(100vh-80px)] overflow-hidden min-h-0 p-4 md:p-8 pb-8 md:pb-8'
                 : 'min-h-screen p-4 md:p-8 pb-8 md:pb-8'
             }

@@ -7,8 +7,7 @@ import {
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  MagnifyingGlassIcon,
-  UserGroupIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -35,6 +34,7 @@ interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 
   color: string;
   client: string;
   status: ProjectStatus;
+  income_balance: number;
 }
 
 const kanbanColumns = [
@@ -43,6 +43,24 @@ const kanbanColumns = [
   { id: 'completed', title: 'Completed', color: 'bg-green-500' },
   { id: 'on_hold', title: 'On Hold', color: 'bg-red-500' }
 ];
+
+const ScrollbarStyles = () => (
+  <style>{`
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(58, 163, 235, 0.2);
+      border-radius: 20px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(58, 163, 235, 0.4);
+    }
+  `}</style>
+);
 
 export default function Projects({ currentUser }: ProjectsProps) {
   const navigate = useNavigate();
@@ -93,10 +111,10 @@ export default function Projects({ currentUser }: ProjectsProps) {
     if (projects.length === 0) {
       setLoading(true);
     }
-    
+
     try {
       let data: SbProject[] = [];
-      
+
       if (!currentUser) {
         setLoading(false);
         return;
@@ -114,7 +132,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
         setLoading(false);
         return;
       }
-      
+
       // Transform data to match component interface
       const normalized = (status: string | null | undefined): ProjectStatus => {
         if (status === 'planning' || status === 'in_progress' || status === 'completed' || status === 'on_hold') {
@@ -151,10 +169,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
           budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
           dueDate: project.due_date || '',
           team: project.team_size || 1,
+          income_balance: project.income_balance || 0,
           color: getStatusColor(status)
         };
       });
-      
+
       setProjects(transformedProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -217,7 +236,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
         deliverables: projectData.deliverables || [],
         internal_tags: projectData.internal_tags || [],
         milestones: projectData.milestones || [],
-        asset_count: projectData.asset_count || 0
+        asset_count: projectData.asset_count || 0,
+        income_balance: projectData.income_balance || 0
       };
 
       if (modalMode === 'create') {
@@ -259,7 +279,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const moveProject = async (projectId: string, newStatus: string) => {
     // Cast string to ProjectStatus for local update
     const status = newStatus as ProjectStatus;
-    
+
     try {
       console.log('Moving project:', projectId, 'to status:', status);
 
@@ -318,7 +338,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     if (!isAdmin) return;
-    
+
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverColumn(columnId);
@@ -366,8 +386,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
   // Apply filters
   const visibleProjects = projects.filter(project => {
     const matchesSearch = !searchTerm ||
-                         project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.client?.toLowerCase().includes(searchTerm.toLowerCase());
+      project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.client?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
     return matchesSearch && matchesStatus && matchesClient;
@@ -379,134 +399,157 @@ export default function Projects({ currentUser }: ProjectsProps) {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
-            <p className="text-gray-300">Manage and track all your active projects</p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={handleNewProject}
-              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0"
-            >
-              <PlusIcon className="h-5 w-5 text-white" />
-              <span>New Project</span>
-            </button>
-          )}
-        </div>
+    <div className="h-full flex flex-col space-y-6">
+      <ScrollbarStyles />
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search projects or clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-            />
+      {/* Header & Filters Section */}
+      <div className="flex-shrink-0 space-y-6">
+        {/* Header */}
+        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
+              <p className="text-gray-300">Manage and track all your active projects</p>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={handleNewProject}
+                className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0"
+              >
+                <PlusIcon className="h-5 w-5 text-white" />
+                <span>New Project</span>
+              </button>
+            )}
           </div>
-          <div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-            >
-              <option value="all">All Status</option>
-              <option value="planning">Planning</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-            </select>
-          </div>
-          {isAdmin && (
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search projects or clients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
+            </div>
             <div>
               <select
-                value={clientFilter}
-                onChange={(e) => setClientFilter(e.target.value)}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               >
-                <option value="all">All Clients</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
+                <option value="all">All Status</option>
+                <option value="planning">Planning</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
               </select>
             </div>
-          )}
+            {isAdmin && (
+              <div>
+                <select
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                >
+                  <option value="all">All Clients</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {kanbanColumns.map((column) => (
-            <div
-              key={column.id}
-              className={`glass-card rounded-xl p-4 min-h-[500px] transition-all duration-300 ${
-                dragOverColumn === column.id
-                  ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
-                  : 'border-2 border-slate-700/50'
+      {/* Kanban Board - Scrollable Area */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {kanbanColumns.map((column) => (
+          <div
+            key={column.id}
+            className={`glass-card rounded-xl p-4 h-full flex flex-col transition-all duration-300 ${dragOverColumn === column.id
+              ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
+              : 'border-2 border-slate-700/50'
               }`}
-              onDragOver={isAdmin ? (e) => handleDragOver(e, column.id) : undefined}
-              onDragLeave={isAdmin ? handleDragLeave : undefined}
-              onDrop={isAdmin ? (e) => handleDrop(e, column.id) : undefined}
-            >
-              <div className="flex items-center space-x-2 mb-4">
-                <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                  {column.title}
-                </h3>
-                <span className="text-sm text-gray-400">({getProjectsByStatus(column.id).length})</span>
-              </div>
-              
-              <div className="space-y-4">
-                {getProjectsByStatus(column.id).map((project) => (
-                  <div
-                    key={project.id}
-                    className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${
-                      draggedProject?.id === project.id
-                        ? 'opacity-40 scale-95 shadow-none'
-                        : 'border-2 border-slate-700/50 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]'
+            onDragOver={isAdmin ? (e) => handleDragOver(e, column.id) : undefined}
+            onDragLeave={isAdmin ? handleDragLeave : undefined}
+            onDrop={isAdmin ? (e) => handleDrop(e, column.id) : undefined}
+          >
+            <div className="flex-shrink-0 flex items-center space-x-2 mb-4">
+              <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
+              <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                {column.title}
+              </h3>
+              <span className="text-sm text-gray-400">({getProjectsByStatus(column.id).length})</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+              {getProjectsByStatus(column.id).map((project) => (
+                <div
+                  key={project.id}
+                  className={`bg-slate-800/50 rounded-lg p-4 transition-all duration-200 cursor-pointer ${draggedProject?.id === project.id
+                    ? 'opacity-40 scale-95 shadow-none'
+                    : 'border-2 border-slate-700/50 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]'
                     }`}
-                    draggable={isAdmin}
-                    onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
-                    onDragEnd={isAdmin ? handleDragEnd : undefined}
-                    onClick={(e) => {
-                      if (!isDragging) {
-                        handleViewProject(project);
-                      } else {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                  >
-                    <div className="flex flex-col gap-2 mb-2 min-w-0 sm:flex-row sm:items-start sm:justify-between">
-                      <h4 className="text-white font-medium text-sm min-w-0 flex-1 truncate">{project.name}</h4>
-                      <div className="flex items-center space-x-1 shrink-0 self-end sm:self-auto">
-                        <button 
-                          onClick={() => handleViewProject(project)}
-                          className="text-white hover:text-blue-300 p-1"
+                  draggable={isAdmin}
+                  onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
+                  onDragEnd={isAdmin ? handleDragEnd : undefined}
+                  onClick={(e) => {
+                    if (!isDragging) {
+                      handleViewProject(project);
+                    } else {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <h4 className="text-white font-bold text-base min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{project.name}</h4>
+                      <p className="text-[#3aa3eb] text-xs font-bold uppercase tracking-wider truncate">{project.client}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Service</span>
+                        <span className="text-xs text-gray-300 font-medium truncate">{project.project_type || 'General'}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Due Date</span>
+                        <span className="text-xs text-gray-300 font-medium">{project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Value</span>
+                        <span className="text-sm font-bold text-green-400">{project.budget}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleViewProject(project); }}
+                          className="text-gray-400 hover:text-white p-1 transition-colors"
                           title="View Project"
                         >
-                          <EyeIcon className="h-4 w-4 text-white" />
+                          <EyeIcon className="h-4 w-4" />
                         </button>
                         {isAdmin && (
                           <>
-                            <button 
-                              onClick={() => handleEditProject(project)}
-                              className="text-blue-500 hover:text-white p-1"
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
+                              className="text-gray-400 hover:text-blue-400 p-1 transition-colors"
                               title="Edit Project"
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
-                            <button 
-                              onClick={() => handleDeleteProject(project)}
-                              className="text-blue-500 hover:text-red-400 p-1"
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
+                              className="text-gray-400 hover:text-red-400 p-1 transition-colors"
                               title="Delete Project"
                             >
                               <TrashIcon className="h-4 w-4" />
@@ -515,39 +558,33 @@ export default function Projects({ currentUser }: ProjectsProps) {
                         )}
                       </div>
                     </div>
-                    
-                    <p className="text-gray-400 text-xs mb-2 min-w-0 truncate">{project.client}</p>
-                    <p className="text-gray-500 text-xs mb-3 line-clamp-2">{project.description}</p>
 
-                    <div className="flex items-center justify-between gap-2 min-w-0">
-                      <div className="flex items-center space-x-2 min-w-0">
-                        <UserGroupIcon className="h-3 w-3 text-blue-500" />
-                        <span className="text-xs text-gray-400">{project.team}</span>
+                    <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Income Balance</span>
+                        <span className={`text-sm font-bold ${project.income_balance > 0 ? 'text-blue-400' : 'text-gray-400'}`}>
+                          ${project.income_balance.toLocaleString()}
+                        </span>
                       </div>
-                      <span className="text-xs font-medium text-green-400 shrink-0">{project.budget}</span>
-                    </div>
-                    
-                    <div className="mt-2 pt-2 border-t border-slate-700">
-                      <span className="text-xs text-gray-400">Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}</span>
                     </div>
                   </div>
-                ))}
-                
-                {getProjectsByStatus(column.id).length === 0 && (
-                  <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${
-                    dragOverColumn === column.id
-                      ? 'border-blue-400 bg-blue-500/5'
-                      : 'border-slate-700/30'
+                </div>
+              ))}
+
+              {getProjectsByStatus(column.id).length === 0 && (
+                <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
+                  ? 'border-blue-400 bg-blue-500/5'
+                  : 'border-slate-700/30'
                   }`}>
-                    <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
-                    {isAdmin && (
-                      <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
-                    )}
-                  </div>
-                )}
-              </div>
+                  <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
+                  {isAdmin && (
+                    <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
+          </div>
+        ))}
       </div>
 
       <ProjectModal
