@@ -147,7 +147,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8 pb-8">
       {showToast && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
           <GlassCard className="p-4 bg-green-500/20 border-green-500/50">
             <p className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>Profile updated successfully!</p>
           </GlassCard>

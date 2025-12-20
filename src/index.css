@@ -49,7 +49,7 @@ body {
 
 .neon-glow {
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .neon-glow:hover {
@@ -59,7 +59,7 @@ body {
 
 .hover-glow {
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .hover-glow:hover {
@@ -367,6 +367,36 @@ input[type="range"].slider::-moz-range-thumb:hover {
 }
 
 
+
+/* Hover shrink effect for interactive elements to match main branch feel */
+button:hover,
+a:hover {
+  transform: scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+/* Animation definitions for menus and notifications */
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-0.5rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  animation-fill-mode: forwards;
+}
+
+.slide-in-from-top {
+  animation-name: slide-in-from-top;
+}
 
 /* Touch interactions for mobile */
 @media (hover: none) and (pointer: coarse) {
