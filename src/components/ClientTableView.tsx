@@ -132,9 +132,6 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
               <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
                 Phone
               </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
-                Service Requested
-              </th>
               <th className="text-right px-6 py-4 text-sm font-semibold text-gray-300">
                 Actions
               </th>
@@ -186,22 +183,6 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-gray-200 font-medium">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {client.services_requested && client.services_requested.length > 0 ? (
-                      client.services_requested.slice(0, 2).map((service, idx) => (
-                        <ServiceTag key={idx} service={service} size="sm" />
-                      ))
-                    ) : (
-                      <span className="text-sm text-gray-400 font-medium">-</span>
-                    )}
-                    {client.services_requested && client.services_requested.length > 2 && (
-                      <span className="text-xs text-gray-300 font-bold ml-1">
-                        +{client.services_requested.length - 2}
-                      </span>
-                    )}
-                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end space-x-2">

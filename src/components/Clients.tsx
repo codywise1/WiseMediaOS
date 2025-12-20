@@ -574,24 +574,6 @@ export default function Clients({ currentUser }: ClientsProps) {
                   )}
                 </div>
 
-                {/* Services Section */}
-                <div className="mb-6 relative z-10">
-                  {client.services_requested && client.services_requested.length > 0 ? (
-                    <>
-                      <h4 className="text-sm font-medium text-white mb-3">Services</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {client.services_requested.map((service, idx) => (
-                          <span key={idx} className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/50 text-xs text-gray-200 hover:text-white hover:border-slate-600 transition-colors cursor-default font-medium">
-                            {service}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="h-4"></div> /* Spacer to maintain height consistency if no services */
-                  )}
-                </div>
-
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
                   <span className="text-xs text-gray-400 font-semibold">
