@@ -504,7 +504,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 <div className="mb-8 relative z-10">
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h3 className="text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
                     <p className="text-gray-300 text-sm font-semibold mb-3 truncate">
