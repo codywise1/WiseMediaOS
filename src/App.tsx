@@ -25,6 +25,7 @@ import AdminFiles from './pages/AdminFiles';
 import Orders from './pages/Orders';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
+import MarketplacePage from './pages/MarketplacePage';
 // import CommunityProPage from './pages/CommunityProPage';
 // import CommunityResourcesPage from './pages/CommunityResourcesPage';
 // import CommunitySettingsPage from './pages/CommunitySettingsPage';
@@ -545,6 +546,12 @@ function App() {
               <CommunityGuard>
                 <LessonPage />
               </CommunityGuard>
+            }
+          />
+          <Route
+          path="/community/marketplace"
+          element={
+            <MarketplacePage/>
             }
           />
           {/* <Route

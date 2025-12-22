@@ -95,7 +95,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Chat', href: '/community/chat', icon: ChatBubbleLeftRightIcon },
         { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }
+        { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
     },
     {
@@ -126,7 +126,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Chat', href: '/community/chat', icon: ChatBubbleLeftRightIcon },
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }
+        { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
     },
     {
@@ -174,8 +174,8 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     },
     {
-      label: 'Marketplace',
-      items: [{ name: 'Marketplace', href: '/community', icon: DocumentDuplicateIcon }]
+      label: 'Marketplace', 
+      items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
     },
     { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
   ]
