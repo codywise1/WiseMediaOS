@@ -99,7 +99,7 @@ export default function CommunityPage() {
   async function fetchClients() {
     try {
       const data = await clientService.getAll();
-      setClients(data);
+      setClients(Array.from(new Map(data.map(c => [c.id, c])).values()));
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -130,7 +130,11 @@ export default function CommunityPage() {
 
         if (data && !error) {
           const newUser: PrivateConversation = { ...data, unreadCount: 0 };
-          setPrivateConversations(prev => [...prev, newUser]);
+          setPrivateConversations(prev => {
+            const map = new Map(prev.map(u => [u.id, u] as const));
+            map.set(newUser.id, newUser);
+            return Array.from(map.values());
+          });
           setView('private');
           setSelectedUser(newUser);
         }
@@ -353,7 +357,8 @@ export default function CommunityPage() {
       .in('id', Array.from(userIds));
 
     if (data) {
-      const conversations = data.map(user => ({
+      const uniqueUsers = Array.from(new Map(data.map(u => [u.id, u])).values());
+      const conversations = uniqueUsers.map(user => ({
         ...user,
         unreadCount: 0,
       }));
