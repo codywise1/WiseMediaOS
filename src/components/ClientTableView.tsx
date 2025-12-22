@@ -8,8 +8,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { Client } from '../lib/supabase';
 import CategoryBadge from './CategoryBadge';
-import ServiceTag from './ServiceTag';
 import { formatPhoneNumber } from '../lib/phoneFormat';
+
+const statusConfig: Record<Client['status'], { color: string; label: string }> = {
+  prospect: { color: 'rgba(34,197,94,0.1) text-white border-#22c55e', label: 'Prospect' },
+  active: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Active' },
+  vip: { color: 'rgba(168,85,247,0.1) text-white border-#a855f7', label: 'VIP' },
+  past: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Past' },
+  archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
+};
 
 interface ClientTableViewProps {
   clients: Client[];
@@ -145,16 +152,21 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   }`}
               >
                 <td className="px-6 py-4">
-                  {['prospect', 'active', 'vip'].includes(client.status) ? (
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${client.status === 'prospect' ? 'bg-green-900/30 text-green-400' :
-                        client.status === 'active' ? 'bg-green-900/30 text-green-400' :
-                          'bg-purple-900/30 text-purple-400'
-                        }`}
-                    >
-                      {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-                    </span>
-                  ) : (
+                  {['prospect', 'active', 'vip'].includes(client.status) ? (() => {
+                    const statusInfo = statusConfig[client.status as keyof typeof statusConfig];
+                    return (
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: statusInfo.color.split(' ')[0],
+                          border: `1px solid ${statusInfo.color.split(' ')[2].replace('border-', '')}`,
+                          color: 'white'
+                        }}
+                      >
+                        {statusInfo.label}
+                      </span>
+                    );
+                  })() : (
                     <span className="text-sm text-gray-500 font-medium capitalize">{client.status}</span>
                   )}
                 </td>
