@@ -17,6 +17,28 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+ .custom-scrollbar {
+   scrollbar-width: thin;
+   scrollbar-color: rgba(58, 163, 235, 0.35) rgba(15, 23, 42, 0.12);
+ }
+
+ .custom-scrollbar::-webkit-scrollbar {
+   width: 5px;
+ }
+
+ .custom-scrollbar::-webkit-scrollbar-track {
+   background: rgba(15, 23, 42, 0.12);
+ }
+
+ .custom-scrollbar::-webkit-scrollbar-thumb {
+   background: rgba(58, 163, 235, 0.25);
+   border-radius: 20px;
+ }
+
+ .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+   background: rgba(58, 163, 235, 0.45);
+ }
+
 
 
 .glass-card {
@@ -374,6 +396,12 @@ a:hover {
   transform: scale(0.98);
   transition: transform 0.2s ease;
 }
+
+ .chat-no-hover button:hover,
+ .chat-no-hover a:hover {
+   transform: none !important;
+   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+ }
 
 /* Animation definitions for menus and notifications */
 @keyframes slide-in-from-top {

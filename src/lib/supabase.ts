@@ -200,6 +200,7 @@ export interface Client {
   linkedin?: string;
   twitter?: string;
   instagram?: string;
+  youtube?: string;
   facebook?: string;
   tiktok?: string;
   github?: string;
@@ -601,9 +602,21 @@ export const clientService = {
     }
 
     const sb = getSupabaseClient();
+
+    const payload: any = { ...updates, updated_at: new Date().toISOString() };
+    if (Object.prototype.hasOwnProperty.call(payload, 'source')) {
+      const allowedSources = ['Referral', 'Instagram', 'X', 'Repeat', 'Other'];
+      const value = payload.source;
+      if (value === '' || value === undefined || value === null) {
+        payload.source = null;
+      } else if (!allowedSources.includes(value)) {
+        payload.source = null;
+      }
+    }
+
     const { data, error } = await sb
       .from('clients')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(payload)
       .eq('id', id)
       .select()
       .single();

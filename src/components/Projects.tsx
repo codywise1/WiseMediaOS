@@ -12,6 +12,7 @@ import {
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
+import { useToast } from '../contexts/ToastContext';
 
 interface User {
   email: string;
@@ -64,6 +65,7 @@ const ScrollbarStyles = () => (
 
 export default function Projects({ currentUser }: ProjectsProps) {
   const navigate = useNavigate();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -242,15 +244,18 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
       if (modalMode === 'create') {
         await projectService.create(apiData);
+        toastSuccess('Project created successfully.');
       } else if (selectedProject) {
         await projectService.update(selectedProject.id, apiData);
+        toastSuccess('Project updated successfully.');
       }
 
       // Reload projects
       await loadProjects();
     } catch (error) {
       console.error('Error saving project:', error);
-      alert('Error saving project. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toastError(`Failed to save project: ${errorMessage}`);
     }
   };
 

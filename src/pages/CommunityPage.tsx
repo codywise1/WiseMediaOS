@@ -586,9 +586,9 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col lg:flex-row gap-6">
+    <div className="h-full overflow-hidden flex flex-col lg:flex-row gap-6 chat-no-hover">
       <div className="lg:w-80 flex-shrink-0">
-        <GlassCard className="h-full flex flex-col">
+        <GlassCard disableHover className="h-full flex flex-col">
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setView('channels')}
@@ -614,7 +614,7 @@ export default function CommunityPage() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2">
+          <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
             {view === 'channels' ? (
               channels.map((channel) => (
                 <button
@@ -790,7 +790,7 @@ export default function CommunityPage() {
       </div>
 
       <div className="flex-1 flex flex-col min-h-0">
-        <GlassCard className="flex-1 flex flex-col overflow-hidden">
+        <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden">
           <div className="pb-4 border-b border-white/10">
             {view === 'channels' && selectedChannel ? (
               <div>
