@@ -445,6 +445,26 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         </div>
       </div>
 
+       {/* Description */}
+      {description && (
+        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            Description
+          </h2>
+          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+            {displayDescription}
+          </p>
+          {shouldTruncate && (
+            <button
+              onClick={() => setShowFullDescription(!showFullDescription)}
+              className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"
+            >
+              {showFullDescription ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           Notes
@@ -469,26 +489,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           ))}
         </div>
       </div>
-
-      {/* Description */}
-      {description && (
-        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-            Description
-          </h2>
-          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-            {displayDescription}
-          </p>
-          {shouldTruncate && (
-            <button
-              onClick={() => setShowFullDescription(!showFullDescription)}
-              className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"
-            >
-              {showFullDescription ? 'Show less' : 'Show more'}
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Edit Modal */}
       <ProjectModal
