@@ -286,7 +286,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                 <option value="prospect">Prospect</option>
                 <option value="active">Active</option>
                 <option value="vip">VIP</option>
-                <option value="past">Past</option>
+                <option value="inactive">Inactive</option>
                 <option value="archived">Archived</option>
               </select>
             </div>
