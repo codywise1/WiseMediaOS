@@ -38,7 +38,7 @@ const statusConfig: Record<Client['status'], { color: string; label: string }> =
   prospect: { color: 'rgba(250,204,21,0.33) text-white border-#facc15', label: 'Prospect' },
   active: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Active' },
   vip: { color: 'rgba(64,172,64,0.33) text-white border-#40ac40', label: 'VIP' },
-  past: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Past' },
+  inactive: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Inactive' },
   archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
 };
 
@@ -333,7 +333,7 @@ export default function Clients({ currentUser }: ClientsProps) {
               <option value="prospect">Prospect</option>
               <option value="active">Active</option>
               <option value="vip">VIP</option>
-              <option value="past">Past</option>
+              <option value="inactive">Inactive</option>
               <option value="archived">Archived</option>
             </select>
           </div>

@@ -20,6 +20,7 @@ export interface Profile {
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const forceDemoMode = import.meta.env.VITE_FORCE_DEMO_MODE === 'true';
+const enableClientUserCreation = import.meta.env.VITE_ENABLE_CLIENT_USER_CREATION === 'true';
 
 // Check if Supabase is configured
 const isSupabaseConfigured = !forceDemoMode && supabaseUrl && supabaseAnonKey &&
@@ -203,9 +204,8 @@ export interface Client {
   youtube?: string;
   facebook?: string;
   tiktok?: string;
-  github?: string;
   notes?: string;
-  status: 'prospect' | 'active' | 'vip' | 'past' | 'archived';
+  status: 'prospect' | 'active' | 'vip' | 'inactive' | 'archived';
   service_type?: 'Website' | 'Branding' | 'Retainer' | 'Ads' | 'Other';
   client_tier?: string; // Deprecated: replaced by status
   source?: 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other';
@@ -513,61 +513,115 @@ export const clientService = {
         throw new Error('User not authenticated. Please log in to create clients.');
       }
 
-      // First, create the user account via Edge Function
-      const { data: { session } } = await sb.auth.getSession();
-      const token = session?.access_token;
+      // Optionally create the user account via Edge Function
+      if (enableClientUserCreation) {
+        const { data: { session } } = await sb.auth.getSession();
+        const token = session?.access_token;
 
-      if (token) {
-        try {
-          const createUserResponse = await fetch(
-            `${supabaseUrl}/functions/v1/create-client-user`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: client.email,
-                name: client.name,
-                phone: client.phone || ''
-              })
+        if (token) {
+          try {
+            const createUserResponse = await fetch(
+              `${supabaseUrl}/functions/v1/create-client-user`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: client.email,
+                  name: client.name,
+                  phone: client.phone || ''
+                })
+              }
+            );
+
+            if (!createUserResponse.ok) {
+              const errorData = await createUserResponse.json();
+              console.warn('Failed to create user account:', errorData);
+              // Continue anyway - the client record will still be created
+            } else {
+              const userData = await createUserResponse.json();
+              console.log('User account created:', userData);
             }
-          );
-
-          if (!createUserResponse.ok) {
-            const errorData = await createUserResponse.json();
-            console.warn('Failed to create user account:', errorData);
-            // Continue anyway - the client record will still be created
-            // The trigger will create the client record when user signs up manually
-          } else {
-            const userData = await createUserResponse.json();
-            console.log('User account created:', userData);
+          } catch (userError) {
+            console.warn('Error creating user account:', userError);
+            // Continue anyway
           }
-        } catch (userError) {
-          console.warn('Error creating user account:', userError);
-          // Continue anyway
         }
       }
 
+      const parseMissingColumn = (message: string | undefined | null) => {
+        if (!message) return null;
+        const match = message.match(/Could not find the '([^']+)' column/i);
+        return match?.[1] || null;
+      };
+
+      const upsertWithFallback = async (payload: Record<string, any>) => {
+        let currentPayload = { ...payload };
+        const removedColumns: string[] = [];
+
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const { data, error } = await sb
+            .from('clients')
+            .upsert([currentPayload], { onConflict: 'email' })
+            .select()
+            .single();
+
+          if (!error) {
+            if (removedColumns.length > 0) {
+              console.warn('Client created, but some fields were not saved because DB columns are missing:', removedColumns);
+            }
+            return { data, error: null };
+          }
+
+          if (error.code === 'PGRST204') {
+            const missing = parseMissingColumn(error.message);
+            if (missing && Object.prototype.hasOwnProperty.call(currentPayload, missing)) {
+              removedColumns.push(missing);
+              delete currentPayload[missing];
+              continue;
+            }
+          }
+
+          return { data: null, error };
+        }
+
+        return {
+          data: null,
+          error: {
+            code: 'PGRST204',
+            message: 'Too many missing columns while creating client. Please run DB migrations and try again.'
+          } as any
+        };
+      };
+
       // Then create the client record
-      const { data, error } = await sb
-        .from('clients')
-        .insert([{
-          name: client.name,
-          email: client.email,
-          phone: client.phone || null,
-          company: client.company || null,
-          address: client.address || null,
-          website: client.website || null,
-          notes: client.notes || null,
-          status: client.status || 'active',
-          service_type: client.service_type || null,
-          client_tier: client.client_tier || null,
-          source: client.source || null
-        }])
-        .select()
-        .single();
+      const insertPayload = {
+        name: client.name,
+        email: client.email,
+        phone: client.phone || null,
+        company: client.company || null,
+        address: client.address || null,
+        website: client.website || null,
+        linkedin: client.linkedin || null,
+        twitter: client.twitter || null,
+        instagram: client.instagram || null,
+        youtube: client.youtube || null,
+        facebook: client.facebook || null,
+        tiktok: client.tiktok || null,
+        notes: client.notes || null,
+        status: client.status || 'active',
+        service_type: client.service_type || null,
+        client_tier: client.client_tier || null,
+        source: client.source || null,
+        first_name: client.first_name || null,
+        category: client.category || null,
+        location: client.location || null,
+        services_requested: client.services_requested || []
+      };
+
+      const { data, error } = await upsertWithFallback(insertPayload);
 
       if (error) {
         console.error('Supabase error:', error);

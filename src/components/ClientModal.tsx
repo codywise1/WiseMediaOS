@@ -30,7 +30,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     location: '',
     services_requested: [] as string[],
     source: '' as '' | 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other',
-    status: 'prospect' as 'prospect' | 'active' | 'vip' | 'past' | 'archived',
+    status: 'prospect' as 'prospect' | 'active' | 'vip' | 'inactive' | 'archived',
     linkedin: '',
     twitter: '',
     instagram: '',
@@ -371,14 +371,14 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">TikTok</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Youtube</label>
                 <input
                   type="text"
                   name="youtube"
                   value={formData.youtube}
                   onChange={handleChange}
                   className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="youtube.com/@username"
+                  placeholder="@username or youtube.com/@username"
                 />
               </div>
             </div>

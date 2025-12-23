@@ -2,4 +2,3 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS linkedin text;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS twitter text;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS instagram text;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS facebook text;
-ALTER TABLE clients ADD COLUMN IF NOT EXISTS github text;

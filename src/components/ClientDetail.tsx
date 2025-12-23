@@ -16,6 +16,14 @@ import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
 import CategoryBadge from './CategoryBadge';
 
+const statusConfig: Record<ClientType['status'], { color: string; label: string }> = {
+  prospect: { color: 'rgba(250,204,21,0.33) text-white border-#facc15', label: 'Prospect' },
+  active: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Active' },
+  vip: { color: 'rgba(64,172,64,0.33) text-white border-#40ac40', label: 'VIP' },
+  inactive: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Inactive' },
+  archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
+};
+
 const formatPhoneNumber = (phone: string) => {
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length === 10) {
@@ -105,15 +113,6 @@ const buildTikTokUrl = (raw: string) => {
   if (/tiktok\.com/i.test(value)) return `https://${value.replace(/^\/\//, '')}`;
   const handle = extractSocialHandle(value);
   return handle ? `https://tiktok.com/@${handle}` : 'https://tiktok.com';
-};
-
-const buildGitHubUrl = (raw: string) => {
-  const value = raw.trim();
-  if (!value) return 'https://github.com';
-  if (/^https?:\/\//i.test(value)) return value;
-  if (/github\.com/i.test(value)) return `https://${value.replace(/^\/\//, '')}`;
-  const handle = extractSocialHandle(value);
-  return handle ? `https://github.com/${handle}` : 'https://github.com';
 };
 
 const buildInstagramUrl = (raw: string) => {
@@ -240,17 +239,19 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 {client.company || client.name}
               </h1>
-              <p className="text-xl text-gray-400 font-bold">{client.name}</p>
+              <div className="flex items-center gap-4 min-w-0">
+                <p className="text-xl text-gray-400 font-bold">{client.name}</p>
+                <div className="flex flex-wrap gap-3 shrink-0">
+                  <CategoryBadge category={client.category || 'General'} />
+                  {client.location && (
+                    <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-white">
+                      {client.location}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <CategoryBadge category={client.category || 'General'} />
-              {client.location && (
-                <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-white">
-                  {client.location}
-                </span>
-              )}
-            </div>
           </div>
 
           <div className="flex flex-col items-end justify-between h-full min-h-[140px] w-full md:w-auto">
@@ -291,7 +292,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Information */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Contact Information
           </h3>
           <div className="space-y-4">
@@ -320,7 +321,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Social Links */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Social Links
           </h3>
           <div className="space-y-4 max-h-[176px] overflow-y-auto pr-1 custom-scrollbar">
@@ -426,29 +427,11 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               </a>
             )}
 
-            {client.github && (
-              <a href={buildGitHubUrl(client.github)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.86.5 12.32c0 5.17 3.44 9.55 8.2 11.1.6.11.82-.27.82-.6 0-.3-.01-1.08-.02-2.12-3.34.75-4.04-1.66-4.04-1.66-.55-1.44-1.34-1.82-1.34-1.82-1.1-.78.08-.77.08-.77 1.22.09 1.86 1.29 1.86 1.29 1.08 1.9 2.83 1.35 3.52 1.03.11-.81.42-1.35.76-1.66-2.66-.31-5.46-1.37-5.46-6.1 0-1.35.46-2.45 1.23-3.31-.12-.31-.53-1.56.12-3.25 0 0 1-.33 3.3 1.26a11.1 11.1 0 0 1 3-.42c1.02 0 2.05.14 3 .42 2.3-1.59 3.3-1.26 3.3-1.26.65 1.69.24 2.94.12 3.25.77.86 1.23 1.96 1.23 3.31 0 4.74-2.8 5.78-5.47 6.09.43.38.81 1.13.81 2.28 0 1.64-.02 2.96-.02 3.36 0 .33.22.72.83.6 4.76-1.55 8.2-5.93 8.2-11.1C23.5 5.86 18.27.5 12 .5z"/></svg>
-                  </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
-                    {(() => {
-                      const handle = extractSocialHandle(client.github);
-                      if (!handle) return 'GitHub';
-                      return handle;
-                    })()}
-                  </span>
-                </div>
-                <ChevronRightIcon className="h-5 w-5 text-gray-600 group-hover/item:text-white" />
-              </a>
-            )}
-
             {client.youtube && (
               <a href={buildYouTubeUrl(client.youtube)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <GlobeAltIcon className="h-5 w-5 text-gray-400" />
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                   </div>
                   <span className="text-gray-300 font-medium truncate max-w-[180px]">
                     {(() => {
@@ -467,25 +450,40 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Details Metrics */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Details
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-sm">Client State</span>
-              <span className="text-white font-bold text-sm uppercase tracking-wider">{client.status}</span>
+              <span className="text-gray-500 font-bold text-base">Client State</span>
+              {(() => {
+                const statusInfo = statusConfig[client.status as keyof typeof statusConfig];
+                if (!statusInfo) return <span className="text-white font-bold text-base uppercase tracking-wider">{client.status}</span>;
+                return (
+                  <span
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      backgroundColor: statusInfo.color.split(' ')[0],
+                      border: `1px solid ${statusInfo.color.split(' ')[2].replace('border-', '')}`,
+                      color: 'white'
+                    }}
+                  >
+                    {statusInfo.label}
+                  </span>
+                );
+              })()}
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-sm">Added</span>
-              <span className="text-white font-bold text-sm">{formatAppDate(client.created_at)}</span>
+              <span className="text-gray-500 font-bold text-base">Added</span>
+              <span className="text-white font-bold text-base">{formatAppDate(client.created_at)}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-sm">Projects Completed</span>
-              <span className="text-white font-bold text-sm">{projects.filter(p => p.status === 'completed').length}</span>
+              <span className="text-gray-500 font-bold text-base">Projects Completed</span>
+              <span className="text-white font-bold text-base">{projects.filter(p => p.status === 'completed').length}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-sm">Lifetime Value</span>
-              <span className="text-white font-bold text-sm tabular-nums">
+              <span className="text-gray-500 font-bold text-base">Lifetime Value</span>
+              <span className="text-white font-bold text-base tabular-nums">
                 ${projects.reduce((sum, p) => sum + (p.budget || 0), 0).toLocaleString()}
               </span>
             </div>
@@ -498,7 +496,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
         {/* Projects Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <h3 className="text-2xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Projects ({projects.length})
             </h3>
           </div>
@@ -511,10 +509,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-2">
-                    <h4 className="text-xl font-black text-white uppercase" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h4 className="text-2xl font-black text-white uppercase" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {project.name}
                     </h4>
-                    <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest">
+                    <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white uppercase tracking-widest">
                       {project.project_type || 'Website'}
                     </span>
                   </div>
@@ -524,12 +522,12 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 </div>
 
                 <div className="flex items-center justify-between mt-6">
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                  <span className="text-sm text-gray-500 font-bold uppercase tracking-wider">
                     {project.status === 'completed' ? `Delivered: ${formatAppDate(project.updated_at || project.created_at)}` : 'In Progress'}
                   </span>
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${project.status === 'completed' ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}></div>
-                    <span className="text-xs font-bold text-white uppercase tracking-widest">
+                    <span className="text-sm font-bold text-white uppercase tracking-widest">
                       {project.status === 'completed' ? 'Completed' : project.status.replace('_', ' ')}
                     </span>
                   </div>
@@ -546,7 +544,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Invoices Section */}
         <div className="space-y-6">
-          <h3 className="text-xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-2xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Invoices
           </h3>
           <div className="space-y-3">
@@ -557,10 +555,10 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 className="w-full flex items-center justify-between p-5 glass-card bg-[#0d1117] hover:bg-[#161b22] border border-white/5 rounded-2xl transition-all group/inv"
               >
                 <div className="flex flex-col items-start gap-1">
-                  <span className="text-sm font-bold text-white group-hover/inv:text-blue-400 transition-colors">
+                  <span className="text-base font-bold text-white group-hover/inv:text-blue-400 transition-colors">
                     Invoice-{invoice.id.slice(0, 3)}
                   </span>
-                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">
                     ${(invoice.amount || 0).toLocaleString()} • {formatAppDate(invoice.created_at)}
                   </span>
                 </div>
