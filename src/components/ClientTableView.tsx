@@ -26,7 +26,7 @@ interface ClientTableViewProps {
   onDelete: (client: Client) => void;
 }
 
-type SortField = 'company' | 'name' | 'category' | 'email' | 'location';
+type SortField = 'company' | 'name' | 'category' | 'email';
 type SortDirection = 'asc' | 'desc';
 
 export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDelete }: ClientTableViewProps) {
@@ -62,10 +62,6 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
       case 'email':
         aValue = a.email || '';
         bValue = b.email || '';
-        break;
-      case 'location':
-        aValue = a.location || '';
-        bValue = b.location || '';
         break;
     }
 
@@ -114,17 +110,8 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 onClick={() => handleSort('category')}
               >
                 <div className="flex items-center space-x-2">
-                  <span>Category</span>
+                  <span>Industry</span>
                   <SortIcon field="category" />
-                </div>
-              </th>
-              <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('location')}
-              >
-                <div className="flex items-center space-x-2">
-                  <span>Location</span>
-                  <SortIcon field="location" />
                 </div>
               </th>
               <th
@@ -186,9 +173,6 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   ) : (
                     <span className="text-sm text-gray-400 font-medium">-</span>
                   )}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-200 font-medium">{client.location || '-'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-gray-200 font-medium">{client.email}</span>
