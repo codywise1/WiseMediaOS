@@ -5,6 +5,7 @@ import { Send, Hash, MessageSquare, ChevronDown, ChevronRight } from 'lucide-rea
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client } from '../lib/supabase';
+import { formatAppDateTime } from '../lib/dateFormat';
 
 interface Channel {
   id: string;
@@ -868,7 +869,7 @@ export default function CommunityPage() {
                       {msg.profiles?.role?.toUpperCase() || 'FREE'}
                     </span>
                     <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatAppDateTime(msg.created_at)}
                     </span>
                   </div>
                   <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -913,7 +914,7 @@ export default function CommunityPage() {
                       </p>
                     </div>
                     <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatAppDateTime(msg.created_at)}
                     </span>
                   </div>
                 </div>

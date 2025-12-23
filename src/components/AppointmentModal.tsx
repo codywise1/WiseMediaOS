@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, Client, UserRole } from '../lib/supabase';
+import { formatToISODate } from '../lib/dateFormat';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Appointment {
   id: number;
   title: string;
   client: string;
+  client_id?: string;
   date: string;
   time: string;
   duration: string;
@@ -94,7 +98,7 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
         title: appointment.title,
         client_id: appointment.client_id || '',
         client_name: appointment.client || '',
-        date: appointment.date,
+        date: appointment.date ? formatToISODate(appointment.date) : '',
         time: normalizeTimeTo24h(appointment.time),
         duration: appointment.duration,
         type: appointment.type,
@@ -193,11 +197,14 @@ export default function AppointmentModal({ isOpen, onClose, onSave, appointment,
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
+            <DatePicker
+              selected={formData.date ? new Date(formData.date) : null}
+              onChange={(date: Date | null) => {
+                const iso = date ? formatToISODate(date) : '';
+                setFormData(prev => ({ ...prev, date: iso }));
+              }}
+              dateFormat="MMM. dd, yyyy"
+              placeholderText="Dec. 10, 2025"
               className="form-input w-full px-4 py-3 rounded-lg"
               required
             />

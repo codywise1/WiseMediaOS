@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, Client } from '../lib/supabase';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { formatToISODate } from '../lib/dateFormat';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -62,8 +65,8 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         project_type: project.project_type || 'Website',
         status: project.status || 'planning',
         priority: project.priority || 'Medium',
-        startDate: project.startDate || '',
-        dueDate: project.dueDate || '',
+        startDate: project.startDate ? formatToISODate(project.startDate) : '',
+        dueDate: project.dueDate ? formatToISODate(project.dueDate) : '',
         budget: project.budget?.toString().replace(/[$,]/g, '') || '',
         billing_type: project.billing_type || 'Fixed',
         invoice_link: project.invoice_link || '',
@@ -262,21 +265,27 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
+              <DatePicker
+                selected={formData.startDate ? new Date(formData.startDate) : null}
+                onChange={(date: Date | null) => {
+                  const iso = date ? formatToISODate(date) : '';
+                  setFormData(prev => ({ ...prev, startDate: iso }));
+                }}
+                dateFormat="MMM. dd, yyyy"
+                placeholderText="Dec. 10, 2025"
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
-              <input
-                type="date"
-                name="dueDate"
-                value={formData.dueDate}
-                onChange={handleChange}
+              <DatePicker
+                selected={formData.dueDate ? new Date(formData.dueDate) : null}
+                onChange={(date: Date | null) => {
+                  const iso = date ? formatToISODate(date) : '';
+                  setFormData(prev => ({ ...prev, dueDate: iso }));
+                }}
+                dateFormat="MMM. dd, yyyy"
+                placeholderText="Dec. 10, 2025"
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               />
             </div>

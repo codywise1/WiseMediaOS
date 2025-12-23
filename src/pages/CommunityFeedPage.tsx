@@ -4,6 +4,7 @@ import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { formatAppDateTime } from '../lib/dateFormat';
 
 type FeedTag = 'General' | 'Design' | 'Dev' | 'Branding' | 'Wins' | 'Questions';
 type Visibility = 'all' | 'pro';
@@ -480,7 +481,7 @@ export default function CommunityFeedPage() {
                           {authorName}
                         </p>
                         <span className="text-xs text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          {new Date(post.created_at).toLocaleString()}
+                          {formatAppDateTime(post.created_at)}
                         </span>
                         {post.visibility === 'pro' && (
                           <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -593,7 +594,7 @@ export default function CommunityFeedPage() {
                                     {name}
                                   </span>
                                   <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {new Date(comment.created_at).toLocaleString()}
+                                    {formatAppDateTime(comment.created_at)}
                                   </span>
                                 </div>
                                 <p className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { formatAppDate } from '../lib/dateFormat';
+import { formatAppDate, formatToISODate } from '../lib/dateFormat';
 import { FileText, Plus, X, DollarSign, Calendar, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Invoice {
   id: string;
@@ -215,7 +217,17 @@ export default function InvoicesPage() {
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Due Date</label>
-                    <input type="date" value={formData.due_date} onChange={(e) => setFormData({...formData, due_date: e.target.value})} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} />
+                    <DatePicker
+                      selected={formData.due_date ? new Date(formData.due_date) : null}
+                      onChange={(date: Date | null) => {
+                        const iso = date ? formatToISODate(date) : '';
+                        setFormData({...formData, due_date: iso});
+                      }}
+                      dateFormat="MMM. dd, yyyy"
+                      placeholderText="Dec. 10, 2025"
+                      className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    />
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Status</label>

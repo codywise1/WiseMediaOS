@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, Client } from '../lib/supabase';
+import { formatToISODate } from '../lib/dateFormat';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Proposal {
   id: string;
@@ -60,7 +63,7 @@ export default function ProposalModal({ isOpen, onClose, onSave, proposal, mode,
         client_name: proposal.client || '',
         value: proposal.value.toString(),
         status: proposal.status,
-        expiryDate: proposal.expiryDate,
+        expiryDate: proposal.expiryDate ? formatToISODate(proposal.expiryDate) : '',
         services: proposal.services.join(', '),
         description: proposal.description
       });
@@ -180,11 +183,14 @@ export default function ProposalModal({ isOpen, onClose, onSave, proposal, mode,
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Expiry Date</label>
-            <input
-              type="date"
-              name="expiryDate"
-              value={formData.expiryDate}
-              onChange={handleChange}
+            <DatePicker
+              selected={formData.expiryDate ? new Date(formData.expiryDate) : null}
+              onChange={(date: Date | null) => {
+                const iso = date ? formatToISODate(date) : '';
+                setFormData(prev => ({ ...prev, expiryDate: iso }));
+              }}
+              dateFormat="MMM. dd, yyyy"
+              placeholderText="Dec. 10, 2025"
               className="form-input w-full px-4 py-3 rounded-lg"
               required
             />

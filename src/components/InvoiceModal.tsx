@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, Client, UserRole } from '../lib/supabase';
+import { formatToISODate } from '../lib/dateFormat';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Invoice {
   id: string;
@@ -54,7 +57,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         client_id: invoice.client_id || '',
         client_name: invoice.client || '',
         amount: invoice.amount.toString(),
-        dueDate: invoice.dueDate,
+        dueDate: invoice.dueDate ? formatToISODate(invoice.dueDate) : '',
         status: invoice.status,
         description: invoice.description
       });
@@ -143,11 +146,14 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
+            <DatePicker
+              selected={formData.dueDate ? new Date(formData.dueDate) : null}
+              onChange={(date: Date | null) => {
+                const iso = date ? formatToISODate(date) : '';
+                setFormData(prev => ({ ...prev, dueDate: iso }));
+              }}
+              dateFormat="MMM. dd, yyyy"
+              placeholderText="Dec. 10, 2025"
               className="form-input w-full px-4 py-3 rounded-lg"
               required
             />
