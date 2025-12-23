@@ -31,6 +31,13 @@ interface ProjectDetailProps {
   currentUser: User | null;
 }
 
+const priorityConfig: Record<string, { color: string; label: string }> = {
+  urgent: { color: 'rgba(239,68,68,0.33) text-white border-#ef4444', label: 'Urgent' },
+  high: { color: 'rgba(249,115,22,0.33) text-white border-#f97316', label: 'High' },
+  medium: { color: 'rgba(234,179,8,0.33) text-white border-#eab308', label: 'Medium' },
+  low: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Low' },
+};
+
 export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -210,16 +217,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'urgent': return 'bg-red-500';
-      case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
   const formatStatusLabel = (status: unknown) => {
     const value = typeof status === 'string' ? status : '';
     return value.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
@@ -245,6 +242,19 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     if (startLabel && !endLabel) return startLabel;
     if (!startLabel && endLabel) return endLabel;
     return `${startLabel} - ${endLabel}`;
+  };
+
+  const getDaysUntilDue = (dueDate: string) => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Due today';
+    if (diffDays > 0) return `${diffDays} days left`;
+    return `Overdue by ${Math.abs(diffDays)} days`;
   };
 
   const isAdmin = currentUser?.role === 'admin';
@@ -362,7 +372,9 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Status</p>
               <p className="text-white font-medium">{formatStatusLabel(project.status)}</p>
-              <p className="text-xs text-gray-500 mt-1">{project.due_date ? `Due ${formatDate(project.due_date)}` : 'No due date'}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {project.status === 'in_progress' ? (getDaysUntilDue(project.due_date) || 'No due date') : (project.due_date ? `Due ${formatDate(project.due_date)}` : 'No due date')}
+              </p>
             </div>
           </div>
 
@@ -404,9 +416,22 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             <FlagIcon className="h-6 w-6 text-orange-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Priority</p>
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium text-white ${getPriorityColor(project.priority)} break-words`}>
-                {project.priority || 'Medium'}
-              </span>
+              {(() => {
+                const priorityKey = (project.priority || 'medium').toLowerCase();
+                const priorityInfo = priorityConfig[priorityKey] || priorityConfig['medium'];
+                return (
+                  <span
+                    className="inline-flex px-3 py-1 rounded-full text-sm font-medium text-white break-words"
+                    style={{
+                      backgroundColor: priorityInfo.color.split(' ')[0],
+                      border: `1px solid ${priorityInfo.color.split(' ')[2].replace('border-', '')}`,
+                      color: 'white'
+                    }}
+                  >
+                    {priorityInfo.label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
