@@ -10,10 +10,11 @@ import {
   TrashIcon,
   BuildingOfficeIcon,
   CurrencyDollarIcon,
-  CalendarIcon,
+  CalendarDaysIcon,
   UserIcon,
-  FlagIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ClipboardDocumentListIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -314,7 +315,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-gray-400 min-w-0">
               <span className="flex items-center space-x-2 min-w-0">
-                <BuildingOfficeIcon className="h-4 w-4" />
                 <span className="min-w-0 truncate">{project.client?.name || 'Unknown Client'}</span>
               </span>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-gray-200 shrink-0">
@@ -363,83 +363,90 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Main Details Grid */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h2 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           Project Details
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <FlagIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <ChartBarIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-1">Status</p>
-              <p className="text-white font-medium">{formatStatusLabel(project.status)}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {project.status === 'in_progress' ? (getDaysUntilDue(project.due_date) || 'No due date') : (project.due_date ? `Due ${formatDate(project.due_date)}` : 'No due date')}
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Status</p>
+              <p className="text-white font-bold text-base">{formatStatusLabel(project.status)}</p>
+              <p className="text-xs text-gray-500 font-bold mt-1">
+                {project.status === 'in_progress'
+                  ? (getDaysUntilDue(project.due_date) || 'No due date')
+                  : (project.due_date ? `Due ${formatDate(project.due_date)}` : 'No due date')}
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <ChartBarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <ClipboardDocumentListIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-2">Progress</p>
-              <div className="flex items-center gap-3">
-                <div className="w-full bg-slate-700 rounded-full h-2 flex-1">
-                  <div
-                    className={`h-2 rounded-full ${getStatusColor(project.status)}`}
-                    style={{ width: `${project.progress || 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-white font-medium text-sm shrink-0">{project.progress || 0}%</span>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Progress</p>
+                <p className="text-xs text-gray-300 font-bold tabular-nums">{project.progress || 0}%</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{project.progress || 0}% completed</p>
+              <div className="w-full bg-white/10 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full ${getStatusColor(project.status)}`}
+                  style={{ width: `${project.progress || 0}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 font-bold mt-2">{project.progress || 0}% completed</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <CurrencyDollarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <CurrencyDollarIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-1">Value</p>
-              <p className="text-white font-medium text-lg">${(project.budget || 0).toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">{project.billing_type || 'Fixed'}</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Value</p>
+              <p className="text-white font-black text-lg tabular-nums">${(project.budget || 0).toLocaleString()}</p>
+              <p className="text-xs text-gray-500 font-bold mt-1">{project.billing_type || 'Fixed'}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <CalendarIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-1">Timeline</p>
-              <p className="text-white font-medium">{formatRangeDate(project.start_date, project.due_date)}</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Timeline</p>
+              <p className="text-white font-bold text-base">{formatRangeDate(project.start_date, project.due_date)}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <FlagIcon className="h-6 w-6 text-orange-400 flex-shrink-0" />
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <SparklesIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-1">Priority</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Priority</p>
               {(() => {
                 const priorityKey = (project.priority || 'medium').toLowerCase();
                 const priorityInfo = priorityConfig[priorityKey] || priorityConfig['medium'];
                 return (
-                  <span
-                    className="inline-flex px-3 py-1 rounded-full text-sm font-medium text-white break-words"
-                    style={{
-                      backgroundColor: priorityInfo.color.split(' ')[0],
-                      border: `1px solid ${priorityInfo.color.split(' ')[2].replace('border-', '')}`,
-                      color: 'white'
-                    }}
-                  >
+                  <p className="text-white font-bold text-base">
                     {priorityInfo.label}
-                  </span>
+                  </p>
                 );
               })()}
             </div>
           </div>
 
-          <div className="flex items-start gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-            <UserIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
+          <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5 min-w-0">
+            <div className="p-2.5 border border-white/10 rounded-xl bg-black/20">
+              <UserIcon className="h-5 w-5 text-blue-400" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-400 mb-1">Assigned Owner</p>
-              <p className="text-white font-medium min-w-0 truncate">{project.owner || currentUser?.name || 'Unassigned'}</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Assigned Owner</p>
+              <p className="text-white font-bold text-base min-w-0 truncate">{project.owner || currentUser?.name || 'Unassigned'}</p>
             </div>
           </div>
         </div>
