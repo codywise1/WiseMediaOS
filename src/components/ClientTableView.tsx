@@ -182,7 +182,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </td>
                 <td className="px-6 py-4">
                   {client.category ? (
-                    <CategoryBadge category={client.category} size="sm" />
+                    <CategoryBadge category={client.category} />
                   ) : (
                     <span className="text-sm text-gray-400 font-medium">-</span>
                   )}

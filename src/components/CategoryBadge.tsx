@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface CategoryBadgeProps {
   category: string;
   size?: 'sm' | 'md';
@@ -10,7 +8,7 @@ export default function CategoryBadge({ category, size = 'md' }: CategoryBadgePr
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium ${sizeClass}`}
+      className={`inline-flex items-center rounded-full ${sizeClass}`}
       style={{
         backgroundColor: 'rgba(59, 163, 234, 0.33)',
         border: '1px solid rgba(59, 163, 234, 1)',
