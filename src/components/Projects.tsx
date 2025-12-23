@@ -30,6 +30,7 @@ interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 
   id: string;
   budget: string;
   dueDate: string;
+  startDate: string;
   team: number;
   color: string;
   client: string;
@@ -181,6 +182,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
           client: project.client?.name || 'Unknown Client',
           budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
           dueDate: project.due_date || '',
+          startDate: project.start_date || '',
           team: project.team_size || 1,
           color: getStatusColor(status)
         };
