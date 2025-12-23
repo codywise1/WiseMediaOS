@@ -300,7 +300,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 <div className="p-2 border border-white/10 rounded-xl">
                   <EnvelopeIcon className="h-5 w-5 text-gray-400" />
                 </div>
-                <span className="text-gray-300 font-medium truncate max-w-[180px]">{client.email}</span>
+                <span className="text-gray-300 font-medium">{client.email}</span>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-600 group-hover/item:text-white" />
             </a>
