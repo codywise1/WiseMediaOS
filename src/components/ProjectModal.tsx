@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, Client } from '../lib/supabase';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -38,8 +37,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     income_balance: ''
   });
 
-  const [tempMember, setTempMember] = useState('');
-  const [tempInternalTag, setTempInternalTag] = useState('');
 
   useEffect(() => {
     if (currentUser?.role === 'admin') {
@@ -123,40 +120,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     setFormData(prev => ({
       ...prev,
       [name]: name === 'progress' || name === 'team' ? parseInt(value) || 0 : value
-    }));
-  };
-
-  const addMember = () => {
-    if (tempMember.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        assigned_members: [...prev.assigned_members, tempMember.trim()]
-      }));
-      setTempMember('');
-    }
-  };
-
-  const removeMember = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      assigned_members: prev.assigned_members.filter((_, i) => i !== index)
-    }));
-  };
-
-  const addInternalTag = () => {
-    if (tempInternalTag.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        internal_tags: [...prev.internal_tags, tempInternalTag.trim()]
-      }));
-      setTempInternalTag('');
-    }
-  };
-
-  const removeInternalTag = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      internal_tags: prev.internal_tags.filter((_, i) => i !== index)
     }));
   };
 
@@ -353,60 +316,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 onChange={handleChange}
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 placeholder="https://..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 4: Scope and Team */}
-        <div>
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Scope and Team</h3>
-          <div className="space-y-4">
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Assigned Members</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={tempMember}
-                  onChange={(e) => setTempMember(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMember())}
-                  className="form-input flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  placeholder="Add team member (press Enter)"
-                />
-                <button
-                  type="button"
-                  onClick={addMember}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shrink-glow-button"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.assigned_members.map((member, index) => (
-                  <span key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-slate-700 text-gray-300 text-sm rounded-full">
-                    {member}
-                    <button
-                      type="button"
-                      onClick={() => removeMember(index)}
-                      className="hover:text-red-400"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="Detailed project description..."
               />
             </div>
           </div>

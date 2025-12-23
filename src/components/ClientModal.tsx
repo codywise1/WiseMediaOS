@@ -35,7 +35,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
     twitter: '',
     instagram: '',
     facebook: '',
-    tiktok: ''
+    tiktok: '',
+    youtube: '',
   });
 
   useEffect(() => {
@@ -55,7 +56,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         twitter: client.twitter || '',
         instagram: client.instagram || '',
         facebook: client.facebook || '',
-        tiktok: client.tiktok || ''
+        tiktok: client.tiktok || '',
+        youtube: client.youtube || '',
       });
     } else if (mode === 'create') {
       // Only reset to empty defaults when creating a new client
@@ -73,7 +75,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
         twitter: '',
         instagram: '',
         facebook: '',
-        tiktok: ''
+        tiktok: '',
+        youtube: '',
       });
     }
   }, [client, mode, isOpen]);
@@ -111,6 +114,7 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
       instagram: formData.instagram.trim() || null,
       facebook: formData.facebook.trim() || null,
       tiktok: formData.tiktok.trim() || null,
+      youtube: formData.youtube.trim() || null,
     } as Client;
 
     onSave(clientData);
@@ -364,6 +368,17 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                   onChange={handleChange}
                   className="form-input w-full px-4 py-3 rounded-lg"
                   placeholder="@username or tiktok.com/@username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">TikTok</label>
+                <input
+                  type="text"
+                  name="youtube"
+                  value={formData.youtube}
+                  onChange={handleChange}
+                  className="form-input w-full px-4 py-3 rounded-lg"
+                  placeholder="youtube.com/@username"
                 />
               </div>
             </div>
