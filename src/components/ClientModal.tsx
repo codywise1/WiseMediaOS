@@ -195,28 +195,27 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
                 className="form-input w-full px-4 py-3 rounded-lg"
               >
                 <option value="">Select category...</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Short Term Rentals">Short Term Rentals</option>
-                <option value="Finance">Finance</option>
+                <option value="Automotive">Automotive</option>
+                <option value="Coaching & Consulting">Coaching & Consulting</option>
+                <option value="Construction & Trades">Construction & Trades</option>
+                <option value="Creator / Influencer">Creator / Influencer</option>
                 <option value="Crypto & Web3">Crypto & Web3</option>
+                <option value="Digital Goods">Digital Goods</option>
                 <option value="E-Commerce">E-Commerce</option>
-                <option value="SAAS & Technology">SAAS & Technology</option>
-                <option value="Personal Care">Personal Care</option>
+                <option value="Education & Courses">Education & Courses</option>
+                <option value="Finance">Finance</option>
+                <option value="Food & Nightlife">Food & Nightlife</option>
                 <option value="Health & Fitness">Health & Fitness</option>
                 <option value="Hospitality">Hospitality</option>
-                <option value="Travel Agency">Travel Agency</option>
-                <option value="Professional Services">Professional Services</option>
-                <option value="Marketing Agency">Marketing Agency</option>
-                <option value="Creator / Influencer">Creator / Influencer</option>
-                <option value="Digital Goods">Digital Goods</option>
-                <option value="Food & Nightlife">Food & Nightlife</option>
-                <option value="Construction & Trades">Construction & Trades</option>
                 <option value="Law">Law</option>
-                <option value="Coaching & Consulting">Coaching & Consulting</option>
-                <option value="Education & Courses">Education & Courses</option>
-                <option value="Automotive">Automotive</option>
+                <option value="Marketing Agency">Marketing Agency</option>
                 <option value="Non-Profit / Community">Non-Profit / Community</option>
-
+                <option value="Personal Care">Personal Care</option>
+                <option value="Professional Services">Professional Services</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="SAAS & Technology">SAAS & Technology</option>
+                <option value="Short Term Rentals">Short Term Rentals</option>
+                <option value="Travel Agency">Travel Agency</option>
               </select>
             </div>
           </div>
