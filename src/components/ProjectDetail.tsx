@@ -242,7 +242,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     if (!startLabel && !endLabel) return '—';
     if (startLabel && !endLabel) return startLabel;
     if (!startLabel && endLabel) return endLabel;
-    return `${startLabel} - ${endLabel}`;
+    return `${startLabel} → ${endLabel}`;
   };
 
   const getDaysUntilDue = (dueDate: string) => {
@@ -254,7 +254,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Due today';
-    if (diffDays > 0) return `${diffDays} days left`;
+    if (diffDays > 0) return `Due in ${diffDays} days`;
     return `Overdue by ${Math.abs(diffDays)} days`;
   };
 

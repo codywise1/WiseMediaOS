@@ -71,7 +71,7 @@ const getDaysUntilDue = (dueDate: string) => {
   const diffTime = due.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return 'Due today';
-  if (diffDays > 0) return `${diffDays} days left`;
+  if (diffDays > 0) return `Due in ${diffDays} days`;
   return `Overdue by ${Math.abs(diffDays)} days`;
 };
 
