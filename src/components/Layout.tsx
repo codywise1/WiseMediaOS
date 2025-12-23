@@ -454,7 +454,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         </div>
 
         {/* Main Content */}
-        <div className={isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}>
+        <div className={isSidebarCollapsed ? 'md:ml-24' : 'md:ml-72'}>
           <TopNav
             currentUser={currentUser}
             onLogout={onLogout}

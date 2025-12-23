@@ -215,7 +215,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           />
         </div>
 
-        <div className="hidden md:flex items-center flex-1 max-w-xl ml-4 relative">
+        <div className={`hidden md:flex items-center flex-1 max-w-xl ${isSidebarCollapsed ? 'ml-12' : 'ml-4'} relative`}>
           <div className="flex items-center w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
             <Search size={18} className="text-gray-400 mr-2" />
             <input
@@ -227,7 +227,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
                 setIsSearchFocused(true);
               }}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
-              placeholder="Search workplace"
+              placeholder="Search workplace..."
               className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
             />
           </div>
@@ -278,7 +278,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
                   autoFocus
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search workplace"
+                  placeholder="Search workplace..."
                   className="bg-transparent flex-1 text-sm text-white placeholder:text-gray-400 focus:outline-none"
                 />
               </div>
