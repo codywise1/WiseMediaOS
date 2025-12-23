@@ -8,7 +8,6 @@ import {
   ChatBubbleLeftRightIcon,
   PencilIcon,
   TrashIcon,
-  BuildingOfficeIcon,
   CurrencyDollarIcon,
   CalendarDaysIcon,
   UserIcon,
@@ -128,8 +127,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         deliverables: projectData.deliverables || [],
         internal_tags: projectData.internal_tags || [],
         milestones: projectData.milestones || [],
-        asset_count: projectData.asset_count || 0,
-        income_balance: projectData.income_balance || 0
+        asset_count: projectData.asset_count || 0
       };
 
       await projectService.update(id!, apiData);
@@ -523,8 +521,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           deliverables: project.deliverables,
           internal_tags: project.internal_tags,
           milestones: project.milestones,
-          asset_count: project.asset_count,
-          income_balance: project.income_balance
+          asset_count: project.asset_count
         }}
         mode="edit"
         currentUser={

@@ -239,7 +239,6 @@ export interface Project {
   internal_tags?: string[];
   milestones?: any[];
   asset_count?: number;
-  income_balance?: number;
   created_at: string;
   updated_at: string;
   client?: Client;

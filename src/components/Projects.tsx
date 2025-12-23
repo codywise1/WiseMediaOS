@@ -34,7 +34,6 @@ interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 
   color: string;
   client: string;
   status: ProjectStatus;
-  income_balance: number;
 }
 
 const kanbanColumns = [
@@ -183,7 +182,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
           budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
           dueDate: project.due_date || '',
           team: project.team_size || 1,
-          income_balance: project.income_balance || 0,
           color: getStatusColor(status)
         };
       });
@@ -250,8 +248,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
         deliverables: projectData.deliverables || [],
         internal_tags: projectData.internal_tags || [],
         milestones: projectData.milestones || [],
-        asset_count: projectData.asset_count || 0,
-        income_balance: projectData.income_balance || 0
+        asset_count: projectData.asset_count || 0
       };
 
       if (modalMode === 'create') {

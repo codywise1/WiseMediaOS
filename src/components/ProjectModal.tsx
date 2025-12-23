@@ -33,8 +33,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     internal_tags: [] as string[],
     description: '',
     progress: 0,
-    team: 1,
-    income_balance: ''
+    team: 1
   });
 
 
@@ -73,7 +72,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         description: project.description || '',
         progress: project.progress || 0,
         team: project.team || 1,
-        income_balance: project.income_balance?.toString() || ''
       });
     } else {
       setFormData({
@@ -94,7 +92,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         description: '',
         progress: 0,
         team: 1,
-        income_balance: ''
       });
     }
   }, [project, mode, isOpen, currentUser]);
@@ -108,7 +105,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
       ...formData,
       client: selectedClient?.name || formData.client_name,
       budget: `$${parseInt(formData.budget || '0').toLocaleString()}`,
-      income_balance: parseFloat(formData.income_balance || '0'),
       ...(mode === 'edit' && project ? { id: project.id } : {})
     };
     onSave(projectData);
