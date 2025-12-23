@@ -274,36 +274,38 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-300 mb-2">Client State</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="form-input w-full px-4 py-3 rounded-lg text-white"
-            >
-              <option value="prospect">Prospect</option>
-              <option value="active">Active</option>
-              <option value="vip">VIP</option>
-              <option value="past">Past</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
-            <select
-              name="source"
-              value={formData.source}
-              onChange={handleChange}
-              className="form-input w-full px-4 py-3 rounded-lg text-white"
-            >
-              <option value="">Select source...</option>
-              <option value="Referral">Referral</option>
-              <option value="Instagram">Instagram</option>
-              <option value="X">X</option>
-              <option value="Repeat">Repeat</option>
-              <option value="Other">Other</option>
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Client State</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 rounded-lg text-white"
+              >
+                <option value="prospect">Prospect</option>
+                <option value="active">Active</option>
+                <option value="vip">VIP</option>
+                <option value="past">Past</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
+              <select
+                name="source"
+                value={formData.source}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 rounded-lg text-white"
+              >
+                <option value="">Select source...</option>
+                <option value="Referral">Referral</option>
+                <option value="Instagram">Instagram</option>
+                <option value="X">X</option>
+                <option value="Repeat">Repeat</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div>

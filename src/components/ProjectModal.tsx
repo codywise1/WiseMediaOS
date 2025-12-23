@@ -335,18 +335,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <option value="Retainer">Retainer</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Income Balance ($)</label>
-              <input
-                type="number"
-                name="income_balance"
-                value={formData.income_balance}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="0"
-                step="0.01"
-              />
-            </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Link</label>
               <input
@@ -365,17 +353,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         <div>
           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Scope and Team</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Owner</label>
-              <input
-                type="text"
-                name="owner"
-                value={formData.owner}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="Project manager name"
-              />
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Assigned Members</label>
@@ -403,41 +380,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                     <button
                       type="button"
                       onClick={() => removeMember(index)}
-                      className="hover:text-red-400"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Internal Tags</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={tempInternalTag}
-                  onChange={(e) => setTempInternalTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInternalTag())}
-                  className="form-input flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  placeholder="Add tag (press Enter)"
-                />
-                <button
-                  type="button"
-                  onClick={addInternalTag}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all shrink-glow-button"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.internal_tags.map((tag, index) => (
-                  <span key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-slate-700 text-gray-300 text-sm rounded-full">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeInternalTag(index)}
                       className="hover:text-red-400"
                     >
                       <XMarkIcon className="h-4 w-4" />
