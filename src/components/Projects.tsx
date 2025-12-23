@@ -6,7 +6,6 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
@@ -62,6 +61,19 @@ const ScrollbarStyles = () => (
     }
   `}</style>
 );
+
+const getDaysUntilDue = (dueDate: string) => {
+  if (!dueDate) return null;
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'Due today';
+  if (diffDays > 0) return `${diffDays} days left`;
+  return `Overdue by ${Math.abs(diffDays)} days`;
+};
 
 export default function Projects({ currentUser }: ProjectsProps) {
   const navigate = useNavigate();
@@ -560,7 +572,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                         <div className="flex flex-col gap-0.5">
                           {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Due Date</span> */}
                           <span className="text-xs text-gray-300">
-                            Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}
+                            {project.status === 'in_progress' ? (getDaysUntilDue(project.dueDate) || 'Due: —') : `Due: ${project.dueDate ? formatAppDate(project.dueDate) : '—'}`}
                           </span>
                         </div>
                         <div className="text-right flex flex-col gap-0.5">
