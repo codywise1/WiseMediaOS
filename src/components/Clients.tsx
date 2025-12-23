@@ -38,7 +38,7 @@ const statusConfig: Record<Client['status'], { color: string; label: string }> =
   prospect: { color: 'rgba(250,204,21,0.33) text-white border-#facc15', label: 'Prospect' },
   active: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Active' },
   vip: { color: 'rgba(64,172,64,0.33) text-white border-#40ac40', label: 'VIP' },
-  inactive: { color: 'rgba(156,163,175,0.1) text-white border-#9ca3af', label: 'Inactive' },
+  inactive: { color: 'rgba(234,59,59,0.3) text-white border-#ea3b3b', label: 'Inactive' },
   archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
 };
 
@@ -512,7 +512,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                     </p>
 
                     <div className="flex flex-wrap gap-2 items-center">
-                      {['prospect', 'active', 'vip'].includes(client.status) && (
+                      {['prospect', 'active', 'vip', 'inactive'].includes(client.status) && (
                         <span
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
                           style={{
