@@ -323,7 +323,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <button
               onClick={() => setIsMessageModalOpen(true)}
-              className="px-4 py-2 glass-card hover:bg-blue-500/10 rounded-full transition-all flex items-center space-x-2"
+              className="btn-pill shrink-glow-button flex items-center space-x-2"
               title="Message"
             >
               <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-200" />
@@ -331,7 +331,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </button>
             <button
               onClick={() => navigate(`/community/chat?clientId=${project.client_id}`)}
-              className="px-4 py-2 glass-card hover:bg-blue-500/10 rounded-full transition-all flex items-center space-x-2"
+              className="btn-pill shrink-glow-button flex items-center space-x-2"
               title="Open Chat"
             >
               <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-200" />
@@ -341,14 +341,14 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <>
                 <button
                   onClick={handleEditProject}
-                  className="p-2 glass-card hover:bg-blue-500/20 rounded-lg transition-all shrink-0"
+                  className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all shrink-0"
                   title="Edit Project"
                 >
                   <PencilIcon className="h-5 w-5 text-blue-400" />
                 </button>
                 <button
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="p-2 glass-card hover:bg-red-500/20 rounded-lg transition-all shrink-0"
+                  className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all shrink-0"
                   title="Delete Project"
                 >
                   <TrashIcon className="h-5 w-5 text-red-400" />
@@ -552,14 +552,14 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={() => setIsMessageModalOpen(false)}
-              className="px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
+              className="btn-secondary shrink-glow-button"
               disabled={sendingDirectMessage}
             >
               Cancel
             </button>
             <button
               onClick={handleSendDirectMessage}
-              className="px-4 py-2 rounded-lg bg-[#3aa3eb] hover:bg-[#2b8dd0] text-white transition-colors disabled:opacity-60"
+              className="btn-primary shrink-glow-button disabled:opacity-60"
               disabled={sendingDirectMessage || !directMessage.trim()}
             >
               {sendingDirectMessage ? 'Sending...' : 'Send'}

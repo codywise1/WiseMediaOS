@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { clientService, projectService, invoiceService, Client as ClientType, Project } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { clientService, projectService, invoiceService, Client as ClientType, Project, isSupabaseAvailable, supabase } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   ArrowLeftIcon,
@@ -15,6 +16,7 @@ import {
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
 import CategoryBadge from './CategoryBadge';
+import Modal from './Modal';
 
 const statusConfig: Record<ClientType['status'], { color: string; label: string }> = {
   prospect: { color: 'rgba(250,204,21,0.33) text-white border-#facc15', label: 'Prospect' },
@@ -144,6 +146,7 @@ interface ClientDetailProps {
 }
 
 export default function ClientDetail({ currentUser }: ClientDetailProps) {
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<ClientType | null>(null);
@@ -153,6 +156,9 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [directMessage, setDirectMessage] = useState('');
+  const [sendingDirectMessage, setSendingDirectMessage] = useState(false);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -210,6 +216,62 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
     }
   };
 
+  const handleSendDirectMessage = async () => {
+    const message = directMessage.trim();
+    if (!message) return;
+
+    try {
+      setSendingDirectMessage(true);
+
+      if (!isSupabaseAvailable()) {
+        setDirectMessage('');
+        setIsMessageModalOpen(false);
+        alert('Demo mode: message sent.');
+        return;
+      }
+
+      if (!profile?.id) {
+        alert('Cannot send message: your profile is not available.');
+        return;
+      }
+
+      const clientEmail = client?.email;
+      if (!clientEmail) {
+        alert('Cannot send message: client email is missing.');
+        return;
+      }
+
+      const { data: recipientProfile } = await supabase!
+        .from('profiles')
+        .select('id')
+        .eq('email', clientEmail)
+        .maybeSingle();
+
+      if (!recipientProfile?.id) {
+        alert(`Cannot send message: ${client?.name || 'client'} hasn't created their account yet.`);
+        return;
+      }
+
+      const { error } = await supabase!
+        .from('private_messages')
+        .insert({
+          sender_id: profile.id,
+          recipient_id: recipientProfile.id,
+          message,
+        });
+
+      if (error) throw error;
+
+      setDirectMessage('');
+      setIsMessageModalOpen(false);
+    } catch (error) {
+      console.error('Error sending direct message:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setSendingDirectMessage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -232,19 +294,19 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       </button>
 
       {/* Hero Section */}
-      <div className="glass-card neon-glow rounded-3xl p-8 lg:p-10 relative overflow-hidden group border border-white/10 shadow-2xl">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-8 relative z-10">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden group border border-white/10 shadow-2xl">
+        <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between relative z-10">
           <div className="space-y-6">
             <div className="space-y-2">
-              <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              <h1 className="text-3xl sm:text-4xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 {client.company || client.name}
               </h1>
               <div className="flex items-center gap-4 min-w-0">
-                <p className="text-xl text-gray-400 font-bold">{client.name}</p>
+                <p className="text-gray-300 text-sm font-medium">{client.name}</p>
                 <div className="flex flex-wrap gap-3 shrink-0">
                   <CategoryBadge category={client.category || 'General'} />
                   {client.location && (
-                    <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-white">
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-white">
                       {client.location}
                     </span>
                   )}
@@ -254,36 +316,33 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
           </div>
 
-          <div className="flex flex-col items-end justify-between h-full min-h-[140px] w-full md:w-auto">
-            <div className="flex gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+
+            <button
+              onClick={() => setIsMessageModalOpen(true)}
+              className="btn-pill shrink-glow-button flex items-center space-x-2"
+              title="Message"
+            >
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-200" />
+              <span className="text-sm font-medium text-gray-200">Message</span>
+            </button>
               <button
                 onClick={() => {
                   setSelectedClient(client);
                   setIsEditModalOpen(true);
                 }}
-                className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all group/btn"
+                className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all group/btn"
               >
                 <PencilIcon className="h-5 w-5 text-gray-400 group-hover/btn:text-white" />
               </button>
               {isAdmin && (
                 <button
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="p-3 bg-red-500/5 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all group/btn"
+                  className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all group/btn"
                 >
                   <TrashIcon className="h-5 w-5 text-red-400/70 group-hover/btn:text-red-400" />
                 </button>
               )}
-            </div>
-
-            <button
-              onClick={() => navigate(`/community/chat?clientId=${client.id}`)}
-              className="mt-auto px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex items-center gap-3 group/msg transition-all w-full md:w-auto justify-center md:justify-start"
-            >
-              <div className="p-1.5 bg-blue-500/20 rounded-lg">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#3ba3ea]" />
-              </div>
-              <span className="text-white font-bold uppercase tracking-widest text-sm">Message</span>
-            </button>
           </div>
         </div>
       </div>
@@ -292,7 +351,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Information */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Contact Information
           </h3>
           <div className="space-y-4">
@@ -301,7 +360,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                 <div className="p-2 border border-white/10 rounded-xl">
                   <EnvelopeIcon className="h-5 w-5 text-gray-400" />
                 </div>
-                <span className="text-gray-300 font-medium">{client.email}</span>
+                <span className="text-gray-300 text-sm font-medium">{client.email}</span>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-600 group-hover/item:text-white" />
             </a>
@@ -311,7 +370,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <PhoneIcon className="h-5 w-5 text-gray-400" />
                   </div>
-                  <span className="text-gray-300 font-medium">{formatPhoneNumber(client.phone)}</span>
+                  <span className="text-gray-300 text-sm font-medium">{formatPhoneNumber(client.phone)}</span>
                 </div>
                 <ChevronRightIcon className="h-5 w-5 text-gray-600 group-hover/item:text-white" />
               </a>
@@ -321,7 +380,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Social Links */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Social Links
           </h3>
           <div className="space-y-4 max-h-[176px] overflow-y-auto pr-1 custom-scrollbar">
@@ -331,7 +390,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <GlobeAltIcon className="h-5 w-5 text-gray-400" />
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">{displayWebsite(client.website)}</span>
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">{displayWebsite(client.website)}</span>
                 </div>
                 <ChevronRightIcon className="h-5 w-5 text-gray-600 group-hover/item:text-white" />
               </a>
@@ -343,7 +402,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0.5 8h4V24h-4V8zM8.5 8h3.8v2.2h.1c.5-1 1.9-2.2 4-2.2 4.3 0 5.1 2.8 5.1 6.5V24h-4v-8.2c0-2 0-4.5-2.7-4.5-2.7 0-3.1 2.1-3.1 4.3V24h-4V8z"/></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.linkedin);
                       if (!handle) return 'LinkedIn';
@@ -361,7 +420,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2H21l-6.52 7.45L22.5 22h-6.39l-5.01-6.48L5.4 22H2.64l7.03-8.04L1.5 2H8l4.53 5.86L18.244 2zm-1.12 18h1.77L6.96 3.9H5.06L17.12 20z"/></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.twitter);
                       if (!handle) return 'X';
@@ -379,7 +438,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.instagram);
                       if (!handle) return 'Instagram';
@@ -397,7 +456,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24H12.82v-9.294H9.692V11.01h3.128V8.309c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.59l-.467 3.696h-3.123V24h6.126C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z"/></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.facebook);
                       if (!handle) return 'Facebook';
@@ -415,7 +474,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.9v13.67a2.89 2.89 0 0 1-2.88 2.88 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.31 0 .61.05.9.14V9.02a6.71 6.71 0 0 0-.9-.06A6.71 6.71 0 0 0 2.33 15.7a6.71 6.71 0 0 0 6.71 6.71 6.71 6.71 0 0 0 6.71-6.71V9.4a8.74 8.74 0 0 0 3.84 1.01V6.69z"/></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.tiktok);
                       if (!handle) return 'TikTok';
@@ -433,7 +492,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
                   <div className="p-2 border border-white/10 rounded-xl">
                     <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                   </div>
-                  <span className="text-gray-300 font-medium truncate max-w-[180px]">
+                  <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
                       const handle = extractSocialHandle(client.youtube);
                       if (!handle) return 'YouTube';
@@ -450,15 +509,15 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Details Metrics */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Details
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-base">Client State</span>
+              <span className="text-gray-400 text-sm font-medium">Client State</span>
               {(() => {
                 const statusInfo = statusConfig[client.status as keyof typeof statusConfig];
-                if (!statusInfo) return <span className="text-white font-bold text-base uppercase tracking-wider">{client.status}</span>;
+                if (!statusInfo) return <span className="text-white text-sm font-semibold uppercase tracking-wider">{client.status}</span>;
                 return (
                   <span
                     className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
@@ -474,16 +533,16 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               })()}
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-base">Added</span>
-              <span className="text-white font-bold text-base">{formatAppDate(client.created_at)}</span>
+              <span className="text-gray-400 text-sm font-medium">Added</span>
+              <span className="text-white text-sm font-semibold">{formatAppDate(client.created_at)}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-base">Projects Completed</span>
-              <span className="text-white font-bold text-base">{projects.filter(p => p.status === 'completed').length}</span>
+              <span className="text-gray-400 text-sm font-medium">Projects Completed</span>
+              <span className="text-white text-sm font-semibold">{projects.filter(p => p.status === 'completed').length}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-bold text-base">Lifetime Value</span>
-              <span className="text-white font-bold text-base tabular-nums">
+              <span className="text-gray-400 text-sm font-medium">Lifetime Value</span>
+              <span className="text-white text-sm font-semibold tabular-nums">
                 ${projects.reduce((sum, p) => sum + (p.budget || 0), 0).toLocaleString()}
               </span>
             </div>
@@ -496,7 +555,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
         {/* Projects Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Projects ({projects.length})
             </h3>
           </div>
@@ -509,25 +568,25 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-2">
-                    <h4 className="text-2xl font-black text-white uppercase" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {project.name}
                     </h4>
-                    <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white uppercase tracking-widest">
+                    <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-white uppercase tracking-wider">
                       {project.project_type || 'Website'}
                     </span>
                   </div>
-                  <span className="text-xl font-black text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  <span className="text-white font-bold text-sm tabular-nums" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                     ${(project.budget || 0).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between mt-6">
-                  <span className="text-sm text-gray-500 font-bold uppercase tracking-wider">
+                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
                     {project.status === 'completed' ? `Delivered: ${formatAppDate(project.updated_at || project.created_at)}` : 'In Progress'}
                   </span>
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${project.status === 'completed' ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}></div>
-                    <span className="text-sm font-bold text-white uppercase tracking-widest">
+                    <span className="text-xs font-bold text-white uppercase tracking-widest">
                       {project.status === 'completed' ? 'Completed' : project.status.replace('_', ' ')}
                     </span>
                   </div>
@@ -544,7 +603,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Invoices Section */}
         <div className="space-y-6">
-          <h3 className="text-2xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
             Invoices
           </h3>
           <div className="space-y-3">
@@ -589,6 +648,43 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
         title="Delete Client"
         message={`Are you sure you want to delete ${client.company || client.name}? This action cannot be undone.`}
       />
+
+      <Modal
+        isOpen={isMessageModalOpen}
+        onClose={() => {
+          if (sendingDirectMessage) return;
+          setIsMessageModalOpen(false);
+        }}
+        title={`Message ${client?.name || 'Client'}`}
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-4">
+          <textarea
+            value={directMessage}
+            onChange={(e) => setDirectMessage(e.target.value)}
+            rows={5}
+            className="form-input w-full px-4 py-3 rounded-lg text-sm"
+            placeholder="Write a direct message..."
+            disabled={sendingDirectMessage}
+          />
+          <div className="flex items-center justify-end gap-3">
+            <button
+              onClick={() => setIsMessageModalOpen(false)}
+              className="btn-secondary shrink-glow-button"
+              disabled={sendingDirectMessage}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendDirectMessage}
+              className="btn-primary shrink-glow-button disabled:opacity-60"
+              disabled={sendingDirectMessage || !directMessage.trim()}
+            >
+              {sendingDirectMessage ? 'Sending...' : 'Send'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

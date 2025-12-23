@@ -522,7 +522,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 {getProjectsByStatus(column.id).map((project) => (
                   <div
                     key={project.id}
-                    className={`group bg-[#0d1117] border border-gray-800/50 hover:border-blue-500/30 rounded-2xl p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''
+                    className={`group bg-[#0d1117]/70 border border-gray-800/50 hover:border-blue-500/30 rounded-2xl p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''
                       }`}
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
@@ -547,7 +547,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 bg-[#3ba3ea]/10 border border-[#3ba3ea]/30 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 border border-blue-500/40 text-white">
                           {project.project_type || 'General'}
                         </span>
                         {/* Action hints - shown on hover */}
