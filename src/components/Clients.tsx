@@ -512,7 +512,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                     </p>
 
                     <div className="flex flex-wrap gap-2 items-center">
-                      {['prospect', 'active', 'vip', 'inactive'].includes(client.status) && (
+                      {['prospect', 'active', 'vip'].includes(client.status) && (
                         <span
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
                           style={{
