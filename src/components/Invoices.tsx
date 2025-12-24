@@ -299,6 +299,29 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         </span>
                       </div>
                       <p className="text-sm text-gray-400 mt-1 line-clamp-2">{invoice.description}</p>
+                      
+                      {/* Proposal Context Banner */}
+                      {invoice.proposal_id && (
+                        <div className="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs">
+                          <div className="flex items-center gap-2">
+                            <DocumentIcon className="h-3 w-3 text-blue-400" />
+                            <span className="text-blue-300">
+                              {invoice.locked_from_send 
+                                ? 'Linked to proposal (awaiting approval)' 
+                                : invoice.activation_source === 'proposal_approval'
+                                ? 'Activated from approved proposal'
+                                : 'Linked to proposal'}
+                            </span>
+                            <button
+                              onClick={() => navigate(`/proposals/${invoice.proposal_id}`)}
+                              className="text-blue-400 hover:text-blue-300 ml-auto"
+                            >
+                              View Proposal →
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <button
                           onClick={() => navigate(`/invoices/${invoice.id}`)}

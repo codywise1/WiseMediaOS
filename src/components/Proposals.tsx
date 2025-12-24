@@ -11,13 +11,14 @@ import {
   PlusIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
-import ProposalModal from './ProposalModal';
+import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
-import { clientService, proposalService } from '../lib/supabase';
+import { proposalService as newProposalService } from '../lib/proposalService';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 
 interface User {
+  id?: string;
   email: string;
   role: 'admin' | 'user';
   name: string;
@@ -28,11 +29,13 @@ interface ProposalsProps {
 }
 
 const statusConfig = {
-  approved: { color: 'bg-white/30 text-white', icon: CheckCircleIcon, label: 'Approved' },
-  pending: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: ClockIcon, label: 'Pending Review' },
-  under_review: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: EyeIcon, label: 'Under Review' },
   draft: { color: 'bg-gray-900/30 text-gray-400', icon: PencilIcon, label: 'Draft' },
-  rejected: { color: 'bg-red-900/30 text-red-400', icon: ClipboardDocumentListIcon, label: 'Rejected' },
+  sent: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: ClockIcon, label: 'Sent' },
+  viewed: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: EyeIcon, label: 'Viewed' },
+  approved: { color: 'bg-green-500/30 text-green-400', icon: CheckCircleIcon, label: 'Approved' },
+  declined: { color: 'bg-red-900/30 text-red-400', icon: ClipboardDocumentListIcon, label: 'Declined' },
+  expired: { color: 'bg-orange-900/30 text-orange-400', icon: CalendarIcon, label: 'Expired' },
+  archived: { color: 'bg-gray-700/30 text-gray-500', icon: ClipboardDocumentListIcon, label: 'Archived' },
 };
 
 export default function Proposals({ currentUser }: ProposalsProps) {
@@ -43,7 +46,6 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any | undefined>();
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   React.useEffect(() => {
     loadProposals();
@@ -54,30 +56,24 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       if (proposals.length === 0) {
         setLoading(true);
       }
-      let data = [];
       
-      if (currentUser?.role === 'admin') {
-        data = await proposalService.getAll();
-      } else if (currentUser?.id) {
-        // Resolve clients.id by email (schema uses proposals.client_id -> clients.id)
-        // Fallback to auth user id for legacy schemas using profiles.id
-        const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
-        const effectiveClientId = clientRecord?.id || currentUser.id;
-        data = await proposalService.getByClientId(effectiveClientId);
-      }
+      const data = await newProposalService.getAll();
       
       // Transform data to match component interface
       const transformedProposals = data.map(proposal => ({
         id: proposal.id,
         title: proposal.title,
-        client: proposal.client?.name || 'Unknown Client',
+        client: proposal.client?.company || proposal.client?.name || 'Unknown Client',
         client_id: proposal.client_id,
         value: proposal.value,
         status: proposal.status,
-        services: proposal.services || [],
-        description: proposal.description,
+        services: [],
+        description: proposal.description || '',
         createdDate: proposal.created_at || '',
-        expiryDate: proposal.expiry_date || ''
+        expiryDate: proposal.expires_at || '',
+        sent_at: proposal.sent_at,
+        approved_at: proposal.approved_at,
+        invoice: proposal.invoice
       }));
       
       setProposals(transformedProposals);
@@ -94,18 +90,14 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   const totalValue = proposals.reduce((sum, proposal) => sum + proposal.value, 0);
   const approvedValue = proposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + p.value, 0);
-  const pendingCount = proposals.filter(p => p.status === 'pending' || p.status === 'under_review').length;
+  const pendingCount = proposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
 
   const handleNewProposal = () => {
-    setSelectedProposal(undefined);
-    setModalMode('create');
     setIsModalOpen(true);
   };
 
-  const handleEditProposal = (proposal: any) => {
-    setSelectedProposal(proposal);
-    setModalMode('edit');
-    setIsModalOpen(true);
+  const handleViewProposal = (proposalId: string) => {
+    navigate(`/proposals/${proposalId}`);
   };
 
   const handleDeleteProposal = (proposal: any) => {
@@ -113,43 +105,16 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveProposal = (proposalData: any) => {
-    const saveProposal = async () => {
-      try {
-        const apiData = {
-          client_id: proposalData.client_id,
-          title: proposalData.title,
-          description: proposalData.description,
-          value: proposalData.value,
-          status: proposalData.status,
-          services: proposalData.services,
-          expiry_date: proposalData.expiryDate
-        };
-
-        if (modalMode === 'create') {
-          await proposalService.create(apiData);
-          toastSuccess('Proposal created successfully.');
-        } else if (selectedProposal) {
-          await proposalService.update(selectedProposal.id, apiData);
-          toastSuccess('Proposal updated successfully.');
-        }
-
-        await loadProposals();
-        setIsModalOpen(false);
-      } catch (error) {
-        console.error('Error saving proposal:', error);
-        toastError('Error saving proposal. Please try again.');
-      }
-    };
-
-    saveProposal();
+  const handleProposalSuccess = async () => {
+    await loadProposals();
+    toastSuccess('Proposal created successfully!');
   };
 
   const confirmDelete = () => {
     const deleteProposal = async () => {
       if (selectedProposal) {
         try {
-          await proposalService.delete(selectedProposal.id);
+          await newProposalService.delete(selectedProposal.id);
           await loadProposals();
           setIsDeleteDialogOpen(false);
           setSelectedProposal(undefined);
@@ -164,6 +129,28 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     deleteProposal();
   };
 
+  const handleApprove = async (proposalId: string) => {
+    try {
+      await newProposalService.approve(proposalId, currentUser?.id);
+      await loadProposals();
+      toastSuccess('Proposal approved! Invoice has been activated.');
+    } catch (error) {
+      console.error('Error approving proposal:', error);
+      toastError('Error approving proposal. Please try again.');
+    }
+  };
+
+  const handleDecline = async (proposalId: string) => {
+    try {
+      await newProposalService.decline(proposalId, currentUser?.id);
+      await loadProposals();
+      toastSuccess('Proposal declined. Invoice has been voided.');
+    } catch (error) {
+      console.error('Error declining proposal:', error);
+      toastError('Error declining proposal. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -174,8 +161,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   const isAdmin = currentUser?.role === 'admin';
 
-  // Users can only see approved proposals, admins see all
-  const visibleProposals = isAdmin ? proposals : proposals.filter(p => p.status === 'approved' || p.status === 'pending');
+  // Users can only see sent/approved proposals, admins see all
+  const visibleProposals = isAdmin ? proposals : proposals.filter(p => p.status === 'sent' || p.status === 'viewed' || p.status === 'approved');
 
   return (
     <div className="space-y-8">
@@ -255,7 +242,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       {/* Proposals List */}
       <div className="space-y-6">
         {visibleProposals.map((proposal) => {
-          const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig];
+          console.log('Proposal status:', proposal.status, 'Type:', typeof proposal.status);
+          const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
           const StatusIcon = statusInfo.icon;
           
           return (
@@ -282,11 +270,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                   {isAdmin && (
                     <div className="flex items-center justify-start sm:justify-end space-x-2 mb-2">
                       <button 
-                        onClick={() => handleEditProposal(proposal)}
+                        onClick={() => handleViewProposal(proposal.id)}
                         className="text-blue-500 hover:text-white p-1 shrink-glow-button"
-                        title="Edit Proposal"
+                        title="View Proposal"
                       >
-                        <PencilIcon className="h-4 w-4 text-blue-500" />
+                        <EyeIcon className="h-4 w-4 text-blue-500" />
                       </button>
                       <button 
                         onClick={() => handleDeleteProposal(proposal)}
@@ -301,17 +289,30 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 </div>
               </div>
 
-              {/* Services */}
-              <div className="mb-4">
-                <p className="text-sm text-gray-400 mb-2">Services Included:</p>
-                <div className="flex flex-wrap gap-2">
-                  {proposal.services.map((service, index) => (
-                    <span key={index} className="px-3 py-1 bg-slate-800 text-gray-300 rounded-full text-sm">
-                      {service}
-                    </span>
-                  ))}
+              {/* Linked Invoice Info */}
+              {proposal.invoice && (
+                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CurrencyDollarIcon className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm text-blue-300 font-semibold">Linked Invoice:</span>
+                      <span className="text-sm text-gray-300">
+                        {proposal.invoice.status === 'draft' ? 'Draft (activates on approval)' : 
+                         proposal.invoice.status === 'unpaid' ? 'Active - Unpaid' :
+                         proposal.invoice.status === 'paid' ? 'Paid' : 'Voided'}
+                      </span>
+                    </div>
+                    {proposal.invoice.status !== 'draft' && (
+                      <button
+                        onClick={() => navigate(`/invoices/${proposal.invoice.id}`)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                      >
+                        View Invoice →
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-700">
                 <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
@@ -326,17 +327,35 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center sm:justify-end">
-                  {proposal.status === 'draft' && (
+                  <div className="flex items-center gap-2 sm:justify-end flex-wrap">
+                    {proposal.status === 'sent' && isAdmin && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(proposal.id)}
+                          className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleDecline(proposal.id)}
+                          className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          Decline
+                        </button>
+                      </>
+                    )}
+                    {proposal.status === 'approved' && (
+                      <div className="flex items-center gap-2 text-sm text-green-400">
+                        <CheckCircleIcon className="h-4 w-4" />
+                        <span>Approved {proposal.approved_at ? formatAppDate(proposal.approved_at) : ''}</span>
+                      </div>
+                    )}
                     <button
-                      onClick={() => {
-                        toastSuccess(`Proposal "${proposal.title}" sent for review for ${proposal.client}.`);
-                      }}
-                      className="btn-action text-sm font-medium shrink-glow-button w-full sm:w-auto"
+                      onClick={() => navigate(`/proposals/${proposal.id}`)}
+                      className="px-4 py-2 bg-[#3aa3eb] text-white text-sm font-medium rounded-lg hover:bg-[#2d8bc7] transition-colors"
                     >
-                      Send for Review
+                      View Details
                     </button>
-                  )}
                   </div>
                 </div>
               </div>
@@ -345,13 +364,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         })}
       </div>
 
-      <ProposalModal
+      <ProposalBuilderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveProposal}
-        proposal={selectedProposal}
-        mode={modalMode}
-        currentUser={currentUser}
+        onSuccess={handleProposalSuccess}
+        currentUserId={currentUser?.id}
       />
 
       <ConfirmDialog
