@@ -10,6 +10,7 @@ interface ProposalBuilderModalProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUserId?: string;
+  editProposalId?: string;
 }
 
 interface ProposalFormData {
@@ -37,7 +38,7 @@ const steps = [
   { id: 6, name: 'Review', description: 'Review and create' }
 ];
 
-export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, currentUserId }: ProposalBuilderModalProps) {
+export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, currentUserId, editProposalId }: ProposalBuilderModalProps) {
   const { success: toastSuccess, error: toastError } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [clients, setClients] = useState<Client[]>([]);
@@ -59,22 +60,60 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   useEffect(() => {
     if (isOpen) {
       loadClients();
-      // Reset form when modal opens
-      setCurrentStep(1);
-      setProposalId(null);
-      setFormData({
-        client_id: '',
-        title: '',
-        description: '',
-        currency: 'CAD',
-        expires_at: '',
-        selectedServices: [],
-        billingPlan: 'full_upfront',
-        paymentTermsDays: 7,
-        depositPercent: 50
-      });
+      if (editProposalId) {
+        setProposalId(editProposalId);
+        loadExistingProposal(editProposalId);
+      } else {
+        // Reset form for NEW proposal
+        setCurrentStep(1);
+        setProposalId(null);
+        setFormData({
+          client_id: '',
+          title: '',
+          description: '',
+          currency: 'CAD',
+          expires_at: '',
+          selectedServices: [],
+          billingPlan: 'full_upfront',
+          paymentTermsDays: 7,
+          depositPercent: 50
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editProposalId]);
+
+  const loadExistingProposal = async (id: string) => {
+    try {
+      setLoading(true);
+      const proposal = await proposalService.getById(id);
+      if (proposal) {
+        const items = await proposalService.getItems(id);
+
+        setFormData({
+          client_id: proposal.client_id,
+          title: proposal.title,
+          description: proposal.description || '',
+          currency: proposal.currency || 'CAD',
+          expires_at: proposal.expires_at || '',
+          selectedServices: items.map(item => ({
+            serviceType: item.service_type,
+            quantity: item.quantity,
+            unitPrice: item.unit_price_cents
+          })),
+          billingPlan: proposal.billing_plan?.plan_type || 'full_upfront',
+          paymentTermsDays: proposal.billing_plan?.payment_terms_days || 7,
+          depositPercent: proposal.billing_plan?.deposit_cents && proposal.value
+            ? Math.round((proposal.billing_plan.deposit_cents / proposal.value) * 100)
+            : 50
+        });
+      }
+    } catch (error) {
+      console.error('Error loading existing proposal:', error);
+      toastError('Failed to load proposal data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadClients = async () => {
     try {
@@ -132,22 +171,28 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
-      const proposal = await proposalService.create({
+      const proposalData = {
         client_id: formData.client_id,
         title: formData.title,
         description: formData.description,
-        status: 'draft',
+        status: 'draft' as const,
         currency: formData.currency,
         value: 0,
         expires_at: expiresAt.toISOString(),
         created_by_user_id: currentUserId
-      });
+      };
 
-      setProposalId(proposal.id);
-      toastSuccess('Draft proposal created with linked invoice');
+      if (editProposalId) {
+        await proposalService.update(editProposalId, proposalData);
+        setProposalId(editProposalId);
+      } else {
+        const proposal = await proposalService.create(proposalData);
+        setProposalId(proposal.id);
+        toastSuccess('Draft proposal created with linked invoice');
+      }
     } catch (error) {
-      console.error('Error creating proposal:', error);
-      toastError('Failed to create proposal');
+      console.error('Error saving proposal:', error);
+      toastError('Failed to save proposal basics');
       throw error;
     } finally {
       setLoading(false);
@@ -159,6 +204,11 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
 
     try {
       setLoading(true);
+      // If editing, clear existing items first to avoid duplicates
+      if (editProposalId) {
+        await proposalService.clearItems(proposalId);
+      }
+
       const items: Omit<ProposalItem, 'id' | 'proposal_id' | 'created_at'>[] = formData.selectedServices.map((service, index) => ({
         service_type: service.serviceType as any,
         name: serviceTemplates.find(t => t.serviceType === service.serviceType)?.label || service.serviceType,
@@ -170,10 +220,10 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       }));
 
       await proposalService.addItems(proposalId, items);
-      toastSuccess('Services added to proposal');
+      toastSuccess('Services updated');
     } catch (error) {
-      console.error('Error adding items:', error);
-      toastError('Failed to add services');
+      console.error('Error updating items:', error);
+      toastError('Failed to update services');
     } finally {
       setLoading(false);
     }
@@ -287,7 +337,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
           <div className="flex items-center justify-between p-6 border-b border-slate-700">
             <div>
               <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                New Proposal
+                {editProposalId ? 'Edit Proposal' : 'New Proposal'}
               </h2>
               <p className="text-sm text-gray-400 mt-1">
                 Guided proposal builder with auto-generated SOW and linked invoice

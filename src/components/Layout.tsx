@@ -144,7 +144,8 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Work',
       items: [
         { name: 'Projects', href: '/projects', icon: FolderIcon },
-        { name: 'Notes', href: '/notes', icon: DocumentTextIcon }
+        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon }
       ]
     },
     { label: 'Billing', items: [{ name: 'Invoices', href: '/invoices', icon: DocumentIcon }] },
@@ -174,7 +175,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     },
     {
-      label: 'Marketplace', 
+      label: 'Marketplace',
       items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
     },
     { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
@@ -252,7 +253,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           className={`hidden md:block fixed inset-y-0 left-0 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'
             }`}
         >
-         <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
+          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
             <div
               className={`flex items-center mb-8 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
                 }`}

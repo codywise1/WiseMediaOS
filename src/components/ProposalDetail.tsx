@@ -17,11 +17,12 @@ import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
+import ProposalBuilderModal from './ProposalBuilderModal';
 
 interface User {
   id?: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'staff' | 'user';
   name: string;
 }
 
@@ -48,6 +49,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const [items, setItems] = useState<ProposalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'sow' | 'pricing' | 'activity' | 'timeline'>('overview');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ClipboardDocumentListIcon },
@@ -153,7 +155,13 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
 
   const statusInfo = statusIcons[proposal.status as keyof typeof statusIcons];
   const StatusIcon = statusInfo.icon;
-  const isAdmin = currentUser?.role === 'admin';
+
+  const userRole = currentUser?.role;
+  const isAdmin = userRole === 'admin';
+  const isStaff = userRole === 'staff';
+  const isClientRecipient = currentUser?.id === proposal.client_id;
+  const canApproveDecline = isAdmin || isStaff || isClientRecipient;
+  const canRevise = isAdmin || isStaff;
 
   const invoiceData = Array.isArray(proposal.invoice) ? proposal.invoice[0] : proposal.invoice;
 
@@ -197,9 +205,9 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
         </div>
 
         {/* Actions */}
-        {isAdmin && (
+        {(canApproveDecline || canRevise) && (
           <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-slate-700">
-            {proposal.status === 'sent' && (
+            {proposal.status === 'sent' && canApproveDecline && (
               <>
                 <button
                   onClick={handleApprove}
@@ -216,15 +224,24 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
               </>
             )}
 
-            {(proposal.status === 'sent' || proposal.status === 'approved' || proposal.status === 'declined') && (
+            {(proposal.status === 'sent' || proposal.status === 'approved' || proposal.status === 'declined') && canRevise && (
               <button
                 onClick={handleRevise}
                 className={`flex-1 min-w-[200px] px-6 py-3 font-semibold rounded-lg transition-colors ${proposal.status === 'sent'
-                    ? 'bg-slate-700 text-white hover:bg-slate-600'
-                    : 'bg-[#3aa3eb] text-white hover:bg-[#2d8bc7]'
+                  ? 'bg-slate-700 text-white hover:bg-slate-600'
+                  : 'bg-[#3aa3eb] text-white hover:bg-[#2d8bc7]'
                   }`}
               >
                 Revise Proposal
+              </button>
+            )}
+
+            {proposal.status === 'draft' && canRevise && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex-1 min-w-[200px] px-6 py-3 bg-[#3aa3eb] text-white font-semibold rounded-lg hover:bg-[#2d8bc7] transition-colors"
+              >
+                Modify Proposal
               </button>
             )}
           </div>
@@ -469,6 +486,17 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           </div>
         </div>
       )}
+
+      <ProposalBuilderModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={() => {
+          loadProposal();
+          setIsEditModalOpen(false);
+        }}
+        editProposalId={proposal.id}
+        currentUserId={currentUser?.id}
+      />
     </div>
   );
 }

@@ -102,6 +102,7 @@ export const proposalService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    if (!data) return [];
 
     // Calculate value from items if not set correctly in DB
     const processedData = data.map(proposal => {
@@ -252,6 +253,23 @@ export const proposalService = {
     return { ...proposalData, invoice: invoiceData } as Proposal;
   },
 
+  async update(id: string, data: Partial<Proposal>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = supabase!;
+    const { data: proposalData, error } = await sb
+      .from('proposals')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return proposalData as Proposal;
+  },
+
   async addItems(proposalId: string, items: Omit<ProposalItem, 'id' | 'proposal_id' | 'created_at'>[]) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
@@ -343,6 +361,33 @@ export const proposalService = {
     return itemsData as ProposalItem[];
   },
 
+  async clearItems(proposalId: string) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = supabase!;
+
+    // Delete invoice items first (constrained)
+    const { data: invoice } = await sb
+      .from('invoices')
+      .select('id')
+      .eq('proposal_id', proposalId)
+      .single();
+
+    if (invoice?.id) {
+      await sb.from('invoice_items').delete().eq('invoice_id', invoice.id);
+    }
+
+    // Delete proposal items
+    const { error } = await sb
+      .from('proposal_items')
+      .delete()
+      .eq('proposal_id', proposalId);
+
+    if (error) throw error;
+  },
+
   async saveBillingPlan(plan: Omit<BillingPlan, 'id' | 'created_at' | 'updated_at'>) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
@@ -413,11 +458,15 @@ export const proposalService = {
       .single();
 
     if (inv) {
-      await sb.from('invoice_events').insert([{
-        invoice_id: inv.id,
-        type: 'amount_synced',
-        meta: { amount: totalCents / 100, source: 'proposal_sent' }
-      }]);
+      try {
+        await sb.from('invoice_events').insert([{
+          invoice_id: inv.id,
+          type: 'amount_synced',
+          meta: { amount: totalCents / 100, source: 'proposal_sent' }
+        }]);
+      } catch (e) {
+        console.warn('Silent failure logging invoice event:', e);
+      }
     }
 
     // Rest of send logic (clauses, events)
@@ -437,6 +486,10 @@ export const proposalService = {
       .in('code', clauseCodes)
       .eq('is_active', true)
       .order('sort_order');
+
+    // Clear any existing snapshots for this proposal before re-locking version 1
+    // This handles revised proposals being resent
+    await sb.from('proposal_clause_snapshots').delete().eq('proposal_id', proposalId);
 
     // Create clause snapshot
     const snapshotHash = JSON.stringify(clauses?.map((c: Clause) => c.code).sort());

@@ -20,7 +20,7 @@ import { useToast } from '../contexts/ToastContext';
 interface User {
   id?: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'staff' | 'user';
   name: string;
 }
 
@@ -56,9 +56,16 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       if (proposals.length === 0) {
         setLoading(true);
       }
-      
+
       const data = await newProposalService.getAll();
-      
+      console.log('Raw proposals data:', data);
+
+      if (!Array.isArray(data)) {
+        console.error('Proposals data is not an array:', data);
+        setProposals([]);
+        return;
+      }
+
       // Transform data to match component interface
       const transformedProposals = data.map(proposal => ({
         id: proposal.id,
@@ -75,7 +82,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         approved_at: proposal.approved_at,
         invoice: proposal.invoice
       }));
-      
+
       setProposals(transformedProposals);
     } catch (error) {
       console.error('Error loading proposals:', error);
@@ -88,9 +95,6 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     }
   };
 
-  const totalValue = proposals.reduce((sum, proposal) => sum + (proposal.value || 0), 0);
-  const approvedValue = proposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + (p.value || 0), 0);
-  const pendingCount = proposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
 
   const handleNewProposal = () => {
     setIsModalOpen(true);
@@ -125,7 +129,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         }
       }
     };
-    
+
     deleteProposal();
   };
 
@@ -158,11 +162,29 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       </div>
     );
   }
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const isAdmin = userRole === 'admin';
+  const isStaff = userRole === 'staff';
+  const isAgency = isAdmin || isStaff;
+  const currentUserId = currentUser?.id;
 
-  const isAdmin = currentUser?.role === 'admin';
+  console.log('Render Proposals - User:', { id: currentUserId, role: userRole, isAgency });
 
-  // Users can only see sent/approved proposals, admins see all
-  const visibleProposals = isAdmin ? proposals : proposals.filter(p => p.status === 'sent' || p.status === 'viewed' || p.status === 'approved');
+  // Agency sees all, Clients only see their own sent/approved proposals
+  const visibleProposals = isAgency
+    ? proposals
+    : proposals.filter(p =>
+      p.client_id === currentUserId &&
+      (p.status === 'sent' || p.status === 'viewed' || p.status === 'approved')
+    );
+
+  // Stats should also be filtered for clients to avoid data leaking
+  const statsProposals = isAgency ? (proposals || []) : (visibleProposals || []);
+  const filteredTotalValue = statsProposals.reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
+  const filteredApprovedValue = statsProposals.filter(p => p?.status === 'approved').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
+  const filteredPendingCount = statsProposals.filter(p => p?.status === 'sent' || p?.status === 'viewed').length;
+
+  console.log('Visible Proposals Count:', visibleProposals.length);
 
   return (
     <div className="space-y-8">
@@ -173,8 +195,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Proposals</h1>
             <p className="text-gray-300">Create, track, and manage project proposals</p>
           </div>
-          {isAdmin && (
-            <button 
+          {isAgency && (
+            <button
               onClick={handleNewProposal}
               className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
@@ -182,7 +204,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
               New Proposal
             </button>
           )}
-          {!isAdmin && (
+          {!isAgency && (
             <div className="text-sm text-gray-400">Review and manage your proposals</div>
           )}
         </div>
@@ -209,7 +231,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Approved Value</p>
-              <p className="text-2xl font-bold text-white">${(approvedValue / 100).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${(filteredApprovedValue / 100).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -221,7 +243,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Pending Review</p>
-              <p className="text-2xl font-bold text-white">{pendingCount}</p>
+              <p className="text-2xl font-bold text-white">{filteredPendingCount}</p>
             </div>
           </div>
         </div>
@@ -233,7 +255,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Total Value</p>
-              <p className="text-2xl font-bold text-white">${(totalValue / 100).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${(filteredTotalValue / 100).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -241,11 +263,21 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
       {/* Proposals List */}
       <div className="space-y-6">
-        {visibleProposals.map((proposal) => {
+        {visibleProposals.length === 0 ? (
+          <div className="glass-card rounded-xl p-12 text-center">
+            <ClipboardDocumentListIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">No proposals found</h3>
+            <p className="text-gray-400">
+              {isAgency
+                ? "You haven't created any proposals yet. Click the button above to start."
+                : "You don't have any sent or approved proposals at this time."}
+            </p>
+          </div>
+        ) : visibleProposals.map((proposal) => {
           console.log('Proposal status:', proposal.status, 'Type:', typeof proposal.status);
           const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
           const StatusIcon = statusInfo.icon;
-          
+
           return (
             <div key={proposal.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
               <div className="flex flex-col gap-4 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
@@ -265,18 +297,18 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                     <p className="text-sm text-gray-500 line-clamp-2">{proposal.description}</p>
                   </div>
                 </div>
-                
+
                 <div className="text-left sm:text-right">
-                  {isAdmin && (
+                  {isAgency && (
                     <div className="flex items-center justify-start sm:justify-end space-x-2 mb-2">
-                      <button 
+                      <button
                         onClick={() => handleViewProposal(proposal.id)}
                         className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                         title="View Proposal"
                       >
                         <EyeIcon className="h-4 w-4 text-blue-500" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteProposal(proposal)}
                         className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                         title="Delete Proposal"
@@ -297,9 +329,9 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       <CurrencyDollarIcon className="h-4 w-4 text-blue-400" />
                       <span className="text-sm text-blue-300 font-semibold">Linked Invoice:</span>
                       <span className="text-sm text-gray-300">
-                        {proposal.invoice.status === 'draft' ? 'Draft (activates on approval)' : 
-                         proposal.invoice.status === 'unpaid' ? 'Active - Unpaid' :
-                         proposal.invoice.status === 'paid' ? 'Paid' : 'Voided'}
+                        {proposal.invoice.status === 'draft' ? 'Draft (activates on approval)' :
+                          proposal.invoice.status === 'unpaid' ? 'Active - Unpaid' :
+                            proposal.invoice.status === 'paid' ? 'Paid' : 'Voided'}
                       </span>
                     </div>
                     {proposal.invoice.status !== 'draft' && (
@@ -318,17 +350,17 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                     <div className="flex items-center space-x-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Created: {proposal.createdDate ? formatAppDate(proposal.createdDate) : '—'}</span>
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-400">Created: {proposal.createdDate ? formatAppDate(proposal.createdDate) : '—'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Expires: {proposal.expiryDate ? formatAppDate(proposal.expiryDate) : '—'}</span>
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-400">Expires: {proposal.expiryDate ? formatAppDate(proposal.expiryDate) : '—'}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 sm:justify-end flex-wrap">
-                    {proposal.status === 'sent' && isAdmin && (
+                    {proposal.status === 'sent' && isAgency && (
                       <>
                         <button
                           onClick={() => handleApprove(proposal.id)}
