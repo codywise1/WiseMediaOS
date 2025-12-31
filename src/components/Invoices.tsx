@@ -197,7 +197,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Invoices</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Invoices</h1>
             <p className="text-gray-300">Manage payments and track outstanding balances</p>
           </div>
           {isAdmin && (
@@ -269,12 +269,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {/* Invoices List */}
       <div className="glass-card rounded-xl neon-glow">
         <div className="p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Invoices</h2>
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Recent Invoices</h2>
         </div>
         
         <div className="divide-y divide-slate-700">
           {visibleInvoices.map((invoice) => {
-            const statusInfo = statusConfig[invoice.status as keyof typeof statusConfig];
+            const statusInfo = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.draft;
             const StatusIcon = statusInfo.icon;
             
             return (
@@ -289,7 +289,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
                         <h3
                           className="text-lg font-bold text-white min-w-0 truncate"
-                          style={{ fontFamily: 'Integral CF, sans-serif' }}
+                          style={{ fontFamily: 'Montserrat, sans-serif' }}
                         >
                           {invoice.client}
                         </h3>

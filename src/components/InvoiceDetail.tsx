@@ -145,7 +145,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div>
               <h1
                 className="text-2xl md:text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: 'Integral CF, sans-serif' }}
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
               >
                 Invoice for {displayClientName}
               </h1>

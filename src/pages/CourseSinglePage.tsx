@@ -211,13 +211,13 @@ export default function CourseSinglePage() {
               className="h-12"
             />
           </div>
-          <h1 className="text-white text-[40px] font-bold mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-white text-[40px] font-bold mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {course?.title || 'Marketing Masterclass'}
           </h1>
           <div className="flex flex-wrap items-center gap-6 text-white">
             <div className="flex items-center gap-2">
               <Clock size={20} className="text-[#3AA3EB]" />
-              <span className="number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{lessons.length}</span>
+              <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lessons.length}</span>
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Lessons</span>
             </div>
             <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function CourseSinglePage() {
             {isEnrolled && (
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={20} className="text-green-400" />
-                <span className="number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{progress}%</span>
+                <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{progress}%</span>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Complete</span>
               </div>
             )}
@@ -288,12 +288,12 @@ export default function CourseSinglePage() {
         {activeTab === 'overview' && (
           <div className="space-y-8">
             <GlassCard>
-              <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>About This Course</h2>
+              <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>About This Course</h2>
               <p className="text-gray-300 leading-relaxed mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
                 {course?.description || 'Master the fundamentals of digital marketing and grow your online presence. This comprehensive course covers everything from social media strategy to content creation and analytics.'}
               </p>
               <div className="space-y-3">
-                <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What You\'ll Learn</h3>
+                <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What You\'ll Learn</h3>
                 {['Build a comprehensive marketing strategy', 'Create engaging content that converts', 'Master social media algorithms', 'Track and analyze your performance'].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="text-[#3AA3EB] flex-shrink-0 mt-1" size={20} />
@@ -334,13 +334,13 @@ export default function CourseSinglePage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Lesson <span className="number">{index + 1}</span>: {lesson.title}
                     </h3>
                     <div className="flex items-center gap-4 text-sm text-gray-400">
                       <span className="flex items-center gap-1">
                         <Clock size={14} />
-                        <span className="number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{lesson.duration_minutes}</span> min
+                        <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lesson.duration_minutes}</span> min
                       </span>
                       {lesson.completed && (
                         <span className="text-green-400 font-medium">Completed</span>
@@ -395,7 +395,7 @@ export default function CourseSinglePage() {
           <div className="space-y-6">
             <GlassCard>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Progress</h2>
+                <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Progress</h2>
                 {progress === 100 && (
                   <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all font-medium shadow-lg">
                     <Award size={20} />
@@ -411,17 +411,17 @@ export default function CourseSinglePage() {
                       <circle cx="64" cy="64" r="60" fill="none" stroke="#3AA3EB" strokeWidth="8" strokeDasharray={`${progress * 3.77} 377`} strokeLinecap="round" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '32px' }}>{progress}%</span>
+                      <span className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '32px' }}>{progress}%</span>
                     </div>
                   </div>
                   <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Overall Progress</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '40px' }}>{Math.round(lessons.length * progress / 100)}</div>
+                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>{Math.round(lessons.length * progress / 100)}</div>
                   <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Lessons Completed</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '40px' }}>{lessons.reduce((acc, l) => acc + l.duration_minutes, 0)}</div>
+                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>{lessons.reduce((acc, l) => acc + l.duration_minutes, 0)}</div>
                   <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Minutes Watched</p>
                 </div>
               </div>
@@ -434,7 +434,7 @@ export default function CourseSinglePage() {
           <GlassCard>
             <div className="flex items-center gap-3 mb-6">
               <MessageSquare className="text-[#3AA3EB]" size={24} />
-              <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Discussions</h2>
+              <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Discussions</h2>
             </div>
             <div className="mb-6">
               <textarea className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none h-32" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} placeholder="Share your thoughts or ask a question..." />

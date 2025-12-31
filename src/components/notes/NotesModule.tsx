@@ -177,7 +177,7 @@ export default function NotesModule() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Notes
           </h1>
           <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -254,7 +254,7 @@ export default function NotesModule() {
             {isEditing ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                     {selectedNote ? 'Edit Note' : 'New Note'}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function NotesModule() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                    <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                       {selectedNote.title}
                     </h2>
                     <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>

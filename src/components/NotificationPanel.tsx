@@ -219,7 +219,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
         <GlassCard className="overflow-hidden bg-slate-950 border border-white/10">
           <div className="relative flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between sm:pr-10">
             <div className="flex items-center justify-between gap-3 min-w-0">
-              {/* <h3 className="text-white font-bold text-lg truncate" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {/* <h3 className="text-white font-bold text-lg truncate" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Notifications
               </h3> */}
               <button

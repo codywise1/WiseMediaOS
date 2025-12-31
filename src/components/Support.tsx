@@ -210,7 +210,7 @@ export default function Support({ currentUser }: SupportProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Support Center</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Support Center</h1>
             <p className="text-gray-300">Get help, submit tickets, and access resources</p>
           </div>
           <button 
@@ -229,7 +229,7 @@ export default function Support({ currentUser }: SupportProps) {
           <div className="p-3 rounded-lg bg-[#3aa3eb] mb-4 inline-block">
             <ChatBubbleLeftRightIcon className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Live Chat</h3>
+          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Live Chat</h3>
           <p className="text-gray-400 text-sm mb-4">Get instant help from our team</p>
           <button 
             onClick={() => console.log('Starting live chat')}
@@ -243,7 +243,7 @@ export default function Support({ currentUser }: SupportProps) {
           <div className="p-3 rounded-lg bg-[#3aa3eb] mb-4 inline-block">
             <TicketIcon className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Submit Ticket</h3>
+          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Submit Ticket</h3>
           <p className="text-gray-400 text-sm mb-4">Create a detailed support request</p>
           <button 
             onClick={handleNewTicket}
@@ -257,7 +257,7 @@ export default function Support({ currentUser }: SupportProps) {
           <div className="p-3 rounded-lg bg-[#3aa3eb] mb-4 inline-block">
             <BookOpenIcon className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Knowledge Base</h3>
+          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Knowledge Base</h3>
           <p className="text-gray-400 text-sm mb-4">Find answers to common questions</p>
           <a
             href="https://wisemedia.io/blogs/"
@@ -273,7 +273,7 @@ export default function Support({ currentUser }: SupportProps) {
           <div className="p-3 rounded-lg bg-[#3aa3eb] mb-4 inline-block">
             <PhoneIcon className="h-6 w-6 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Schedule Call</h3>
+          <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Schedule Call</h3>
           <p className="text-gray-400 text-sm mb-4">Book a consultation with our team</p>
           <button 
             onClick={() => navigate('/appointments')}
@@ -326,7 +326,7 @@ export default function Support({ currentUser }: SupportProps) {
       {/* Recent Tickets */}
       <div className="glass-card rounded-xl neon-glow">
         <div className="p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Your Support Tickets</h2>
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your Support Tickets</h2>
         </div>
         
         <div className="divide-y divide-slate-700">
@@ -344,7 +344,7 @@ export default function Support({ currentUser }: SupportProps) {
                     
                     <div className="min-w-0">
                       <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
-                        <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{ticket.subject}</h3>
+                        <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{ticket.subject}</h3>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {statusInfo.label}
@@ -415,7 +415,7 @@ export default function Support({ currentUser }: SupportProps) {
       {/* Knowledge Base */}
       <div className="glass-card rounded-xl neon-glow">
         <div className="p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Popular Articles</h2>
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Popular Articles</h2>
         </div>
         
         <div className="p-6">
@@ -445,7 +445,7 @@ export default function Support({ currentUser }: SupportProps) {
 
       {/* Contact Information */}
       <div className="glass-card rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>Contact Information</h2>
+        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>Contact Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-[#3aa3eb]">

@@ -504,7 +504,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       <div className="glass-card neon-glow rounded-2xl p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}!</span>
             </h1>
             <p className="text-gray-300">Here's what's happening with your projects today.</p>
@@ -532,7 +532,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-200 mb-1">{stat.name}</p>
-                  <p className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  <p className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {stat.value}
                   </p>
                   <p className="text-xs text-gray-300 font-medium">{stat.subtitle}</p>
@@ -575,7 +575,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <span className="text-2xl font-bold text-white">{action.count}</span>
             </div>
 
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{action.name}</h3>
+            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>{action.name}</h3>
             <p className="text-gray-300 mb-1">{action.description}</p>
             <p className="text-sm text-[#59a1e5] font-semibold mb-4">{action.status}</p>
 
@@ -597,7 +597,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       {/* Recent Activity */}
       <div className="glass-card rounded-xl p-6 neon-glow">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Activity</h2>
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Recent Activity</h2>
           <button
             onClick={() => console.log('View all activities')}
             className="btn-pill shrink-glow-button"

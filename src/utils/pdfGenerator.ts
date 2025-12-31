@@ -82,7 +82,7 @@ export const generateProposalPDF = (proposal: any) => {
         }
         
         .title {
-          font-family: 'Integral CF', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 32px;
           font-weight: 700;
           background: linear-gradient(135deg, #3aa3eb, #3aa3eb);
@@ -103,7 +103,7 @@ export const generateProposalPDF = (proposal: any) => {
         }
         
         .section-title {
-          font-family: 'Integral CF', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 20px;
           font-weight: 700;
           color: #ffffff;
@@ -426,7 +426,7 @@ export const generateInvoicePDF = (invoice: any) => {
         }
         
         .title {
-          font-family: 'Integral CF', sans-serif;
+          font-family: 'Montserrat', sans-serif;
           font-size: 32px;
           font-weight: 700;
           background: linear-gradient(135deg, #3aa3eb, #3aa3eb);

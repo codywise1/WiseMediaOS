@@ -230,7 +230,7 @@ export default function LessonPage() {
         </GlassCard>
 
         <GlassCard>
-          <h1 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {currentLesson?.title}
           </h1>
           {currentLesson?.description && (
@@ -256,14 +256,14 @@ export default function LessonPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <GlassCard>
-            <h2 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>Transcript</h2>
+            <h2 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>Transcript</h2>
             <p className="text-gray-300 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
               {(currentLesson as any)?.transcript || 'Transcript coming soon.'}
             </p>
           </GlassCard>
 
           <GlassCard>
-            <h2 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>Resources</h2>
+            <h2 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>Resources</h2>
             {resources.length === 0 ? (
               <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>No resources for this lesson.</p>
             ) : (
@@ -288,7 +288,7 @@ export default function LessonPage() {
         <GlassCard>
           <div className="flex items-center gap-3 mb-4">
             <MessageSquare className="text-[#3AA3EB]" size={20} />
-            <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>Comments</h2>
+            <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>Comments</h2>
           </div>
           <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Comments coming soon.</p>
         </GlassCard>
@@ -308,7 +308,7 @@ export default function LessonPage() {
       <div className="lg:col-span-4">
         <div className="sticky top-24 space-y-4">
           <GlassCard>
-            <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>Course Outline</h3>
+            <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>Course Outline</h3>
             <div className="space-y-2">
               {lessons.map((l, idx) => {
                 const done = !!completedMap[l.id];
@@ -340,7 +340,7 @@ export default function LessonPage() {
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setOutlineOpen(false)} />
           <div className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] p-4 glass-card overflow-y-auto">
-            <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>Outline</h3>
+            <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>Outline</h3>
             <div className="space-y-2">
               {lessons.map((l, idx) => {
                 const done = !!completedMap[l.id];

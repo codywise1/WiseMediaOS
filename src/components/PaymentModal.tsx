@@ -624,7 +624,7 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
         <div className="relative overflow-hidden rounded-2xl bg-[#0F172A] border border-slate-700">
           {/* Receipt Header */}
           <div className="bg-gradient-to-r from-[#3AA3EB] to-emerald-500 px-6 py-4 text-center">
-            <h2 className="text-2xl font-black text-white tracking-wide" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+            <h2 className="text-2xl font-black text-white tracking-wide" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
               WISE MEDIA
             </h2>
             <p className="text-white/80 text-sm mt-1">Payment Receipt</p>
@@ -648,7 +648,7 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
             {/* Amount */}
             <div className="text-center py-3">
               <p className="text-xs uppercase text-gray-400 tracking-widest">Amount Paid</p>
-              <p className="text-4xl font-black text-white mt-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+              <p className="text-4xl font-black text-white mt-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                 ${invoice.amount.toLocaleString()}
               </p>
               <span className="inline-block mt-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">

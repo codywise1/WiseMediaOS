@@ -344,7 +344,7 @@ export default function CommunityFeedPage() {
     return (
       <div className="space-y-6">
         <div className="glass-card p-6 rounded-2xl border border-white/10">
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             Creator Club Feed
           </h1>
           <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -359,7 +359,7 @@ export default function CommunityFeedPage() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Creator Club
           </h1>
           <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -505,7 +505,7 @@ export default function CommunityFeedPage() {
                   </div>
 
                   {post.title && (
-                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                       {post.title}
                     </h2>
                   )}

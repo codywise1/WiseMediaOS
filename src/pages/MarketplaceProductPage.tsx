@@ -258,7 +258,7 @@ export default function MarketplaceProductPage() {
                   </span>
                 )}
               </div>
-              <h1 className="text-white font-bold text-[32px] mb-3" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <h1 className="text-white font-bold text-[32px] mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {product.title}
               </h1>
               <div className="flex items-center gap-4 mb-4">
@@ -272,11 +272,11 @@ export default function MarketplaceProductPage() {
             <div>
               <div className="flex items-baseline gap-3 mb-4">
                 {product.discount_enabled && product.old_price && (
-                  <span className="text-gray-500 line-through number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '24px' }}>
+                  <span className="text-gray-500 line-through number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '24px' }}>
                     ${product.old_price.toFixed(2)}
                   </span>
                 )}
-                <span className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '40px' }}>
+                <span className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>
                   ${product.price.toFixed(2)}
                 </span>
               </div>
@@ -328,7 +328,7 @@ export default function MarketplaceProductPage() {
         </div>
 
         <GlassCard>
-          <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Product Overview
           </h2>
           <p className="text-gray-300 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
@@ -338,7 +338,7 @@ export default function MarketplaceProductPage() {
 
         {product.included_files && product.included_files.length > 0 && (
           <GlassCard>
-            <h2 className="text-white font-bold text-2xl mb-6" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h2 className="text-white font-bold text-2xl mb-6" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               What's Included
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,7 +359,7 @@ export default function MarketplaceProductPage() {
 
         <GlassCard>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Customer Reviews
             </h2>
             {hasPurchased && (
@@ -371,7 +371,7 @@ export default function MarketplaceProductPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div className="text-center">
-              <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '48px' }}>{product.rating.toFixed(1)}</div>
+              <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '48px' }}>{product.rating.toFixed(1)}</div>
               {renderStars(Math.round(product.rating), 24)}
               <p className="text-gray-400 mt-2 number" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{product.reviews_count} reviews</p>
             </div>
@@ -424,7 +424,7 @@ export default function MarketplaceProductPage() {
 
         {relatedProducts.length > 0 && (
           <div>
-            <h2 className="text-white font-bold text-2xl mb-6" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h2 className="text-white font-bold text-2xl mb-6" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               You Might Also Like
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -446,7 +446,7 @@ export default function MarketplaceProductPage() {
                   </div>
                   <h3 className="text-white font-bold mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{relatedProduct.title}</h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-[#3AA3EB] font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '20px' }}>${relatedProduct.price.toFixed(2)}</span>
+                    <span className="text-[#3AA3EB] font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '20px' }}>${relatedProduct.price.toFixed(2)}</span>
                     <div className="flex items-center gap-1">
                       <Star size={14} className="fill-yellow-400 text-yellow-400" />
                       <span className="text-gray-400 text-sm number">{relatedProduct.rating.toFixed(1)}</span>
@@ -463,7 +463,7 @@ export default function MarketplaceProductPage() {
         <div className="fixed bottom-0 left-0 right-0 lg:hidden z-40 p-4 bg-black/80 backdrop-blur-xl border-t border-white/10">
           <div className="flex items-center justify-between max-w-xl mx-auto">
             <div>
-              <p className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '24px' }}>${product.price.toFixed(2)}</p>
+              <p className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '24px' }}>${product.price.toFixed(2)}</p>
               <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Instant Download</p>
             </div>
             <button onClick={handlePurchase} className="px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 flex items-center gap-2">
@@ -501,7 +501,7 @@ export default function MarketplaceProductPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <GlassCard className="w-full max-w-lg">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Write a Review</h3>
+                <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Write a Review</h3>
                 <button onClick={() => setShowReviewModal(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
                   <X size={20} />
                 </button>

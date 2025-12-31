@@ -6,7 +6,7 @@ export default function ReferralsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Referrals
       </h1>
 
@@ -47,7 +47,7 @@ export default function ReferralsPage() {
       </div>
 
       <GlassCard>
-        <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Your Referral Link</h2>
         <div className="flex gap-2">
           <input
@@ -64,7 +64,7 @@ export default function ReferralsPage() {
       </GlassCard>
 
       <GlassCard>
-        <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Recent Referrals</h2>
         <div className="space-y-3">
           {[

@@ -17,7 +17,7 @@ export default function CreatorHome() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-[#8AB5EB] font-medium">Creator Club</p>
-            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
               Welcome back, Creator
             </h1>
             <p className="text-gray-400 mt-2 max-w-2xl">

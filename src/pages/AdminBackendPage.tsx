@@ -121,7 +121,7 @@ export default function AdminBackendPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <GlassCard className="p-8 text-center">
           <Shield className="text-red-400 mx-auto mb-4" size={64} />
-          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             Access Denied
           </h2>
           <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -136,7 +136,7 @@ export default function AdminBackendPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Creator Club Backend
           </h1>
           <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -252,7 +252,7 @@ export default function AdminBackendPage() {
                   {products.map((product) => (
                     <tr key={product.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-4 text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{product.title}</td>
-                      <td className="py-3 px-4 text-green-400 font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>${product.price}</td>
+                      <td className="py-3 px-4 text-green-400 font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>${product.price}</td>
                       <td className="py-3 px-4 text-gray-300 capitalize" style={{ fontFamily: 'Montserrat, sans-serif' }}>{product.category}</td>
                       <td className="py-3 px-4">{product.is_featured ? <span className="text-yellow-400">⭐</span> : '-'}</td>
                       <td className="py-3 px-4 text-gray-400 number" style={{ fontFamily: 'Montserrat, sans-serif' }}>{product.purchases_count}</td>
@@ -374,7 +374,7 @@ export default function AdminBackendPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <GlassCard className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                <h3 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                   {editingItem?.id ? 'Edit' : 'Add'} {activeTab.slice(0, -1)}
                 </h3>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">

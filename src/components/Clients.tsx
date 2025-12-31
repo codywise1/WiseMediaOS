@@ -262,7 +262,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Clients</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Clients</h1>
             <p className="text-gray-300">Manage your client relationships and information</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
@@ -504,7 +504,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 <div className="mb-8 relative z-10">
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h3 className="text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
                     <p className="text-gray-300 text-sm font-semibold mb-3 truncate">

@@ -67,7 +67,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 <div className="p-2 bg-purple-500/20 rounded-lg">
                   <Lock className="text-purple-400" size={20} />
                 </div>
-                <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Change Password
                 </h3>
               </div>

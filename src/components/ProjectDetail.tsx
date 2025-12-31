@@ -308,14 +308,14 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {project.name}
             </h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-gray-400 min-w-0">
               <span className="flex items-center space-x-2 min-w-0">
                 <span className="min-w-0 truncate">{project.client?.name || 'Unknown Client'}</span>
               </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-gray-200 shrink-0">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#59a1e5]/20 border border-[#59a1e5]/30 text-white shrink-0">
                 {project.project_type || 'Website'}
               </span>
             </div>
@@ -361,7 +361,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Main Details Grid */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-8" style={{ fontFamily: 'Montserrat, sans-serif' }}>
           Project Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -453,7 +453,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
        {/* Description */}
       {description && (
         <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             Description
           </h2>
           <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
@@ -471,18 +471,18 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       )}
 
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
           Notes
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {notesToRender.map((note: any) => (
             <div key={note.id} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
               <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
-                <p className="text-white font-bold min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                <p className="text-white font-bold min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   {note.title}
                 </p>
                 {note.category && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-gray-200 shrink-0">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#59a1e5]/20 border border-[#59a1e5]/30 text-white shrink-0">
                     {note.category}
                   </span>
                 )}

@@ -92,7 +92,7 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Creator Tools
       </h1>
 
@@ -116,14 +116,14 @@ export default function ToolsPage() {
         <GlassCard>
           <div className="flex items-center gap-3 mb-6">
             <Palette className="text-[#3AA3EB]" size={28} />
-            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color Palette Generator</h2>
+            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color Palette Generator</h2>
           </div>
           <div className="space-y-6">
             <div>
               <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Base Color</label>
               <div className="flex gap-4">
                 <input type="color" value={baseColor} onChange={(e) => setBaseColor(e.target.value)} className="w-20 h-20 bg-black/30 border border-white/10 rounded-lg cursor-pointer" />
-                <input type="text" value={baseColor} onChange={(e) => setBaseColor(e.target.value)} className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }} />
+                <input type="text" value={baseColor} onChange={(e) => setBaseColor(e.target.value)} className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }} />
                 <button onClick={generatePalette} className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg shadow-[#3AA3EB]/20">
                   Generate
                 </button>
@@ -138,7 +138,7 @@ export default function ToolsPage() {
                     <div key={i} className="group relative">
                       <div className="aspect-square rounded-lg shadow-lg transition-transform hover:scale-110 cursor-pointer" style={{ backgroundColor: color }} onClick={() => copyToClipboard(color)} />
                       <div className="mt-2 text-center">
-                        <p className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '14px' }}>{color}</p>
+                        <p className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '14px' }}>{color}</p>
                         <button onClick={() => copyToClipboard(color)} className="text-[#3AA3EB] hover:text-[#2a92da] text-xs mt-1">
                           {copied ? 'Copied!' : 'Copy'}
                         </button>
@@ -156,7 +156,7 @@ export default function ToolsPage() {
         <GlassCard>
           <div className="flex items-center gap-3 mb-6">
             <Type className="text-[#3AA3EB]" size={28} />
-            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Text Case Transformer</h2>
+            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Text Case Transformer</h2>
           </div>
           <div className="space-y-6">
             <div>
@@ -199,12 +199,12 @@ export default function ToolsPage() {
         <GlassCard>
           <div className="flex items-center gap-3 mb-6">
             <FileText className="text-[#3AA3EB]" size={28} />
-            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lorem Ipsum Generator</h2>
+            <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lorem Ipsum Generator</h2>
           </div>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Number of Paragraphs: <span className="number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{loremLength}</span></label>
+                <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Number of Paragraphs: <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{loremLength}</span></label>
                 <input type="range" min="1" max="10" value={loremLength} onChange={(e) => setLoremLength(parseInt(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
               </div>
               <button onClick={generateLorem} className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg shadow-[#3AA3EB]/20">

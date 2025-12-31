@@ -434,7 +434,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
         <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div className="min-w-0">
-              <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
+              <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Projects</h1>
               <p className="text-gray-300">Manage and track all your active projects</p>
             </div>
             {isAdmin && (
@@ -509,7 +509,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {column.title}
                   </h3>
                 </div>
@@ -522,8 +522,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 {getProjectsByStatus(column.id).map((project) => (
                   <div
                     key={project.id}
-                    className={`group bg-[#0d1117]/70 border border-gray-800/50 hover:border-blue-500/30 rounded-2xl p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''
-                      }`}
+                    className={`group bg-[#0d1117]/50 border border-gray-800/50 hover:border-blue-500/30 rounded-[10px] p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''}`}
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
                     onDragEnd={isAdmin ? handleDragEnd : undefined}
@@ -538,7 +537,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                   >
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1.5 min-w-0">
-                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                           {project.name}
                         </h4>
                         <p className="text-gray-400 text-xs font-medium truncate">
@@ -547,7 +546,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 border border-blue-500/40 text-white">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
                           {project.project_type || 'General'}
                         </span>
                         {/* Action hints - shown on hover */}

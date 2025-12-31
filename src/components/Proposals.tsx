@@ -183,7 +183,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Proposals</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Proposals</h1>
             <p className="text-gray-300">Create, track, and manage project proposals</p>
           </div>
           {isAdmin && (
@@ -267,7 +267,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
-                      <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>{proposal.title}</h3>
+                      <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{proposal.title}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
                         <StatusIcon className="h-3 w-3 mr-1" />
                         {statusInfo.label}
