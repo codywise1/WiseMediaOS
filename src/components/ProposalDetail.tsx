@@ -42,7 +42,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToast();
-  
+
   const [proposal, setProposal] = useState<any>(null);
   const [items, setItems] = useState<ProposalItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
       setLoading(true);
       const data = await proposalService.getById(id!);
       setProposal(data);
-      
+
       const itemsData = await proposalService.getItems(id!);
       setItems(itemsData);
     } catch (error) {
@@ -129,6 +129,8 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const StatusIcon = statusInfo.icon;
   const isAdmin = currentUser?.role === 'admin';
 
+  const invoiceData = Array.isArray(proposal.invoice) ? proposal.invoice[0] : proposal.invoice;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,8 +198,8 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
               onClick={() => setActiveTab(tab)}
               className={`
                 flex-1 px-4 py-2 rounded-lg font-semibold transition-colors
-                ${activeTab === tab 
-                  ? 'bg-[#3aa3eb] text-white' 
+                ${activeTab === tab
+                  ? 'bg-[#3aa3eb] text-white'
                   : 'text-gray-400 hover:text-white hover:bg-slate-800'}
               `}
             >
@@ -241,7 +243,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-white">Total:</span>
                     <span className="text-2xl font-bold text-[#3aa3eb]">
-                      {formatCurrency(proposal.total_amount_cents)}
+                      {formatCurrency(proposal.value)}
                     </span>
                   </div>
                 </div>
@@ -249,7 +251,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
             </div>
 
             {/* Linked Invoice */}
-            {proposal.invoice && (
+            {invoiceData && (
               <div className="glass-card rounded-2xl p-6">
                 <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                   Linked Invoice
@@ -262,33 +264,33 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                     </div>
                     <span className={`
                       px-3 py-1 rounded-full text-sm font-semibold
-                      ${proposal.invoice.status === 'draft' ? 'bg-gray-700 text-gray-300' :
-                        proposal.invoice.status === 'unpaid' ? 'bg-orange-500/30 text-orange-400' :
-                        proposal.invoice.status === 'paid' ? 'bg-green-500/30 text-green-400' :
-                        'bg-red-500/30 text-red-400'}
+                      ${invoiceData.status === 'draft' ? 'bg-gray-700 text-gray-300' :
+                        invoiceData.status === 'unpaid' ? 'bg-orange-500/30 text-orange-400' :
+                          invoiceData.status === 'paid' ? 'bg-green-500/30 text-green-400' :
+                            'bg-red-500/30 text-red-400'}
                     `}>
-                      {(proposal.invoice.status || 'pending').charAt(0).toUpperCase() + (proposal.invoice.status || 'pending').slice(1)}
+                      {(invoiceData.status || 'pending').charAt(0).toUpperCase() + (invoiceData.status || 'pending').slice(1)}
                     </span>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Amount:</span>
                       <span className="text-white font-semibold">
-                        {formatCurrency(proposal.value)}
+                        {formatCurrency((invoiceData.amount || 0) * 100)}
                       </span>
                     </div>
-                    {proposal.invoice.status === 'draft' && (
+                    {invoiceData.status === 'draft' && (
                       <p className="text-blue-300 text-xs mt-2">
                         This invoice will activate automatically when the proposal is approved.
                       </p>
                     )}
-                    {proposal.invoice.status === 'unpaid' && proposal.invoice.due_at && (
+                    {invoiceData.status === 'unpaid' && (invoiceData.due_at || invoiceData.due_date) && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Due Date:</span>
-                        <span className="text-white">{formatAppDate(proposal.invoice.due_at)}</span>
+                        <span className="text-white">{formatAppDate(invoiceData.due_at || invoiceData.due_date)}</span>
                       </div>
                     )}
-                    {proposal.invoice.status !== 'draft' && (
+                    {invoiceData.status !== 'draft' && (
                       <button
                         onClick={() => navigate('/invoices')}
                         className="w-full mt-3 px-4 py-2 bg-[#3aa3eb] text-white rounded-lg hover:bg-[#2d8bc7] transition-colors"

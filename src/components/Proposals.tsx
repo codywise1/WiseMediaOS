@@ -88,8 +88,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     }
   };
 
-  const totalValue = proposals.reduce((sum, proposal) => sum + proposal.value, 0);
-  const approvedValue = proposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + p.value, 0);
+  const totalValue = proposals.reduce((sum, proposal) => sum + (proposal.value || 0), 0);
+  const approvedValue = proposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + (p.value || 0), 0);
   const pendingCount = proposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
 
   const handleNewProposal = () => {
@@ -209,7 +209,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Approved Value</p>
-              <p className="text-2xl font-bold text-white">${approvedValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${(approvedValue / 100).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             </div>
             <div className="ml-4">
               <p className="text-sm text-white">Total Value</p>
-              <p className="text-2xl font-bold text-white">${totalValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${(totalValue / 100).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       </button>
                     </div>
                   )}
-                  <p className="text-2xl font-bold text-white">${proposal.value.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-white">${((proposal.value || 0) / 100).toLocaleString()}</p>
                 </div>
               </div>
 

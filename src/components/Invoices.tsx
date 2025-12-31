@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoiceService, Invoice as InvoiceRecord, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
-import { 
-  DocumentIcon, 
+import {
+  DocumentIcon,
   CreditCardIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -42,6 +42,7 @@ type InvoiceView = Omit<InvoiceRecord, 'client'> & {
 const statusConfig = {
   paid: { color: 'bg-white/30 text-white', icon: CheckCircleIcon },
   pending: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: ClockIcon },
+  unpaid: { color: 'bg-orange-500/30 text-orange-400', icon: ClockIcon },
   overdue: { color: 'bg-red-900/30 text-red-400', icon: ExclamationTriangleIcon },
   draft: { color: 'bg-gray-900/30 text-gray-400', icon: DocumentIcon },
 };
@@ -67,7 +68,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         setLoading(true);
       }
       let data: InvoiceRecord[] = [];
-      
+
       if (currentUser?.role === 'admin') {
         data = await invoiceService.getAll();
       } else if (currentUser) {
@@ -75,7 +76,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         // currentUser.id is the auth user id and does not match invoices.client_id (clients.id).
         data = await invoiceService.getForCurrentUser();
       }
-      
+
       // Transform data to match component interface
       const transformedInvoices: InvoiceView[] = data.map(invoice => ({
         ...invoice,
@@ -84,7 +85,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         createdDate: invoice.created_at || '',
         dueDate: invoice.due_date || ''
       }));
-      
+
       setInvoices(transformedInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
@@ -97,7 +98,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  const totalPending = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
+  const totalPending = invoices.filter(inv => inv.status === 'pending' || inv.status === 'unpaid').reduce((sum, inv) => sum + inv.amount, 0);
   const totalOverdue = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
 
@@ -137,7 +138,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           await invoiceService.update(selectedInvoice.id, payload as any);
           toastSuccess('Invoice updated successfully.');
         }
-        
+
         // Reload invoices
         await loadInvoices();
       } catch (error) {
@@ -145,7 +146,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         toastError('Error saving invoice. Please try again.');
       }
     };
-    
+
     saveInvoice();
   };
 
@@ -201,7 +202,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             <p className="text-gray-300">Manage payments and track outstanding balances</p>
           </div>
           {isAdmin && (
-            <button 
+            <button
               onClick={handleNewInvoice}
               className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
             >
@@ -271,12 +272,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         <div className="p-6 border-b border-slate-700">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Recent Invoices</h2>
         </div>
-        
+
         <div className="divide-y divide-slate-700">
           {visibleInvoices.map((invoice) => {
             const statusInfo = statusConfig[invoice.status as keyof typeof statusConfig] || statusConfig.draft;
             const StatusIcon = statusInfo.icon;
-            
+
             return (
               <div key={invoice.id} className="p-6 hover:bg-slate-800/30 transition-colors">
                 <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
@@ -284,7 +285,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="p-2 rounded-lg bg-slate-700">
                       <DocumentIcon className="h-6 w-6 text-gray-300" />
                     </div>
-                    
+
                     <div className="min-w-0">
                       <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
                         <h3
@@ -293,24 +294,24 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         >
                           {invoice.client}
                         </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}> 
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-400 mt-1 line-clamp-2">{invoice.description}</p>
-                      
+
                       {/* Proposal Context Banner */}
                       {invoice.proposal_id && (
                         <div className="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs">
                           <div className="flex items-center gap-2">
                             <DocumentIcon className="h-3 w-3 text-blue-400" />
                             <span className="text-blue-300">
-                              {invoice.locked_from_send 
-                                ? 'Linked to proposal (awaiting approval)' 
+                              {invoice.locked_from_send
+                                ? 'Linked to proposal (awaiting approval)'
                                 : invoice.activation_source === 'proposal_approval'
-                                ? 'Activated from approved proposal'
-                                : 'Linked to proposal'}
+                                  ? 'Activated from approved proposal'
+                                  : 'Linked to proposal'}
                             </span>
                             <button
                               onClick={() => navigate(`/proposals/${invoice.proposal_id}`)}
@@ -321,7 +322,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           </div>
                         </div>
                       )}
-                      
+
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <button
                           onClick={() => navigate(`/invoices/${invoice.id}`)}
@@ -343,7 +344,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         </button>
                         {isAdmin && (
                           <>
-                            <button 
+                            <button
                               onClick={() => handleEditInvoice(invoice)}
                               className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                               title="Edit Invoice"
@@ -351,7 +352,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteInvoice(invoice)}
                               className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                               title="Delete Invoice"
@@ -364,19 +365,19 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-left sm:text-right">
                     <p className="text-2xl font-bold text-white">${invoice.amount.toLocaleString()}</p>
                     <p className="text-sm text-gray-400">Due: {invoice.dueDate ? formatAppDate(invoice.dueDate) : '—'}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-700 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-gray-400">Created: {invoice.createdDate ? formatAppDate(invoice.createdDate) : '—'}</p>
-                  
+
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
                     {invoice.status === 'pending' && !isAdmin && (
-                      <button 
+                      <button
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
@@ -387,7 +388,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </button>
                     )}
                     {invoice.status === 'overdue' && !isAdmin && (
-                      <button 
+                      <button
                         onClick={() => {
                           handlePayInvoice(invoice);
                         }}
@@ -398,7 +399,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </button>
                     )}
                     {(invoice.status === 'pending' || invoice.status === 'overdue') && isAdmin && (
-                      <button 
+                      <button
                         onClick={() => {
                           toastSuccess(
                             `Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()} · Due ${invoice.dueDate}).`

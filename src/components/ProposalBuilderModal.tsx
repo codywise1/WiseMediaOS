@@ -43,7 +43,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [proposalId, setProposalId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<ProposalFormData>({
     client_id: '',
     title: '',
@@ -132,7 +132,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
         description: formData.description,
         status: 'draft',
         currency: formData.currency,
-        total_amount_cents: 0,
+        value: 0,
         expires_at: expiresAt.toISOString(),
         created_by_user_id: currentUserId
       });
@@ -195,7 +195,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
     if (!template) return;
 
     const exists = formData.selectedServices.find(s => s.serviceType === serviceType);
-    
+
     if (exists) {
       setFormData({
         ...formData,
@@ -235,7 +235,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   };
 
   const calculateTotal = () => {
-    return formData.selectedServices.reduce((sum, service) => 
+    return formData.selectedServices.reduce((sum, service) =>
       sum + (service.quantity * service.unitPrice), 0
     );
   };
@@ -253,7 +253,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-        
+
         <div className="relative w-full max-w-6xl bg-slate-900 rounded-2xl shadow-2xl border border-slate-700">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700">
@@ -281,9 +281,9 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                   <div className="flex flex-col items-center">
                     <div className={`
                       w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm
-                      ${currentStep > step.id ? 'bg-green-500 text-white' : 
-                        currentStep === step.id ? 'bg-[#3aa3eb] text-white' : 
-                        'bg-slate-700 text-gray-400'}
+                      ${currentStep > step.id ? 'bg-green-500 text-white' :
+                        currentStep === step.id ? 'bg-[#3aa3eb] text-white' :
+                          'bg-slate-700 text-gray-400'}
                     `}>
                       {currentStep > step.id ? <CheckIcon className="h-5 w-5" /> : step.id}
                     </div>
@@ -394,8 +394,8 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                           key={template.serviceType}
                           className={`
                             p-4 rounded-lg border-2 cursor-pointer transition-all
-                            ${isSelected 
-                              ? 'border-[#3aa3eb] bg-[#3aa3eb]/10' 
+                            ${isSelected
+                              ? 'border-[#3aa3eb] bg-[#3aa3eb]/10'
                               : 'border-slate-700 bg-slate-800 hover:border-slate-600'}
                           `}
                           onClick={() => toggleService(template.serviceType)}
@@ -634,14 +634,14 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-4">Review & Send</h3>
-                  
+
                   <div className="space-y-4">
                     {/* Client Info */}
                     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                       <h4 className="text-sm font-bold text-[#3aa3eb] mb-2">Client</h4>
                       <p className="text-white">
-                        {clients.find(c => c.id === formData.client_id)?.company || 
-                         clients.find(c => c.id === formData.client_id)?.name}
+                        {clients.find(c => c.id === formData.client_id)?.company ||
+                          clients.find(c => c.id === formData.client_id)?.name}
                       </p>
                     </div>
 
@@ -716,7 +716,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
               >
                 Cancel
               </button>
-              
+
               {currentStep < 6 ? (
                 <button
                   onClick={handleNext}

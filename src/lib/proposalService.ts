@@ -100,19 +100,24 @@ export const proposalService = {
 
     if (error) throw error;
 
-    // Calculate total_amount_cents from items if not set correctly
+    // Calculate value from items if not set correctly in DB
     const processedData = data.map(proposal => {
+      const invoiceData = Array.isArray(proposal.invoice) ? proposal.invoice[0] : proposal.invoice;
+
+      let finalValue = proposal.value || proposal.total_amount_cents || 0;
       if (proposal.items && proposal.items.length > 0) {
         const calculatedTotal = proposal.items.reduce(
           (sum: number, item: any) => sum + (item.line_total_cents || 0),
           0
         );
-        return {
-          ...proposal,
-          value: calculatedTotal
-        };
+        finalValue = calculatedTotal;
       }
-      return proposal;
+
+      return {
+        ...proposal,
+        value: finalValue,
+        invoice: invoiceData
+      };
     });
 
     return processedData as Proposal[];
@@ -120,7 +125,7 @@ export const proposalService = {
 
   async getById(id: string) {
     if (!isSupabaseAvailable()) {
-      throw new Error('Supabase not configured');
+      return null;
     }
 
     const sb = supabase!;
@@ -129,13 +134,30 @@ export const proposalService = {
       .select(`
         *,
         client:clients(*),
-        invoice:invoices(*)
+        invoice:invoices(*),
+        items:proposal_items(*)
       `)
       .eq('id', id)
       .single();
 
     if (error) throw error;
-    return data as Proposal;
+    if (!data) return null;
+
+    const invoiceData = Array.isArray(data.invoice) ? data.invoice[0] : data.invoice;
+    let finalValue = data.value || data.total_amount_cents || 0;
+
+    if (data.items && data.items.length > 0) {
+      finalValue = data.items.reduce(
+        (sum: number, item: any) => sum + (item.line_total_cents || 0),
+        0
+      );
+    }
+
+    return {
+      ...data,
+      value: finalValue,
+      invoice: invoiceData
+    } as Proposal;
   },
 
   async getItems(proposalId: string) {
@@ -160,7 +182,7 @@ export const proposalService = {
     }
 
     const sb = supabase!;
-    
+
     // Create proposal
     const { data: proposalData, error: proposalError } = await sb
       .from('proposals')
@@ -238,46 +260,60 @@ export const proposalService = {
 
     if (itemsError) throw itemsError;
 
-    // Get the linked invoice
-    const { data: proposal } = await sb
+    // Calculate aggregate total from ALL items for this proposal
+    const { data: allItems, error: itemsFetchError } = await sb
+      .from('proposal_items')
+      .select('line_total_cents')
+      .eq('proposal_id', proposalId);
+
+    if (itemsFetchError) throw itemsFetchError;
+
+    const totalCents = (allItems || []).reduce((sum, item) => sum + (item.line_total_cents || 0), 0);
+
+    // Update proposal totals
+    await sb
       .from('proposals')
-      .select('invoice:invoices(id)')
-      .eq('id', proposalId)
+      .update({
+        value: totalCents
+      })
+      .eq('id', proposalId);
+
+    // Update the linked invoice amount directly by proposal_id
+    const { error: invoiceUpdateError } = await sb
+      .from('invoices')
+      .update({
+        amount: totalCents / 100 // Convert cents to dollars
+      })
+      .eq('proposal_id', proposalId);
+
+    if (invoiceUpdateError) {
+      console.error('Error updating invoice amount:', invoiceUpdateError);
+    }
+
+    // Mirror NEW items to invoice_items if invoice exists
+    const { data: invoice } = await sb
+      .from('invoices')
+      .select('id')
+      .eq('proposal_id', proposalId)
       .single();
 
-    const linkedInvoice = proposal?.invoice as any;
-    
-    if (linkedInvoice?.id) {
-      // Mirror items to invoice
-      await sb.from('invoice_items').insert(
+    if (invoice?.id) {
+      const { error: mirrorError } = await sb.from('invoice_items').insert(
         itemsData.map((item: ProposalItem, index: number) => ({
-          invoice_id: linkedInvoice.id,
+          invoice_id: invoice.id,
           proposal_item_id: item.id,
           name: item.name,
           description: item.description,
           quantity: item.quantity,
           unit_price_cents: item.unit_price_cents,
           line_total_cents: item.line_total_cents,
-          sort_order: index
+          sort_order: (allItems?.length || 0) - itemsData.length + index
         }))
       );
-    }
 
-    // Update proposal total
-    const total = itemsData.reduce((sum: number, item: ProposalItem) => sum + item.line_total_cents, 0);
-    await sb
-      .from('proposals')
-      .update({ value: total })
-      .eq('id', proposalId);
-
-    // Update invoice total
-    if (linkedInvoice?.id) {
-      await sb
-        .from('invoices')
-        .update({
-          amount: total // Changed from total_cents to amount
-        })
-        .eq('id', linkedInvoice.id);
+      if (mirrorError) {
+        console.error('Error mirroring items:', mirrorError);
+      }
     }
 
     return itemsData as ProposalItem[];
@@ -290,6 +326,38 @@ export const proposalService = {
 
     const sb = supabase!;
 
+    // Recalculate total value to ensure sync
+    const { data: allItems } = await sb
+      .from('proposal_items')
+      .select('line_total_cents')
+      .eq('proposal_id', proposalId);
+
+    const totalCents = (allItems || []).reduce((sum, item) => sum + (item.line_total_cents || 0), 0);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    // Update proposal status AND value
+    const { data: proposalData, error: proposalError } = await sb
+      .from('proposals')
+      .update({
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        expires_at: expiresAt.toISOString(),
+        value: totalCents
+      })
+      .eq('id', proposalId)
+      .select()
+      .single();
+
+    if (proposalError) throw proposalError;
+
+    // Sync invoice amount explicitly
+    await sb
+      .from('invoices')
+      .update({ amount: totalCents / 100 })
+      .eq('proposal_id', proposalId);
+
+    // Rest of send logic (clauses, events)
     // Get proposal items to determine services
     const { data: items } = await sb
       .from('proposal_items')
@@ -336,23 +404,6 @@ export const proposalService = {
       );
     }
 
-    // Update proposal status
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
-    const { data: proposalData, error: proposalError } = await sb
-      .from('proposals')
-      .update({
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString()
-      })
-      .eq('id', proposalId)
-      .select()
-      .single();
-
-    if (proposalError) throw proposalError;
-
     // Log event
     await sb.from('proposal_events').insert([{
       proposal_id: proposalId,
@@ -370,12 +421,21 @@ export const proposalService = {
 
     const sb = supabase!;
 
-    // Update proposal status
+    // Recalculate total value to ensure sync
+    const { data: allItems } = await sb
+      .from('proposal_items')
+      .select('line_total_cents')
+      .eq('proposal_id', proposalId);
+
+    const totalCents = (allItems || []).reduce((sum, item) => sum + (item.line_total_cents || 0), 0);
+
+    // Update proposal status AND value
     const { data: proposalData, error: proposalError } = await sb
       .from('proposals')
       .update({
         status: 'approved',
-        approved_at: new Date().toISOString()
+        approved_at: new Date().toISOString(),
+        value: totalCents
       })
       .eq('id', proposalId)
       .select()
@@ -383,7 +443,7 @@ export const proposalService = {
 
     if (proposalError) throw proposalError;
 
-    // Get linked invoice
+    // Get and update linked invoice
     const { data: invoice } = await sb
       .from('invoices')
       .select('*')
@@ -391,11 +451,12 @@ export const proposalService = {
       .single();
 
     if (invoice) {
-      // Activate invoice - update status to unpaid
+      // Activate invoice - update status to unpaid AND sync amount
       await sb
         .from('invoices')
         .update({
-          status: 'unpaid'
+          status: 'unpaid',
+          amount: totalCents / 100
         })
         .eq('id', invoice.id);
 

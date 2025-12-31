@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client, UserRole } from '../lib/supabase';
+import { clientService, Client, Invoice } from '../lib/supabase';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-interface Invoice {
-  id: string;
-  client: string;
-  amount: number;
-  dueDate: string;
-  status: string;
-  createdDate: string;
-  description: string;
-  client_id?: string;
-}
-
 interface InvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (invoice: Omit<Invoice, 'id' | 'createdDate'> | Invoice) => void;
+  onSave: (invoice: Partial<Invoice>) => void;
   invoice?: Invoice;
   mode: 'create' | 'edit';
   currentUser?: { role: UserRole } | null;
@@ -55,9 +44,9 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     if (invoice && mode === 'edit') {
       setFormData({
         client_id: invoice.client_id || '',
-        client_name: invoice.client || '',
+        client_name: invoice.client?.name || invoice.client?.company || '',
         amount: invoice.amount.toString(),
-        dueDate: invoice.dueDate ? formatToISODate(invoice.dueDate) : '',
+        dueDate: invoice.due_date ? formatToISODate(invoice.due_date) : '',
         status: invoice.status,
         description: invoice.description
       });
@@ -80,10 +69,11 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     const selectedClient = clients.find(c => c.id === formData.client_id);
     
     const invoiceData = {
-      ...formData,
-      client: selectedClient?.name || formData.client_name,
+      client_id: formData.client_id,
       amount: parseInt(formData.amount),
-      ...(mode === 'edit' && invoice ? { id: invoice.id, createdDate: invoice.createdDate } : {})
+      description: formData.description,
+      due_date: formData.dueDate,
+      status: formData.status as 'draft' | 'pending' | 'paid' | 'overdue'
     };
     onSave(invoiceData);
     onClose();

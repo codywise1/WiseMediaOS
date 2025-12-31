@@ -150,7 +150,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                 Invoice for {displayClientName}
               </h1>
               <p className="text-base md:text-xl text-gray-300">
-                {invoice.description} · ${invoice.amount.toLocaleString()}
+                {invoice.description} · ${(invoice.amount || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <span className="text-xs text-gray-400">Amount</span>
             </div>
             <p className="text-xl md:text-2xl font-bold text-white">
-              ${invoice.amount.toLocaleString()}
+              ${(invoice.amount || 0).toLocaleString()}
             </p>
           </div>
 
@@ -328,11 +328,11 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Subtotal</span>
-                <span className="text-white font-medium">${invoice.amount.toLocaleString()}</span>
+                <span className="text-white font-medium">${(invoice.amount || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-white/10">
                 <span className="text-lg font-bold text-white">Total</span>
-                <span className="text-lg font-bold text-white">${invoice.amount.toLocaleString()}</span>
+                <span className="text-lg font-bold text-white">${(invoice.amount || 0).toLocaleString()}</span>
               </div>
             </div>
           </div>

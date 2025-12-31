@@ -247,10 +247,14 @@ export interface Project {
 export interface Invoice {
   id: string;
   client_id: string;
+  proposal_id?: string;
   amount: number;
   description: string;
-  status: 'draft' | 'pending' | 'paid' | 'overdue';
+  status: 'draft' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';
   due_date: string;
+  due_at?: string; // Some parts of the app use due_at
+  locked_from_send?: boolean;
+  activation_source?: string | null;
   created_at: string;
   updated_at: string;
   client?: Client;
@@ -264,9 +268,10 @@ export interface Proposal {
   title: string;
   description: string;
   value: number;
-  status: 'draft' | 'pending' | 'under_review' | 'approved' | 'rejected';
+  status: 'draft' | 'sent' | 'viewed' | 'approved' | 'declined' | 'expired' | 'archived';
   services: string[];
-  expiry_date: string;
+  expiry_date?: string;
+  expires_at?: string; // Used in proposalService
   created_at: string;
   updated_at: string;
   client?: Client;
@@ -968,7 +973,7 @@ export const invoiceService = {
   }
 };
 
-// Proposal operations
+// @deprecated Use proposalService from src/lib/proposalService.ts for better feature support
 export const proposalService = {
   async getAll() {
     if (!isSupabaseAvailable()) {
