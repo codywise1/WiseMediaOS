@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
-  PlusIcon,
   MagnifyingGlassIcon,
   BookmarkIcon,
   TrashIcon,
-  PencilIcon,
   DocumentArrowUpIcon,
+  DocumentTextIcon,
   XMarkIcon,
   PaperClipIcon,
-  FunnelIcon,
   UserIcon,
-  FolderIcon
+  FolderIcon,
+  Squares2X2Icon,
+  Bars3Icon,
+  VideoCameraIcon,
+  ClipboardDocumentCheckIcon,
+  EyeIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { noteService, clientService, projectService, Note, Client, Project, UserRole } from '../lib/supabase';
 import Modal from './Modal';
@@ -43,6 +49,8 @@ interface NoteFormData {
 }
 
 export default function Notes({ currentUser }: NotesProps) {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -54,7 +62,9 @@ export default function Notes({ currentUser }: NotesProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<string>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'staff';
 
@@ -72,12 +82,12 @@ export default function Notes({ currentUser }: NotesProps) {
       const notesPromise = isAdmin
         ? noteService.getAll()
         : (async () => {
-            if (!currentUser?.email) return [];
-            const client = await clientService.getByEmail(currentUser.email);
-            if (!client?.id) return [];
-            const clientNotes = await noteService.getByClient(client.id);
-            return clientNotes.filter(note => note.is_shared_with_client);
-          })();
+          if (!currentUser?.email) return [];
+          const client = await clientService.getByEmail(currentUser.email);
+          if (!client?.id) return [];
+          const clientNotes = await noteService.getByClient(client.id);
+          return clientNotes.filter(note => note.is_shared_with_client);
+        })();
 
       const [notesData, clientsData, projectsData] = await Promise.all([
         notesPromise,
@@ -91,7 +101,7 @@ export default function Notes({ currentUser }: NotesProps) {
       console.error('Error loading data:', error);
       if (notes.length === 0) {
         // Only wipe if we have no data to show
-         // We might want to keep empty arrays if it failed initially
+        // We might want to keep empty arrays if it failed initially
       }
     } finally {
       setLoading(false);
@@ -105,9 +115,7 @@ export default function Notes({ currentUser }: NotesProps) {
   };
 
   const handleEditNote = (note: Note) => {
-    setSelectedNote(note);
-    setModalMode('edit');
-    setIsModalOpen(true);
+    navigate(`/notes/${note.id}`);
   };
 
   const handleDeleteNote = (note: Note) => {
@@ -145,8 +153,9 @@ export default function Notes({ currentUser }: NotesProps) {
 
     const matchesCategory = selectedCategory === 'all' || note.category === selectedCategory;
     const matchesClient = selectedClient === 'all' || note.client_id === selectedClient;
+    const matchesProject = selectedProject === 'all' || note.project_id === selectedProject;
 
-    return matchesSearch && matchesCategory && matchesClient;
+    return matchesSearch && matchesCategory && matchesClient && matchesProject;
   });
 
   const categories = Array.from(new Set(notes.map(n => n.category).filter(Boolean)));
@@ -159,207 +168,261 @@ export default function Notes({ currentUser }: NotesProps) {
     );
   }
 
+  const stats = [
+    { label: 'All Notes', count: notes.length, icon: UserIcon },
+    { label: 'Pinned', count: notes.filter(n => n.is_pinned).length, icon: BookmarkIcon },
+    { label: 'SOPs', count: notes.filter(n => n.category?.toLowerCase() === 'sop').length, icon: ClipboardDocumentCheckIcon },
+    { label: 'Meetings', count: notes.filter(n => n.category?.toLowerCase() === 'meeting').length, icon: VideoCameraIcon },
+  ];
+
   return (
-    <div className="space-y-8 pb-20 md:pb-8">
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Notes
-            </h1>
-            <p className="text-gray-300">Create and manage your notes and documentation</p>
+    <div className="relative space-y-6 pb-20 md:pb-8">
+      {/* Background Glows */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#3aa3eb]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 -right-24 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            NOTES
+          </h1>
+          <p className="text-gray-400 mt-1">Create, edit, and manage your notes</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-slate-900/50 backdrop-blur-md rounded-lg p-1 border border-white/10">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-[#3aa3eb] text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <Squares2X2Icon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-[#3aa3eb] text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              <Bars3Icon className="h-5 w-5" />
+            </button>
           </div>
           {isAdmin && (
             <button
               onClick={handleCreateNote}
-              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
+              className="px-6 py-2.5 bg-transparent border border-white/20 hover:border-white/40 text-white rounded-full transition-all backdrop-blur-md hover:bg-white/5 font-medium"
             >
-              <PlusIcon className="h-5 w-5" />
-              <span>New Note</span>
+              New Note
             </button>
           )}
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl p-4 md:p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search notes, tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="form-input w-full pl-12 pr-4 py-3 rounded-lg"
-            />
+      {/* Filters Card */}
+      <div className="glass-card rounded-3xl p-6 border border-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Search</label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search notes or clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-950/50 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/50 transition-colors"
+              />
+            </div>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="btn-secondary flex items-center justify-center space-x-2 px-6 py-3 rounded-xl md:w-auto shrink-glow-button"
-          >
-            <FunnelIcon className="h-5 w-5" />
-            <span>Filters</span>
-          </button>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Type</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full bg-slate-950/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-colors appearance-none"
+            >
+              <option value="all">Select a note type</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Client</label>
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className="w-full bg-slate-950/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-colors appearance-none"
+            >
+              <option value="all">Select Client</option>
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>
+                  {client.company || client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Project</label>
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="w-full bg-slate-950/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-colors appearance-none"
+            >
+              <option value="all">Select Project</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+      </div>
 
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pb-6 border-b border-white/10">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="form-input w-full px-4 py-3 rounded-lg"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="glass-card rounded-2xl p-6 flex items-center gap-4 border border-white/10 hover:border-white/20 transition-all group">
+            <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+              <stat.icon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Client</label>
-              <select
-                value={selectedClient}
-                onChange={(e) => setSelectedClient(e.target.value)}
-                className="form-input w-full px-4 py-3 rounded-lg"
-              >
-                <option value="all">All Clients</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.company || client.name}
-                  </option>
-                ))}
-              </select>
+              <p className="text-gray-400 text-sm font-medium">{stat.label}</p>
+              <p className="text-2xl font-bold text-white">{stat.count}</p>
             </div>
           </div>
-        )}
+        ))}
+      </div>
 
-        {filteredNotes.length === 0 ? (
-          <div className="text-center py-12">
-            <DocumentArrowUpIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">No notes found</p>
-            {isAdmin && (
-              <button
-                onClick={handleCreateNote}
-                className="mt-4 btn-primary px-6 py-3 rounded-xl"
-              >
-                Create Your First Note
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredNotes.map(note => (
-              <div
-                key={note.id}
-                className="bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700/50 hover:border-[#3aa3eb]/30 rounded-xl p-4 transition-all cursor-pointer group"
-                onClick={() => handleEditNote(note)}
-              >
-                <div className="flex items-start justify-between mb-3">
+      {/* Notes Grid/List */}
+      {filteredNotes.length === 0 ? (
+        <div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-white/5 mt-8">
+          <DocumentTextIcon className="h-16 w-16 text-gray-700 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">No notes found matching your criteria</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {filteredNotes.map(note => (
+            <div
+              key={note.id}
+              className="glass-card rounded-2xl border border-white/10 hover:border-[#3aa3eb]/30 transition-all cursor-pointer group flex flex-col p-6"
+              onClick={() => handleEditNote(note)}
+            >
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-white truncate mb-1">
+                    <h3 className="text-xl font-bold text-white truncate mb-2 group-hover:text-[#3aa3eb] transition-colors">
                       {note.title}
                     </h3>
-                    {note.category && (
-                      <span className="inline-block px-2 py-1 bg-[#3aa3eb]/20 text-[#3aa3eb] text-xs rounded-lg">
-                        {note.category}
-                      </span>
-                    )}
+                    <p className="text-gray-400 text-xs font-medium">{note.client?.company || note.client?.name || 'Wise Media'}</p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTogglePin(note);
-                    }}
-                    className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-                  >
-                    <BookmarkIcon className={`h-5 w-5 transition-colors ${
-                      note.is_pinned ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400 group-hover:text-white'
-                    }`} />
-                  </button>
+                  <BookmarkIcon className={`h-5 w-5 shrink-0 transition-colors ${note.is_pinned ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600 group-hover:text-gray-400'}`} />
                 </div>
 
-                <p className="text-gray-300 text-sm line-clamp-3 mb-3">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {note.category && (
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${note.category.toLowerCase() === 'idea' || note.category.toLowerCase() === 'ideas' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      note.category.toLowerCase() === 'sop' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                        note.category.toLowerCase() === 'meeting' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' :
+                          'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                      }`}>
+                      {note.category}
+                    </span>
+                  )}
+                  {note.is_shared_with_client ? (
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+                      Shared
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold uppercase tracking-wider">
+                      Private
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3">
                   {note.content.replace(/<[^>]*>/g, '')}
                 </p>
+              </div>
 
-                {note.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {note.tags.slice(0, 3).map((tag, idx) => (
-                      <span key={idx} className="px-2 py-1 bg-slate-700/50 text-gray-300 text-xs rounded">
-                        #{tag}
-                      </span>
-                    ))}
-                    {note.tags.length > 3 && (
-                      <span className="px-2 py-1 text-gray-400 text-xs">
-                        +{note.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {note.attachments.length > 0 && (
-                  <div className="flex items-center space-x-2 mb-3">
-                    <PaperClipIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-xs text-gray-400">
-                      {note.attachments.length} attachment{note.attachments.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 border-t border-slate-700/50 pt-3 min-w-0">
-                  <div className="flex flex-wrap items-center gap-3 min-w-0">
-                    {note.client && (
-                      <div className="flex items-center space-x-1 min-w-0">
-                        <UserIcon className="h-4 w-4 shrink-0" />
-                        <span className="truncate max-w-[160px] sm:max-w-[100px]">
-                          {note.client.company || note.client.name}
-                        </span>
-                      </div>
-                    )}
-                    {note.project && (
-                      <div className="flex items-center space-x-1 min-w-0">
-                        <FolderIcon className="h-4 w-4 shrink-0" />
-                        <span className="truncate max-w-[160px] sm:max-w-[100px]">
-                          {note.project.name}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <span className="shrink-0">{formatAppDate(note.updated_at)}</span>
-                </div>
-
-                {isAdmin && (
-                  <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-700/50 opacity-0 group-hover:opacity-100 transition-opacity sm:flex-row sm:items-center">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditNote(note);
-                      }}
-                      className="flex-1 btn-secondary text-xs py-2 rounded-lg shrink-glow-button"
-                    >
-                      <PencilIcon className="h-4 w-4 inline mr-1" />
-                      Edit
-                    </button>
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                <span className="flex items-center gap-1.5">
+                  <FolderIcon className="h-3.5 w-3.5" />
+                  {note.project?.name || 'No Project'}
+                </span>
+                <div className="flex items-center gap-4">
+                  <span>{formatAppDate(note.updated_at)}</span>
+                  {isAdmin && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteNote(note);
                       }}
-                      className="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 text-xs py-2 rounded-lg transition-colors shrink-glow-button"
+                      className="p-1.5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-lg transition-colors"
                     >
-                      <TrashIcon className="h-4 w-4 inline mr-1" />
-                      Delete
+                      <TrashIcon className="h-4 w-4" />
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="glass-card rounded-3xl border border-white/10 p-2 mt-8">
+          {/* Table Header */}
+          <div className="grid grid-cols-5 gap-4 px-8 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-2">
+            <div className="col-span-2">Title</div>
+            <div>Client</div>
+            <div>Type</div>
+            <div className="flex items-center gap-1">
+              Last Edited <ChevronDownIcon className="h-3 w-3" />
+            </div>
+          </div>
+
+          {/* Table Rows */}
+          <div className="space-y-1">
+            {filteredNotes.map(note => (
+              <div
+                key={note.id}
+                className="grid grid-cols-5 items-center gap-4 px-6 py-4 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group border border-transparent hover:border-white/5"
+                onClick={() => handleEditNote(note)}
+              >
+                <div className="col-span-2">
+                  <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate">
+                    {note.title}
+                  </h3>
+                </div>
+                <div className="text-gray-400 text-sm truncate">
+                  {note.client?.company || note.client?.name || 'Wise Media'}
+                </div>
+                <div>
+                  {note.category && (
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${note.category.toLowerCase() === 'idea' || note.category.toLowerCase() === 'ideas' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      note.category.toLowerCase() === 'sop' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                        note.category.toLowerCase() === 'meeting' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' :
+                          'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                      }`}>
+                      {note.category}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 text-sm whitespace-nowrap">
+                    {formatAppDate(note.updated_at)}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditNote(note);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-white transition-all ml-4"
+                  >
+                    View Note <EyeIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
-
+        </div>
+      )}
       <NoteModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
