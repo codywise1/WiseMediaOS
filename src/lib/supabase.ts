@@ -174,9 +174,6 @@ export const authService = {
 // Mock data for demo mode only (when Supabase is not configured)
 let mockClients: Client[] = JSON.parse(localStorage.getItem('wise_media_clients') || '[]');
 let mockProjects: Project[] = JSON.parse(localStorage.getItem('wise_media_projects') || '[]');
-let mockInvoices: Invoice[] = JSON.parse(localStorage.getItem('wise_media_invoices') || '[]');
-let mockProposals: Proposal[] = JSON.parse(localStorage.getItem('wise_media_proposals') || '[]');
-let mockAppointments: Appointment[] = JSON.parse(localStorage.getItem('wise_media_appointments') || '[]');
 let nextMockId = 1;
 
 // Generate unique ID for mock data
@@ -250,7 +247,7 @@ export interface Invoice {
   proposal_id?: string;
   amount: number;
   description: string;
-  status: 'draft' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';
+  status: 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';
   due_date: string;
   due_at?: string; // Some parts of the app use due_at
   locked_from_send?: boolean;

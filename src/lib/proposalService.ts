@@ -2,7 +2,7 @@ import { supabase, isSupabaseAvailable } from './supabase';
 import { getClauseCodesForServices } from '../config/serviceTemplates';
 
 export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'approved' | 'declined' | 'expired' | 'archived';
-export type InvoiceStatus = 'draft' | 'unpaid' | 'paid' | 'void';
+export type InvoiceStatus = 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'void' | 'stale';
 export type ServiceType = 'website' | 'landing_page' | 'web_app' | 'brand_identity' | 'seo' | 'graphic_design' | 'video_editing' | 'retainer' | 'other';
 export type BillingPlanType = 'full_upfront' | 'split' | 'milestones' | 'monthly_retainer' | 'custom';
 
@@ -23,6 +23,8 @@ export interface Proposal {
   updated_at: string;
   client?: any;
   invoice?: any;
+  billing_plan?: BillingPlan;
+  events?: ProposalEvent[];
 }
 
 export interface ProposalItem {
@@ -55,7 +57,7 @@ export interface BillingPlan {
 export interface ProposalEvent {
   id: string;
   proposal_id: string;
-  type: string;
+  type: 'created' | 'updated' | 'service_added' | 'service_removed' | 'pricing_changed' | 'sent' | 'viewed' | 'approved' | 'signed' | 'declined' | 'expired' | 'revised' | 'note';
   meta?: any;
   created_by_user_id?: string;
   created_at: string;
@@ -94,7 +96,8 @@ export const proposalService = {
         *,
         client:clients(*),
         invoice:invoices(*),
-        items:proposal_items(*)
+        items:proposal_items(*),
+        billing_plan:billing_plans(*)
       `)
       .order('created_at', { ascending: false });
 
@@ -103,6 +106,7 @@ export const proposalService = {
     // Calculate value from items if not set correctly in DB
     const processedData = data.map(proposal => {
       const invoiceData = Array.isArray(proposal.invoice) ? proposal.invoice[0] : proposal.invoice;
+      const billingPlanData = Array.isArray(proposal.billing_plan) ? proposal.billing_plan[0] : proposal.billing_plan;
 
       let finalValue = proposal.value || proposal.total_amount_cents || 0;
       if (proposal.items && proposal.items.length > 0) {
@@ -116,7 +120,8 @@ export const proposalService = {
       return {
         ...proposal,
         value: finalValue,
-        invoice: invoiceData
+        invoice: invoiceData,
+        billing_plan: billingPlanData
       };
     });
 
@@ -135,7 +140,9 @@ export const proposalService = {
         *,
         client:clients(*),
         invoice:invoices(*),
-        items:proposal_items(*)
+        items:proposal_items(*),
+        billing_plan:billing_plans(*),
+        events:proposal_events(*)
       `)
       .eq('id', id)
       .single();
@@ -144,6 +151,8 @@ export const proposalService = {
     if (!data) return null;
 
     const invoiceData = Array.isArray(data.invoice) ? data.invoice[0] : data.invoice;
+    const billingPlanData = Array.isArray(data.billing_plan) ? data.billing_plan[0] : data.billing_plan;
+
     let finalValue = data.value || data.total_amount_cents || 0;
 
     if (data.items && data.items.length > 0) {
@@ -156,7 +165,8 @@ export const proposalService = {
     return {
       ...data,
       value: finalValue,
-      invoice: invoiceData
+      invoice: invoiceData,
+      billing_plan: billingPlanData
     } as Proposal;
   },
 
@@ -210,12 +220,12 @@ export const proposalService = {
       .insert([{
         client_id: proposal.client_id,
         proposal_id: proposalData.id,
-        amount: 0, // Changed from total_cents to amount
+        amount: 0,
         description: `Proposal: ${proposal.title}`,
-        status: 'pending',
+        status: 'draft',
         due_date: dueDate.toISOString(), // Required field
         locked_from_send: true,
-        activation_source: null
+        activation_source: 'proposal_approval'
       }])
       .select()
       .single();
@@ -314,9 +324,47 @@ export const proposalService = {
       if (mirrorError) {
         console.error('Error mirroring items:', mirrorError);
       }
+
+      // Log invoice items updated event
+      await sb.from('invoice_events').insert([{
+        invoice_id: invoice.id,
+        type: 'items_updated',
+        meta: { count: items.length }
+      }]);
     }
 
+    // Log service added event
+    await sb.from('proposal_events').insert([{
+      proposal_id: proposalId,
+      type: 'service_added',
+      meta: { count: items.length }
+    }]);
+
     return itemsData as ProposalItem[];
+  },
+
+  async saveBillingPlan(plan: Omit<BillingPlan, 'id' | 'created_at' | 'updated_at'>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = supabase!;
+    const { data, error } = await sb
+      .from('billing_plans')
+      .upsert([plan], { onConflict: 'proposal_id' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Log billing plan event
+    await sb.from('proposal_events').insert([{
+      proposal_id: plan.proposal_id,
+      type: 'pricing_changed',
+      meta: { plan_type: plan.plan_type }
+    }]);
+
+    return data as BillingPlan;
   },
 
   async send(proposalId: string, userId?: string) {
@@ -356,6 +404,21 @@ export const proposalService = {
       .from('invoices')
       .update({ amount: totalCents / 100 })
       .eq('proposal_id', proposalId);
+
+    // Log amount sync event if invoice exists
+    const { data: inv } = await sb
+      .from('invoices')
+      .select('id')
+      .eq('proposal_id', proposalId)
+      .single();
+
+    if (inv) {
+      await sb.from('invoice_events').insert([{
+        invoice_id: inv.id,
+        type: 'amount_synced',
+        meta: { amount: totalCents / 100, source: 'proposal_sent' }
+      }]);
+    }
 
     // Rest of send logic (clauses, events)
     // Get proposal items to determine services
@@ -451,12 +514,14 @@ export const proposalService = {
       .single();
 
     if (invoice) {
-      // Activate invoice - update status to unpaid AND sync amount
+      // Activate invoice - update status to ready AND sync amount
+      // ready: prepared but not yet sent to client manually or automatically
       await sb
         .from('invoices')
         .update({
-          status: 'unpaid',
-          amount: totalCents / 100
+          status: 'ready',
+          amount: totalCents / 100,
+          locked_from_send: false
         })
         .eq('id', invoice.id);
 
@@ -566,6 +631,62 @@ export const proposalService = {
       proposal_id: proposalId,
       type: 'expired'
     }]);
+  },
+
+  async revise(proposalId: string, userId?: string) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = supabase!;
+
+    // 1. Update proposal status to draft and clear approval date
+    const { data: proposalData, error: proposalError } = await sb
+      .from('proposals')
+      .update({
+        status: 'draft',
+        approved_at: null,
+        declined_at: null,
+        sent_at: null
+      })
+      .eq('id', proposalId)
+      .select()
+      .single();
+
+    if (proposalError) throw proposalError;
+
+    // 2. Find and update linked invoice back to draft
+    const { data: invoice } = await sb
+      .from('invoices')
+      .select('id')
+      .eq('proposal_id', proposalId)
+      .single();
+
+    if (invoice) {
+      await sb
+        .from('invoices')
+        .update({
+          status: 'draft',
+          locked_from_send: true
+        })
+        .eq('id', invoice.id);
+
+      // Log invoice revision event
+      await sb.from('invoice_events').insert([{
+        invoice_id: invoice.id,
+        type: 'revision_started',
+        meta: { source: 'proposal_revision' }
+      }]);
+    }
+
+    // 3. Log proposal revision event
+    await sb.from('proposal_events').insert([{
+      proposal_id: proposalId,
+      type: 'revised',
+      created_by_user_id: userId
+    }]);
+
+    return proposalData as Proposal;
   },
 
   async delete(proposalId: string) {

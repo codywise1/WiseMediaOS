@@ -109,6 +109,12 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       }
     }
 
+    if (currentStep === 3) {
+      if (proposalId) {
+        await saveBillingPlan();
+      }
+    }
+
     if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
@@ -168,6 +174,28 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
     } catch (error) {
       console.error('Error adding items:', error);
       toastError('Failed to add services');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveBillingPlan = async () => {
+    if (!proposalId) return;
+
+    try {
+      setLoading(true);
+      await proposalService.saveBillingPlan({
+        proposal_id: proposalId,
+        plan_type: formData.billingPlan,
+        currency: formData.currency,
+        total_cents: calculateTotal(),
+        deposit_cents: formData.billingPlan === 'split' ? calculateTotal() * (formData.depositPercent / 100) : 0,
+        payment_terms_days: formData.paymentTermsDays
+      });
+      toastSuccess('Payment plan saved');
+    } catch (error) {
+      console.error('Error saving billing plan:', error);
+      toastError('Failed to save payment plan');
     } finally {
       setLoading(false);
     }

@@ -45,6 +45,8 @@ const statusConfig = {
   unpaid: { color: 'bg-orange-500/30 text-orange-400', icon: ClockIcon },
   overdue: { color: 'bg-red-900/30 text-red-400', icon: ExclamationTriangleIcon },
   draft: { color: 'bg-gray-900/30 text-gray-400', icon: DocumentIcon },
+  ready: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: CheckCircleIcon },
+  void: { color: 'bg-red-500/30 text-red-400', icon: TrashIcon },
 };
 
 export default function Invoices({ currentUser }: InvoicesProps) {
@@ -98,7 +100,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  const totalPending = invoices.filter(inv => inv.status === 'pending' || inv.status === 'unpaid').reduce((sum, inv) => sum + inv.amount, 0);
+  const totalPending = invoices.filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready').reduce((sum, inv) => sum + inv.amount, 0);
   const totalOverdue = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
 
