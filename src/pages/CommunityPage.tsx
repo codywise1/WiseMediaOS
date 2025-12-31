@@ -800,7 +800,7 @@ export default function CommunityPage() {
           <div className="pb-4 border-b border-white/10">
             {view === 'channels' && selectedChannel ? (
               <div>
-                <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                   <Hash size={24} className="text-[#59a1e5]" />
                   {selectedChannel.name}
                 </h2>
@@ -824,7 +824,7 @@ export default function CommunityPage() {
                   </div>
                 )}
                 <div>
-                  <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                  <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                     {getConversationName(selectedUser)}
                   </h2>
                   <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -833,7 +833,7 @@ export default function CommunityPage() {
                 </div>
               </div>
             ) : (
-              <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+              <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                 Select a {view === 'channels' ? 'channel' : 'conversation'}
               </h2>
             )}

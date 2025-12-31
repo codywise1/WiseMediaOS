@@ -192,11 +192,11 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="w-full">
-                  <h2 className="text-white font-bold text-2xl mb-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                  <h2 className="text-white font-bold text-2xl mb-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                     {profile?.full_name || 'User'}
                   </h2>
                   <p className="text-gray-400 mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>{profile?.email}</p>
-                  <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold border ${getRoleBadgeColor()}`} style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+                  <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold border ${getRoleBadgeColor()}`} style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                     {profile?.role}
                   </span>
                 </div>
@@ -236,15 +236,15 @@ export default function ProfilePage() {
 
                 <div className="w-full grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
                   <div className="text-center">
-                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{stats.totalPurchases}</div>
+                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.totalPurchases}</div>
                     <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Purchases</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{stats.totalReviews}</div>
+                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.totalReviews}</div>
                     <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Reviews</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{stats.memberDays}</div>
+                    <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.memberDays}</div>
                     <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Days</div>
                   </div>
                 </div>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
           <div className="flex-1 space-y-6">
             {isEditing ? (
               <GlassCard>
-                <h3 className="text-white font-bold text-xl mb-6" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+                <h3 className="text-white font-bold text-xl mb-6" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                   Edit Profile
                 </h3>
                 <div className="space-y-4">
@@ -389,7 +389,7 @@ export default function ProfilePage() {
                       <Award className="text-[#3AA3EB]" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                         Achievements
                       </h3>
                       <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your milestones and badges</p>
@@ -435,7 +435,7 @@ export default function ProfilePage() {
                       <Clock className="text-[#3AA3EB]" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                         Account Details
                       </h3>
                       <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Member information</p>

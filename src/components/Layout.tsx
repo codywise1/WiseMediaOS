@@ -252,7 +252,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           className={`hidden md:block fixed inset-y-0 left-0 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'
             }`}
         >
-          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
+         <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
             <div
               className={`flex items-center mb-8 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
                 }`}
@@ -271,7 +271,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                 type="button"
                 onClick={() => setIsSidebarCollapsed(v => !v)}
                 aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${isSidebarCollapsed ? 'absolute top-4 right-4' : ''
+                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${isSidebarCollapsed ? 'absolute top-4 right-4' : 'ml-[50px]'
                   }`}
               >
                 {isSidebarCollapsed ? (

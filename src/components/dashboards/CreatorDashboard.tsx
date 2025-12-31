@@ -111,7 +111,7 @@ export default function CreatorDashboard() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-white font-bold text-[40px] mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h1 className="text-white font-bold text-[40px] mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Welcome Back, {profile?.full_name || 'Creator'}
         </h1>
         <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -128,7 +128,7 @@ export default function CreatorDashboard() {
             </div>
             <div>
               <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Active Courses</p>
-              <p className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '28px' }}>{stats.courseProgress.length}</p>
+              <p className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '28px' }}>{stats.courseProgress.length}</p>
             </div>
           </div>
         </GlassCard>
@@ -140,7 +140,7 @@ export default function CreatorDashboard() {
             </div>
             <div>
               <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Marketplace Sales</p>
-              <p className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '28px' }}>{stats.marketplaceSales}</p>
+              <p className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '28px' }}>{stats.marketplaceSales}</p>
             </div>
           </div>
         </GlassCard>
@@ -152,7 +152,7 @@ export default function CreatorDashboard() {
             </div>
             <div>
               <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Referrals</p>
-              <p className="text-white font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '28px' }}>{stats.referralCount}</p>
+              <p className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '28px' }}>{stats.referralCount}</p>
             </div>
           </div>
         </GlassCard>
@@ -164,7 +164,7 @@ export default function CreatorDashboard() {
             </div>
             <div>
               <p className="text-white/90 text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your Rank</p>
-              <p className="text-white font-bold" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', fontSize: '16px', textTransform: 'uppercase' }}>{stats.rank}</p>
+              <p className="text-white font-bold" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '16px', textTransform: 'uppercase' }}>{stats.rank}</p>
             </div>
           </div>
         </GlassCard>
@@ -177,7 +177,7 @@ export default function CreatorDashboard() {
             <Lightbulb className="text-[#3AA3EB]" size={24} />
           </div>
           <div className="flex-1">
-            <h3 className="text-white font-bold mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Tip</h3>
+            <h3 className="text-white font-bold mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Tip</h3>
             <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{dailyTip}</p>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function CreatorDashboard() {
 
       {/* Course Progress */}
       <div>
-        <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Course Progress</h2>
+        <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Course Progress</h2>
         <div className="space-y-4">
           {stats.courseProgress.length === 0 ? (
             <GlassCard>
@@ -201,7 +201,7 @@ export default function CreatorDashboard() {
               <GlassCard key={i} className="hover:scale-[1.02] transition-transform">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-white font-bold" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{course.title}</h3>
-                  <span className="text-[#3AA3EB] font-bold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>{Math.round(course.progress)}%</span>
+                  <span className="text-[#3AA3EB] font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{Math.round(course.progress)}%</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div className="bg-[#3AA3EB] h-2 rounded-full transition-all" style={{ width: `${course.progress}%` }}></div>
@@ -215,7 +215,7 @@ export default function CreatorDashboard() {
       {/* New Drops */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>New Drops</h2>
+          <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>New Drops</h2>
           <button onClick={() => setCurrentPage('courses')} className="text-[#3AA3EB] hover:text-[#2a92da] transition-colors" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             View All →
           </button>
@@ -242,7 +242,7 @@ export default function CreatorDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Actions</h2>
+        <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button onClick={() => setCurrentPage('marketplace')} className="p-6 bg-gradient-to-br from-[#3AA3EB]/20 to-purple-500/20 hover:from-[#3AA3EB]/30 hover:to-purple-500/30 rounded-xl border border-white/10 transition-all text-left group">
             <div className="p-3 bg-[#3AA3EB]/20 rounded-lg inline-block mb-3 group-hover:scale-110 transition-transform">

@@ -12,7 +12,7 @@ export default function SettingsPage() {
   return (
     <>
       <div className="space-y-8">
-        <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Settings
         </h1>
 
@@ -23,7 +23,7 @@ export default function SettingsPage() {
                 <Bell className="text-blue-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Notifications
                 </h3>
                 <div className="space-y-3">
@@ -50,7 +50,7 @@ export default function SettingsPage() {
                 <Lock className="text-purple-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Security
                 </h3>
                 <div className="space-y-3">
@@ -74,7 +74,7 @@ export default function SettingsPage() {
                 <Globe className="text-green-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Preferences
                 </h3>
                 <div className="space-y-3">
@@ -106,7 +106,7 @@ export default function SettingsPage() {
                 <CreditCard className="text-yellow-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Billing
                 </h3>
                 <div className="space-y-3">

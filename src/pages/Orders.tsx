@@ -22,7 +22,7 @@ export default function Orders() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-[#8AB5EB] font-medium">Sales</p>
-            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
               Orders & Payments
             </h1>
             <p className="text-gray-400 mt-2 max-w-2xl">

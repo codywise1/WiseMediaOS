@@ -72,7 +72,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Admin Dashboard
         </h1>
         <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-400 mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             Total Revenue
           </h3>
-          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             ${stats.totalRevenue.toLocaleString()}
           </p>
         </GlassCard>
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-400 mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             Total Members
           </h3>
-          <p className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <p className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             {stats.subscriptions.free + stats.subscriptions.pro + stats.subscriptions.elite}
           </p>
           <div className="flex gap-2 text-xs" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-400 mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             Upcoming Calls
           </h3>
-          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             {stats.upcomingAppointments}
           </p>
         </GlassCard>
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-400 mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             Unpaid Invoices
           </h3>
-          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+          <p className="text-3xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             {stats.unpaidInvoices}
           </p>
         </GlassCard>
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/50 flex items-center justify-center">
               <BookOpen className="text-blue-400" size={20} />
             </div>
-            <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+            <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
               Top Course This Week
             </h3>
           </div>
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/50 flex items-center justify-center">
               <ShoppingBag className="text-blue-400" size={20} />
             </div>
-            <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+            <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
               Marketplace Activity
             </h3>
           </div>
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
           <div className="w-10 h-10 rounded-lg bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
             <Lightbulb className="text-yellow-400" size={20} />
           </div>
-          <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase' }}>
+          <h3 className="text-xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
             Smart AI Suggestions
           </h3>
         </div>

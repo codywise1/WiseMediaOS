@@ -7,7 +7,7 @@ export default function CoursesPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Courses
       </h1>
 
@@ -27,7 +27,7 @@ export default function CoursesPage() {
                   <BookOpen className="text-blue-400" size={24} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{course.title}</h3>
+                  <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{course.title}</h3>
                   <div className="flex items-center gap-4 mt-2 text-gray-400">
                     <div className="flex items-center gap-1">
                       <Play size={14} />

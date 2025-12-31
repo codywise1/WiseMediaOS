@@ -89,7 +89,7 @@ export default function Login({ onLogin }: LoginProps) {
             alt="Wise Media"
             className="h-12 w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <h1 className="text-2xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h1>
           <p className="text-gray-400">

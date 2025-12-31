@@ -4,7 +4,7 @@ import { BarChart3, TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-r
 export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
-      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Analytics
       </h1>
 

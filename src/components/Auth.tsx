@@ -69,7 +69,7 @@ export default function Auth() {
             alt="Wise Media"
             className="h-12 mx-auto mb-6"
           />
-          <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {isForgotPassword ? 'Reset Password' : isSignUp ? 'Join Creator Club' : 'Welcome Back'}
           </h1>
           <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>

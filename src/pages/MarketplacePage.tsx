@@ -76,7 +76,7 @@ export default function MarketplacePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-white font-bold text-[40px] mb-2" style={{ fontFamily: 'Integral CF, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <h1 className="text-white font-bold text-[40px] mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Marketplace
         </h1>
         <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
@@ -158,7 +158,7 @@ export default function MarketplacePage() {
                       </span>
                       <div className="flex items-center gap-1">
                         <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                        <span className="text-white text-sm font-semibold number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                        <span className="text-white text-sm font-semibold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                           {product.rating.toFixed(1)}
                         </span>
                         <span className="text-gray-400 text-xs number" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -180,11 +180,11 @@ export default function MarketplacePage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-2">
                         {product.discount_enabled && product.old_price && (
-                          <span className="text-gray-500 line-through text-sm number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                          <span className="text-gray-500 line-through text-sm number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                             ${product.old_price.toFixed(2)}
                           </span>
                         )}
-                        <span className="text-2xl font-bold text-white number" style={{ fontFamily: 'Integral CF, system-ui, sans-serif' }}>
+                        <span className="text-2xl font-bold text-white number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                           ${product.price.toFixed(2)}
                         </span>
                       </div>
