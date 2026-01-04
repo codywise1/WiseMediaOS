@@ -154,6 +154,15 @@ export default function Notes({ currentUser }: NotesProps) {
     }
   };
 
+  const handleToggleShare = async (note: Note) => {
+    try {
+      await noteService.update(note.id, { visibility: note.visibility === 'client_visible' ? 'internal' : 'client_visible' });
+      await loadData();
+    } catch (error) {
+      console.error('Error toggling share:', error);
+    }
+  };
+
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
@@ -263,6 +272,7 @@ export default function Notes({ currentUser }: NotesProps) {
                   onEdit={handleEditNote}
                   onDelete={handleDeleteNote}
                   onTogglePin={handleTogglePin}
+                  onToggleShare={handleToggleShare}
                 />
               ))}
             </div>
@@ -282,6 +292,7 @@ export default function Notes({ currentUser }: NotesProps) {
               onEdit={handleEditNote}
               onDelete={handleDeleteNote}
               onTogglePin={handleTogglePin}
+              onToggleShare={handleToggleShare}
             />
           ))}
         </div>
@@ -321,12 +332,13 @@ export default function Notes({ currentUser }: NotesProps) {
   );
 }
 
-function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
+function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare }: {
   note: Note;
   viewMode: 'grid' | 'list';
   onEdit: (n: Note) => void;
   onDelete: (n: Note) => void;
   onTogglePin: (e: React.MouseEvent, n: Note) => void;
+  onToggleShare?: (n: Note) => void;
 }) {
   const categoryStyles: Record<string, string> = {
     idea: 'bg-[#3ba3ea]/20 text-[#3ba3ea] border-[#3ba3ea]/30',
@@ -398,7 +410,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
   return (
     <div
       onClick={() => onEdit(note)}
-      className="grid grid-cols-6 items-center gap-4 px-6 py-4 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group border border-transparent hover:border-white/5"
+      className="grid grid-cols-5 items-center gap-4 px-6 py-4 hover:bg-white/5 rounded-2xl transition-all cursor-pointer group border border-transparent hover:border-white/5"
     >
       <div className="col-span-2 flex items-center gap-3 min-w-0">
         <button
@@ -414,25 +426,23 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
       <div className="text-gray-400 text-xs font-bold uppercase tracking-widest truncate">
         {note.client?.name || 'Wise Media'}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${style}`}>
           {note.category}
         </span>
       </div>
-      <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">
-        {formatAppDate(note.updated_at)}
-      </div>
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-center gap-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleShare?.(note); }}
+          className="shrink-glow-button px-4 py-2 bg-white/5 hover:bg-[#3aa3eb] border border-white/10 hover:border-[#3aa3eb] rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all whitespace-nowrap"
+        >
+          {note.visibility === 'client_visible' ? `Stop sharing` : `Share with ${note.client?.name || 'Client'}`}
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(note); }}
           className="p-2 hover:bg-red-500/20 text-gray-700 hover:text-red-500 rounded-lg transition-all opacity-0 group-hover:opacity-100"
         >
           <TrashIcon className="h-4 w-4" />
-        </button>
-        <button
-          className="px-4 py-2 bg-white/5 hover:bg-[#3aa3eb] border border-white/10 hover:border-[#3aa3eb] rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all whitespace-nowrap"
-        >
-          Open Details
         </button>
       </div>
     </div>
