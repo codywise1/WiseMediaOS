@@ -331,18 +331,52 @@ export interface Note {
   project?: Project;
 }
 
-export interface DocumentRecord {
+export type FileStatus = 'draft' | 'in_review' | 'awaiting_client' | 'approved' | 'archived';
+
+export type FileVisibility = 'private' | 'shared';
+
+export interface FileRecord {
   id: string;
   bucket_id: string;
   path: string;
   filename: string;
   content_type?: string | null;
   size_bytes?: number | null;
-  owner_team?: string | null;
-  status?: string | null;
-  created_by?: string | null;
+  status: FileStatus;
+  visibility: FileVisibility;
+  owner_id: string;
+  client_id?: string | null;
+  project_id?: string | null;
+  meeting_id?: string | null;
+  note_id?: string | null;
   created_at: string;
   updated_at: string;
+  // Optional populated relations
+  client?: Client;
+  project?: Project;
+  meeting?: Appointment; // Assuming meeting is appointment
+  note?: Note;
+  versions?: FileVersion[];
+  audit_log?: FileAuditEntry[];
+}
+
+export interface FileVersion {
+  id: string;
+  file_id: string;
+  version_number: number;
+  path: string;
+  size_bytes: number;
+  created_at: string;
+  created_by: string;
+}
+
+export interface FileAuditEntry {
+  id: string;
+  file_id: string;
+  action: 'uploaded' | 'shared' | 'viewed' | 'downloaded' | 'version_restored' | 'archived' | 'deleted';
+  performed_by: string;
+  timestamp: string;
+  details?: string;
 }
 
 // Support operations
@@ -1402,6 +1436,200 @@ export const documentsService = {
     if (storageError) throw storageError;
 
     const { error: dbError } = await sb.from('documents').delete().eq('id', record.id);
+    if (dbError) throw dbError;
+  },
+};
+
+// Files (New system with context linking)
+let mockFiles: FileRecord[] = JSON.parse(localStorage.getItem('wise_media_files') || '[]');
+
+export const filesService = {
+  async list() {
+    if (!isSupabaseAvailable()) {
+      return mockFiles;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('files')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*),
+        meeting:appointments(*),
+        note:notes(*)
+      `)
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as FileRecord[]) || [];
+  },
+
+  async upload(file: File, meta: {
+    client_id?: string;
+    project_id?: string;
+    meeting_id?: string;
+    note_id?: string;
+    visibility?: FileVisibility;
+    status?: FileStatus;
+  }) {
+    if (!isSupabaseAvailable()) {
+      const id = generateId();
+      const now = new Date().toISOString();
+      const record: FileRecord = {
+        id,
+        bucket_id: 'files',
+        path: id,
+        filename: file.name,
+        content_type: file.type,
+        size_bytes: file.size,
+        status: meta.status || 'draft',
+        visibility: meta.visibility || 'private',
+        owner_id: 'current_user', // Mock
+        client_id: meta.client_id || null,
+        project_id: meta.project_id || null,
+        meeting_id: meta.meeting_id || null,
+        note_id: meta.note_id || null,
+        created_at: now,
+        updated_at: now,
+      };
+      mockFiles = [record, ...mockFiles];
+      saveToStorage('wise_media_files', mockFiles);
+      return record;
+    }
+
+    const sb = getSupabaseClient();
+    const { data: { user } } = await sb.auth.getUser();
+    const fileExt = file.name.split('.').pop();
+    const randomPart = (globalThis.crypto && 'randomUUID' in globalThis.crypto)
+      ? (globalThis.crypto as Crypto).randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const fileName = fileExt ? `${randomPart}.${fileExt}` : randomPart;
+    const filePath = `uploads/${fileName}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('files')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: inserted, error: insertError } = await sb
+      .from('files')
+      .insert([
+        {
+          bucket_id: 'files',
+          path: filePath,
+          filename: file.name,
+          content_type: file.type || null,
+          size_bytes: file.size,
+          status: meta.status || 'draft',
+          visibility: meta.visibility || 'private',
+          created_by: user?.id || '',
+          client_id: meta.client_id || null,
+          project_id: meta.project_id || null,
+          meeting_id: meta.meeting_id || null,
+          note_id: meta.note_id || null,
+        },
+      ])
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*),
+        meeting:appointments(*),
+        note:notes(*)
+      `)
+      .single();
+
+    if (insertError) throw insertError;
+    return inserted as FileRecord;
+  },
+
+  async update(id: string, patch: Partial<FileRecord>) {
+    if (!isSupabaseAvailable()) {
+      mockFiles = mockFiles.map(f =>
+        f.id === id
+          ? {
+            ...f,
+            ...patch,
+            updated_at: new Date().toISOString(),
+          }
+          : f
+      );
+      saveToStorage('wise_media_files', mockFiles);
+      return mockFiles.find(f => f.id === id) || null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('files')
+      .update({
+        ...patch,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*),
+        meeting:appointments(*),
+        note:notes(*)
+      `)
+      .single();
+
+    if (error) throw error;
+    return (data as FileRecord) || null;
+  },
+
+  async getById(id: string) {
+    if (!isSupabaseAvailable()) {
+      return mockFiles.find(f => f.id === id) || null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('files')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*),
+        meeting:appointments(*),
+        note:notes(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return (data as FileRecord) || null;
+  },
+
+  async getSignedUrl(path: string, expiresInSeconds = 60) {
+    if (!isSupabaseAvailable()) {
+      return null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb.storage.from('files').createSignedUrl(path, expiresInSeconds);
+    if (error) throw error;
+    return data.signedUrl;
+  },
+
+  async delete(record: Pick<FileRecord, 'id' | 'path'>) {
+    if (!isSupabaseAvailable()) {
+      mockFiles = mockFiles.filter(f => f.id !== record.id);
+      saveToStorage('wise_media_files', mockFiles);
+      return;
+    }
+
+    const sb = getSupabaseClient();
+
+    const { error: storageError } = await sb.storage.from('files').remove([record.path]);
+    if (storageError) throw storageError;
+
+    const { error: dbError } = await sb.from('files').delete().eq('id', record.id);
     if (dbError) throw dbError;
   },
 };

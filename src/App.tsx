@@ -25,6 +25,8 @@ import AdminBackendPage from './pages/AdminBackendPage';
 import CreatorHome from './pages/CreatorHome';
 import AdminFiles from './pages/AdminFiles';
 import Orders from './pages/Orders';
+import FilesPage from './pages/FilesPage';
+import FileDetailPage from './pages/FileDetailPage';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
 import MarketplacePage from './pages/MarketplacePage';
@@ -646,14 +648,15 @@ function App() {
               </AdminGuard>
             }
           /> */}
-          <Route
+          {/* <Route
             path="/admin/files"
             element={
               <AdminGuard>
                 <AdminFiles />
               </AdminGuard>
             }
-          />
+          /> */}
+          <Route path="/files" element={<FilesPage />} />
           <Route
             path="/orders"
             element={
@@ -662,6 +665,8 @@ function App() {
               </AdminGuard>
             }
           />
+          <Route path="/files" element={<FilesPage />} />
+          <Route path="/files/:id" element={<FileDetailPage />} />
           <Route
             path="/creator"
             element={
@@ -677,3 +682,4 @@ function App() {
 }
 
 export default App;
+
