@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bell, UserPlus, FileText, MessageSquare, Clock3, X } from 'lucide-react';
 import GlassCard from './GlassCard';
-import { projectService, invoiceService, appointmentService } from '../lib/supabase';
+import { projectService, invoiceService, meetingService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 
 interface Notification {
@@ -147,11 +147,11 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
       activities.push({
         id: `appointment-${appt.id}`,
         type: 'appointment',
-        title: `Appointment with ${clientName} (${typeLabel})`,
+        title: `Meeting with ${clientName} (${typeLabel})`,
         message: date.toLocaleString(),
         time: formatActivityTime(date),
         timestamp: date.getTime(),
-        to: '/appointments',
+        to: '/meetings',
       });
     });
 
@@ -179,7 +179,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
         const [projects, invoices, appointments] = await Promise.all([
           projectService.getAll().catch(() => []),
           invoiceService.getAll().catch(() => []),
-          appointmentService.getAll().catch(() => []),
+          meetingService.getAll().catch(() => []),
         ]);
 
         if (cancelled) return;

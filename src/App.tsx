@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Clients from './components/Clients';
@@ -10,7 +10,7 @@ import Notes from './components/Notes';
 import NoteDetail from './components/NoteDetail';
 import Invoices from './components/Invoices';
 import InvoiceDetail from './components/InvoiceDetail';
-import Appointments from './components/Appointments';
+
 import Proposals from './components/Proposals';
 import ProposalDetail from './components/ProposalDetail';
 import Support from './components/Support';
@@ -30,6 +30,11 @@ import FileDetailPage from './pages/FileDetailPage';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
 import MarketplacePage from './pages/MarketplacePage';
+import MeetingsPage from './pages/MeetingsPage';
+import LiveMeetingPage from './pages/LiveMeetingPage';
+import MeetingDetailPage from './pages/MeetingDetailPage';
+import ClientNotes from './pages/ClientNotes';
+import ClientNoteDetail from './pages/ClientNoteDetail';
 // import CommunityProPage from './pages/CommunityProPage';
 // import CommunityResourcesPage from './pages/CommunityResourcesPage';
 // import CommunitySettingsPage from './pages/CommunitySettingsPage';
@@ -507,9 +512,14 @@ function App() {
           <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
           <Route path="/notes" element={<Notes currentUser={currentUser} />} />
           <Route path="/notes/:id" element={<NoteDetail currentUser={currentUser} />} />
+
+          {/* Client Portal Routes */}
+          <Route path="/client/notes" element={<ClientNotes currentUser={currentUser} />} />
+          <Route path="/client/notes/:id" element={<ClientNoteDetail />} />
+
           <Route path="/invoices" element={<Invoices currentUser={currentUser} />} />
           <Route path="/invoices/:id" element={<InvoiceDetail currentUser={currentUser} />} />
-          <Route path="/appointments" element={<Appointments currentUser={currentUser} />} />
+          <Route path="/appointments" element={<Navigate to="/meetings" replace />} />
           <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
           <Route path="/proposals/:id" element={<ProposalDetail currentUser={currentUser} />} />
           <Route path="/support" element={<Support currentUser={currentUser} />} />
@@ -598,6 +608,23 @@ function App() {
               <AdminGuard>
                 <AdminBackendPage />
               </AdminGuard>
+            }
+          />
+          <Route path="/meetings" element={<MeetingsPage />} />
+          <Route
+            path="/meetings/live/:id"
+            element={
+              <StaffOrAdminGuard>
+                <LiveMeetingPage />
+              </StaffOrAdminGuard>
+            }
+          />
+          <Route
+            path="/meetings/:id"
+            element={
+              <StaffOrAdminGuard>
+                <MeetingDetailPage />
+              </StaffOrAdminGuard>
             }
           />
           {/* <Route

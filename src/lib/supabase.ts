@@ -290,6 +290,110 @@ export interface Appointment {
   client?: Client;
 }
 
+// Meeting system types
+export type MeetingStatus = 'scheduled' | 'live' | 'processing' | 'ready' | 'shared' | 'archived';
+export type MeetingType = 'video' | 'phone' | 'in-person';
+
+export interface MeetingParticipant {
+  user_id: string;
+  name: string;
+  email?: string;
+  role: 'host' | 'participant' | 'client';
+  joined_at?: string;
+  left_at?: string;
+}
+
+export interface MeetingRecording {
+  id: string;
+  meeting_id: string;
+  file_path: string;
+  file_url?: string;
+  duration_seconds?: number;
+  size_bytes?: number;
+  recording_started_at: string;
+  recording_ended_at?: string;
+  has_screen_share: boolean;
+  screen_share_segments?: Array<{ start: number; end: number }>;
+  status: 'recording' | 'processing' | 'ready' | 'failed';
+  created_at: string;
+}
+
+export interface MeetingTranscript {
+  id: string;
+  meeting_id: string;
+  entries: Array<{
+    timestamp: string;
+    speaker: string;
+    speaker_role: 'admin' | 'staff' | 'client';
+    text: string;
+  }>;
+  language: string;
+  confidence_score?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetingSummarySection {
+  content: string;
+  is_shared: boolean;
+  last_edited_at?: string;
+  last_edited_by?: string;
+}
+
+export interface MeetingSummary {
+  id: string;
+  meeting_id: string;
+  internal_summary: MeetingSummarySection;
+  client_safe_summary: MeetingSummarySection;
+  decisions: MeetingSummarySection;
+  action_items: Array<{
+    text: string;
+    assigned_to?: string;
+    due_date?: string;
+    completed: boolean;
+  }>;
+  risks_and_flags: MeetingSummarySection;
+  scope_change_detected: boolean;
+  generated_by_ai: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Meeting {
+  id: string;
+  client_id?: string;
+  project_id?: string;
+  title: string;
+  description?: string;
+  meeting_date: string;
+  meeting_time: string;
+  duration_minutes: number;
+  actual_duration_seconds?: number;
+  type: MeetingType;
+  status: MeetingStatus;
+  location?: string;
+  meeting_url?: string;
+  participants: MeetingParticipant[];
+  notes_id?: string; // Link to notes table
+  recording_id?: string;
+  transcript_id?: string;
+  summary_id?: string;
+  is_recording: boolean;
+  recording_started_at?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // Populated relations
+  client?: Client;
+  project?: Project;
+  recording?: MeetingRecording;
+  transcript?: MeetingTranscript;
+  summary?: MeetingSummary;
+  notes?: Note;
+}
+
+export type CreateMeeting = Omit<Meeting, 'id' | 'created_at' | 'updated_at' | 'client' | 'project' | 'recording' | 'transcript' | 'summary' | 'notes'>;
+
 export interface SupportTicket {
   id: string;
   client_id: string;
@@ -311,24 +415,52 @@ export interface NoteAttachment {
   uploaded_at: string;
 }
 
+export type NoteCategory = 'idea' | 'meeting' | 'sales_call' | 'sop' | 'task' | 'general';
+export type NoteVisibility = 'internal' | 'client_visible';
+
+export interface NoteBlock {
+  id: string;
+  type: 'heading' | 'paragraph' | 'bullets' | 'numbered' | 'todo' | 'toggle' | 'quote' | 'callout' | 'divider' | 'code';
+  content?: string;
+  level?: number;
+  items?: string[];
+  todos?: { text: string; done: boolean }[];
+  children?: NoteBlock[];
+  lang?: string;
+  tone?: 'info' | 'warning' | 'error' | 'success';
+}
+
 export interface Note {
   id: string;
   title: string;
-  content: string;
-  category?: string;
+  content: NoteBlock[] | string; // Support both for transition
+  plainText?: string;
+  category: NoteCategory;
   tags: string[];
-  client_id?: string;
-  project_id?: string;
-  related_meeting?: string;
-  is_shared_with_client: boolean;
-  is_shared_with_admin: boolean;
-  is_pinned: boolean;
+  pinned: boolean; // Renamed from is_pinned in request but I'll support both for transition
+  is_pinned?: boolean;
+  visibility: NoteVisibility;
+  orgId?: string;
+  authorUserId?: string;
+  clientId?: string;
+  projectId?: string;
+  meetingId?: string;
+  proposalId?: string;
+  invoiceId?: string;
   attachments: NoteAttachment[];
-  created_by: string;
   created_at: string;
   updated_at: string;
   client?: Client;
   project?: Project;
+}
+
+export interface NoteAudit {
+  id: string;
+  note_id: string;
+  actor_id: string;
+  action: 'note_created' | 'note_updated' | 'note_deleted' | 'note_shared' | 'note_unshared' | 'note_pinned' | 'note_unpinned';
+  metadata: any;
+  created_at: string;
 }
 
 export type FileStatus = 'draft' | 'in_review' | 'awaiting_client' | 'approved' | 'archived';
@@ -1174,6 +1306,336 @@ export const appointmentService = {
   }
 };
 
+// Meeting operations
+export const meetingService = {
+  async getAll() {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .order('meeting_date', { ascending: false });
+
+    if (error) throw error;
+    return data as Meeting[];
+  },
+
+  async getById(id: string) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data as Meeting;
+  },
+
+  async getByClientId(clientId: string) {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('client_id', clientId)
+      .order('meeting_date', { ascending: false });
+
+    if (error) throw error;
+    return data as Meeting[];
+  },
+
+  async getByProjectId(projectId: string) {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('project_id', projectId)
+      .order('meeting_date', { ascending: false });
+
+    if (error) throw error;
+    return data as Meeting[];
+  },
+
+  async getByStatus(status: MeetingStatus) {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('status', status)
+      .order('meeting_date', { ascending: false });
+
+    if (error) throw error;
+    return data as Meeting[];
+  },
+
+  async getLiveMeetings() {
+    return this.getByStatus('live');
+  },
+
+  async getUpcoming() {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = getSupabaseClient();
+    const now = new Date().toISOString().split('T')[0];
+    const { data, error } = await sb
+      .from('meetings')
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .eq('status', 'scheduled')
+      .gte('meeting_date', now)
+      .order('meeting_date', { ascending: true });
+
+    if (error) throw error;
+    return data as Meeting[];
+  },
+
+  async create(meeting: CreateMeeting) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .insert([meeting])
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data as Meeting;
+  },
+
+  async update(id: string, updates: Partial<Meeting>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meetings')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(*),
+        project:projects(*)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data as Meeting;
+  },
+
+  async updateStatus(id: string, status: MeetingStatus) {
+    return this.update(id, { status });
+  },
+
+  async startRecording(id: string) {
+    return this.update(id, {
+      is_recording: true,
+      recording_started_at: new Date().toISOString(),
+      status: 'live'
+    });
+  },
+
+  async stopRecording(id: string) {
+    return this.update(id, {
+      is_recording: false,
+      status: 'processing'
+    });
+  },
+
+  async delete(id: string) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { error } = await sb
+      .from('meetings')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // Recording operations
+  async getRecording(meetingId: string) {
+    if (!isSupabaseAvailable()) {
+      return null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_recordings')
+      .select('*')
+      .eq('meeting_id', meetingId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as MeetingRecording | null;
+  },
+
+  // Transcript operations
+  async getTranscript(meetingId: string) {
+    if (!isSupabaseAvailable()) {
+      return null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_transcripts')
+      .select('*')
+      .eq('meeting_id', meetingId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as MeetingTranscript | null;
+  },
+
+  async createTranscript(transcript: Omit<MeetingTranscript, 'id' | 'created_at' | 'updated_at'>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_transcripts')
+      .insert([transcript])
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data as MeetingTranscript;
+  },
+
+  // Summary operations
+  async getSummary(meetingId: string) {
+    if (!isSupabaseAvailable()) {
+      return null;
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_summaries')
+      .select('*')
+      .eq('meeting_id', meetingId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as MeetingSummary | null;
+  },
+
+  async createSummary(summary: Omit<MeetingSummary, 'id' | 'created_at' | 'updated_at'>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_summaries')
+      .insert([summary])
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data as MeetingSummary;
+  },
+
+  async updateSummary(id: string, updates: Partial<MeetingSummary>) {
+    if (!isSupabaseAvailable()) {
+      throw new Error('Supabase not configured');
+    }
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('meeting_summaries')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data as MeetingSummary;
+  },
+
+  // Permission helpers
+  canUserAccessMeeting(userRole: UserRole, meeting: Meeting): boolean {
+    // Admin and Staff can access all meetings
+    if (userRole === 'admin' || userRole === 'staff') {
+      return true;
+    }
+
+    // Clients can only access meetings where they are participants or linked client
+    // This would need to check if the current user's email matches a participant
+    // For now, returning false for non-admin/staff
+    return false;
+  },
+
+  canUserGenerateSummary(userRole: UserRole): boolean {
+    // Only admins can trigger AI summary generation
+    return userRole === 'admin';
+  },
+
+  canUserShare(userRole: UserRole): boolean {
+    // Only admins can share content with clients
+    return userRole === 'admin';
+  },
+
+  canUserRecord(userRole: UserRole): boolean {
+    // Only admins can record meetings
+    return userRole === 'admin';
+  }
+};
+
 export const noteService = {
   async getAll() {
     if (!isSupabaseAvailable()) {
@@ -1185,10 +1647,10 @@ export const noteService = {
       .from('notes')
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
-      .order('is_pinned', { ascending: false })
+      .order('pinned', { ascending: false })
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -1201,8 +1663,8 @@ export const noteService = {
       .from('notes')
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
       .eq('id', id)
       .maybeSingle();
@@ -1217,11 +1679,11 @@ export const noteService = {
       .from('notes')
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
-      .eq('client_id', clientId)
-      .order('is_pinned', { ascending: false })
+      .eq('clientId', clientId)
+      .order('pinned', { ascending: false })
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -1234,11 +1696,11 @@ export const noteService = {
       .from('notes')
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
-      .eq('project_id', projectId)
-      .order('is_pinned', { ascending: false })
+      .eq('projectId', projectId)
+      .order('pinned', { ascending: false })
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -1253,51 +1715,109 @@ export const noteService = {
       .from('notes')
       .insert({
         ...note,
-        admin_id: (userData?.user?.id || ''),
-        created_by: userData?.user?.id || '',
+        authorUserId: userData?.user?.id || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
       .single();
 
     if (error) throw error;
+
+    // Log audit event
+    await noteAuditService.log({
+      note_id: data.id,
+      actor_id: userData?.user?.id || '',
+      action: 'note_created',
+      metadata: { title: data.title }
+    });
+
     return data as Note;
   },
 
   async update(id: string, updates: Partial<Note>) {
     const sb = getSupabaseClient();
+    const { data: userData } = await sb.auth.getUser();
+
     const { data, error } = await sb
       .from('notes')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select(`
         *,
-        client:clients(*),
-        project:projects(*)
+        client:clients!clientId(*),
+        project:projects!projectId(*)
       `)
       .single();
 
     if (error) throw error;
+
+    // Log audit event
+    await noteAuditService.log({
+      note_id: id,
+      actor_id: userData?.user?.id || '',
+      action: 'note_updated',
+      metadata: { fields: Object.keys(updates) }
+    });
+
     return data as Note;
   },
 
   async delete(id: string) {
     const sb = getSupabaseClient();
+    const { data: userData } = await sb.auth.getUser();
+
     const { error } = await sb
       .from('notes')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    // Log audit event
+    await noteAuditService.log({
+      note_id: id,
+      actor_id: userData?.user?.id || '',
+      action: 'note_deleted',
+      metadata: {}
+    });
   },
 
-  async togglePin(id: string, isPinned: boolean) {
-    return this.update(id, { is_pinned: isPinned });
+  async togglePin(id: string, pinned: boolean) {
+    return this.update(id, { pinned });
+  }
+};
+
+export const noteAuditService = {
+  async log(entry: Omit<NoteAudit, 'id' | 'created_at'>) {
+    if (!isSupabaseAvailable()) return;
+
+    const sb = getSupabaseClient();
+    const { error } = await sb
+      .from('note_audit_log')
+      .insert([entry]);
+
+    if (error) {
+      console.error('Error logging note audit event:', error);
+    }
+  },
+
+  async getByNoteId(noteId: string) {
+    if (!isSupabaseAvailable()) return [];
+
+    const sb = getSupabaseClient();
+    const { data, error } = await sb
+      .from('note_audit_log')
+      .select('*')
+      .eq('note_id', noteId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as NoteAudit[];
   }
 };
 

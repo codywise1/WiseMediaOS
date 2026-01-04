@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { clientService, appointmentService, UserRole, Client, supabase, isSupabaseAvailable } from '../lib/supabase';
-import { 
-  CalendarIcon, 
+import {
+  CalendarIcon,
   ClockIcon,
   VideoCameraIcon,
   PhoneIcon,
@@ -103,24 +103,24 @@ const buildGoogleDateTimes = (date: string, time: string, duration: string) => {
 };
 
 const appointmentTypes = [
-  { 
-    name: 'Consultation Call', 
-    duration: '30 min', 
-    icon: PhoneIcon, 
+  {
+    name: 'Consultation Call',
+    duration: '30 min',
+    icon: PhoneIcon,
     color: 'bg-[#3aa3eb]',
     calendarUrl: 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2gM2TTSiOVFVhgF7Wlh_CMhzdWIscSg1gM7ZoPh54woIpS7wWaoTiiwBRn2jnS1fBFwReWUeFF'
   },
-  { 
-    name: 'Review Call', 
-    duration: '45 min', 
-    icon: VideoCameraIcon, 
+  {
+    name: 'Review Call',
+    duration: '45 min',
+    icon: VideoCameraIcon,
     color: 'bg-[#3aa3eb]',
     calendarUrl: 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2gM2TTSiOVFVhgF7Wlh_CMhzdWIscSg1gM7ZoPh54woIpS7wWaoTiiwBRn2jnS1fBFwReWUeFF'
   },
-  { 
-    name: 'Discovery Call', 
-    duration: '60 min', 
-    icon: UserIcon, 
+  {
+    name: 'Discovery Call',
+    duration: '60 min',
+    icon: UserIcon,
     color: 'bg-[#3aa3eb]',
     calendarUrl: 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2gM2TTSiOVFVhgF7Wlh_CMhzdWIscSg1gM7ZoPh54woIpS7wWaoTiiwBRn2jnS1fBFwReWUeFF'
   },
@@ -164,7 +164,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
       }
       let data: AppointmentApi[] = [];
       const clientList = clientListParam || clients;
-      
+
       if (currentUser?.role === 'admin') {
         data = (await appointmentService.getAll()) as AppointmentApi[];
       } else if (currentUser?.id) {
@@ -178,7 +178,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
           return;
         }
       }
-      
+
       // Transform data to match component interface
       const transformedAppointments = data.map(appointment => ({
         id: appointment.id,
@@ -193,7 +193,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         location: appointment.location || '',
         description: appointment.description || ''
       }));
-      
+
       setAppointments(transformedAppointments);
     } catch (error) {
       console.error('Error loading appointments:', error);
@@ -324,7 +324,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                     start: dateTimes.start,
                     end: dateTimes.end,
                     location: apiData.location,
-                    
+
                   }
                 });
               } catch (calendarError) {
@@ -336,7 +336,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         } else if (selectedAppointment) {
           await appointmentService.update(selectedAppointment.id, apiData);
         }
-        
+
         // Reload appointments
         await loadAppointments();
       } catch (error) {
@@ -344,7 +344,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         toastError('Error saving appointment. Please try again.');
       }
     };
-    
+
     saveAppointment();
   };
 
@@ -362,7 +362,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         }
       }
     };
-    
+
     deleteAppointment();
   };
 
@@ -384,7 +384,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
             <p className="text-gray-300">Schedule and manage your meetings and consultations</p>
           </div>
           {isAdmin && (
-            <button 
+            <button
               onClick={handleNewAppointment}
               className="btn-primary text-white font-medium flex items-center justify-center space-x-2 glass-button shrink-glow-button shrink-0 w-full sm:w-auto"
             >
@@ -421,7 +421,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-black bg-opacity-75" onClick={() => setShowClientSelector(false)}></div>
-            
+
             <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform glass-card neon-glow rounded-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-white title-font">Select Client for {selectedAppointmentType.name}</h3>
@@ -432,7 +432,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   ×
                 </button>
               </div>
-              
+
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {clients.map((client) => (
                   <button
@@ -453,11 +453,11 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   </button>
                 ))}
               </div>
-              
+
               {clients.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-gray-400">No clients found. Add clients first to book appointments.</p>
-                  <button 
+                  <button
                     onClick={() => navigate('/clients')}
                     className="btn-primary mt-4 shrink-glow-button"
                   >
@@ -474,14 +474,14 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Upcoming Appointments</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <button 
+          <button
             onClick={() => setViewMode('list')}
             className={`btn-secondary text-sm font-medium ${viewMode === 'list' ? 'border-white/60' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button`}
             disabled={!isAdmin}
           >
             List View
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('calendar')}
             className={`btn-primary text-sm ${viewMode === 'calendar' ? 'ring-2 ring-white/40' : ''} ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''} shrink-glow-button`}
             disabled={!isAdmin}
@@ -527,14 +527,14 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   </span>
                   {isAdmin && (
                     <div className="flex items-center space-x-2">
-                      <button 
+                      <button
                         onClick={() => handleEditAppointment(appointment)}
                         className="text-blue-500 hover:text-white p-1 shrink-glow-button"
                         title="Edit Appointment"
                       >
                         <PencilIcon className="h-4 w-4 text-blue-500" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteAppointment(appointment)}
                         className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
                         title="Delete Appointment"
@@ -566,7 +566,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3 w-full sm:w-auto">
                   {appointment.type === 'video' && (
-                    <button 
+                    <button
                       onClick={() => {
                         window.open('https://meet.google.com/sample-meeting-link', '_blank');
                       }}

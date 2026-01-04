@@ -1,21 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { isSupabaseAvailable, noteService, Note, UserRole } from '../lib/supabase';
+import {
+    noteService,
+    Note,
+    UserRole,
+    NoteBlock,
+    noteAuditService,
+    NoteAudit
+} from '../lib/supabase';
 import {
     ArrowLeftIcon,
     TrashIcon,
-    UserIcon,
     FolderIcon,
     DocumentTextIcon,
-    PaperClipIcon,
     EyeIcon,
     CurrencyDollarIcon,
     CalendarDaysIcon,
-    EllipsisHorizontalIcon
+    BookmarkIcon,
+    ShareIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    UserIcon,
+    VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
 import ConfirmDialog from './ConfirmDialog';
+import NoteEditor from './notes/NoteEditor';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface User {
     email: string;
@@ -32,65 +44,31 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [note, setNote] = useState<Note | null>(null);
+    const [blocks, setBlocks] = useState<NoteBlock[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [auditLogs, setAuditLogs] = useState<NoteAudit[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
+
+    const isAdminOrStaff = currentUser?.role === 'admin' || currentUser?.role === 'staff';
+    const isInitialLoad = useRef(true);
 
     useEffect(() => {
         if (id) {
             loadNote();
+            loadAuditLogs();
         }
     }, [id]);
 
     const loadNote = async () => {
         try {
             setLoading(true);
-            if (!isSupabaseAvailable()) {
-                // Mock data for demo
-                const mockNote: Note = {
-                    id: id || '1',
-                    title: 'PROPOSAL BUILDER PROMPT',
-                    content: `
-            <p>Build a guided <strong>Proposal Builder</strong> that generates a Proposal PDF, clause level SOW per selected service, an Agreement, and auto creates a linked Draft Invoice.</p>
-            <p>Proposal and Invoice stay synced via strict rules, shared line items, statuses, and audit events.</p>
-            <br/>
-            <h3>Product intent</h3>
-            <p>This is a contract generation system, not a form.</p>
-            <p>It eliminates manual rebuilds, free text scope, and mismatched billing.</p>
-            <br/>
-            <h3>Non negotiables</h3>
-            <ul>
-              <li>Every Proposal creates exactly one linked Invoice in Draft on first save.</li>
-              <li>Invoice cannot be sent or paid until Proposal is Signed, unless Admin overrides.</li>
-              <li>Legal text locks via clause snapshots the moment a Proposal is Sent, and all sent or signed proposals must render snapshots only.</li>
-              <li>If a Proposal changes after Signed, never edit the signed invoice, create a Change Order Proposal and new Invoice.</li>
-              <li>All state changes and key actions create immutable audit events.</li>
-            </ul>
-            <br/>
-            <h3>Supported services now</h3>
-            <p><strong>Website Development, Landing Page, Web App Development, Brand Identity</strong></p>
-            <p>SEO Services, Graphic Design, Video Editing.</p>
-          `,
-                    category: 'Idea',
-                    is_pinned: true,
-                    is_shared_with_client: true,
-                    client_id: 'client-1',
-                    project_id: 'project-1',
-                    user_id: 'user-1',
-                    created_at: '2025-12-02T10:00:00Z',
-                    updated_at: '2026-01-08T15:30:00Z',
-                    tags: ['proposal', 'builder', 'automation'],
-                    attachments: [
-                        { id: '1', name: 'invoice_logic_flow.png', url: '#', size: 1024, type: 'image/png' }
-                    ],
-                    client: { name: 'Wise Media', company: 'Wise Media' },
-                    project: { name: 'Website Redesign Project' }
-                };
-                setNote(mockNote);
-            } else {
-                const data = await noteService.getAll();
-                const found = data.find(n => n.id === id);
+            if (id) {
+                const found = await noteService.getById(id);
                 if (found) {
                     setNote(found);
+                    setBlocks(Array.isArray(found.content) ? found.content : []);
                 } else {
                     navigate('/notes');
                 }
@@ -100,23 +78,68 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
             navigate('/notes');
         } finally {
             setLoading(false);
+            isInitialLoad.current = false;
         }
     };
 
-    const handleDelete = async () => {
-        if (!note) return;
-        try {
-            if (isSupabaseAvailable()) {
-                await noteService.delete(note.id);
+    const loadAuditLogs = async () => {
+        if (id) {
+            try {
+                const logs = await noteAuditService.getByNoteId(id);
+                setAuditLogs(logs);
+            } catch (error) {
+                console.error('Error loading audit logs:', error);
             }
+        }
+    };
+
+    const saveNote = async (updatedBlocks: NoteBlock[]) => {
+        if (!id || isInitialLoad.current) return;
+
+        setIsSaving(true);
+        try {
+            const plainText = updatedBlocks.map(b => b.content || b.items?.join(' ') || b.todos?.map(t => t.text).join(' ') || '').join(' ').slice(0, 1000);
+            await noteService.update(id, {
+                content: updatedBlocks,
+                plainText,
+                updated_at: new Date().toISOString()
+            });
+            loadAuditLogs();
+        } catch (error) {
+            console.error('Error autosaving note:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Simple autosave on block change with 2s delay
+    useEffect(() => {
+        if (isInitialLoad.current) return;
+        const timer = setTimeout(() => {
+            saveNote(blocks);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, [blocks]);
+
+    const handleDelete = async () => {
+        if (!id) return;
+        try {
+            await noteService.delete(id);
             navigate('/notes');
         } catch (error) {
             console.error('Error deleting note:', error);
-            alert('Error deleting note. Please try again.');
         }
     };
 
-    const isAdmin = currentUser?.role === 'admin';
+    const handleTogglePin = async () => {
+        if (!note) return;
+        try {
+            const updated = await noteService.togglePin(note.id, !note.pinned);
+            setNote(updated);
+        } catch (error) {
+            console.error('Error toggling pin:', error);
+        }
+    };
 
     if (loading) {
         return (
@@ -130,92 +153,94 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Back Button */}
-            <button
-                onClick={() => navigate('/notes')}
-                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors group mb-4"
-            >
-                <ArrowLeftIcon className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                <span className="font-medium">Back to Notes</span>
-            </button>
+            {/* Top Navigation & Status */}
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={() => navigate('/notes')}
+                    className="flex items-center space-x-2 text-gray-500 hover:text-white transition-colors group"
+                >
+                    <ArrowLeftIcon className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Back to Library</span>
+                </button>
 
-            {/* Header Card */}
-            <div className="glass-card rounded-3xl p-8 border border-white/10">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-4">
-                        <h1 className="text-4xl font-black text-white tracking-tight uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            {note.title}
-                        </h1>
-                        <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold uppercase tracking-wider">
-                                {note.category || 'Note'}
-                            </span>
-                            {note.is_pinned && (
-                                <span className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-[10px] font-bold uppercase tracking-wider">
-                                    Pinned
-                                </span>
-                            )}
-                            {note.is_shared_with_client ? (
-                                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
-                                    Shared
-                                </span>
-                            ) : (
-                                <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold uppercase tracking-wider">
-                                    Private
-                                </span>
-                            )}
-                            <span className="text-gray-500 text-sm font-medium ml-2">
-                                {note.client?.company || note.client?.name || 'Wise Media'}
-                            </span>
+                <div className="flex items-center gap-4">
+                    {isSaving ? (
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[#3aa3eb] uppercase tracking-widest">
+                            <div className="h-2 w-2 bg-[#3aa3eb] rounded-full animate-ping" />
+                            Autosaving...
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button className="px-6 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-full border border-emerald-500/30 text-sm font-bold transition-all">
-                            Share Note
-                        </button>
-                        <button className="px-6 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full border border-red-500/30 text-sm font-bold transition-all">
-                            Stop Sharing
-                        </button>
-                        <button
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            className="p-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl border border-red-500/30 transition-all"
-                        >
-                            <TrashIcon className="h-5 w-5" />
-                        </button>
-                    </div>
+                    ) : (
+                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                            <CheckCircleIcon className="h-4 w-4" />
+                            Changes Saved
+                        </div>
+                    )}
+                    <div className="h-4 w-px bg-white/10 mx-2" />
+                    <button
+                        onClick={() => setShowHistory(!showHistory)}
+                        className={`p-2 rounded-lg transition-all ${showHistory ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        <ClockIcon className="h-5 w-5" />
+                    </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="glass-card rounded-3xl border border-white/10 overflow-hidden min-h-[600px] flex flex-col">
-                        {/* Simulation Toolbar */}
-                        <div className="bg-white/5 border-b border-white/10 px-6 py-3 flex items-center gap-4 text-gray-400">
-                            <span className="font-bold cursor-pointer hover:text-white transition-colors">B</span>
-                            <span className="italic cursor-pointer hover:text-white transition-colors">I</span>
-                            <span className="underline cursor-pointer hover:text-white transition-colors">U</span>
-                            <span className="line-through cursor-pointer hover:text-white transition-colors">S</span>
-                            <div className="w-px h-4 bg-white/10 mx-1" />
-                            <div className="flex items-center gap-3">
-                                <div className="h-4 w-4 bg-white/20 rounded-sm" />
-                                <div className="h-4 w-4 bg-white/20 rounded-sm" />
-                                <div className="h-4 w-4 bg-white/20 rounded-sm" />
-                            </div>
-                            <div className="w-px h-4 bg-white/10 mx-1" />
-                            <div className="flex items-center gap-3">
-                                <div className="h-4 w-4 bg-white/20 rounded-sm" />
-                                <div className="h-4 w-4 bg-white/20 rounded-sm" />
-                            </div>
+            {/* Main Container */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="lg:col-span-3 space-y-6">
+                    {/* Editor Header */}
+                    <div className="glass-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8">
+                            <button
+                                onClick={handleTogglePin}
+                                className={`p-3 rounded-2xl transition-all border ${note.pinned
+                                        ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                                        : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/30'
+                                    }`}
+                            >
+                                <BookmarkIcon className={`h-6 w-6 ${note.pinned ? 'fill-yellow-500' : ''}`} />
+                            </button>
                         </div>
-                        {/* Note Text */}
-                        <div className="p-8 flex-1">
-                            <div
-                                className="prose prose-invert max-w-none text-gray-300 leading-relaxed space-y-4"
-                                dangerouslySetInnerHTML={{ __html: note.content }}
+
+                        <div className="space-y-4 max-w-2xl">
+                            <input
+                                type="text"
+                                value={note.title}
+                                onChange={(e) => {
+                                    const newTitle = e.target.value;
+                                    setNote({ ...note, title: newTitle });
+                                    // Immediate title save optional, or let it follow the blocks timer
+                                }}
+                                className="w-full bg-transparent border-none p-0 text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800 uppercase"
+                                placeholder="UNTITLED NOTE"
                             />
+
+                            <div className="flex flex-wrap gap-2">
+                                <span className="px-3 py-1 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] border border-[#3aa3eb]/20 text-[10px] font-black uppercase tracking-widest">
+                                    {note.category}
+                                </span>
+                                <span className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${note.visibility === 'client_visible'
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                    }`}>
+                                    {note.visibility === 'client_visible' ? 'Shared with Client' : 'Internal Agency Only'}
+                                </span>
+                                {note.tags.map(tag => (
+                                    <span key={tag} className="px-3 py-1 rounded-full bg-white/5 text-gray-500 border border-white/5 text-[10px] font-bold uppercase tracking-wider">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Editor Area */}
+                    <div className="glass-card rounded-3xl border border-white/10 p-12 min-h-[800px]">
+                        <NoteEditor
+                            content={blocks}
+                            onChange={setBlocks}
+                            readOnly={!isAdminOrStaff}
+                        />
                     </div>
                 </div>
 
@@ -223,73 +248,78 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                 <div className="space-y-6">
                     {/* Details Card */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-sm font-black text-white uppercase tracking-widest mb-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            Details
-                        </h2>
+                        <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Metadata</h2>
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Type</span>
-                                <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20">{note.category || 'Idea'}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Created</span>
-                                <span className="text-gray-300 font-bold">{formatAppDate(note.created_at)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Last Edited</span>
-                                <span className="text-gray-300 font-bold">{formatAppDate(note.updated_at)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Client</span>
-                                <span className="text-white font-bold">{note.client?.company || note.client?.name || 'Wise Media'}</span>
-                            </div>
+                            <MetaItem label="Author" value={note.authorUserId ? 'Team Member' : 'System'} icon={UserIcon} />
+                            <MetaItem label="Client" value={note.client?.name || 'Internal'} icon={UserIcon} />
+                            <MetaItem label="Created" value={formatAppDate(note.created_at)} icon={CalendarDaysIcon} />
+                            <MetaItem label="Last Edit" value={formatAppDate(note.updated_at)} icon={ClockIcon} />
                         </div>
                     </div>
 
-                    {/* Linked Card */}
+                    {/* Actions Card */}
+                    <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-3">
+                        <button
+                            onClick={() => {
+                                if (!note.clientId) {
+                                    alert('You must link a client before sharing.');
+                                    return;
+                                }
+                                noteService.update(note.id, { visibility: note.visibility === 'internal' ? 'client_visible' : 'internal' }).then(setNote);
+                            }}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white uppercase tracking-widest transition-all"
+                        >
+                            <ShareIcon className="h-4 w-4" />
+                            {note.visibility === 'client_visible' ? 'Unshare Note' : 'Share with Client'}
+                        </button>
+                        <button
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-bold text-red-500 uppercase tracking-widest transition-all"
+                        >
+                            <TrashIcon className="h-4 w-4" />
+                            Delete Record
+                        </button>
+                    </div>
+
+                    {/* Linked Entities */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-sm font-black text-white uppercase tracking-widest mb-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            Linked
-                        </h2>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer">
-                                <div className="p-2 bg-blue-500/20 rounded-lg">
-                                    <FolderIcon className="h-4 w-4 text-blue-400" />
-                                </div>
-                                <span className="text-sm text-gray-300 font-medium truncate">{note.project?.name || 'Website Redesign Project'}</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer">
-                                <div className="p-2 bg-indigo-500/20 rounded-lg">
-                                    <CurrencyDollarIcon className="h-4 w-4 text-indigo-400" />
-                                </div>
-                                <span className="text-sm text-gray-300 font-medium truncate">Invoice-333</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer">
-                                <div className="p-2 bg-gray-500/20 rounded-lg">
-                                    <DocumentTextIcon className="h-4 w-4 text-gray-400" />
-                                </div>
-                                <span className="text-sm text-gray-300 font-medium truncate">What is Wise Media OS?</span>
-                            </div>
+                        <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Linked Intelligence</h2>
+                        <div className="space-y-2">
+                            {note.projectId && (
+                                <LinkedItem label="Project" value={note.project?.name || 'Project'} icon={FolderIcon} />
+                            )}
+                            {note.meetingId && (
+                                <LinkedItem label="Meeting" value="Meeting Records" icon={VideoCameraIcon} />
+                            )}
+                            {note.proposalId && (
+                                <LinkedItem label="Proposal" value="Proposal Draft" icon={DocumentTextIcon} />
+                            )}
+                            {note.invoiceId && (
+                                <LinkedItem label="Invoice" value="Linked Invoice" icon={CurrencyDollarIcon} />
+                            )}
+                            {!note.projectId && !note.meetingId && !note.proposalId && !note.invoiceId && (
+                                <p className="text-[10px] text-gray-700 italic">No entities linked to this note.</p>
+                            )}
                         </div>
                     </div>
 
-                    {/* Attachments Card */}
-                    <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-sm font-black text-white uppercase tracking-widest mb-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            Attachments
-                        </h2>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                                        <UserIcon className="h-4 w-4 text-blue-400" />
+                    {/* History / Audit Log */}
+                    {showHistory && (
+                        <div className="glass-card rounded-2xl p-6 border border-white/10 animate-in fade-in duration-300">
+                            <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">
+                                <span>Audit Trail</span>
+                                <ClockIcon className="h-4 w-4" />
+                            </h2>
+                            <div className="space-y-4 h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                                {auditLogs.map(log => (
+                                    <div key={log.id} className="border-l border-white/10 pl-4 py-1">
+                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">{log.action.replace('note_', '').replace('_', ' ')}</p>
+                                        <p className="text-[9px] text-gray-600 font-medium">{new Date(log.created_at).toLocaleString()}</p>
                                     </div>
-                                    <span className="text-sm text-gray-300 font-medium truncate">invoice_logic_flow.png</span>
-                                </div>
-                                <EyeIcon className="h-4 w-4 text-gray-500 hover:text-white cursor-pointer transition-colors" />
+                                ))}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -297,9 +327,35 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                 isOpen={isDeleteDialogOpen}
                 onClose={() => setIsDeleteDialogOpen(false)}
                 onConfirm={handleDelete}
-                title="Delete Note"
-                message={`Are you sure you want to delete this note? This action cannot be undone.`}
+                title="Delete Intelligence Record"
+                message={`Are you sure you want to delete this note? All blocks and audit data will be permanently removed.`}
             />
+        </div>
+    );
+}
+
+function MetaItem({ label, value, icon: Icon }: any) {
+    return (
+        <div className="flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-2 text-gray-500 font-bold uppercase tracking-widest">
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+            </div>
+            <span className="text-gray-300 font-black">{value}</span>
+        </div>
+    );
+}
+
+function LinkedItem({ label, value, icon: Icon }: any) {
+    return (
+        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer group">
+            <div className="p-2 bg-white/5 rounded-lg group-hover:bg-[#3aa3eb]/20 transition-colors">
+                <Icon className="h-4 w-4 text-gray-500 group-hover:text-[#3aa3eb]" />
+            </div>
+            <div className="min-w-0">
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{label}</p>
+                <p className="text-xs font-bold text-white truncate">{value}</p>
+            </div>
         </div>
     );
 }

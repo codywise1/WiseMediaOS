@@ -64,10 +64,10 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Find client name for display
     const selectedClient = clients.find(c => c.id === formData.client_id);
-    
+
     const invoiceData = {
       client_id: formData.client_id,
       amount: parseInt(formData.amount),

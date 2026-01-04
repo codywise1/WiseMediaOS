@@ -85,7 +85,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
         // { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon },
         { name: 'Files', href: '/files', icon: DocumentDuplicateIcon },
-        { name: 'Meetings', href: '/appointments', icon: CalendarIcon },
+        { name: 'Meetings', href: '/meetings', icon: CalendarIcon },
         { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
         { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
       ]
@@ -117,7 +117,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
         // { name: 'Files', href: '/admin/files', icon: DocumentDuplicateIcon },
         { name: 'Files', href: '/files', icon: DocumentDuplicateIcon },
-        { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
+        { name: 'Meetings', href: '/meetings', icon: CalendarIcon },
         { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
         { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
       ]
@@ -146,7 +146,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Work',
       items: [
         { name: 'Projects', href: '/projects', icon: FolderIcon },
-        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+        { name: 'Notes', href: '/client/notes', icon: DocumentTextIcon },
         { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon }
       ]
     },

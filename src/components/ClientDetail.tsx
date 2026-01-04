@@ -326,23 +326,23 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-200" />
               <span className="text-sm font-medium text-gray-200">Message</span>
             </button>
+            <button
+              onClick={() => {
+                setSelectedClient(client);
+                setIsEditModalOpen(true);
+              }}
+              className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all group/btn"
+            >
+              <PencilIcon className="h-5 w-5 text-gray-400 group-hover/btn:text-white" />
+            </button>
+            {isAdmin && (
               <button
-                onClick={() => {
-                  setSelectedClient(client);
-                  setIsEditModalOpen(true);
-                }}
+                onClick={() => setIsDeleteDialogOpen(true)}
                 className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all group/btn"
               >
-                <PencilIcon className="h-5 w-5 text-gray-400 group-hover/btn:text-white" />
+                <TrashIcon className="h-5 w-5 text-red-400/70 group-hover/btn:text-red-400" />
               </button>
-              {isAdmin && (
-                <button
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="btn-secondary shrink-glow-button p-2 rounded-lg transition-all group/btn"
-                >
-                  <TrashIcon className="h-5 w-5 text-red-400/70 group-hover/btn:text-red-400" />
-                </button>
-              )}
+            )}
           </div>
         </div>
       </div>
@@ -400,7 +400,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <a href={buildLinkedInUrl(client.linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0.5 8h4V24h-4V8zM8.5 8h3.8v2.2h.1c.5-1 1.9-2.2 4-2.2 4.3 0 5.1 2.8 5.1 6.5V24h-4v-8.2c0-2 0-4.5-2.7-4.5-2.7 0-3.1 2.1-3.1 4.3V24h-4V8z"/></svg>
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0.5 8h4V24h-4V8zM8.5 8h3.8v2.2h.1c.5-1 1.9-2.2 4-2.2 4.3 0 5.1 2.8 5.1 6.5V24h-4v-8.2c0-2 0-4.5-2.7-4.5-2.7 0-3.1 2.1-3.1 4.3V24h-4V8z" /></svg>
                   </div>
                   <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
@@ -418,7 +418,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <a href={buildTwitterUrl(client.twitter)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2H21l-6.52 7.45L22.5 22h-6.39l-5.01-6.48L5.4 22H2.64l7.03-8.04L1.5 2H8l4.53 5.86L18.244 2zm-1.12 18h1.77L6.96 3.9H5.06L17.12 20z"/></svg>
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2H21l-6.52 7.45L22.5 22h-6.39l-5.01-6.48L5.4 22H2.64l7.03-8.04L1.5 2H8l4.53 5.86L18.244 2zm-1.12 18h1.77L6.96 3.9H5.06L17.12 20z" /></svg>
                   </div>
                   <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
@@ -454,7 +454,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <a href={buildFacebookUrl(client.facebook)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24H12.82v-9.294H9.692V11.01h3.128V8.309c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.59l-.467 3.696h-3.123V24h6.126C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z"/></svg>
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24H12.82v-9.294H9.692V11.01h3.128V8.309c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.312h3.59l-.467 3.696h-3.123V24h6.126C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z" /></svg>
                   </div>
                   <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
@@ -472,7 +472,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <a href={buildTikTokUrl(client.tiktok)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.9v13.67a2.89 2.89 0 0 1-2.88 2.88 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.31 0 .61.05.9.14V9.02a6.71 6.71 0 0 0-.9-.06A6.71 6.71 0 0 0 2.33 15.7a6.71 6.71 0 0 0 6.71 6.71 6.71 6.71 0 0 0 6.71-6.71V9.4a8.74 8.74 0 0 0 3.84 1.01V6.69z"/></svg>
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.9v13.67a2.89 2.89 0 0 1-2.88 2.88 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.31 0 .61.05.9.14V9.02a6.71 6.71 0 0 0-.9-.06A6.71 6.71 0 0 0 2.33 15.7a6.71 6.71 0 0 0 6.71 6.71 6.71 6.71 0 0 0 6.71-6.71V9.4a8.74 8.74 0 0 0 3.84 1.01V6.69z" /></svg>
                   </div>
                   <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {
@@ -490,7 +490,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <a href={buildYouTubeUrl(client.youtube)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                 <div className="flex items-center gap-4">
                   <div className="p-2 border border-white/10 rounded-xl">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
                   </div>
                   <span className="text-gray-300 text-sm font-medium truncate max-w-[180px]">
                     {(() => {

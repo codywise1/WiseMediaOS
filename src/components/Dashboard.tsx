@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   projectService,
   invoiceService,
-  appointmentService,
+  meetingService,
   clientService,
   UserRole
 } from '../lib/supabase';
@@ -52,14 +52,14 @@ const adminQuickActions = [
     route: '/invoices'
   },
   {
-    name: 'Appointments',
+    name: 'Meetings',
     description: 'Schedule calls and meetings',
     icon: CalendarIcon,
     count: 0,
     status: 'No Meetings',
     color: 'bg-[#3aa3eb]',
-    actions: ['Book Call', 'View Calendar'],
-    route: '/appointments'
+    actions: ['View All', 'Schedule New'],
+    route: '/meetings'
   },
 ];
 
@@ -203,10 +203,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       try {
         if (currentUser?.role === 'admin') {
           // Admin sees all data
-          const [projects, invoices, appointments] = await Promise.all([
+          const [projects, invoices, meetings] = await Promise.all([
             projectService.getAll(),
             invoiceService.getAll(),
-            appointmentService.getAll()
+            meetingService.getAll()
           ]);
 
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
@@ -234,7 +234,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           setDashboardData({
             projects: projects.length,
             invoices: invoices.length,
-            appointments: appointments.length,
+            appointments: meetings.length,
             supportTickets: 0,
             pendingInvoices,
             overdueInvoices,
@@ -245,7 +245,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             previousMonthProjects: previousMonthProjects.length,
             previousMonthInvoices: previousMonthInvoices.length
           });
-          buildRecentActivities(projects as any[], invoices as any[], appointments as any[]);
+          buildRecentActivities(projects as any[], invoices as any[], meetings as any[]);
         } else if (currentUser?.id) {
           // Client sees only their data
           // Resolve clients.id by email (schema uses *_tables.client_id -> clients.id)
@@ -468,10 +468,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } else if (actionName === 'View Calendar') {
-      navigate('/appointments');
+    } else if (actionName === 'View Calendar' || actionName === 'Schedule New' || actionName === 'View All') {
+      navigate('/meetings');
     } else if (actionName === 'Reschedule') {
-      navigate('/appointments');
+      navigate('/meetings');
     } else if (actionName === 'Review') {
       navigate('/proposals');
     } else if (actionName === 'Sign Contract') {
@@ -614,7 +614,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               onClick={() => {
                 if (activity.type === 'project') navigate('/projects');
                 else if (activity.type === 'invoice') navigate('/invoices');
-                else if (activity.type === 'appointment') navigate('/appointments');
+                else if (activity.type === 'appointment') navigate('/meetings');
                 else if (activity.type === 'proposal') navigate('/proposals');
               }}
             >
