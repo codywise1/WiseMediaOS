@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     VideoCameraIcon,
@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import MeetingCard from '../components/MeetingCard';
 import ScheduleMeetingModal from '../components/ScheduleMeetingModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function MeetingsPage() {
     const navigate = useNavigate();
@@ -31,6 +32,8 @@ export default function MeetingsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -102,10 +105,17 @@ export default function MeetingsPage() {
         console.log('Sharing meeting:', meeting.id);
     };
 
-    const handleDeleteMeeting = async (meeting: Meeting) => {
-        if (window.confirm('Are you sure you want to delete this meeting?')) {
+    const handleDeleteMeeting = (meeting: Meeting) => {
+        setSelectedMeeting(meeting);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (selectedMeeting) {
             try {
-                await meetingService.delete(meeting.id);
+                await meetingService.delete(selectedMeeting.id);
+                setIsDeleteDialogOpen(false);
+                setSelectedMeeting(null);
                 loadData();
             } catch (error) {
                 console.error('Error deleting meeting:', error);
@@ -285,6 +295,14 @@ export default function MeetingsPage() {
                 onClose={() => setIsScheduleModalOpen(false)}
                 onSave={loadData}
                 currentUser={currentUser}
+            />
+
+            <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Meeting"
+                message={`Are you sure you want to delete the meeting "${selectedMeeting?.title}"? This action cannot be undone.`}
             />
         </div>
     );

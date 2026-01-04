@@ -215,7 +215,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           />
         </div>
 
-        <div className="hidden md:flex items-center flex-1 max-w-xl pl-1 relative">
+        <div className={`hidden md:flex items-center flex-1 max-w-xl pl-1 relative ${isSidebarCollapsed ? 'ml-[50px]' : ''}`}>
           <div className="flex items-center w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
             <Search size={18} className="text-gray-400 mr-2" />
             <input

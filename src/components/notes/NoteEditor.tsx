@@ -558,9 +558,9 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                     </div>
 
                     {!readOnly && (
-                        <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity my-2">
+                        <div className="flex justify-start opacity-0 group-hover:opacity-100 transition-opacity my-2">
                             <div className="h-px bg-white/10 flex-1 self-center" />
-                            <div className="flex items-center gap-2 px-3 overflow-x-auto scrollbar-hide">
+                            <div className="flex items-center gap-1 px-2 overflow-x-auto scrollbar-hide">
                                 <BlockTypeButton icon={BoldIcon} label="" onClick={() => applyFormatting(index, 'bold')} />
                                 <BlockTypeButton icon={ItalicIcon} label="" onClick={() => applyFormatting(index, 'italic')} />
                                 <BlockTypeButton icon={LinkIcon} label="" onClick={() => applyFormatting(index, 'link')} />
@@ -599,7 +599,7 @@ function BlockTypeButton({ icon: Icon, label, onClick }: any) {
     return (
         <button
             onClick={onClick}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap"
+            className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap"
         >
             <Icon className="h-4 w-4" />
             {label}
