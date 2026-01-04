@@ -20,8 +20,6 @@ function getFileType(file: FileRecord) {
   return (ext ? ext.toUpperCase() : 'FILE');
 }
 
-const getFileType2 = getFileType;
-
 export default function FilesPage() {
   const navigate = useNavigate();
   const [files, setFiles] = useState<FileRecord[]>([]);
