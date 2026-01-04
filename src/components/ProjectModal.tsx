@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client } from '../lib/supabase';
+import { clientService, Client, UserRole } from '../lib/supabase';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+
+interface User {
+  email: string;
+  role: UserRole;
+  name: string;
+  id?: string;
+}
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -11,7 +18,7 @@ interface ProjectModalProps {
   onSave: (project: any) => void;
   project?: any;
   mode: 'create' | 'edit';
-  currentUser?: { role: 'admin' | 'user'; name?: string } | null;
+  currentUser?: User | null;
 }
 
 export default function ProjectModal({ isOpen, onClose, onSave, project, mode, currentUser }: ProjectModalProps) {

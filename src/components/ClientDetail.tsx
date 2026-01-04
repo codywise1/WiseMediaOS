@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { clientService, projectService, invoiceService, Client as ClientType, Project, isSupabaseAvailable, supabase } from '../lib/supabase';
+import { clientService, projectService, invoiceService, Client as ClientType, Project, isSupabaseAvailable, supabase, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   ArrowLeftIcon,
@@ -137,7 +137,7 @@ const buildYouTubeUrl = (raw: string) => {
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
 }
 

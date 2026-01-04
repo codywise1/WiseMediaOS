@@ -16,11 +16,12 @@ import ConfirmDialog from './ConfirmDialog';
 import { proposalService as newProposalService } from '../lib/proposalService';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
+import { UserRole } from '../lib/supabase';
 
 interface User {
   id?: string;
   email: string;
-  role: 'admin' | 'staff' | 'user';
+  role: UserRole;
   name: string;
 }
 

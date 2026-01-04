@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { clientService, invoiceService, Client, Invoice } from '../lib/supabase';
+import { clientService, invoiceService, Client, Invoice, UserRole } from '../lib/supabase';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -20,7 +20,7 @@ import { formatAppDate } from '../lib/dateFormat';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectService, clientService, Project as SbProject } from '../lib/supabase';
+import { projectService, clientService, Project as SbProject, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   PlusIcon,
@@ -15,7 +15,7 @@ import { useToast } from '../contexts/ToastContext';
 
 interface User {
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   name: string;
   id?: string;
 }

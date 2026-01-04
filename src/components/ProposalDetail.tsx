@@ -18,11 +18,12 @@ import { serviceTemplates } from '../config/serviceTemplates';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 import ProposalBuilderModal from './ProposalBuilderModal';
+import { UserRole } from '../lib/supabase';
 
 interface User {
   id?: string;
   email: string;
-  role: 'admin' | 'staff' | 'user';
+  role: UserRole;
   name: string;
 }
 

@@ -23,7 +23,6 @@ import CourseSinglePage from './pages/CourseSinglePage';
 import ProfilePage from './pages/ProfilePage';
 import AdminBackendPage from './pages/AdminBackendPage';
 import CreatorHome from './pages/CreatorHome';
-import AdminFiles from './pages/AdminFiles';
 import Orders from './pages/Orders';
 import FilesPage from './pages/FilesPage';
 import FileDetailPage from './pages/FileDetailPage';
