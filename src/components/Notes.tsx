@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -10,9 +10,6 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   TrashIcon,
-  EyeIcon,
-  FolderIcon,
-  UserIcon,
   ClipboardDocumentCheckIcon,
   VideoCameraIcon
 } from '@heroicons/react/24/outline';
@@ -24,7 +21,6 @@ import {
   Client,
   Project,
   UserRole,
-  NoteCategory
 } from '../lib/supabase';
 import ConfirmDialog from './ConfirmDialog';
 import { formatAppDate } from '../lib/dateFormat';
@@ -68,7 +64,6 @@ export default function Notes({ currentUser }: NotesProps) {
   const [isPinnedExpanded, setIsPinnedExpanded] = useState(true);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const isAdminOrStaff = currentUser?.role === 'admin' || currentUser?.role === 'staff';
 
   useLoadingGuard(loading, setLoading);
 
@@ -110,6 +105,16 @@ export default function Notes({ currentUser }: NotesProps) {
 
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
   const regularNotes = filteredNotes.filter(n => !n.pinned);
+
+  const linkedClients = useMemo(() => {
+    const clientIds = new Set(notes.map(n => n.clientId).filter(Boolean));
+    return clients.filter(client => clientIds.has(client.id));
+  }, [notes, clients]);
+
+  const linkedProjects = useMemo(() => {
+    const projectIds = new Set(notes.map(n => n.projectId).filter(Boolean));
+    return projects.filter(project => projectIds.has(project.id));
+  }, [notes, projects]);
 
   const handleCreateNote = () => {
     setSelectedNote(null);
@@ -160,10 +165,10 @@ export default function Notes({ currentUser }: NotesProps) {
   if (loading) return null;
 
   const stats = [
-    { label: 'Intelligence', count: notes.length, icon: DocumentTextIcon, color: 'text-[#3aa3eb]' },
+    { label: 'All Notes', count: notes.length, icon: DocumentTextIcon, color: 'text-[#3aa3eb]' },
     { label: 'Pinned', count: notes.filter(n => n.pinned).length, icon: BookmarkIcon, color: 'text-yellow-400' },
-    { label: 'Meetings', count: notes.filter(n => n.category === 'meeting').length, icon: VideoCameraIcon, color: 'text-indigo-400' },
     { label: 'SOPs', count: notes.filter(n => n.category === 'sop').length, icon: ClipboardDocumentCheckIcon, color: 'text-emerald-400' },
+    { label: 'Meetings', count: notes.filter(n => n.category === 'meeting').length, icon: VideoCameraIcon, color: 'text-indigo-400' }
   ];
 
   return (
@@ -230,8 +235,8 @@ export default function Notes({ currentUser }: NotesProps) {
         onProjectChange={setSelectedProject}
         visibility={selectedVisibility}
         onVisibilityChange={setSelectedVisibility}
-        clients={clients}
-        projects={projects}
+        clients={linkedClients}
+        projects={linkedProjects}
         onReset={resetFilters}
         resultsCount={filteredNotes.length}
       />
@@ -324,11 +329,11 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
   onTogglePin: (e: React.MouseEvent, n: Note) => void;
 }) {
   const categoryStyles: Record<string, string> = {
-    idea: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    meeting: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-    sales_call: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    sop: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    task: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    idea: 'bg-[#3ba3ea]/20 text-[#3ba3ea] border-[#3ba3ea]/30',
+    meeting: 'bg-[#40ac40]/20 text-[#40ac40] border-[#40ac40]/30',
+    sales_call: 'bg-[#ea3b3b]/20 text-[#ea3b3b] border-[#ea3b3b]/30',
+    sop: 'bg-[#e8ea3b]/20 text-[#e8ea3b] border-[#e8ea3b]/30',
+    task: 'bg-[#ea3b3b]/20 text-[#ea3b3b] border-[#ea3b3b]/30', // Using red for task
     general: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
   };
 
@@ -368,11 +373,11 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${style}`}>
+            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border-2 ${style} shadow-sm`}>
               {note.category}
             </span>
             {note.visibility === 'client_visible' && (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-black uppercase tracking-wider">
+              <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shadow-sm">
                 Shared
               </span>
             )}
@@ -383,12 +388,8 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
           </p>
         </div>
 
-        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-black text-gray-500 uppercase tracking-widest">
-          <span className="flex items-center gap-1.5">
-            <FolderIcon className="h-3.5 w-3.5" />
-            {note.project?.name || 'No Project'}
-          </span>
-          <span>{formatAppDate(note.updated_at)}</span>
+        <div className="pt-4 border-t border-white/5 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+          Last Edited: {formatAppDate(note.updated_at)}
         </div>
       </div>
     );

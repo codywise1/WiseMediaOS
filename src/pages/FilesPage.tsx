@@ -3,14 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
-
-const statusColors: Record<FileStatus, string> = {
-  draft: 'text-gray-300 bg-gray-500/10 border border-gray-400/30',
-  in_review: 'text-amber-200 bg-amber-500/10 border border-amber-400/30',
-  awaiting_client: 'text-blue-300 bg-blue-500/10 border border-blue-400/30',
-  approved: 'text-emerald-300 bg-emerald-500/10 border border-emerald-400/30',
-  archived: 'text-slate-300 bg-slate-500/10 border border-slate-400/30',
-};
+import { fileStatusColors } from '../lib/statusColors';
 
 function getFileType(file: FileRecord) {
   if (file.content_type && file.content_type.includes('/')) {
@@ -315,7 +308,7 @@ export default function FilesPage() {
                 <div className="sm:col-span-2 text-xs text-gray-300">{formatAppDate(file.updated_at)}</div>
 
                 <div className="sm:col-span-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColors[file.status]}`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fileStatusColors[file.status]}`}>
                     {file.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>

@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileRecord, filesService, FileStatus, FileVisibility } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
-
-const statusColors: Record<FileStatus, string> = {
-  draft: 'text-gray-300 bg-gray-500/10 border border-gray-400/30',
-  in_review: 'text-amber-200 bg-amber-500/10 border border-amber-400/30',
-  awaiting_client: 'text-blue-300 bg-blue-500/10 border border-blue-400/30',
-  approved: 'text-emerald-300 bg-emerald-500/10 border border-emerald-400/30',
-  archived: 'text-slate-300 bg-slate-500/10 border border-slate-400/30',
-};
+import { fileStatusColors } from '../lib/statusColors';
 
 export default function FileDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -239,7 +232,7 @@ export default function FileDetailPage() {
                     <option value="archived">Archived</option>
                   </select>
                 </div>
-                <div className={`px-3 py-2 rounded-lg text-sm font-medium ${statusColors[file.status]}`}>
+                <div className={`px-3 py-2 rounded-lg text-sm font-medium ${fileStatusColors[file.status]}`}>
                   {file.status.replace('_', ' ').toUpperCase()}
                 </div>
               </div>

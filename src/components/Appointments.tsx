@@ -16,6 +16,7 @@ import {
 import { formatAppDate } from '../lib/dateFormat';
 import AppointmentModal from './AppointmentModal';
 import ConfirmDialog from './ConfirmDialog';
+import { appointmentStatusColors } from '../lib/statusColors';
 
 interface User {
   email: string;
@@ -130,9 +131,9 @@ const googleCalendarEmbedUrl =
   'https://calendar.google.com/calendar/embed?src=your_calendar_id%40group.calendar.google.com&ctz=America/New_York';
 
 const statusColors = {
-  confirmed: 'bg-white/30 text-white',
-  pending: 'bg-[#3aa3eb]/30 text-[#3aa3eb]',
-  cancelled: 'bg-red-900/30 text-red-400',
+  confirmed: 'bg-[#40ac40]/20 text-[#40ac40] border border-[#40ac40]/30',
+  pending: 'bg-[#3ba3ea]/20 text-[#3ba3ea] border border-[#3ba3ea]/30',
+  cancelled: 'bg-[#ea3b3b]/20 text-[#ea3b3b] border border-[#ea3b3b]/30',
 };
 
 export default function Appointments({ currentUser }: AppointmentsProps) {
@@ -522,7 +523,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${statusColors[appointment.status as keyof typeof statusColors]}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${appointmentStatusColors[appointment.status]}`}>
                     {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                   </span>
                   {isAdmin && (

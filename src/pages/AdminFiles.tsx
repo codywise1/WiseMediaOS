@@ -3,13 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { DocumentIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
 import { DocumentRecord, documentsService } from '../lib/supabase';
-
-const statusColors: Record<string, string> = {
-  Ready: 'text-emerald-300 bg-emerald-500/10 border border-emerald-400/30',
-  Signed: 'text-blue-300 bg-blue-500/10 border border-blue-400/30',
-  Approved: 'text-indigo-200 bg-indigo-500/10 border border-indigo-400/30',
-  'In Review': 'text-amber-200 bg-amber-500/10 border border-amber-400/30',
-};
+import { adminFileStatusColors } from '../lib/statusColors';
 
 export default function AdminFiles() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -203,7 +197,7 @@ export default function AdminFiles() {
                     value={doc.status || 'Ready'}
                     onChange={(e) => handleStatusChange(doc, e.target.value)}
                     disabled={updatingId === doc.id}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold bg-transparent ${statusColors[doc.status || 'Ready'] || 'bg-white/5'} border border-white/10`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold bg-transparent ${adminFileStatusColors[doc.status || 'Ready'] || 'bg-white/5'} border border-white/10`}
                     title="Update status"
                   >
                     <option value="Ready">Ready</option>

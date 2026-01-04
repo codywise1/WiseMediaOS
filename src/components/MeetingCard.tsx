@@ -11,6 +11,7 @@ import {
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { Meeting, MeetingStatus, UserRole } from '../lib/supabase';
+import { meetingStatusColors } from '../lib/statusColors';
 
 interface MeetingCardProps {
     meeting: Meeting;
@@ -20,15 +21,6 @@ interface MeetingCardProps {
     onShare?: (meeting: Meeting) => void;
     onDelete?: (meeting: Meeting) => void;
 }
-
-const statusColors: Record<MeetingStatus, string> = {
-    scheduled: 'text-gray-300 bg-gray-500/10 border-gray-400/30',
-    live: 'text-red-300 bg-red-500/10 border-red-400/30 animate-pulse',
-    processing: 'text-amber-200 bg-amber-500/10 border-amber-400/30',
-    ready: 'text-emerald-300 bg-emerald-500/10 border-emerald-400/30',
-    shared: 'text-blue-300 bg-blue-500/10 border-blue-400/30',
-    archived: 'text-slate-300 bg-slate-500/10 border-slate-400/30',
-};
 
 const typeIcons = {
     video: VideoCameraIcon,
@@ -81,7 +73,7 @@ export default function MeetingCard({
                     </div>
                 </div>
 
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColors[meeting.status]}`}>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${meetingStatusColors[meeting.status]}`}>
                     {meeting.status === 'live' ? 'LIVE' : meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
                 </span>
             </div>
