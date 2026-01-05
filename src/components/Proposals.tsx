@@ -9,10 +9,12 @@ import {
   EyeIcon,
   PencilIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
+import { clientService } from '../lib/supabase';
 import { proposalService as newProposalService } from '../lib/proposalService';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
@@ -30,13 +32,13 @@ interface ProposalsProps {
 }
 
 const statusConfig = {
-  draft: { color: 'bg-gray-900/30 text-gray-400', icon: PencilIcon, label: 'Draft' },
-  sent: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: ClockIcon, label: 'Sent' },
-  viewed: { color: 'bg-[#3aa3eb]/30 text-[#3aa3eb]', icon: EyeIcon, label: 'Viewed' },
-  approved: { color: 'bg-green-500/30 text-green-400', icon: CheckCircleIcon, label: 'Approved' },
-  declined: { color: 'bg-red-900/30 text-red-400', icon: ClipboardDocumentListIcon, label: 'Declined' },
-  expired: { color: 'bg-orange-900/30 text-orange-400', icon: CalendarIcon, label: 'Expired' },
-  archived: { color: 'bg-gray-700/30 text-gray-500', icon: ClipboardDocumentListIcon, label: 'Archived' },
+  draft: { color: 'text-gray-400', border: 'border-gray-500/50', label: 'Draft' },
+  sent: { color: 'text-blue-400', border: 'border-blue-500/50', label: 'Sent' },
+  viewed: { color: 'text-blue-400', border: 'border-blue-500/50', label: 'Viewed' },
+  approved: { color: 'text-green-400', border: 'border-green-500/50', label: 'Approved' },
+  declined: { color: 'text-red-400', border: 'border-red-500/50', label: 'Declined' },
+  expired: { color: 'text-red-400', border: 'border-red-500/50', label: 'Expired' },
+  archived: { color: 'text-gray-500', border: 'border-gray-500/30', label: 'Archived' },
 };
 
 export default function Proposals({ currentUser }: ProposalsProps) {
@@ -44,6 +46,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const { error: toastError, success: toastSuccess } = useToast();
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any | undefined>();
@@ -58,7 +61,21 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         setLoading(true);
       }
 
-      const data = await newProposalService.getAll();
+      let data: any[] = [];
+      const userRole = (currentUser?.role || '').toLowerCase();
+      const isAgency = userRole === 'admin' || userRole === 'staff';
+
+      if (isAgency) {
+        data = await newProposalService.getAll();
+      } else if (currentUser?.email) {
+        // Resolve client_id from email for clients
+        const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+        const effectiveClientId = clientRecord?.id || currentUser.id || '';
+        data = await newProposalService.getByClientId(effectiveClientId);
+      } else {
+        data = [];
+      }
+
       console.log('Raw proposals data:', data);
 
       if (!Array.isArray(data)) {
@@ -156,6 +173,30 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     }
   };
 
+  const getStatusTimeline = (proposal: any) => {
+    if (proposal.status === 'approved' && proposal.approved_at) {
+      return `Signed on ${formatAppDate(proposal.approved_at)}`;
+    }
+
+    if (proposal.expiryDate) {
+      const expiry = new Date(proposal.expiryDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expiry.setHours(0, 0, 0, 0);
+
+      const diffTime = expiry.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return `Expired ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'Day' : 'Days'} Ago`;
+      } else {
+        return `Expires in ${diffDays} ${diffDays === 1 ? 'Day' : 'Days'}`;
+      }
+    }
+
+    return `Created ${formatAppDate(proposal.createdDate)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -171,230 +212,170 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   console.log('Render Proposals - User:', { id: currentUserId, role: userRole, isAgency });
 
-  // Agency sees all, Clients only see their own sent/approved proposals
-  const visibleProposals = isAgency
-    ? proposals
-    : proposals.filter(p =>
-      p.client_id === currentUserId &&
-      (p.status === 'sent' || p.status === 'viewed' || p.status === 'approved')
-    );
+  const visibleProposals = proposals.filter(p => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'approved') return p.status === 'approved';
+    if (statusFilter === 'pending') return p.status === 'sent' || p.status === 'viewed';
+    return true;
+  });
 
-  // Stats should also be filtered for clients to avoid data leaking
+  // Stats calculations
   const statsProposals = isAgency ? (proposals || []) : (visibleProposals || []);
-  const filteredTotalValue = statsProposals.reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
-  const filteredApprovedValue = statsProposals.filter(p => p?.status === 'approved').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
-  const filteredPendingCount = statsProposals.filter(p => p?.status === 'sent' || p?.status === 'viewed').length;
-
-  console.log('Visible Proposals Count:', visibleProposals.length);
+  const awaitingCount = statsProposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
+  const approvedRevenue = statsProposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
+  const totalPipeline = statsProposals.reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
+  const expiredValue = statsProposals.filter(p => p.status === 'expired').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+      <div className="glass-card neon-glow rounded-3xl p-8 lg:p-10 mb-8 border border-white/5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Proposals</h1>
-            <p className="text-gray-300">Create, track, and manage project proposals</p>
+            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>PROPOSALS</h1>
+            <p className="text-gray-400 text-lg font-medium">Create, track, and manage project proposals</p>
           </div>
           {isAgency && (
             <button
-              onClick={handleNewProposal}
-              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
             >
               <PlusIcon className="h-5 w-5" />
-              New Proposal
+              <span>New Proposal</span>
             </button>
-          )}
-          {!isAgency && (
-            <div className="text-sm text-gray-400">Review and manage your proposals</div>
           )}
         </div>
       </div>
 
       {/* Proposal Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <ClipboardDocumentListIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Total Proposals</p>
-              <p className="text-2xl font-bold text-white">{visibleProposals.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-500">
-              <CheckCircleIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Approved Value</p>
-              <p className="text-2xl font-bold text-white">${(filteredApprovedValue / 100).toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <ClockIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Pending Review</p>
-              <p className="text-2xl font-bold text-white">{filteredPendingCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-[#3aa3eb]">
-              <CurrencyDollarIcon className="h-6 w-6 text-white" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-white">Total Value</p>
-              <p className="text-2xl font-bold text-white">${(filteredTotalValue / 100).toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Proposals List */}
-      <div className="space-y-6">
-        {visibleProposals.length === 0 ? (
-          <div className="glass-card rounded-xl p-12 text-center">
-            <ClipboardDocumentListIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No proposals found</h3>
-            <p className="text-gray-400">
-              {isAgency
-                ? "You haven't created any proposals yet. Click the button above to start."
-                : "You don't have any sent or approved proposals at this time."}
-            </p>
-          </div>
-        ) : visibleProposals.map((proposal) => {
-          console.log('Proposal status:', proposal.status, 'Type:', typeof proposal.status);
-          const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
-          const StatusIcon = statusInfo.icon;
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Awaiting Approval', value: awaitingCount, icon: UserIcon, filter: 'pending' as const, color: 'text-white', iconBg: 'bg-slate-700/50' },
+          { label: 'Approved Revenue', value: `$${(approvedRevenue / 100).toLocaleString()}`, icon: UserIcon, filter: 'approved' as const, color: 'text-white', iconBg: 'bg-green-500/20' },
+          { label: 'Total Pipeline Value', value: `$${(totalPipeline / 100).toLocaleString()}`, icon: UserIcon, filter: 'all' as const, color: 'text-white', iconBg: 'bg-blue-500/20', isActive: true },
+          { label: 'Expired Value', value: `$${(expiredValue / 100).toLocaleString()}`, icon: UserIcon, filter: 'all' as const, color: 'text-white', iconBg: 'bg-red-500/20' },
+        ].map((card, index) => {
+          const isFiltering = statusFilter === card.filter;
+          const isPipeline = card.label === 'Total Pipeline Value';
           return (
-            <div key={proposal.id} className="glass-card rounded-xl p-6 card-hover neon-glow">
-              <div className="flex flex-col gap-4 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="p-3 rounded-lg bg-slate-700">
-                    <ClipboardDocumentListIcon className="h-6 w-6 text-gray-300" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:gap-3">
-                      <h3 className="text-lg font-bold text-white min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{proposal.title}</h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusInfo.color}`}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {statusInfo.label}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400 mt-1 truncate">{proposal.client}</p>
-                    <p className="text-sm text-gray-500 line-clamp-2">{proposal.description}</p>
-                  </div>
+            <div
+              key={index}
+              onClick={() => setStatusFilter(card.filter)}
+              className={`glass-card rounded-2xl p-6 cursor-pointer transition-all duration-300 hover-glow group relative overflow-hidden border ${isFiltering || (isPipeline && statusFilter === 'all')
+                ? 'border-[#3aa3eb] bg-[#3aa3eb]/10'
+                : 'border-white/5 hover:border-white/10'
+                }`}
+            >
+              <div className="flex items-center gap-4 relative z-10">
+                <div className={`p-3 rounded-xl ${card.iconBg} border border-white/10`}>
+                  <card.icon className="h-6 w-6 text-white" />
                 </div>
-
-                <div className="text-left sm:text-right">
-                  {isAgency && (
-                    <div className="flex items-center justify-start sm:justify-end space-x-2 mb-2">
-                      <button
-                        onClick={() => handleViewProposal(proposal.id)}
-                        className="text-blue-500 hover:text-white p-1 shrink-glow-button"
-                        title="View Proposal"
-                      >
-                        <EyeIcon className="h-4 w-4 text-blue-500" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProposal(proposal)}
-                        className="text-blue-500 hover:text-red-400 p-1 shrink-glow-button"
-                        title="Delete Proposal"
-                      >
-                        <TrashIcon className="h-4 w-4 text-blue-500" />
-                      </button>
-                    </div>
-                  )}
-                  <p className="text-2xl font-bold text-white">${((proposal.value || 0) / 100).toLocaleString()}</p>
-                </div>
-              </div>
-
-              {/* Linked Invoice Info */}
-              {proposal.invoice && (
-                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CurrencyDollarIcon className="h-4 w-4 text-blue-400" />
-                      <span className="text-sm text-blue-300 font-semibold">Linked Invoice:</span>
-                      <span className="text-sm text-gray-300">
-                        {proposal.invoice.status === 'draft' ? 'Draft (activates on approval)' :
-                          proposal.invoice.status === 'unpaid' ? 'Active - Unpaid' :
-                            proposal.invoice.status === 'paid' ? 'Paid' : 'Voided'}
-                      </span>
-                    </div>
-                    {proposal.invoice.status !== 'draft' && (
-                      <button
-                        onClick={() => navigate(`/invoices/${proposal.invoice.id}`)}
-                        className="text-xs text-blue-400 hover:text-blue-300"
-                      >
-                        View Invoice →
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                    <div className="flex items-center space-x-2">
-                      <CalendarIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-400">Created: {proposal.createdDate ? formatAppDate(proposal.createdDate) : '—'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CalendarIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-400">Expires: {proposal.expiryDate ? formatAppDate(proposal.expiryDate) : '—'}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:justify-end flex-wrap">
-                    {proposal.status === 'sent' && isAgency && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(proposal.id)}
-                          className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleDecline(proposal.id)}
-                          className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
-                        >
-                          Decline
-                        </button>
-                      </>
-                    )}
-                    {proposal.status === 'approved' && (
-                      <div className="flex items-center gap-2 text-sm text-green-400">
-                        <CheckCircleIcon className="h-4 w-4" />
-                        <span>Approved {proposal.approved_at ? formatAppDate(proposal.approved_at) : ''}</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => navigate(`/proposals/${proposal.id}`)}
-                      className="px-4 py-2 bg-[#3aa3eb] text-white text-sm font-medium rounded-lg hover:bg-[#2d8bc7] transition-colors"
-                    >
-                      View Details
-                    </button>
-                  </div>
+                <div>
+                  <p className="text-sm text-white font-medium mb-1">{card.label}</p>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    {card.value}
+                  </p>
                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Proposals List (Table-like Header) */}
+      <div className="pt-8">
+        <div className="px-8 mb-4 grid grid-cols-12 gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 border-b border-white/5 pb-2">
+          <div className="col-span-3">Proposal Name</div>
+          <div className="col-span-2">Client</div>
+          <div className="col-span-2 text-center">Deal Stage</div>
+          <div className="col-span-1 text-center">Value</div>
+          <div className="col-span-3 text-center">Status Timeline</div>
+          <div className="col-span-1 text-right"></div>
+        </div>
+
+        <div className="space-y-3">
+          {visibleProposals.length === 0 ? (
+            <div className="glass-card rounded-2xl p-12 text-center border border-white/5">
+              <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
+              <p className="text-gray-500">
+                {isAgency
+                  ? "You haven't created any proposals yet."
+                  : "You don't have any matching proposals at this time."}
+              </p>
+            </div>
+          ) : visibleProposals.map((proposal) => {
+            const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
+            const timelineStatus = getStatusTimeline(proposal);
+            const isApproved = proposal.status === 'approved';
+            const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
+
+            return (
+              <div key={proposal.id} className="glass-card rounded-2xl p-6 transition-all duration-300 hover:border-[#3aa3eb]/50 hover:shadow-[0_0_20px_rgba(58,163,235,0.1)] group relative border border-white/5 overflow-hidden">
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  {/* Proposal Name */}
+                  <div className="col-span-3 min-w-0">
+                    <h3 className="text-xl font-bold text-white truncate mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{proposal.title}</h3>
+                    <div className="flex flex-wrap gap-2 text-Montserrat">
+                      <span className="px-3 py-1 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                        Website
+                      </span>
+                      {proposal.services && proposal.services.length > 1 && (
+                        <span className="px-3 py-1 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                          Web App
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Client */}
+                  <div className="col-span-2 text-gray-300 font-bold">
+                    {proposal.client}
+                  </div>
+
+                  {/* Deal Stage */}
+                  <div className="col-span-2 flex justify-center">
+                    <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusInfo.border} ${statusInfo.color} bg-black/20`}>
+                      {statusInfo.label}
+                    </span>
+                  </div>
+
+                  {/* Value */}
+                  <div className="col-span-1 text-center text-white font-bold">
+                    ${((proposal.value || 0) / 100).toLocaleString()}
+                  </div>
+
+                  {/* Status Timeline */}
+                  <div className="col-span-3 flex justify-center">
+                    <span className={`px-4 py-2 rounded-full text-[10px] font-bold tracking-tight border ${isApproved ? 'bg-green-500/10 border-green-500/50 text-green-400' :
+                      isExpired ? 'bg-red-500/10 border-red-500/50 text-red-400' :
+                        'bg-[#3aa3eb]/10 border-[#3aa3eb]/50 text-blue-400'
+                      }`}>
+                      {timelineStatus}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-1 flex items-center justify-end gap-3">
+                    <button onClick={() => handleViewProposal(proposal.id)} className="text-gray-400 hover:text-white transition-colors">
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
+                    {isAgency && (
+                      <>
+                        <button onClick={() => navigate(`/proposals/${proposal.id}`)} className="text-gray-400 hover:text-white transition-colors">
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                        <button onClick={() => handleDeleteProposal(proposal)} className="text-gray-400 hover:text-red-400 transition-colors">
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <ProposalBuilderModal

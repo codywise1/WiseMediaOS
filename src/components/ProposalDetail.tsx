@@ -11,14 +11,16 @@ import {
   ArchiveBoxIcon,
   ClipboardDocumentListIcon,
   BanknotesIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  PencilIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 import ProposalBuilderModal from './ProposalBuilderModal';
-import { UserRole } from '../lib/supabase';
+import { UserRole, clientService } from '../lib/supabase';
 
 interface User {
   id?: string;
@@ -51,6 +53,10 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'sow' | 'pricing' | 'activity' | 'timeline'>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [clientSignature, setClientSignature] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
+  const [effectiveClientId, setEffectiveClientId] = useState<string | null>(null);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ClipboardDocumentListIcon },
@@ -67,30 +73,47 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   }, [id]);
 
   const loadProposal = async () => {
+    if (!id) return;
     try {
       setLoading(true);
-      const data = await proposalService.getById(id!);
-      setProposal(data);
+      const data = await proposalService.getById(id);
+      if (data) {
+        setProposal(data);
+        const itemsData = await proposalService.getItems(id);
+        setItems(itemsData);
 
-      const itemsData = await proposalService.getItems(id!);
-      setItems(itemsData);
+        // Resolve client ID for current user if they are a client
+        if (currentUser?.email) {
+          const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
+          setEffectiveClientId(clientRecord?.id || currentUser.id || null);
+        }
+      }
     } catch (error) {
       console.error('Error loading proposal:', error);
-      toastError('Failed to load proposal');
+      toastError('Failed to load proposal details');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async () => {
-    if (!id) return;
+  const handleApprove = () => {
+    setClientSignature(currentUser?.name || '');
+    setIsApprovalModalOpen(true);
+  };
+
+  const confirmApproval = async () => {
+    if (!id || !clientSignature.trim()) return;
     try {
-      await proposalService.approve(id, currentUser?.id);
-      toastSuccess('Proposal approved! Invoice has been activated.');
+      setIsApproving(true);
+      await proposalService.approve(id, currentUser?.id, clientSignature);
+      toastSuccess('Proposal approved! Legal terms accepted and invoice activated.');
+      setIsApprovalModalOpen(false);
       await loadProposal();
     } catch (error) {
       console.error('Error approving proposal:', error);
       toastError('Failed to approve proposal');
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -157,10 +180,10 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const statusInfo = statusIcons[proposal.status as keyof typeof statusIcons];
   const StatusIcon = statusInfo.icon;
 
-  const userRole = currentUser?.role;
+  const userRole = (currentUser?.role || '').toLowerCase();
   const isAdmin = userRole === 'admin';
   const isStaff = userRole === 'staff';
-  const isClientRecipient = currentUser?.id === proposal.client_id;
+  const isClientRecipient = proposal?.client_id === effectiveClientId;
   const canApproveDecline = isAdmin || isStaff || isClientRecipient;
   const canRevise = isAdmin || isStaff;
 
@@ -476,6 +499,9 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                 <div>
                   <p className="text-sm text-white">
                     <span className="font-bold capitalize">{event.type.replace('_', ' ')}</span>
+                    {event.type === 'signed' && event.meta?.signature && (
+                      <span className="text-gray-400 font-normal"> by {event.meta.signature}</span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500">{formatAppDate(event.created_at)}</p>
                 </div>
@@ -498,6 +524,67 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
         editProposalId={proposal.id}
         currentUserId={currentUser?.id}
       />
+
+      {/* Signature Modal */}
+      {isApprovalModalOpen && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsApprovalModalOpen(false)} />
+
+            <div className="relative w-full max-w-md bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 p-8">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
+                  <ShieldCheckIcon className="h-8 w-8 text-[#3aa3eb]" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  Confirm Approval
+                </h2>
+                <p className="text-gray-400 text-sm">
+                  By signing this proposal, you agree to the Scope of Work, Pricing, and Master Agreement terms outline in the document.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Draw or Type Signature (Full Name)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={clientSignature}
+                      onChange={(e) => setClientSignature(e.target.value)}
+                      placeholder="Type your full name"
+                      className="w-full px-4 py-4 bg-slate-800 border-2 border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-[#3aa3eb] transition-all italic text-xl"
+                      style={{ fontFamily: "'Dancing Script', 'Style Script', cursive" }}
+                    />
+                    <PencilIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-2 text-center uppercase tracking-widest">
+                    Digital Signature - Equivalent to hand-written signature
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                  <button
+                    onClick={confirmApproval}
+                    disabled={!clientSignature.trim() || isApproving}
+                    className="w-full py-4 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:hover:bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-all"
+                  >
+                    {isApproving ? 'Processing...' : 'Confirm & Sign'}
+                  </button>
+                  <button
+                    onClick={() => setIsApprovalModalOpen(false)}
+                    className="w-full py-3 text-gray-400 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

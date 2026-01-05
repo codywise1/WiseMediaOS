@@ -24,7 +24,7 @@ interface ProposalFormData {
     quantity: number;
     unitPrice: number;
   }[];
-  billingPlan: 'full_upfront' | 'split' | 'milestones' | 'monthly_retainer';
+  billingPlan: 'full_upfront' | 'split' | 'milestones' | 'monthly_retainer' | 'custom';
   paymentTermsDays: number;
   depositPercent: number;
 }
@@ -118,7 +118,13 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   const loadClients = async () => {
     try {
       const data = await clientService.getAll();
-      setClients(data);
+      // Sort clients alphabetically by company or name
+      const sortedData = [...data].sort((a, b) => {
+        const nameA = (a.company || a.name || '').toLowerCase();
+        const nameB = (b.company || b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      setClients(sortedData);
     } catch (error) {
       console.error('Error loading clients:', error);
     }
@@ -504,12 +510,13 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Unit Price (cents)</label>
+                                <label className="block text-xs font-bold text-gray-400 mb-1">Unit Price ($)</label>
                                 <input
                                   type="number"
                                   min="0"
-                                  value={selectedService.unitPrice}
-                                  onChange={(e) => updateServicePrice(template.serviceType, parseInt(e.target.value) || 0)}
+                                  step="0.01"
+                                  value={selectedService.unitPrice / 100}
+                                  onChange={(e) => updateServicePrice(template.serviceType, Math.round(parseFloat(e.target.value) * 100) || 0)}
                                   className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white text-sm"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
@@ -588,7 +595,8 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                       { value: 'full_upfront', label: 'Full Upfront', desc: '100% due on approval' },
                       { value: 'split', label: '50/50 Split', desc: '50% deposit, 50% on completion' },
                       { value: 'milestones', label: 'Milestones', desc: 'Custom milestone payments' },
-                      { value: 'monthly_retainer', label: 'Monthly', desc: 'Recurring monthly billing' }
+                      { value: 'monthly_retainer', label: 'Monthly', desc: 'Recurring monthly billing' },
+                      { value: 'custom', label: 'Custom', desc: 'Unstructured or special terms' }
                     ].map((plan) => (
                       <div
                         key={plan.value}

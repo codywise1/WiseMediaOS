@@ -129,6 +129,50 @@ export const proposalService = {
     return processedData as Proposal[];
   },
 
+  async getByClientId(clientId: string) {
+    if (!isSupabaseAvailable()) {
+      return [];
+    }
+
+    const sb = supabase!;
+    const { data, error } = await sb
+      .from('proposals')
+      .select(`
+        *,
+        client:clients(*),
+        invoice:invoices(*),
+        items:proposal_items(*),
+        billing_plan:billing_plans(*)
+      `)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const processedData = data.map(proposal => {
+      const invoiceData = Array.isArray(proposal.invoice) ? proposal.invoice[0] : proposal.invoice;
+      const billingPlanData = Array.isArray(proposal.billing_plan) ? proposal.billing_plan[0] : proposal.billing_plan;
+
+      let finalValue = proposal.value || proposal.total_amount_cents || 0;
+      if (proposal.items && proposal.items.length > 0) {
+        finalValue = proposal.items.reduce(
+          (sum: number, item: any) => sum + (item.line_total_cents || 0),
+          0
+        );
+      }
+
+      return {
+        ...proposal,
+        value: finalValue,
+        invoice: invoiceData,
+        billing_plan: billingPlanData
+      };
+    });
+
+    return processedData as Proposal[];
+  },
+
   async getById(id: string) {
     if (!isSupabaseAvailable()) {
       return null;
@@ -530,13 +574,38 @@ export const proposalService = {
     return proposalData as Proposal;
   },
 
-  async approve(proposalId: string, userId?: string) {
+  async approve(proposalId: string, userId?: string, signature?: string) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
     }
 
     const sb = supabase!;
 
+    // Use RPC if available (bypasses RLS safely for clients)
+    try {
+      const { error: rpcError } = await sb
+        .rpc('approve_proposal', {
+          p_proposal_id: proposalId,
+          p_signature: signature || ''
+        });
+
+      if (!rpcError) {
+        // Fetch and return the updated proposal
+        const { data: updatedProposal } = await sb
+          .from('proposals')
+          .select('*, client:clients(*), invoice:invoices(*), items:proposal_items(*), billing_plan:billing_plans(*)')
+          .eq('id', proposalId)
+          .single();
+        return updatedProposal as Proposal;
+      }
+
+      // If RPC doesn't exist yet or fails, fallback to manual logic (legacy or for agency users with full RLS)
+      console.warn('RPC approve_proposal failed or missing, falling back to manual update:', rpcError);
+    } catch (e) {
+      console.warn('RPC call failed, falling back to manual update:', e);
+    }
+
+    // Manual fallback (original logic)
     // Recalculate total value to ensure sync
     const { data: allItems } = await sb
       .from('proposal_items')
@@ -546,6 +615,7 @@ export const proposalService = {
     const totalCents = (allItems || []).reduce((sum, item) => sum + (item.line_total_cents || 0), 0);
 
     // Update proposal status AND value
+    // We update status first, then value if it fails we still want status updated
     const { data: proposalData, error: proposalError } = await sb
       .from('proposals')
       .update({
@@ -554,17 +624,37 @@ export const proposalService = {
         value: totalCents
       })
       .eq('id', proposalId)
-      .select()
-      .single();
+      .select();
 
-    if (proposalError) throw proposalError;
+    if (proposalError) {
+      console.warn('Full update failed, attempting status-only update:', proposalError);
+      // Fallback: try updating only status if value update is restricted by RLS
+      const { data: fallbackData, error: fallbackError } = await sb
+        .from('proposals')
+        .update({
+          status: 'approved',
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', proposalId)
+        .select();
+
+      if (fallbackError) throw fallbackError;
+      if (!fallbackData || fallbackData.length === 0) {
+        throw new Error('Fail: Proposal not found or update permission denied');
+      }
+      return fallbackData[0] as Proposal;
+    }
+
+    if (!proposalData || proposalData.length === 0) {
+      throw new Error('Fail: Proposal not found or update permission denied');
+    }
 
     // Get and update linked invoice
     const { data: invoice } = await sb
       .from('invoices')
       .select('*')
       .eq('proposal_id', proposalId)
-      .single();
+      .maybeSingle();
 
     if (invoice) {
       // Activate invoice - update status to ready AND sync amount
@@ -586,6 +676,16 @@ export const proposalService = {
       }]);
     }
 
+    // Log signature if provided
+    if (signature) {
+      await sb.from('proposal_events').insert([{
+        proposal_id: proposalId,
+        type: 'signed',
+        meta: { signature },
+        created_by_user_id: userId
+      }]);
+    }
+
     // Log proposal approval
     await sb.from('proposal_events').insert([{
       proposal_id: proposalId,
@@ -593,7 +693,7 @@ export const proposalService = {
       created_by_user_id: userId
     }]);
 
-    return proposalData as Proposal;
+    return (proposalData[0] as unknown) as Proposal;
   },
 
   async decline(proposalId: string, userId?: string) {
