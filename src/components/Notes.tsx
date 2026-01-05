@@ -270,7 +270,7 @@ export default function Notes({ currentUser }: NotesProps) {
             >
               <div className="flex items-center">
                 <div className={`p-3 rounded-lg ${isActive ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-                  <stat.icon className={`h-6 w-6 ${isActive ? 'text-white' : stat.color}`} />
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-white font-medium">{stat.label}</p>

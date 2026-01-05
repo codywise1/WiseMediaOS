@@ -101,14 +101,6 @@ export default function NoteSearchFilters({
                             <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                     </select>
-
-                    <button
-                        onClick={onReset}
-                        className="p-2 text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
-                        title="Clear all"
-                    >
-                        <XMarkIcon className="h-5 w-5" />
-                    </button>
                 </div>
             </div>
 
