@@ -28,7 +28,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
     client_id: '',
     client_name: '',
     project_type: 'Website',
-    status: 'planning',
+    status: 'not_started',
     priority: 'Medium',
     startDate: '',
     dueDate: '',
@@ -66,7 +66,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         client_id: project.client_id || '',
         client_name: project.client || '',
         project_type: project.project_type || 'Website',
-        status: project.status || 'planning',
+        status: project.status || 'not_started',
         priority: project.priority || 'Medium',
         startDate: project.startDate ? formatToISODate(project.startDate) : '',
         dueDate: project.dueDate ? formatToISODate(project.dueDate) : '',
@@ -86,7 +86,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         client_id: '',
         client_name: '',
         project_type: 'Website',
-        status: 'planning',
+        status: 'not_started',
         priority: 'Medium',
         startDate: '',
         dueDate: '',
@@ -201,10 +201,10 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 required
               >
-                <option value="planning">Planning</option>
+                <option value="not_started">Not Started</option>
                 <option value="in_progress">In Progress</option>
+                <option value="in_review">In Review</option>
                 <option value="completed">Completed</option>
-                <option value="on_hold">On Hold</option>
               </select>
             </div>
 

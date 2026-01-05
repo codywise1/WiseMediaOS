@@ -6,7 +6,8 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ArrowDownIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -24,7 +25,7 @@ interface ProjectsProps {
   currentUser: User | null;
 }
 
-type ProjectStatus = 'planning' | 'in_progress' | 'completed' | 'on_hold';
+type ProjectStatus = 'not_started' | 'in_progress' | 'in_review' | 'completed';
 
 interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 'client' | 'status'> {
   id: string;
@@ -34,14 +35,15 @@ interface Project extends Omit<SbProject, 'budget' | 'due_date' | 'team_size' | 
   team: number;
   color: string;
   client: string;
+  industry: string;
   status: ProjectStatus;
 }
 
 const kanbanColumns = [
-  { id: 'planning', title: 'Planning', color: 'bg-[#3aa3eb]' },
+  { id: 'not_started', title: 'Not Started', color: 'bg-slate-500' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-[#3aa3eb]' },
-  { id: 'completed', title: 'Completed', color: 'bg-green-500' },
-  { id: 'on_hold', title: 'On Hold', color: 'bg-red-500' }
+  { id: 'in_review', title: 'In Review', color: 'bg-amber-500' },
+  { id: 'completed', title: 'Completed', color: 'bg-green-500' }
 ];
 
 const ScrollbarStyles = () => (
@@ -89,6 +91,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
+  const [industryFilter, setIndustryFilter] = useState('all');
   const [clients, setClients] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -96,11 +99,16 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
-      case 'planning': return 'bg-[#3aa3eb]';
-      case 'in_progress': return 'bg-[#3aa3eb]';
-      case 'completed': return 'bg-green-500';
-      case 'on_hold': return 'bg-red-500';
-      default: return 'bg-[#3aa3eb]';
+      case 'not_started':
+        return 'text-slate-400';
+      case 'in_progress':
+        return 'text-blue-400';
+      case 'in_review':
+        return 'text-amber-400';
+      case 'completed':
+        return 'text-green-400';
+      default:
+        return 'text-gray-400';
     }
   };
 
@@ -149,10 +157,12 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
       // Transform data to match component interface
       const normalized = (status: string | null | undefined): ProjectStatus => {
-        if (status === 'planning' || status === 'in_progress' || status === 'completed' || status === 'on_hold') {
+        if (status === 'not_started' || status === 'in_progress' || status === 'in_review' || status === 'completed') {
           return status;
         }
-        return 'planning';
+        // Fallback or mapping for legacy data
+        if (status === 'on_hold') return 'not_started';
+        return 'not_started';
       };
 
       const transformedProjects: Project[] = data.map(project => {
@@ -180,6 +190,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
           updated_at: project.updated_at,
           client_id: project.client_id,
           client: project.client?.name || 'Unknown Client',
+          industry: project.client?.category || 'General',
           budget: project.budget ? `$${project.budget.toLocaleString()}` : '$0',
           dueDate: project.due_date || '',
           startDate: project.start_date || '',
@@ -406,8 +417,14 @@ export default function Projects({ currentUser }: ProjectsProps) {
       project.client?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
-    return matchesSearch && matchesStatus && matchesClient;
+    const matchesIndustry = industryFilter === 'all' || project.industry === industryFilter;
+    return matchesSearch && matchesStatus && matchesClient && matchesIndustry;
   });
+
+  const uniqueIndustries = Array.from(new Set(projects.map(p => p.industry).filter(Boolean)));
+
+  const clientIdsWithProjects = new Set(projects.map(p => p.client_id));
+  const clientsWithProjects = clients.filter(c => clientIdsWithProjects.has(c.id));
 
 
   const getProjectsByStatus = (status: string) => {
@@ -434,7 +451,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
         <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div className="min-w-0">
-              <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Projects</h1>
+              <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
               <p className="text-gray-300">Manage and track all your active projects</p>
             </div>
             {isAdmin && (
@@ -449,22 +466,27 @@ export default function Projects({ currentUser }: ProjectsProps) {
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search projects or clients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search projects or clients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                />
+              </div>
             </div>
-            <div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project State</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
               >
                 <option value="all">All Status</option>
                 {kanbanColumns.map(col => (
@@ -472,23 +494,76 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 ))}
               </select>
             </div>
-            {isAdmin && (
-              <div>
-                <select
-                  value={clientFilter}
-                  onChange={(e) => setClientFilter(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                >
-                  <option value="all">All Clients</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
+              <select
+                disabled={!isAdmin}
+                value={clientFilter}
+                onChange={(e) => setClientFilter(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="all">All Clients</option>
+                {clientsWithProjects.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Industry</label>
+              <select
+                value={industryFilter}
+                onChange={(e) => setIndustryFilter(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+              >
+                <option value="all">All Categories</option>
+                {uniqueIndustries.map(industry => (
+                  <option key={industry} value={industry}>{industry}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Active Filters Display */}
+          {(searchTerm || statusFilter !== 'all' || clientFilter !== 'all' || industryFilter !== 'all') && (
+            <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
+              <span className="text-gray-400">Active filters:</span>
+              {searchTerm && (
+                <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                  Search: {searchTerm}
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                  Status: {kanbanColumns.find(c => c.id === statusFilter)?.title}
+                </span>
+              )}
+              {clientFilter !== 'all' && (
+                <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                  Client: {clients.find(c => c.id === clientFilter)?.name}
+                </span>
+              )}
+              {industryFilter !== 'all' && (
+                <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                  Industry: {industryFilter}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setClientFilter('all');
+                  setIndustryFilter('all');
+                }}
+                className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -509,7 +584,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                     {column.title}
                   </h3>
                 </div>
@@ -585,14 +660,19 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 ))}
 
                 {getProjectsByStatus(column.id).length === 0 && (
-                  <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
-                    ? 'border-blue-400 bg-blue-500/5'
-                    : 'border-slate-700/30'
+                  <div className={`flex flex-col items-center justify-center py-16 px-4 rounded-xl border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
+                    ? 'border-green-400 bg-green-500/10 scale-105'
+                    : 'border-slate-700/50 bg-slate-800/20'
                     }`}>
-                    <p className="text-gray-500 text-sm">No projects in {column.title.toLowerCase()}</p>
-                    {isAdmin && (
-                      <p className="text-gray-600 text-xs mt-1">Drag projects here or create new ones</p>
-                    )}
+                    <div className={`mb-4 p-3 rounded-full border-2 border-dashed ${dragOverColumn === column.id ? 'border-green-400 bg-green-400/20' : 'border-slate-700'}`}>
+                      <ArrowDownIcon className={`h-8 w-8 ${dragOverColumn === column.id ? 'text-green-400 animate-bounce' : 'text-slate-600'}`} />
+                    </div>
+                    <p className={`text-base font-bold uppercase tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                      No Project Here
+                    </p>
+                    <p className="text-gray-500 text-xs text-center max-w-[150px]">
+                      {isAdmin ? 'Drag projects here or create a new one' : 'No projects in this stage'}
+                    </p>
                   </div>
                 )}
               </div>
