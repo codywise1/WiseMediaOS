@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import {
   DocumentTextIcon,
   Squares2X2Icon,
@@ -42,7 +41,6 @@ interface NotesProps {
 
 export default function Notes({ currentUser }: NotesProps) {
   const navigate = useNavigate();
-  const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -60,6 +58,7 @@ export default function Notes({ currentUser }: NotesProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [selectedVisibility, setSelectedVisibility] = useState<string>('all');
   const [isPinnedExpanded, setIsPinnedExpanded] = useState(true);
 
@@ -99,8 +98,9 @@ export default function Notes({ currentUser }: NotesProps) {
     const matchesClient = selectedClient === 'all' || note.clientId === selectedClient;
     const matchesProject = selectedProject === 'all' || note.projectId === selectedProject;
     const matchesVisibility = selectedVisibility === 'all' || note.visibility === selectedVisibility;
+    const matchesPinnedFilter = !showPinnedOnly || note.pinned;
 
-    return matchesSearch && matchesCategory && matchesClient && matchesProject && matchesVisibility;
+    return matchesSearch && matchesCategory && matchesClient && matchesProject && matchesVisibility && matchesPinnedFilter;
   });
 
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
@@ -169,6 +169,7 @@ export default function Notes({ currentUser }: NotesProps) {
     setSelectedClient('all');
     setSelectedProject('all');
     setSelectedVisibility('all');
+    setShowPinnedOnly(false);
   };
 
   if (loading) return null;
@@ -182,73 +183,105 @@ export default function Notes({ currentUser }: NotesProps) {
 
   return (
     <div className="space-y-8 pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight font-display">
-            NOTES
-          </h1>
-          <p className="text-gray-400 mt-1 uppercase text-[10px] font-black tracking-widest flex items-center gap-2">
-            Intelligence Layer <span className="w-1.5 h-1.5 rounded-full bg-[#3aa3eb] animate-pulse" /> Agency Wide
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
+      {/* Header and Filters Section */}
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>NOTES</h1>
+            <p className="text-gray-300">Intelligence Layer of Wise Media Agency Wide</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
+            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1 shrink-0">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-[#3aa3eb] text-white' : 'text-gray-400 hover:text-white'} shrink-glow-button`}
+                title="Grid View"
+              >
+                <Squares2X2Icon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-[#3aa3eb] text-white' : 'text-gray-400 hover:text-white'} shrink-glow-button`}
+                title="List View"
+              >
+                <Bars3Icon className="h-5 w-5" />
+              </button>
+            </div>
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#3aa3eb] text-white' : 'text-gray-500 hover:text-white'}`}
+              onClick={handleCreateNote}
+              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
             >
-              <Squares2X2Icon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#3aa3eb] text-white' : 'text-gray-500 hover:text-white'}`}
-            >
-              <Bars3Icon className="h-5 w-5" />
+              <PlusIcon className="h-5 w-5" />
+              <span>New Note</span>
             </button>
           </div>
-          <button
-            onClick={handleCreateNote}
-            className="btn-primary shrink-glow-button px-6 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs flex items-center gap-2"
-          >
-            <PlusIcon className="h-5 w-5" />
-            New Note
-          </button>
         </div>
+
+        {/* Filters Section */}
+        <NoteSearchFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          category={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          clientId={selectedClient}
+          onClientChange={setSelectedClient}
+          projectId={selectedProject}
+          onProjectChange={setSelectedProject}
+          visibility={selectedVisibility}
+          onVisibilityChange={setSelectedVisibility}
+          clients={linkedClients}
+          projects={linkedProjects}
+          onReset={resetFilters}
+          resultsCount={filteredNotes.length}
+        />
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="glass-card rounded-2xl p-6 border border-white/5 flex items-center gap-4 group">
-            <div className={`h-12 w-12 rounded-full bg-white/5 border border-white/5 flex items-center justify-center transition-transform group-hover:scale-110 ${stat.color}`}>
-              <stat.icon className="h-6 w-6" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => {
+          const isActive =
+            (stat.label === 'All Notes' && selectedCategory === 'all' && !showPinnedOnly) ||
+            (stat.label === 'Pinned' && showPinnedOnly) ||
+            (stat.label === 'SOPs' && selectedCategory === 'sop') ||
+            (stat.label === 'Meetings' && selectedCategory === 'meeting');
+
+          return (
+            <div
+              key={idx}
+              onClick={() => {
+                if (stat.label === 'Pinned') {
+                  setShowPinnedOnly(true);
+                  setSelectedCategory('all');
+                } else if (stat.label === 'All Notes') {
+                  setShowPinnedOnly(false);
+                  setSelectedCategory('all');
+                } else if (stat.label === 'SOPs') {
+                  setShowPinnedOnly(false);
+                  setSelectedCategory('sop');
+                } else if (stat.label === 'Meetings') {
+                  setShowPinnedOnly(false);
+                  setSelectedCategory('meeting');
+                }
+              }}
+              className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${isActive
+                ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
+                : 'hover-glow border-white/10'
+                }`}
+            >
+              <div className="flex items-center">
+                <div className={`p-3 rounded-lg ${isActive ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+                  <stat.icon className={`h-6 w-6 ${isActive ? 'text-white' : stat.color}`} />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm text-white font-medium">{stat.label}</p>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.count}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
-              <p className="text-2xl font-black text-white">{stat.count}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Filters Section */}
-      <NoteSearchFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        category={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        clientId={selectedClient}
-        onClientChange={setSelectedClient}
-        projectId={selectedProject}
-        onProjectChange={setSelectedProject}
-        visibility={selectedVisibility}
-        onVisibilityChange={setSelectedVisibility}
-        clients={linkedClients}
-        projects={linkedProjects}
-        onReset={resetFilters}
-        resultsCount={filteredNotes.length}
-      />
 
       {/* Pinned Section */}
       {pinnedNotes.length > 0 && (
@@ -258,7 +291,7 @@ export default function Notes({ currentUser }: NotesProps) {
             className="flex items-center gap-2 text-[10px] font-black text-yellow-500 uppercase tracking-widest group"
           >
             <BookmarkIcon className="h-4 w-4 fill-yellow-500" />
-            Pinned Notes ({pinnedNotes.length})
+            <span style={{ fontFamily: 'Integral CF, sans-serif' }}>Pinned Notes ({pinnedNotes.length})</span>
             {isPinnedExpanded ? <ChevronUpIcon className="h-3 w-3" /> : <ChevronDownIcon className="h-3 w-3" />}
           </button>
 
@@ -299,7 +332,7 @@ export default function Notes({ currentUser }: NotesProps) {
       ) : filteredNotes.length === 0 ? (
         <div className="glass-card rounded-3xl p-20 text-center border border-white/10">
           <DocumentTextIcon className="h-16 w-16 text-gray-700 mx-auto mb-6" />
-          <h3 className="text-xl font-bold text-white mb-2">No notes found</h3>
+          <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No notes found</h3>
           <p className="text-gray-400 mb-8 max-w-md mx-auto">We couldn't find any notes matching your filters. Try adjusting your search or create a new note.</p>
           <button
             onClick={resetFilters}
@@ -340,16 +373,16 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
   onTogglePin: (e: React.MouseEvent, n: Note) => void;
   onToggleShare?: (n: Note) => void;
 }) {
-  const categoryStyles: Record<string, string> = {
-    idea: 'bg-[#3ba3ea]/20 text-[#3ba3ea] border-[#3ba3ea]/30',
-    meeting: 'bg-[#40ac40]/20 text-[#40ac40] border-[#40ac40]/30',
-    sales_call: 'bg-[#ea3b3b]/20 text-[#ea3b3b] border-[#ea3b3b]/30',
-    sop: 'bg-[#e8ea3b]/20 text-[#e8ea3b] border-[#e8ea3b]/30',
-    task: 'bg-[#ea3b3b]/20 text-[#ea3b3b] border-[#ea3b3b]/30', // Using red for task
-    general: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+  const categoryConfigs: Record<string, { bg: string, border: string, text: string }> = {
+    idea: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+    meeting: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+    sales_call: { bg: 'rgba(234, 59, 59, 0.33)', border: 'rgba(234, 59, 59, 1)', text: '#ffffff' },
+    sop: { bg: 'rgba(250, 204, 21, 0.33)', border: 'rgba(250, 204, 21, 1)', text: '#ffffff' },
+    task: { bg: 'rgba(168, 85, 247, 0.33)', border: 'rgba(168, 85, 247, 1)', text: '#ffffff' },
+    general: { bg: 'rgba(107, 114, 128, 0.33)', border: 'rgba(107, 114, 128, 1)', text: '#ffffff' }
   };
 
-  const style = categoryStyles[note.category] || categoryStyles.general;
+  const config = categoryConfigs[note.category] || categoryConfigs.general;
 
   if (viewMode === 'grid') {
     return (
@@ -357,39 +390,47 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         onClick={() => onEdit(note)}
         className="glass-card rounded-2xl border border-white/10 hover:border-[#3aa3eb]/30 transition-all cursor-pointer group flex flex-col p-6 h-full relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(note); }}
-            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
-        </div>
 
         <div className="flex-1">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0 pr-8">
-              <h3 className="text-xl font-bold text-white truncate mb-1 group-hover:text-[#3aa3eb] transition-colors">
+              <h3 className="text-xl font-bold text-white truncate mb-1 group-hover:text-[#3aa3eb] transition-colors" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 {note.title}
               </h3>
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
                 {note.client?.name || 'Internal Record'}
               </p>
             </div>
-            <button
-              onClick={(e) => onTogglePin(e, note)}
-              className={`p-1 transition-colors ${note.pinned ? 'text-yellow-400' : 'text-gray-600 hover:text-gray-400'}`}
-            >
-              <BookmarkIcon className={`h-5 w-5 ${note.pinned ? 'fill-yellow-400' : ''}`} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => onTogglePin(e, note)}
+                className={`p-1 transition-colors ${note.pinned ? 'text-yellow-400' : 'text-gray-600 hover:text-gray-400'}`}
+              >
+                <BookmarkIcon className={`h-5 w-5 ${note.pinned ? 'fill-yellow-400' : ''}`} />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border-2 ${style} shadow-sm`}>
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
+              style={{
+                backgroundColor: config.bg,
+                border: `1px solid ${config.border}`,
+                color: config.text
+              }}
+            >
               {note.category}
             </span>
             {note.visibility === 'client_visible' && (
-              <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+              <span
+                className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.33)',
+                  border: '1px solid rgba(16, 185, 129, 1)',
+                  color: '#ffffff'
+                }}
+              >
                 Shared
               </span>
             )}
@@ -400,8 +441,15 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
           </p>
         </div>
 
-        <div className="pt-4 border-t border-white/5 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-          Last Edited: {formatAppDate(note.updated_at)}
+        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+          <span>Last Edited: {formatAppDate(note.updated_at)}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(note); }}
+            className="p-1.5 text-gray-600 hover:text-red-400 transition-colors"
+            title="Delete Note"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
         </div>
       </div>
     );
@@ -419,7 +467,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         >
           <BookmarkIcon className={`h-4 w-4 ${note.pinned ? 'fill-yellow-400' : ''}`} />
         </button>
-        <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate">
+        <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           {note.title}
         </h3>
       </div>
@@ -427,7 +475,14 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         {note.client?.name || 'Wise Media'}
       </div>
       <div className="flex items-center justify-center gap-2">
-        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${style}`}>
+        <span
+          className="inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all"
+          style={{
+            backgroundColor: config.bg,
+            border: `1px solid ${config.border}`,
+            color: config.text
+          }}
+        >
           {note.category}
         </span>
       </div>

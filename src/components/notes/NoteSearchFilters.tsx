@@ -1,8 +1,6 @@
 import {
     MagnifyingGlassIcon,
-    FunnelIcon,
     XMarkIcon,
-    ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { Client, Project } from '../../lib/supabase';
 
@@ -40,114 +38,116 @@ export default function NoteSearchFilters({
     resultsCount
 }: NoteSearchFiltersProps) {
     return (
-        <div className="space-y-4">
-            {/* Search and Results Count */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="relative flex-1">
-                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            {/* Search Filter */}
+            <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+                <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search notes, tags, content..."
+                        placeholder="Search notes..."
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3.5 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/50 transition-all font-medium"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
                     />
-                    {searchQuery && (
-                        <button
-                            onClick={() => onSearchChange('')}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
-                        >
-                            <XMarkIcon className="h-4 w-4 text-gray-500" />
-                        </button>
-                    )}
-                </div>
-                <div className="px-4 py-2 bg-[#3aa3eb]/10 border border-[#3aa3eb]/20 rounded-xl">
-                    <p className="text-[10px] font-bold text-[#3aa3eb] uppercase tracking-widest">
-                        {resultsCount} {resultsCount === 1 ? 'Note' : 'Notes'} Found
-                    </p>
                 </div>
             </div>
 
-            {/* Filters Row */}
-            <div className="glass-card rounded-2xl border border-white/10 p-4 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 border-r border-white/10 mr-1">
-                    <FunnelIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Filters</span>
-                </div>
-
-                {/* Category Filter */}
-                <FilterDropdown
+            {/* Category Filter */}
+            <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Type</label>
+                <select
                     value={category}
-                    onChange={onCategoryChange}
-                    options={[
-                        { value: 'all', label: 'All Categories' },
-                        { value: 'idea', label: 'Idea' },
-                        { value: 'meeting', label: 'Meeting' },
-                        { value: 'sales_call', label: 'Sales Call' },
-                        { value: 'sop', label: 'SOP' },
-                        { value: 'task', label: 'Task' },
-                        { value: 'general', label: 'General' }
-                    ]}
-                />
-
-                {/* Visibility Filter */}
-                <FilterDropdown
-                    value={visibility}
-                    onChange={onVisibilityChange}
-                    options={[
-                        { value: 'all', label: 'All Visibility' },
-                        { value: 'internal', label: 'Internal Only' },
-                        { value: 'client_visible', label: 'Shared with Client' }
-                    ]}
-                />
-
-                {/* Client Filter */}
-                <FilterDropdown
-                    value={clientId}
-                    onChange={onClientChange}
-                    options={[
-                        { value: 'all', label: 'All Clients' },
-                        ...clients.map(c => ({ value: c.id, label: c.name }))
-                    ]}
-                />
-
-                {/* Project Filter */}
-                <FilterDropdown
-                    value={projectId}
-                    onChange={onProjectChange}
-                    options={[
-                        { value: 'all', label: 'All Projects' },
-                        ...projects.filter(p => clientId === 'all' || p.client_id === clientId).map(p => ({ value: p.id, label: p.name }))
-                    ]}
-                />
-
-                <button
-                    onClick={onReset}
-                    className="ml-auto px-4 py-2 hover:bg-white/5 rounded-xl text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-all"
+                    onChange={(e) => onCategoryChange(e.target.value)}
+                    className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
                 >
-                    Reset Filters
-                </button>
+                    <option value="all">All Types</option>
+                    <option value="idea">Idea</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="sales_call">Sales Call</option>
+                    <option value="sop">SOP</option>
+                    <option value="task">Task</option>
+                    <option value="general">General</option>
+                </select>
             </div>
+
+            {/* Client Filter */}
+            <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
+                <select
+                    value={clientId}
+                    onChange={(e) => onClientChange(e.target.value)}
+                    className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+                >
+                    <option value="all">All Clients</option>
+                    {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Project Filter */}
+            <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project</label>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={projectId}
+                        onChange={(e) => onProjectChange(e.target.value)}
+                        className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+                    >
+                        <option value="all">All Projects</option>
+                        {projects.filter((p: Project) => clientId === 'all' || p.client_id === clientId).map((p: Project) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+
+                    <button
+                        onClick={onReset}
+                        className="p-2 text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
+                        title="Clear all"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Active filters display */}
+            {(searchQuery || category !== 'all' || clientId !== 'all' || projectId !== 'all' || visibility !== 'all') && (
+                <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-wrap items-center gap-2 mt-2 text-sm">
+                    <span className="text-gray-400">Active filters:</span>
+                    {searchQuery && (
+                        <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                            Search: {searchQuery}
+                        </span>
+                    )}
+                    {category !== 'all' && (
+                        <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300 capitalize">
+                            Category: {category.replace('_', ' ')}
+                        </span>
+                    )}
+                    {clientId !== 'all' && (
+                        <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                            Client: {clients.find((c: Client) => c.id === clientId)?.name}
+                        </span>
+                    )}
+                    {projectId !== 'all' && (
+                        <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                            Project: {projects.find((p: Project) => p.id === projectId)?.name}
+                        </span>
+                    )}
+                    <button
+                        onClick={onReset}
+                        className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
+                    >
+                        Clear all
+                    </button>
+                    <span className="ml-auto text-xs font-bold text-[#3aa3eb] uppercase tracking-widest bg-[#3aa3eb]/10 px-3 py-1 rounded-full">
+                        {resultsCount} {resultsCount === 1 ? 'Note' : 'Notes'} Found
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
 
-function FilterDropdown({ value, onChange, options }: { value: string, onChange: (v: string) => void, options: { value: string, label: string }[] }) {
-
-    return (
-        <div className="relative group">
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="appearance-none bg-white/5 border border-white/10 hover:border-white/20 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-all cursor-pointer min-w-[140px]"
-            >
-                {options.map(opt => (
-                    <option key={opt.value} value={opt.value} className="bg-[#0f172a] text-white">
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
-            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none group-hover:text-gray-300 transition-colors" />
-        </div>
-    );
-}
