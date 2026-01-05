@@ -13,7 +13,8 @@ import {
   BanknotesIcon,
   ChatBubbleLeftRightIcon,
   PencilIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
@@ -21,6 +22,7 @@ import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import { UserRole, clientService } from '../lib/supabase';
+import { generateProposalPDF } from '../utils/pdfGenerator';
 
 interface User {
   id?: string;
@@ -57,6 +59,27 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const [clientSignature, setClientSignature] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const [effectiveClientId, setEffectiveClientId] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!proposal) return;
+    try {
+      setIsGeneratingPDF(true);
+      // Small artificial delay for better UX feedback
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await generateProposalPDF({
+        ...proposal,
+        client: proposal.client?.company || proposal.client?.name || 'Client',
+        services: items.map(item => item.name)
+      });
+      toastSuccess('Proposal PDF downloaded');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toastError('Failed to generate PDF');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ClipboardDocumentListIcon },
@@ -221,10 +244,26 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           </div>
 
           <div className="text-right">
-            <p className="text-sm text-gray-400 mb-1">Total Value</p>
             <p className="text-2xl font-bold text-white">
               {formatCurrency(proposal.value)}
             </p>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-white rounded-xl transition-all border border-slate-700 shrink-glow-button disabled:opacity-50"
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                  <span>Download PDF</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 

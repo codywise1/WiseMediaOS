@@ -10,7 +10,8 @@ import {
   PencilIcon,
   PlusIcon,
   TrashIcon,
-  UserIcon
+  UserIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -19,6 +20,7 @@ import { proposalService as newProposalService } from '../lib/proposalService';
 import { formatAppDate } from '../lib/dateFormat';
 import { useToast } from '../contexts/ToastContext';
 import { UserRole } from '../lib/supabase';
+import { generateProposalPDF } from '../utils/pdfGenerator';
 
 interface User {
   id?: string;
@@ -92,7 +94,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         client_id: proposal.client_id,
         value: proposal.value,
         status: proposal.status,
-        services: [],
+        services: (proposal.items || []).map((item: any) => item.name),
         description: proposal.description || '',
         createdDate: proposal.created_at || '',
         expiryDate: proposal.expires_at || '',
@@ -113,6 +115,25 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     }
   };
 
+
+  const [generatingPDFId, setGeneratingPDFId] = useState<string | null>(null);
+
+  const handleDownloadPDF = async (proposal: any) => {
+    try {
+      setGeneratingPDFId(proposal.id);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await generateProposalPDF({
+        ...proposal,
+        services: proposal.services || []
+      });
+      toastSuccess('Proposal PDF downloaded');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toastError('Failed to generate PDF');
+    } finally {
+      setGeneratingPDFId(null);
+    }
+  };
 
   const handleNewProposal = () => {
     setIsModalOpen(true);
@@ -261,13 +282,13 @@ export default function Proposals({ currentUser }: ProposalsProps) {
             <div
               key={index}
               onClick={() => setStatusFilter(card.filter)}
-              className={`glass-card rounded-2xl p-6 cursor-pointer transition-all duration-300 hover-glow group relative overflow-hidden border ${isFiltering || (isPipeline && statusFilter === 'all')
+              className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 hover-glow group relative overflow-hidden border ${isFiltering || (isPipeline && statusFilter === 'all')
                 ? 'border-[#3aa3eb] bg-[#3aa3eb]/10'
                 : 'border-white/5 hover:border-white/10'
                 }`}
             >
               <div className="flex items-center gap-4 relative z-10">
-                <div className={`p-3 rounded-xl ${card.iconBg} border border-white/10`}>
+                <div className={`p-3 rounded-lg ${card.iconBg} border border-white/10`}>
                   <card.icon className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -282,99 +303,139 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         })}
       </div>
 
-      {/* Proposals List (Table-like Header) */}
-      <div className="pt-8">
-        <div className="px-8 mb-4 grid grid-cols-12 gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 border-b border-white/5 pb-2">
-          <div className="col-span-3">Proposal Name</div>
-          <div className="col-span-2">Client</div>
-          <div className="col-span-2 text-center">Deal Stage</div>
-          <div className="col-span-1 text-center">Value</div>
-          <div className="col-span-3 text-center">Status Timeline</div>
-          <div className="col-span-1 text-right"></div>
-        </div>
+      {/* Proposals Table */}
+      <div className="pt-4">
+        <div className="glass-card rounded-3xl overflow-hidden border border-white/10">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/10">
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Proposal Name</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Client</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Deal Stage</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Value</th>
+                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Status Timeline</th>
+                  <th className="px-8 py-5 text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {visibleProposals.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-12 text-center">
+                      <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
+                      <p className="text-gray-500">
+                        {isAgency
+                          ? "You haven't created any proposals yet."
+                          : "You don't have any matching proposals at this time."}
+                      </p>
+                    </td>
+                  </tr>
+                ) : visibleProposals.map((proposal) => {
+                  const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
+                  const timelineStatus = getStatusTimeline(proposal);
+                  const isApproved = proposal.status === 'approved';
+                  const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
 
-        <div className="space-y-3">
-          {visibleProposals.length === 0 ? (
-            <div className="glass-card rounded-2xl p-12 text-center border border-white/5">
-              <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
-              <p className="text-gray-500">
-                {isAgency
-                  ? "You haven't created any proposals yet."
-                  : "You don't have any matching proposals at this time."}
-              </p>
-            </div>
-          ) : visibleProposals.map((proposal) => {
-            const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
-            const timelineStatus = getStatusTimeline(proposal);
-            const isApproved = proposal.status === 'approved';
-            const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
-
-            return (
-              <div key={proposal.id} className="glass-card rounded-2xl p-6 transition-all duration-300 hover:border-[#3aa3eb]/50 hover:shadow-[0_0_20px_rgba(58,163,235,0.1)] group relative border border-white/5 overflow-hidden">
-                <div className="grid grid-cols-12 gap-4 items-center">
-                  {/* Proposal Name */}
-                  <div className="col-span-3 min-w-0">
-                    <h3 className="text-xl font-bold text-white truncate mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{proposal.title}</h3>
-                    <div className="flex flex-wrap gap-2 text-Montserrat">
-                      <span className="px-3 py-1 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb] uppercase tracking-wider">
-                        Website
-                      </span>
-                      {proposal.services && proposal.services.length > 1 && (
-                        <span className="px-3 py-1 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb] uppercase tracking-wider">
-                          Web App
+                  return (
+                    <tr key={proposal.id} className="group hover:bg-white/[0.03] transition-colors">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-1 h-8 rounded-full ${isApproved ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' :
+                            isExpired ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
+                              'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
+                            }`} />
+                          <div>
+                            <h3 className="text-sm font-black text-white tracking-widest truncate max-w-[200px]" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                              {proposal.title}
+                            </h3>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {proposal.services && proposal.services.length > 0 ? (
+                                proposal.services.map((service: string, sIdx: number) => (
+                                  <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                                    {service}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                                  Website
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <span className="text-sm font-bold text-gray-200">{proposal.client}</span>
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 ${isApproved ? 'bg-green-500/20 text-green-500 border-green-500/30' :
+                          isExpired ? 'bg-red-500/20 text-red-500 border-red-500/30' :
+                            statusInfo.color + ' ' + statusInfo.border + ' bg-black/20'
+                          }`}>
+                          {statusInfo.label}
                         </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Client */}
-                  <div className="col-span-2 text-gray-300 font-bold">
-                    {proposal.client}
-                  </div>
-
-                  {/* Deal Stage */}
-                  <div className="col-span-2 flex justify-center">
-                    <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusInfo.border} ${statusInfo.color} bg-black/20`}>
-                      {statusInfo.label}
-                    </span>
-                  </div>
-
-                  {/* Value */}
-                  <div className="col-span-1 text-center text-white font-bold">
-                    ${((proposal.value || 0) / 100).toLocaleString()}
-                  </div>
-
-                  {/* Status Timeline */}
-                  <div className="col-span-3 flex justify-center">
-                    <span className={`px-4 py-2 rounded-full text-[10px] font-bold tracking-tight border ${isApproved ? 'bg-green-500/10 border-green-500/50 text-green-400' :
-                      isExpired ? 'bg-red-500/10 border-red-500/50 text-red-400' :
-                        'bg-[#3aa3eb]/10 border-[#3aa3eb]/50 text-blue-400'
-                      }`}>
-                      {timelineStatus}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-1 flex items-center justify-end gap-3">
-                    <button onClick={() => handleViewProposal(proposal.id)} className="text-gray-400 hover:text-white transition-colors">
-                      <EyeIcon className="h-5 w-5" />
-                    </button>
-                    {isAgency && (
-                      <>
-                        <button onClick={() => navigate(`/proposals/${proposal.id}`)} className="text-gray-400 hover:text-white transition-colors">
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button onClick={() => handleDeleteProposal(proposal)} className="text-gray-400 hover:text-red-400 transition-colors">
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <span className="text-base font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                          ${((proposal.value || 0) / 100).toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold tracking-tight border ${isApproved ? 'bg-green-500/10 border-green-500/50 text-green-400' :
+                          isExpired ? 'bg-red-500/10 border-red-500/50 text-red-400' :
+                            'bg-[#3aa3eb]/10 border-[#3aa3eb]/50 text-blue-400'
+                          }`}>
+                          {timelineStatus}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleDownloadPDF(proposal)}
+                            disabled={generatingPDFId === proposal.id}
+                            className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                            title="Download PDF"
+                          >
+                            {generatingPDFId === proposal.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
+                            ) : (
+                              <ArrowDownTrayIcon className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleViewProposal(proposal.id)}
+                            className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                            title="View Details"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                          {isAgency && (
+                            <>
+                              <button
+                                onClick={() => navigate(`/proposals/${proposal.id}`)}
+                                className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProposal(proposal)}
+                                className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

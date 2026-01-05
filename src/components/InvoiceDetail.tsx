@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { clientService, invoiceService, Client, Invoice, UserRole } from '../lib/supabase';
 import {
@@ -17,6 +17,7 @@ import {
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
 import { formatAppDate } from '../lib/dateFormat';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
 
 interface User {
   email: string;
@@ -36,6 +37,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -126,6 +128,23 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const daysUntilDue = getDaysUntilDue(invoice.due_date);
   const displayClientName = client?.company || client?.name || 'Client';
 
+
+  const handleDownloadPDF = async () => {
+    try {
+      setGeneratingPDF(true);
+      // Small artificial delay for better UX feedback
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await generateInvoicePDF({
+        ...invoice,
+        client: displayClientName,
+        createdDate: invoice.created_at,
+        dueDate: invoice.due_date
+      } as any);
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-20 md:pb-8">
       <button
@@ -202,11 +221,10 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <ClockIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Days Until Due</span>
             </div>
-            <p className={`text-xl md:text-2xl font-bold ${
-              daysUntilDue < 0 ? 'text-red-400' :
+            <p className={`text-xl md:text-2xl font-bold ${daysUntilDue < 0 ? 'text-red-400' :
               daysUntilDue < 7 ? 'text-yellow-400' :
-              'text-green-400'
-            }`}>
+                'text-green-400'
+              }`}>
               {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} overdue` : daysUntilDue}
             </p>
           </div>
@@ -305,9 +323,22 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Actions</h2>
               <div className="space-y-3">
-                <button className="w-full btn-primary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
-                  <DocumentArrowDownIcon className="h-5 w-5" />
-                  <span>Download PDF</span>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={generatingPDF}
+                  className="w-full btn-primary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {generatingPDF ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <DocumentArrowDownIcon className="h-5 w-5" />
+                      <span>Download PDF</span>
+                    </>
+                  )}
                 </button>
                 <button className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
                   <EnvelopeIcon className="h-5 w-5" />
