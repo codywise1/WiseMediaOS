@@ -4,10 +4,10 @@ import {
     TrashIcon,
     ChevronUpIcon,
     ChevronDownIcon,
+    ChevronRightIcon,
     ListBulletIcon,
     NumberedListIcon,
     CheckCircleIcon,
-    QueueListIcon,
     ChatBubbleBottomCenterTextIcon,
     InformationCircleIcon,
     CodeBracketIcon,
@@ -15,16 +15,19 @@ import {
     BoldIcon,
     ItalicIcon,
     LinkIcon,
-    HashtagIcon
+    HashtagIcon,
+    DocumentTextIcon,
+    ArrowUturnLeftIcon,
+    ArrowUturnRightIcon
 } from '@heroicons/react/24/outline';
-import { NoteBlock, NoteCategory } from '../../lib/supabase';
+import { NoteBlock } from '../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 const parseMarkdown = (text: string) => {
     return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:text-blue-300">$1</a>');
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em class="italic text-gray-200">$1</em>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[#3aa3eb] border-b border-[#3aa3eb]/30 hover:border-[#3aa3eb] transition-all">$1</a>');
 };
 
 interface NoteEditorProps {
@@ -98,7 +101,6 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                 const el = refs.current[index];
 
                 if (typeof focusInfo.itemIndex === 'number') {
-                    // Handle list item focus
                     const inputs = el?.querySelectorAll('input');
                     if (inputs && inputs[focusInfo.itemIndex]) {
                         const input = inputs[focusInfo.itemIndex];
@@ -108,7 +110,6 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                         }, 0);
                     }
                 } else {
-                    // Handle standard block focus
                     el?.focus();
                     if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
                         setTimeout(() => {
@@ -165,22 +166,49 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
         updateBlocks(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
-    const handleSlashCommand = (index: number, textarea: HTMLTextAreaElement | HTMLInputElement, start: number, text: string) => {
-        if (start === 0 || text[start - 1] === '\n') {
-            const rect = textarea.getBoundingClientRect();
-            const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20;
-            const lines = text.slice(0, start).split('\n').length - 1;
-            setSlashMenu({
-                show: true,
-                index,
-                query: '',
-                position: { top: rect.top + lines * lineHeight + 20, left: rect.left }
-            });
-        }
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && !readOnly) {
+                const activeIdx = blocks.findIndex(b => b.id === activeBlockId);
+                if (activeIdx === -1) return;
+
+                if (e.key === 'b') { e.preventDefault(); applyFormatting(activeIdx, 'bold'); }
+                if (e.key === 'i') { e.preventDefault(); applyFormatting(activeIdx, 'italic'); }
+                if (e.key === 'k') { e.preventDefault(); applyFormatting(activeIdx, 'link'); }
+
+                if (e.shiftKey) {
+                    if (e.key === '7') { e.preventDefault(); addBlock('numbered', activeIdx); }
+                    if (e.key === '8') { e.preventDefault(); addBlock('bullets', activeIdx); }
+                    if (e.key === '9') { e.preventDefault(); addBlock('todo', activeIdx); }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [activeBlockId, blocks, readOnly]);
+
+    const handleSlashCommand = (index: number, textarea: HTMLTextAreaElement | HTMLInputElement) => {
+        const rect = textarea.getBoundingClientRect();
+        setSlashMenu({
+            show: true,
+            index,
+            query: '',
+            position: { top: rect.top + 30, left: rect.left }
+        });
     };
 
     const handleKeyDown = (e: React.KeyboardEvent, block: NoteBlock, index: number, itemIndex?: number) => {
         const isList = block.type === 'bullets' || block.type === 'numbered' || block.type === 'todo';
+
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const dir = e.shiftKey ? -1 : 1;
+            const currentIndent = block.indent || 0;
+            const newIndent = Math.max(0, Math.min(4, currentIndent + dir));
+            handleBlockChange(block.id, { indent: newIndent });
+            return;
+        }
 
         if (e.key === 'Enter' && !e.shiftKey && !slashMenu.show) {
             e.preventDefault();
@@ -189,9 +217,7 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                 const items = block.type === 'todo' ? block.todos : block.items;
                 const currentItem = block.type === 'todo' ? (items as any[])[itemIndex].text : (items as string[])[itemIndex];
 
-                // If empty item and it's the last one (or only one), break out of list
                 if ((!currentItem || currentItem === '') && items && items.length > 0) {
-                    // If it's the only item, just turn block to paragraph
                     if (items.length === 1) {
                         const newBlocks = [...blocks];
                         newBlocks[index] = { ...block, type: 'paragraph', content: '', items: undefined, todos: undefined };
@@ -200,27 +226,22 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                         return;
                     }
 
-                    // If it's the last item, remove it and create new paragraph after
                     if (itemIndex === items.length - 1) {
                         const newItems = [...(items as any[])];
                         newItems.pop();
                         const newBlocks = [...blocks];
-                        // Update list
                         newBlocks[index] = {
                             ...block,
                             [block.type === 'todo' ? 'todos' : 'items']: newItems
                         };
-                        // Add new paragraph
                         const newBlockId = uuidv4();
                         newBlocks.splice(index + 1, 0, { id: newBlockId, type: 'paragraph', content: '' });
-
                         updateBlocks(newBlocks);
                         setFocusInfo({ id: newBlockId, offset: 0 });
                         return;
                     }
                 }
 
-                // Normal list behavior: add new item
                 if (block.type === 'todo') {
                     const newTodos = [...(block.todos || [])];
                     newTodos.splice(itemIndex + 1, 0, { text: '', done: false });
@@ -238,16 +259,10 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
             const el = e.target as HTMLInputElement | HTMLTextAreaElement;
             const start = el.selectionStart || 0;
             const content = block.content || '';
-
             const left = content.slice(0, start);
             const right = content.slice(start);
 
-            const newBlock: NoteBlock = {
-                id: uuidv4(),
-                type: 'paragraph',
-                content: right
-            };
-
+            const newBlock: NoteBlock = { id: uuidv4(), type: 'paragraph', content: right, indent: block.indent };
             const newBlocks = [...blocks];
             newBlocks[index] = { ...block, content: left };
             newBlocks.splice(index + 1, 0, newBlock);
@@ -261,40 +276,12 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
 
             if (start === 0 && end === 0) {
                 if (isList && typeof itemIndex === 'number') {
-                    // List backspace logic
-                    if (itemIndex === 0) {
-                        // First item logic
-                        const items = block.type === 'todo' ? block.todos : block.items;
-                        if (items && items.length === 1 && !isListContentEmpty(block, itemIndex)) {
-                            // Turn to paragraph if single item with content
-                            // Actually standard behavior is usually: if content matches list style, maybe nothing?
-                            // But Notion turns it to text if you backspace at start.
-                            // Let's implement: merge into previous block if exists, or turn to paragraph?
-                            // If index > 0, merge to previous block
-                            if (index > 0) {
-                                e.preventDefault();
-                                // Implementation of merging list into previous block is complex. 
-                                // Simplified: just focus previous block for now if complicated.
-                                const prev = blocks[index - 1];
-                                setFocusInfo({
-                                    id: prev.id,
-                                    offset: (prev.content?.length || 0),
-                                    itemIndex: (prev.type === 'bullets' || prev.type === 'numbered' || prev.type === 'todo')
-                                        ? (prev.items?.length || prev.todos?.length || 1) - 1
-                                        : undefined
-                                });
-                                return;
-                            }
-                        }
-                    } else {
-                        // Not first item
+                    if (itemIndex > 0) {
                         e.preventDefault();
                         const items = block.type === 'todo' ? block.todos : block.items;
                         const newItems = [...(items as any[])];
                         const removedItem = newItems.splice(itemIndex, 1)[0];
                         const prevItem = newItems[itemIndex - 1];
-
-                        // Append content to previous item
                         const removedText = block.type === 'todo' ? (removedItem as any).text : (removedItem as string);
                         const prevText = block.type === 'todo' ? (prevItem as any).text : (prevItem as string);
 
@@ -307,98 +294,34 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                         }
                         setFocusInfo({ id: block.id, offset: prevText.length, itemIndex: itemIndex - 1 });
                         return;
+                    } else if (block.indent && block.indent > 0) {
+                        e.preventDefault();
+                        handleBlockChange(block.id, { indent: block.indent - 1 });
+                        return;
                     }
                 }
 
                 if (index === 0) return;
                 e.preventDefault();
-
                 const prevBlock = blocks[index - 1];
                 const currentContent = block.content || '';
 
                 if (prevBlock.type === 'paragraph' || prevBlock.type === 'heading') {
                     const prevContent = prevBlock.content || '';
                     const newBlocks = [...blocks];
-                    newBlocks[index - 1] = {
-                        ...prevBlock,
-                        content: prevContent + currentContent
-                    };
+                    newBlocks[index - 1] = { ...prevBlock, content: prevContent + currentContent };
                     newBlocks.splice(index, 1);
                     updateBlocks(newBlocks);
                     setFocusInfo({ id: prevBlock.id, offset: prevContent.length });
-                } else if (prevBlock.type === 'bullets' || prevBlock.type === 'numbered' || prevBlock.type === 'todo') {
-                    // Merge textual block INTO list?
-                    // Append content to last item of list
-                    const items = prevBlock.type === 'todo' ? [...(prevBlock.todos || [])] : [...(prevBlock.items || [])];
-                    const lastIdx = items.length - 1;
-                    if (lastIdx >= 0) {
-                        const lastItem = items[lastIdx];
-                        const lastText = prevBlock.type === 'todo' ? (lastItem as any).text : (lastItem as string);
-
-                        if (prevBlock.type === 'todo') {
-                            (items[lastIdx] as any).text = lastText + currentContent;
-                            const newBlocks = [...blocks];
-                            newBlocks[index - 1] = { ...prevBlock, todos: items as any[] };
-                            newBlocks.splice(index, 1);
-                            updateBlocks(newBlocks);
-                        } else {
-                            items[lastIdx] = lastText + currentContent;
-                            const newBlocks = [...blocks];
-                            newBlocks[index - 1] = { ...prevBlock, items: items as any[] };
-                            newBlocks.splice(index, 1);
-                            updateBlocks(newBlocks);
-                        }
-                        setFocusInfo({ id: prevBlock.id, offset: lastText.length, itemIndex: lastIdx });
-                    }
+                } else if (isList && (block.content === '' || !block.content)) {
+                    // Convert list to paragraph if backspaced at start and no content
+                    handleBlockChange(block.id, { type: 'paragraph', items: undefined, todos: undefined });
                 } else {
-                    if (currentContent.length === 0) {
-                        removeBlock(block.id);
-                        setFocusInfo({ id: prevBlock.id, offset: (prevBlock.content || '').length });
-                    } else {
-                        setFocusInfo({ id: prevBlock.id, offset: (prevBlock.content || '').length });
-                    }
+                    removeBlock(block.id);
+                    setFocusInfo({ id: prevBlock.id, offset: (prevBlock.content || '').length });
                 }
-            }
-        } else if (e.key === 'ArrowUp') {
-            if (isList && typeof itemIndex === 'number' && itemIndex > 0) {
-                e.preventDefault();
-                setFocusInfo({ id: block.id, offset: 0, itemIndex: itemIndex - 1 });
-                return;
-            }
-
-            if (index > 0) {
-                e.preventDefault();
-                const prev = blocks[index - 1];
-                const prevIsList = prev.type === 'bullets' || prev.type === 'numbered' || prev.type === 'todo';
-                const lastItemIdx = prevIsList
-                    ? (prev.type === 'todo' ? (prev.todos?.length || 1) : (prev.items?.length || 1)) - 1
-                    : undefined;
-
-                setFocusInfo({ id: prev.id, offset: 0, itemIndex: lastItemIdx });
-            }
-        } else if (e.key === 'ArrowDown') {
-            if (isList && typeof itemIndex === 'number') {
-                const itemsCount = block.type === 'todo' ? (block.todos?.length || 0) : (block.items?.length || 0);
-                if (itemIndex < itemsCount - 1) {
-                    e.preventDefault();
-                    setFocusInfo({ id: block.id, offset: 0, itemIndex: itemIndex + 1 });
-                    return;
-                }
-            }
-
-            if (index < blocks.length - 1) {
-                e.preventDefault();
-                const next = blocks[index + 1];
-                const nextIsList = next.type === 'bullets' || next.type === 'numbered' || next.type === 'todo';
-
-                setFocusInfo({ id: next.id, offset: 0, itemIndex: nextIsList ? 0 : undefined });
             }
         }
-    };
-
-    const isListContentEmpty = (block: NoteBlock, index: number) => {
-        if (block.type === 'todo') return !block.todos?.[index]?.text;
-        return !block.items?.[index];
     };
 
     const closeSlashMenu = () => {
@@ -413,48 +336,29 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
     const applyFormatting = (index: number, format: 'bold' | 'italic' | 'link') => {
         const block = blocks[index];
         if (!block) return;
-
         const el = refs.current[index];
-        if (!el) return;
+        if (!el || !(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
 
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        if (start === null || end === null || start === end) return;
 
-            if (start === null || end === null || start === end) return;
+        const text = block.content || '';
+        const selected = text.substring(start, end);
+        let prefix = '', suffix = '';
 
-            const text = block.content || '';
-            const selected = text.substring(start, end);
-
-            let prefix = '';
-            let suffix = '';
-
-            switch (format) {
-                case 'bold':
-                    prefix = '**';
-                    suffix = '**';
-                    break;
-                case 'italic':
-                    prefix = '*';
-                    suffix = '*';
-                    break;
-                case 'link':
-                    prefix = '[';
-                    suffix = '](url)';
-                    break;
-            }
-
-            const newContent = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
-            handleBlockChange(block.id, { content: newContent });
-
-            // Restore selection after update (delayed to allow render)
-            setTimeout(() => {
-                if (el) {
-                    el.focus();
-                    el.setSelectionRange(start + prefix.length, end + prefix.length);
-                }
-            }, 0);
+        switch (format) {
+            case 'bold': prefix = '**'; suffix = '**'; break;
+            case 'italic': prefix = '*'; suffix = '*'; break;
+            case 'link': prefix = '['; suffix = '](url)'; break;
         }
+
+        const newContent = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
+        handleBlockChange(block.id, { content: newContent });
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
     };
 
     const blockTypes = [
@@ -469,518 +373,396 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
         { label: 'Quote', value: 'quote' as NoteBlock['type'] },
         { label: 'Code', value: 'code' as NoteBlock['type'] },
         { label: 'Divider', value: 'divider' as NoteBlock['type'] },
+        { label: 'Toggle', value: 'toggle' as NoteBlock['type'] },
     ];
 
     return (
-        <div className="space-y-4 relative">
-            {slashMenu.show && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: slashMenu.position.top,
-                        left: slashMenu.position.left,
-                        zIndex: 1000
-                    }}
-                    className="bg-white border border-gray-300 rounded-lg shadow-lg p-2 max-h-60 overflow-y-auto w-64"
-                >
-                    {blockTypes.map((type, i) => (
-                        <button
-                            key={i}
-                            onClick={() => selectBlockType(type.value, (type as any).props)}
-                            className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-gray-800"
-                        >
-                            {type.label}
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            {inlineToolbar.show && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: inlineToolbar.position.top,
-                        left: inlineToolbar.position.left,
-                        zIndex: 1000
-                    }}
-                    className="bg-white border border-gray-300 rounded-lg shadow-lg p-2 flex gap-1"
-                >
-                    <button onClick={() => applyFormatting(inlineToolbar.blockIndex, 'bold')} className="p-1 hover:bg-gray-100 rounded"><BoldIcon className="h-4 w-4" /></button>
-                    <button onClick={() => applyFormatting(inlineToolbar.blockIndex, 'italic')} className="p-1 hover:bg-gray-100 rounded"><ItalicIcon className="h-4 w-4" /></button>
-                    <button onClick={() => applyFormatting(inlineToolbar.blockIndex, 'link')} className="p-1 hover:bg-gray-100 rounded"><LinkIcon className="h-4 w-4" /></button>
-                </div>
-            )}
-
-            {blocks.map((block, index) => (
-                <div key={block.id} className="group relative">
-                    <div className="flex items-start gap-3">
-                        {!readOnly && (
-                            <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute -left-10 top-0 mt-1">
-                                <button
-                                    onClick={() => moveBlock(index, 'up')}
-                                    disabled={index === 0}
-                                    className="p-1 hover:bg-white/10 rounded transition-colors text-gray-500 disabled:opacity-30"
-                                >
-                                    <ChevronUpIcon className="h-4 w-4" />
-                                </button>
-                                <button
-                                    onClick={() => moveBlock(index, 'down')}
-                                    disabled={index === blocks.length - 1}
-                                    className="p-1 hover:bg-white/10 rounded transition-colors text-gray-500 disabled:opacity-30"
-                                >
-                                    <ChevronDownIcon className="h-4 w-4" />
-                                </button>
-                                <button
-                                    onClick={() => removeBlock(block.id)}
-                                    className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-gray-500"
-                                >
-                                    <TrashIcon className="h-4 w-4" />
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="flex-1">
-                            <BlockComponent
-                                block={block}
-                                onChange={(updates) => handleBlockChange(block.id, updates)}
-                                readOnly={readOnly}
-                                index={index}
-                                refs={refs}
-                                slashMenu={slashMenu}
-                                handleSlashCommand={handleSlashCommand}
-                                closeSlashMenu={closeSlashMenu}
-                                showInlineToolbar={showInlineToolbar}
-                                onKeyDown={(e, itemIndex) => handleKeyDown(e, block, index, itemIndex)}
-                                isActive={activeBlockId === block.id}
-                                onActivate={() => setActiveBlockId(block.id)}
-                            />
-                        </div>
+        <div className="relative min-h-full font-sans selection:bg-[#3aa3eb]/20">
+            {!readOnly && (
+                <div className="sticky top-0 z-50 mb-8 -mx-4 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex items-center justify-between group/toolbar shadow-xl">
+                    <div className="flex items-center gap-1">
+                        <ToolbarButton icon={ArrowUturnLeftIcon} onClick={() => { }} />
+                        <ToolbarButton icon={ArrowUturnRightIcon} onClick={() => { }} />
+                        <div className="h-4 w-px bg-white/10 mx-2" />
+                        <ToolbarButton icon={BoldIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'bold')} />
+                        <ToolbarButton icon={ItalicIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'italic')} />
+                        <ToolbarButton icon={LinkIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'link')} />
+                        <div className="h-4 w-px bg-white/10 mx-2" />
+                        <ToolbarButton icon={HashtagIcon} label="1" onClick={() => addBlock('heading', undefined, { level: 1 })} />
+                        <ToolbarButton icon={HashtagIcon} label="2" onClick={() => addBlock('heading', undefined, { level: 2 })} />
+                        <ToolbarButton icon={ListBulletIcon} onClick={() => addBlock('bullets')} />
+                        <ToolbarButton icon={NumberedListIcon} onClick={() => addBlock('numbered')} />
+                        <ToolbarButton icon={CheckCircleIcon} onClick={() => addBlock('todo')} />
                     </div>
 
-                    {!readOnly && (
-                        <div className="flex justify-start opacity-0 group-hover:opacity-100 transition-opacity my-2">
-                            <div className="h-px bg-white/10 flex-1 self-center" />
-                            <div className="flex items-center gap-1 px-2 overflow-x-auto scrollbar-hide">
-                                <BlockTypeButton icon={BoldIcon} label="" onClick={() => applyFormatting(index, 'bold')} />
-                                <BlockTypeButton icon={ItalicIcon} label="" onClick={() => applyFormatting(index, 'italic')} />
-                                <BlockTypeButton icon={LinkIcon} label="" onClick={() => applyFormatting(index, 'link')} />
-                                <BlockTypeButton icon={HashtagIcon} label="H1" onClick={() => addBlock('heading', index + 1, { level: 1 })} />
-                                <BlockTypeButton icon={HashtagIcon} label="H2" onClick={() => addBlock('heading', index + 1, { level: 2 })} />
-                                <BlockTypeButton icon={HashtagIcon} label="H3" onClick={() => addBlock('heading', index + 1, { level: 3 })} />
-                                <BlockTypeButton icon={InformationCircleIcon} label="" onClick={() => addBlock('callout', index + 1)} />
-                                <BlockTypeButton icon={ListBulletIcon} label="" onClick={() => addBlock('bullets', index)} />
-                                <BlockTypeButton icon={NumberedListIcon} label="" onClick={() => addBlock('numbered', index)} />
-                                <BlockTypeButton icon={CheckCircleIcon} label="" onClick={() => addBlock('todo', index)} />
-                                <BlockTypeButton icon={QueueListIcon} label="" onClick={() => addBlock('toggle', index)} />
-                                <BlockTypeButton icon={ChatBubbleBottomCenterTextIcon} label="" onClick={() => addBlock('quote', index)} />
-                                <BlockTypeButton icon={CodeBracketIcon} label="" onClick={() => addBlock('code', index)} />
-                                <BlockTypeButton icon={MinusIcon} label="" onClick={() => addBlock('divider', index)} />
-                            </div>
-                            <div className="h-px bg-white/10 flex-1 self-center" />
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                        <ToolbarButton icon={CodeBracketIcon} onClick={() => addBlock('code')} />
+                        <ToolbarButton icon={ChatBubbleBottomCenterTextIcon} onClick={() => addBlock('quote')} />
+                        <ToolbarButton icon={InformationCircleIcon} onClick={() => addBlock('callout')} />
+                        <ToolbarButton icon={MinusIcon} onClick={() => addBlock('divider')} />
+                        <div className="h-4 w-px bg-white/10 mx-2" />
+                        <button className="px-4 py-1.5 bg-[#3aa3eb] hover:bg-[#4ab3fb] rounded-full text-[10px] font-black uppercase tracking-widest text-white transition-all">
+                            Share
+                        </button>
+                    </div>
                 </div>
-            ))}
+            )}
+
+            <div className="space-y-[12px] pb-32">
+                {slashMenu.show && (
+                    <div
+                        style={{ position: 'fixed', top: slashMenu.position.top, left: slashMenu.position.left, zIndex: 1000 }}
+                        className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 max-h-80 overflow-y-auto w-64"
+                    >
+                        {blockTypes.map((type, i) => (
+                            <button
+                                key={i}
+                                onClick={() => selectBlockType(type.value, (type as any).props)}
+                                className="flex items-center gap-3 w-full text-left px-3 py-2.5 hover:bg-[#3aa3eb]/20 rounded-xl text-white/90 transition-all group"
+                            >
+                                <div className="p-1.5 bg-white/5 rounded-lg group-hover:bg-[#3aa3eb]/30 transition-colors">
+                                    {type.value === 'heading' ? <HashtagIcon className="h-4 w-4" /> :
+                                        type.value === 'paragraph' ? <DocumentTextIcon className="h-4 w-4" /> :
+                                            type.value === 'bullets' ? <ListBulletIcon className="h-4 w-4" /> :
+                                                <PlusIcon className="h-4 w-4" />}
+                                </div>
+                                <span className="text-xs font-bold uppercase tracking-widest">{type.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {inlineToolbar.show && (
+                    <div
+                        style={{ position: 'fixed', top: inlineToolbar.position.top, left: inlineToolbar.position.left, zIndex: 1000 }}
+                        className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1 flex gap-0.5"
+                    >
+                        <ToolbarButton icon={BoldIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex, 'bold')} />
+                        <ToolbarButton icon={ItalicIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex, 'italic')} />
+                        <ToolbarButton icon={LinkIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex, 'link')} />
+                    </div>
+                )}
+
+                {blocks.map((block, index) => (
+                    <BlockComponent
+                        key={block.id}
+                        block={block}
+                        onChange={(updates) => handleBlockChange(block.id, updates)}
+                        onRemove={() => removeBlock(block.id)}
+                        onMove={(dir) => moveBlock(index, dir)}
+                        readOnly={readOnly}
+                        index={index}
+                        refs={refs}
+                        slashMenu={slashMenu}
+                        handleSlashCommand={handleSlashCommand}
+                        closeSlashMenu={closeSlashMenu}
+                        showInlineToolbar={showInlineToolbar}
+                        onKeyDown={(e, itemIdx) => handleKeyDown(e, block, index, itemIdx)}
+                        isActive={activeBlockId === block.id}
+                        onActivate={() => setActiveBlockId(block.id)}
+                        isFirst={index === 0}
+                        isLast={index === blocks.length - 1}
+                    />
+                ))}
+            </div>
 
             {!readOnly && blocks.length === 0 && (
                 <div
                     onClick={() => addBlock('paragraph')}
-                    className="border-2 border-dashed border-white/5 rounded-2xl p-12 text-center cursor-pointer hover:border-white/10 hover:bg-white/2 transition-all"
+                    className="border-2 border-dashed border-white/5 rounded-3xl p-16 text-center cursor-pointer hover:border-[#3aa3eb]/30 hover:bg-[#3aa3eb]/5 transition-all group"
                 >
-                    <PlusIcon className="h-8 w-8 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">Click to add your first block</p>
+                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-[#3aa3eb]/20 transition-colors">
+                        <PlusIcon className="h-8 w-8 text-gray-700 group-hover:text-[#3aa3eb]" />
+                    </div>
+                    <p className="text-gray-600 font-black uppercase tracking-widest text-xs">Click to begin drafting intelligence</p>
                 </div>
             )}
         </div>
     );
 }
 
+function ToolbarButton({ icon: Icon, label, onClick }: any) {
+    return (
+        <button onClick={onClick} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10 shrink-0">
+            <div className="flex flex-col items-center">
+                <Icon className="h-5 w-5" />
+                {label && <span className="text-[8px] font-black -mt-1 leading-none">{label}</span>}
+            </div>
+        </button>
+    );
+}
+
 function BlockTypeButton({ icon: Icon, label, onClick }: any) {
     return (
-        <button
-            onClick={onClick}
-            className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all whitespace-nowrap"
-        >
-            <Icon className="h-4 w-4" />
+        <button onClick={onClick} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-[#3aa3eb]/20 border border-white/10 hover:border-[#3aa3eb]/30 rounded-xl text-[10px] font-black text-gray-400 hover:text-[#3aa3eb] transition-all whitespace-nowrap uppercase tracking-widest">
+            <Icon className="h-3.5 w-3.5" />
             {label}
         </button>
     );
 }
 
-function BlockComponent({
-    block,
-    onChange,
-    readOnly,
-    index,
-    refs,
-    slashMenu,
-    handleSlashCommand,
-    closeSlashMenu,
-    showInlineToolbar,
-    onKeyDown,
-    isActive,
-    onActivate
-}: {
-    block: NoteBlock,
-    onChange: (updates: Partial<NoteBlock>) => void,
-    readOnly: boolean,
-    index: number,
-    refs: React.MutableRefObject<(HTMLInputElement | HTMLTextAreaElement | null)[]>,
-    slashMenu: SlashMenuState,
-    handleSlashCommand: (index: number, textarea: HTMLTextAreaElement | HTMLInputElement, start: number, text: string) => void,
-    closeSlashMenu: () => void,
-    showInlineToolbar: (index: number) => void,
-    onKeyDown?: (e: React.KeyboardEvent, itemIndex?: number) => void,
+interface BlockComponentProps {
+    block: NoteBlock;
+    onChange: (updates: Partial<NoteBlock>) => void;
+    onRemove: () => void;
+    onMove: (dir: 'up' | 'down') => void;
+    readOnly: boolean;
+    index: number;
+    refs: React.MutableRefObject<(HTMLInputElement | HTMLTextAreaElement | null)[]>;
+    slashMenu: SlashMenuState;
+    handleSlashCommand: (index: number, textarea: HTMLTextAreaElement | HTMLInputElement, start: number, text: string) => void;
+    closeSlashMenu: () => void;
+    showInlineToolbar: (index: number) => void;
+    onKeyDown?: (e: React.KeyboardEvent, itemIndex?: number) => void;
     isActive: boolean;
     onActivate: () => void;
-}) {
-    const baseClasses = "w-full bg-transparent focus:outline-none placeholder:text-gray-600 text-white transition-all";
+    isFirst: boolean;
+    isLast: boolean;
+}
+
+function BlockComponent({
+    block, onChange, onRemove, onMove, readOnly, index, refs, slashMenu,
+    handleSlashCommand, onKeyDown,
+    isActive, onActivate, isFirst, isLast
+}: BlockComponentProps) {
+    const baseClasses = "w-full bg-transparent focus:outline-none placeholder:text-gray-700 text-white/90 transition-all selection:bg-[#3aa3eb]/30";
+    const indentLevel = block.indent || 0;
+    const indentPadding = indentLevel * 24; // 24px per level 
+
+    return (
+        <div className="group/block relative -ml-12 pl-12" style={{ marginLeft: `${-48 + indentPadding}px`, paddingLeft: `48px` }}>
+            <div className="flex items-start gap-4">
+                {!readOnly && (
+                    <div className="flex flex-col items-center gap-1 opacity-0 group-hover/block:opacity-100 transition-opacity absolute left-0 top-1">
+                        <button className="p-1 cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-400">
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8zm0 6h2v2H8zm0 6h2v2H8zm6-12h2v2h-2zm0 6h2v2h-2zm0 6h2v2h-2z" /></svg>
+                        </button>
+                        <div className="flex flex-col -space-y-1">
+                            <button onClick={() => onMove('up')} disabled={isFirst} className="p-0.5 text-gray-800 hover:text-white disabled:opacity-20"><ChevronUpIcon className="h-3 w-3" /></button>
+                            <button onClick={() => onMove('down')} disabled={isLast} className="p-0.5 text-gray-800 hover:text-white disabled:opacity-20"><ChevronDownIcon className="h-3 w-3" /></button>
+                        </div>
+                    </div>
+                )}
+                <div className="flex-1">
+                    <BlockRenderer
+                        block={block} onChange={onChange} readOnly={readOnly} index={index}
+                        refs={refs} slashMenu={slashMenu} handleSlashCommand={handleSlashCommand}
+                        onKeyDown={onKeyDown} isActive={isActive} onActivate={onActivate} baseClasses={baseClasses}
+                    />
+                </div>
+            </div>
+            {!readOnly && isActive && (
+                <div className="flex items-center gap-1 mt-2 opacity-0 group-hover/block:opacity-100 transition-opacity">
+                    <div className="h-px bg-white/5 flex-1" />
+                    <div className="flex items-center gap-1">
+                        <BlockTypeButton icon={PlusIcon} label="Add" onClick={() => handleSlashCommand(index, refs.current[index] as any, 0, '')} />
+                        <BlockTypeButton icon={TrashIcon} label="Delete" onClick={onRemove} />
+                    </div>
+                    <div className="h-px bg-white/5 flex-1" />
+                </div>
+            )}
+        </div>
+    );
+}
+
+function BlockRenderer({
+    block, onChange, readOnly, index, refs, slashMenu, handleSlashCommand,
+    onKeyDown, isActive, onActivate, baseClasses
+}: any) {
+    const typographyClasses = "text-[15px] sm:text-[16px] leading-[1.55] tracking-normal";
 
     switch (block.type) {
-        case 'heading':
-            const fontSize = block.level === 1 ? 'text-4xl' : block.level === 2 ? 'text-3xl' : 'text-2xl';
-            if (readOnly) {
-                return <div className={`${fontSize} font-black tracking-tight text-white`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
-            }
-            if (!isActive) {
-                return (
-                    <div
-                        className={`${fontSize} font-black tracking-tight text-white cursor-text min-h-[32px]`}
-                        dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || `<span class="text-gray-600 opacity-50">Heading ${block.level || 2}</span>` }}
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    />
-                );
-            }
+        case 'heading': {
+            const headingStyles = block.level === 1
+                ? 'text-[28px] font-semibold tracking-tight text-white mb-2 mt-6'
+                : block.level === 2 ? 'text-[22px] font-semibold text-white/90 mb-2 mt-4'
+                    : 'text-[18px] font-semibold text-white/80 mb-1 mt-3';
+
+            if (readOnly) return <div className={headingStyles} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
+            if (!isActive) return (
+                <div
+                    className={`${headingStyles} cursor-text min-h-[32px]`}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || `<span class="text-gray-700 opacity-50">Heading ${block.level || 2}</span>` }}
+                    onClick={onActivate} tabIndex={0} onFocus={onActivate} ref={(el) => refs.current[index] = el as any}
+                />
+            );
             return (
                 <input
-                    autoFocus
-                    type="text"
-                    value={block.content}
-                    onChange={(e) => onChange({ content: e.target.value })}
-                    placeholder={`Heading ${block.level || 2}`}
-                    disabled={readOnly}
-                    ref={(el) => refs.current[index] = el}
-                    className={`${baseClasses} ${fontSize} font-black tracking-tight`}
+                    autoFocus type="text" value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                    placeholder={`Heading ${block.level || 2}`} disabled={readOnly} ref={(el) => refs.current[index] = el}
+                    className={`${baseClasses} ${headingStyles} py-1`}
                     onKeyDown={(e) => {
                         if (onKeyDown) onKeyDown(e);
                         if (e.key === '/' && !slashMenu.show) {
                             e.preventDefault();
-                            const input = e.target as HTMLInputElement;
-                            const start = input.selectionStart ?? 0;
-                            handleSlashCommand(index, input, start, input.value);
-                        } else if (slashMenu.show && slashMenu.index === index) {
-                            if (e.key === 'Escape') {
-                                closeSlashMenu();
-                            }
+                            handleSlashCommand(index, e.target as any, (e.target as any).selectionStart, (e.target as any).value);
                         }
                     }}
                 />
             );
-
+        }
         case 'paragraph':
-            if (readOnly) {
-                return <div className="text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
-            }
-            if (!isActive) {
-                return (
-                    <div
-                        className="text-gray-300 leading-relaxed cursor-text min-h-[24px]"
-                        dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="text-gray-600 opacity-50">Type \'/\' for commands</span>' }}
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    />
-                );
-            }
+            if (readOnly) return <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
+            if (!isActive) return (
+                <div
+                    className={`${typographyClasses} text-white/80 cursor-text min-h-[1.55em]`}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="text-gray-700 opacity-30">Type \'/\' for commands...</span>' }}
+                    onClick={onActivate} tabIndex={0} onFocus={onActivate} ref={(el) => refs.current[index] = el as any}
+                />
+            );
             return (
                 <textarea
-                    autoFocus
-                    value={block.content}
-                    onChange={(e) => onChange({ content: e.target.value })}
-                    placeholder="Start typing..."
-                    disabled={readOnly}
-                    rows={1}
-                    ref={(el) => refs.current[index] = el}
-                    className={`${baseClasses} text-gray-300 resize-none overflow-hidden leading-relaxed`}
-                    onInput={(e: any) => {
-                        e.target.style.height = 'auto';
-                        e.target.style.height = e.target.scrollHeight + 'px';
-                    }}
+                    autoFocus value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                    placeholder="Start typing..." disabled={readOnly} rows={1} ref={(el) => refs.current[index] = el}
+                    className={`${baseClasses} ${typographyClasses} text-white/80 resize-none overflow-hidden`}
+                    onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
                     onKeyDown={(e) => {
                         if (onKeyDown) onKeyDown(e);
                         if (e.key === '/' && !slashMenu.show) {
                             e.preventDefault();
-                            const textarea = e.target as HTMLTextAreaElement;
-                            const start = textarea.selectionStart ?? 0;
-                            handleSlashCommand(index, textarea, start, textarea.value);
-                        } else if (slashMenu.show && slashMenu.index === index) {
-                            if (e.key === 'Escape') {
-                                closeSlashMenu();
-                            }
+                            handleSlashCommand(index, e.target as any, (e.target as any).selectionStart, (e.target as any).value);
                         }
                     }}
                 />
             );
-
-        case 'bullets':
-            if (readOnly) {
-                return (
-                    <ul className="list-disc list-inside space-y-2">
-                        {block.items?.map((item, i) => (
-                            <li key={i} className="text-gray-300" dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
-                        ))}
-                    </ul>
-                );
-            }
-            if (!isActive) {
-                return (
-                    <ul
-                        className="list-disc list-inside space-y-2 cursor-text"
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    >
-                        {block.items?.map((item, i) => (
-                            <li key={i} className="text-gray-300" dangerouslySetInnerHTML={{ __html: parseMarkdown(item) || '<span class="opacity-50">Empty item</span>' }} />
-                        ))}
-                    </ul>
-                );
-            }
+        case 'bullets': {
+            const items = block.items || [''];
             return (
-                <ul className="list-disc list-inside space-y-2" ref={(el) => refs.current[index] = el as any}>
-                    {block.items?.map((item, i) => (
-                        <li key={i} className="text-gray-300">
+                <ul className="space-y-2 list-none" ref={(el) => refs.current[index] = el as any}>
+                    {items.map((item: string, i: number) => (
+                        <li key={i} className="flex items-start gap-3 group/li">
+                            <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#3aa3eb]/40 shrink-0" />
                             <input
-                                autoFocus={i === (block.items?.length || 1) - 1} // Autofocus last item or specific logic? Maybe just let user click. 
-                                // Actually better to autofocus the one corresponding to cursor, but hard to know.
-                                type="text"
-                                value={item}
-                                onChange={(e) => {
-                                    const newItems = [...(block.items || [])];
-                                    newItems[i] = e.target.value;
-                                    onChange({ items: newItems });
-                                }}
-                                onKeyDown={(e) => {
-                                    if (onKeyDown) onKeyDown(e, i);
-                                }}
-                                placeholder="List item..."
-                                disabled={readOnly}
-                                className={`${baseClasses} inline-block w-[calc(100%-24px)] ml-2`}
+                                autoFocus={isActive && i === items.length - 1} type="text" value={item}
+                                onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
+                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="List item..."
+                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5`}
                             />
                         </li>
                     ))}
                 </ul>
             );
-
-        case 'numbered':
-            if (readOnly) {
-                return (
-                    <ol className="list-decimal list-inside space-y-2">
-                        {block.items?.map((item, i) => (
-                            <li key={i} className="text-gray-300" dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
-                        ))}
-                    </ol>
-                );
-            }
-            if (!isActive) {
-                return (
-                    <ol
-                        className="list-decimal list-inside space-y-2 cursor-text"
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    >
-                        {block.items?.map((item, i) => (
-                            <li key={i} className="text-gray-300" dangerouslySetInnerHTML={{ __html: parseMarkdown(item) || '<span class="opacity-50">Empty item</span>' }} />
-                        ))}
-                    </ol>
-                );
-            }
+        }
+        case 'numbered': {
+            const items = block.items || [''];
             return (
-                <ol className="list-decimal list-inside space-y-2" ref={(el) => refs.current[index] = el as any}>
-                    {block.items?.map((item, i) => (
-                        <li key={i} className="text-gray-300">
+                <ol className="space-y-2 list-none" ref={(el) => refs.current[index] = el as any}>
+                    {items.map((item: string, i: number) => (
+                        <li key={i} className="flex items-start gap-3 group/li">
+                            <span className="mt-0.5 text-[14px] font-mono text-[#3aa3eb]/50 w-5 text-right shrink-0">{i + 1}.</span>
                             <input
-                                autoFocus={i === (block.items?.length || 1) - 1}
-                                type="text"
-                                value={item}
-                                onChange={(e) => {
-                                    const newItems = [...(block.items || [])];
-                                    newItems[i] = e.target.value;
-                                    onChange({ items: newItems });
-                                }}
-                                onKeyDown={(e) => {
-                                    if (onKeyDown) onKeyDown(e, i);
-                                }}
-                                placeholder="List item..."
-                                disabled={readOnly}
-                                className={`${baseClasses} inline-block w-[calc(100%-24px)] ml-2`}
+                                autoFocus={isActive && i === items.length - 1} type="text" value={item}
+                                onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
+                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="List item..."
+                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5`}
                             />
                         </li>
                     ))}
                 </ol>
             );
-
+        }
+        case 'todo': {
+            const todos = block.todos || [{ text: '', done: false }];
+            return (
+                <div className="space-y-2" ref={(el) => refs.current[index] = el as any}>
+                    {todos.map((todo: { text: string, done: boolean }, i: number) => (
+                        <div key={i} className="flex items-start gap-3 group/todo">
+                            <button
+                                onClick={() => { const newTodos = [...todos]; newTodos[i].done = !newTodos[i].done; onChange({ todos: newTodos }); }}
+                                className={`mt-1 w-5 h-5 rounded border transition-all flex items-center justify-center shrink-0 ${todo.done ? 'bg-[#3aa3eb] border-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.4)]' : 'bg-white/5 border-white/20 hover:border-white/40'}`}
+                            >
+                                {todo.done && <CheckCircleIcon className="h-3.5 w-3.5 text-white" />}
+                            </button>
+                            <input
+                                autoFocus={isActive && i === todos.length - 1} type="text" value={todo.text}
+                                onChange={(e) => { const newTodos = [...todos]; newTodos[i].text = e.target.value; onChange({ todos: newTodos }); }}
+                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="To do item..."
+                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5 ${todo.done ? 'line-through text-white/30' : ''}`}
+                            />
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        case 'toggle': {
+            const isOpen = block.isOpen ?? true;
+            return (
+                <div className="space-y-1" ref={(el) => refs.current[index] = el as any}>
+                    <div className="flex items-start gap-2 group/toggle-head">
+                        <button onClick={() => onChange({ isOpen: !isOpen })} className="mt-1 p-0.5 hover:bg-white/10 rounded transition-colors">
+                            <ChevronRightIcon className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                        </button>
+                        <textarea
+                            autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                            onClick={onActivate} placeholder="Toggle block..." disabled={readOnly} rows={1}
+                            className={`${baseClasses} ${typographyClasses} text-white/90 font-medium resize-none overflow-hidden`}
+                            onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                            onKeyDown={(e) => onKeyDown?.(e)}
+                        />
+                    </div>
+                </div>
+            );
+        }
+        case 'quote':
+            return (
+                <div className="relative" ref={(el) => refs.current[index] = el as any}>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3aa3eb] rounded-full" />
+                    <textarea
+                        autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                        onClick={onActivate} placeholder="Inspiring quote..." disabled={readOnly} rows={1}
+                        className={`${baseClasses} ${typographyClasses} pl-6 italic text-white/90 resize-none overflow-hidden`}
+                        onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                        onKeyDown={(e) => onKeyDown?.(e)}
+                    />
+                </div>
+            );
         case 'callout': {
-            const toneMap = {
-                info: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: InformationCircleIcon },
+            const toneMap: any = {
+                info: { bg: 'bg-[#3aa3eb]/10', border: 'border-[#3aa3eb]/20', text: 'text-[#3aa3eb]', icon: InformationCircleIcon },
                 warning: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', icon: InformationCircleIcon },
                 error: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', icon: InformationCircleIcon },
                 success: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', icon: InformationCircleIcon }
             };
             const tone = toneMap[block.tone || 'info'];
             const Icon = tone.icon;
-
-            if (readOnly) {
-                return (
-                    <div className={`p-4 rounded-xl border ${tone.bg} ${tone.border} flex gap-4`}>
-                        <Icon className={`h-6 w-6 shrink-0 ${tone.text}`} />
-                        <div className="flex-1">
-                            <div className={`${tone.text} font-medium`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
-                        </div>
-                    </div>
-                );
-            }
-            if (!isActive) {
-                return (
-                    <div
-                        className={`p-4 rounded-xl border ${tone.bg} ${tone.border} flex gap-4 cursor-text`}
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    >
-                        <Icon className={`h-6 w-6 shrink-0 ${tone.text}`} />
-                        <div className="flex-1">
-                            <div className={`${tone.text} font-medium`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="opacity-50">Important information...</span>' }} />
-                        </div>
-                    </div>
-                );
-            }
             return (
-                <div className={`p-4 rounded-xl border ${tone.bg} ${tone.border} flex gap-4`}>
-                    <Icon className={`h-6 w-6 shrink-0 ${tone.text}`} />
-                    <div className="flex-1">
-                        <textarea
-                            autoFocus
-                            value={block.content}
-                            onChange={(e) => onChange({ content: e.target.value })}
-                            placeholder="Important information..."
-                            disabled={readOnly}
-                            rows={1}
-                            ref={(el) => refs.current[index] = el}
-                            className={`${baseClasses} ${tone.text} resize-none overflow-hidden leading-relaxed font-medium`}
-                            onInput={(e: any) => {
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                            }}
-                            onKeyDown={(e) => {
-                                if (onKeyDown) onKeyDown(e);
-                            }}
-                        />
-                    </div>
+                <div className={`p-4 rounded-[20px] border ${tone.bg} ${tone.border} flex gap-4 shadow-lg shadow-black/20`} ref={(el) => refs.current[index] = el as any}>
+                    <Icon className={`h-5 w-5 shrink-0 ${tone.text} mt-1`} />
+                    <textarea
+                        autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                        onClick={onActivate} placeholder="Important information..." disabled={readOnly} rows={1}
+                        className={`${baseClasses} ${typographyClasses} ${tone.text} font-medium resize-none overflow-hidden`}
+                        onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                        onKeyDown={(e) => onKeyDown?.(e)}
+                    />
                 </div>
             );
         }
-
-        case 'quote':
-            if (readOnly) {
-                return (
-                    <div className="border-l-4 border-[#3aa3eb] pl-6 py-2 italic text-xl text-gray-300" dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
-                );
-            }
-            if (!isActive) {
-                return (
-                    <div
-                        className="border-l-4 border-[#3aa3eb] pl-6 py-2 italic text-xl text-gray-300 cursor-text min-h-[44px]"
-                        dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="text-gray-600 opacity-50">Inspiring quote...</span>' }}
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    />
-                );
-            }
-            return (
-                <div className="border-l-4 border-[#3aa3eb] pl-6 py-2">
-                    <textarea
-                        autoFocus
-                        value={block.content}
-                        onChange={(e) => onChange({ content: e.target.value })}
-                        placeholder="Inspiring quote..."
-                        disabled={readOnly}
-                        rows={1}
-                        ref={(el) => refs.current[index] = el}
-                        className={`${baseClasses} italic text-xl text-gray-300 resize-none overflow-hidden leading-relaxed`}
-                        onInput={(e: any) => {
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        onKeyDown={(e) => {
-                            if (onKeyDown) onKeyDown(e);
-                        }}
-                    />
-                </div>
-            );
-
         case 'divider':
-            return <div className="h-px bg-white/10 w-full my-4" />;
-
-        case 'code':
-            if (!isActive) {
-                return (
-                    <div
-                        className="bg-black/40 rounded-xl p-4 border border-white/5 font-mono text-sm cursor-text"
-                        onClick={onActivate}
-                        tabIndex={0}
-                        onFocus={onActivate}
-                        ref={(el) => refs.current[index] = el as any}
-                    >
-                        <div className="flex items-center justify-between mb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                            <span>{block.lang || 'typescript'}</span>
-                        </div>
-                        <pre className="text-blue-400 font-mono whitespace-pre-wrap">{block.content}</pre>
-                    </div>
-                );
-            }
             return (
-                <div className="bg-black/40 rounded-xl p-4 border border-white/5 font-mono text-sm">
-                    <div className="flex items-center justify-between mb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                <div className="py-2" ref={(el) => refs.current[index] = el as any}>
+                    <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent w-full" />
+                </div>
+            );
+        case 'code':
+            return (
+                <div className="bg-black/60 rounded-[16px] border border-white/10 overflow-hidden relative group/code" ref={(el) => refs.current[index] = el as any}>
+                    <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                         <input
-                            type="text"
-                            value={block.lang || 'typescript'}
-                            onChange={(e) => onChange({ lang: e.target.value })}
-                            className="bg-transparent focus:outline-none w-24"
-                            placeholder="language"
-                            disabled={readOnly}
+                            type="text" value={block.lang || 'typescript'} onChange={(e) => onChange({ lang: e.target.value })}
+                            className="bg-transparent focus:outline-none w-24" placeholder="language" disabled={readOnly} onClick={onActivate}
                         />
+                        <button onClick={() => navigator.clipboard.writeText(block.content || '')} className="opacity-0 group-hover/code:opacity-100 transition-opacity hover:text-[#3aa3eb]">Copy to clipboard</button>
                     </div>
                     <textarea
-                        autoFocus
-                        value={block.content}
-                        onChange={(e) => onChange({ content: e.target.value })}
-                        placeholder="// Paste code here..."
-                        disabled={readOnly}
-                        rows={4}
-                        className={`${baseClasses} text-blue-400 font-mono resize-none overflow-hidden leading-relaxed`}
-                        onInput={(e: any) => {
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        onKeyDown={(e) => {
-                            if (onKeyDown) onKeyDown(e);
-                        }}
+                        autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                        onClick={onActivate} placeholder="// Paste code here..." disabled={readOnly} rows={4}
+                        className={`${baseClasses} p-4 font-mono text-[13px] sm:text-[14px] leading-relaxed text-[#3aa3eb] resize-none overflow-hidden`}
+                        onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                        onKeyDown={(e) => onKeyDown?.(e)}
                     />
                 </div>
             );
-
-        default:
-            return null;
+        default: return null;
     }
 }

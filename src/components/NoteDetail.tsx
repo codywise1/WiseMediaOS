@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 import {
     noteService,
     Note,
@@ -14,7 +14,6 @@ import {
     TrashIcon,
     FolderIcon,
     DocumentTextIcon,
-    EyeIcon,
     CurrencyDollarIcon,
     CalendarDaysIcon,
     BookmarkIcon,
@@ -27,7 +26,6 @@ import {
 import { formatAppDate } from '../lib/dateFormat';
 import ConfirmDialog from './ConfirmDialog';
 import NoteEditor from './notes/NoteEditor';
-import { useDebounce } from '../hooks/useDebounce';
 
 interface User {
     email: string;
@@ -112,6 +110,41 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
         }
     };
 
+    useEffect(() => {
+        if (note && blocks.length === 0 && !loading) {
+            // Apply templates for new/empty notes
+            const templates: Record<string, NoteBlock[]> = {
+                sop: [
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Overview' },
+                    { id: uuidv4(), type: 'paragraph', content: '' },
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Steps' },
+                    { id: uuidv4(), type: 'numbered', items: [''] },
+                ],
+                meeting: [
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Agenda' },
+                    { id: uuidv4(), type: 'bullets', items: [''] },
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Notes' },
+                    { id: uuidv4(), type: 'paragraph', content: '' },
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Action Items' },
+                    { id: uuidv4(), type: 'todo', todos: [{ text: '', done: false }] },
+                ],
+                sales_call: [
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Pain Points' },
+                    { id: uuidv4(), type: 'bullets', items: [''] },
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Value Proposition' },
+                    { id: uuidv4(), type: 'paragraph', content: '' },
+                    { id: uuidv4(), type: 'heading', level: 2, content: 'Next Steps' },
+                    { id: uuidv4(), type: 'todo', todos: [{ text: '', done: false }] },
+                ]
+            };
+
+            const templateBlocks = (templates as any)[note.category];
+            if (templateBlocks) {
+                setBlocks(templateBlocks);
+            }
+        }
+    }, [note?.category, loading]);
+
     // Simple autosave on block change with 2s delay
     useEffect(() => {
         if (isInitialLoad.current) return;
@@ -189,29 +222,28 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div className="lg:col-span-3 space-y-6">
                     {/* Editor Header */}
-                    <div className="glass-card rounded-3xl p-8 border border-white/10 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8">
+                    <div className="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 relative overflow-hidden mb-6">
+                        <div className="absolute top-0 right-0 p-4 sm:p-8">
                             <button
                                 onClick={handleTogglePin}
                                 className={`p-3 rounded-2xl transition-all border ${note.pinned
-                                        ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
-                                        : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/30'
+                                    ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                                    : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/30'
                                     }`}
                             >
                                 <BookmarkIcon className={`h-6 w-6 ${note.pinned ? 'fill-yellow-500' : ''}`} />
                             </button>
                         </div>
 
-                        <div className="space-y-4 max-w-2xl">
+                        <div className="space-y-4 max-w-3xl">
                             <input
                                 type="text"
                                 value={note.title}
                                 onChange={(e) => {
                                     const newTitle = e.target.value;
                                     setNote({ ...note, title: newTitle });
-                                    // Immediate title save optional, or let it follow the blocks timer
                                 }}
-                                className="w-full bg-transparent border-none p-0 text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800 uppercase"
+                                className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800 uppercase"
                                 placeholder="UNTITLED NOTE"
                             />
 
@@ -220,8 +252,8 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     {note.category}
                                 </span>
                                 <span className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${note.visibility === 'client_visible'
-                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
                                     }`}>
                                     {note.visibility === 'client_visible' ? 'Shared with Client' : 'Internal Agency Only'}
                                 </span>
@@ -235,20 +267,38 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     </div>
 
                     {/* Editor Area */}
-                    <div className="glass-card rounded-3xl border border-white/10 p-12 min-h-[800px]">
-                        <NoteEditor
-                            content={blocks}
-                            onChange={setBlocks}
-                            readOnly={!isAdminOrStaff}
-                        />
+                    <div className="glass-card rounded-[32px] border border-white/10 hover:border-white/20 transition-all duration-300 shadow-2xl relative overflow-hidden group/editor">
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover/editor:opacity-100 transition-opacity pointer-events-none" />
+
+                        <div className="relative max-w-[760px] mx-auto min-h-[800px] px-4 py-6 sm:px-6 sm:py-8">
+                            <NoteEditor
+                                content={blocks}
+                                onChange={setBlocks}
+                                readOnly={!isAdminOrStaff}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* Sidebar */}
-                <div className="space-y-6">
+                {/* Sidebar - Sticky */}
+                <div className="space-y-6 lg:sticky lg:top-6 self-start">
                     {/* Details Card */}
-                    <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Metadata</h2>
+                    <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-[#3aa3eb]" />
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Contextual Data</h2>
+                            {isSaving ? (
+                                <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] uppercase tracking-widest animate-pulse">
+                                    <div className="w-1 h-1 rounded-full bg-[#3aa3eb]" />
+                                    Synchronizing...
+                                </span>
+                            ) : (
+                                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-40">
+                                    Secured
+                                </span>
+                            )}
+                        </div>
                         <div className="space-y-4">
                             <MetaItem label="Author" value={note.authorUserId ? 'Team Member' : 'System'} icon={UserIcon} />
                             <MetaItem label="Client" value={note.client?.name || 'Internal'} icon={UserIcon} />

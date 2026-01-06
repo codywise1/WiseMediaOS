@@ -220,7 +220,7 @@ export interface Project {
   client_id: string;
   name: string;
   description?: string;
-  status: 'not_started' | 'in_progress' | 'in_review' | 'completed';
+  status: 'not_started' | 'in_progress' | 'in_review' | 'completed' | 'active' | 'on_hold' | 'planning';
   progress: number;
   budget?: number;
   start_date?: string;
@@ -428,6 +428,7 @@ export interface NoteBlock {
   children?: NoteBlock[];
   lang?: string;
   tone?: 'info' | 'warning' | 'error' | 'success';
+  indent?: number;
 }
 
 export interface Note {

@@ -205,6 +205,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <option value="in_progress">In Progress</option>
                 <option value="in_review">In Review</option>
                 <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
               </select>
             </div>
 

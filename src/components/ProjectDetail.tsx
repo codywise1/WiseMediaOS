@@ -208,11 +208,21 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'planning': return 'bg-blue-500';
-      case 'in_progress': return 'bg-[#3aa3eb]';
-      case 'completed': return 'bg-green-500';
-      case 'on_hold': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'not_started':
+      case 'planning':
+        return 'bg-slate-500';
+      case 'in_progress':
+        return 'bg-[#3aa3eb]';
+      case 'in_review':
+        return 'bg-amber-500';
+      case 'completed':
+        return 'bg-green-500';
+      case 'on_hold':
+        return 'bg-red-500';
+      case 'active':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
