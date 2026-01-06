@@ -133,7 +133,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         <div>
           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Basics</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 relative">
               <label className="block text-sm font-medium text-gray-300 mb-2">Project Title *</label>
               <input
                 type="text"
@@ -145,7 +145,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-2">Client *</label>
               {currentUser?.role === 'admin' ? (
                 <select
@@ -175,7 +175,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
               )}
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-2">Project Type</label>
               <select
                 name="project_type"
@@ -189,10 +189,11 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <option value="SEO">SEO</option>
                 <option value="Brand Identity">Brand Identity</option>
                 <option value="Video Editing">Video Editing</option>
-                <option value="Graphic Design">Graphic Design</option>              </select>
+                <option value="Graphic Design">Graphic Design</option>
+              </select>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-2">Status *</label>
               <select
                 name="status"
@@ -205,7 +206,6 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
                 <option value="in_progress">In Progress</option>
                 <option value="in_review">In Review</option>
                 <option value="completed">Completed</option>
-                <option value="on_hold">On Hold</option>
               </select>
             </div>
 

@@ -527,11 +527,11 @@ export default function Clients({ currentUser }: ClientsProps) {
                       {client.category && <CategoryBadge category={client.category} />}
                       {client.location && (
                         <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
                           style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.33)',
-                            border: '1px solid rgba(255, 255, 255, 1)',
-                            color: 'white'
+                            backgroundColor: 'rgba(59, 163, 234, 0.33)',
+                            border: '1px solid rgba(59, 163, 234, 1)',
+                            color: '#ffffff'
                           }}
                         >
                           {client.location}

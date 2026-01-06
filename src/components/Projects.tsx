@@ -7,7 +7,10 @@ import {
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  AdjustmentsHorizontalIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from '@heroicons/react/24/outline';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -94,6 +97,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [industryFilter, setIndustryFilter] = useState('all');
   const [clients, setClients] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState(kanbanColumns[0].id);
+  const [showFilters, setShowFilters] = useState(false);
 
   useLoadingGuard(loading, setLoading);
 
@@ -446,84 +451,118 @@ export default function Projects({ currentUser }: ProjectsProps) {
       <ScrollbarStyles />
 
       {/* Header & Filters Section */}
-      <div className="flex-shrink-0 space-y-6">
+      <div className="space-y-2">
         {/* Header */}
         <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div className="min-w-0">
               <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
-              <p className="text-gray-300">Manage and track all your active projects</p>
+              <p className="text-gray-400 text-sm sm:text-base">Manage and track all your active projects</p>
             </div>
-            {isAdmin && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleNewProject}
-                className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0"
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden p-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-gray-300 hover:text-white transition-all transition-all"
               >
-                <PlusIcon className="h-5 w-5 text-white" />
-                <span>New Project</span>
+                <AdjustmentsHorizontalIcon className="h-5 w-5" />
               </button>
-            )}
+              {isAdmin && (
+                <button
+                  onClick={handleNewProject}
+                  className="btn-primary flex-1 sm:flex-none text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button"
+                >
+                  <PlusIcon className="h-5 w-5 text-white" />
+                  <span className="whitespace-nowrap">New Project</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Tabs */}
+          <div className="lg:hidden flex overflow-x-auto pb-2 mb-6 gap-2 custom-scrollbar">
+            {kanbanColumns.map((col) => {
+              const isActive = activeTab === col.id;
+              const count = getProjectsByStatus(col.id).length;
+              return (
+                <button
+                  key={col.id}
+                  onClick={() => setActiveTab(col.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 border ${isActive
+                    ? 'bg-blue-500/20 border-blue-500/50 text-white shadow-lg shadow-blue-500/10'
+                    : 'bg-slate-800/30 border-slate-700/50 text-gray-400 hover:border-slate-600'
+                    }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${col.color}`}></div>
+                  <span className="text-xs font-bold tracking-tight">{col.title}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700/50 text-gray-500'}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search projects or clients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
-                />
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block transition-all duration-300`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search projects..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project State</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
-              >
-                <option value="all">All Status</option>
-                {kanbanColumns.map(col => (
-                  <option key={col.id} value={col.id}>{col.title}</option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project State</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                >
+                  <option value="all">All Status</option>
+                  {kanbanColumns.map(col => (
+                    <option key={col.id} value={col.id}>{col.title}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
-              <select
-                disabled={!isAdmin}
-                value={clientFilter}
-                onChange={(e) => setClientFilter(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="all">All Clients</option>
-                {clientsWithProjects.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
+                <select
+                  disabled={!isAdmin}
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="all">All Clients</option>
+                  {clientsWithProjects.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Industry</label>
-              <select
-                value={industryFilter}
-                onChange={(e) => setIndustryFilter(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
-              >
-                <option value="all">All Categories</option>
-                {uniqueIndustries.map(industry => (
-                  <option key={industry} value={industry}>{industry}</option>
-                ))}
-              </select>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Industry</label>
+                <select
+                  value={industryFilter}
+                  onChange={(e) => setIndustryFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                >
+                  <option value="all">All Categories</option>
+                  {uniqueIndustries.map(industry => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -569,11 +608,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
       {/* Kanban Board - Scrollable Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-6 overflow-x-auto pb-4 custom-scrollbar lg:overflow-x-visible">
+        <div className="h-full flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-x-visible pb-4 custom-scrollbar">
           {kanbanColumns.map((column) => (
             <div
               key={column.id}
-              className={`glass-card rounded-xl p-4 h-full min-h-0 min-w-[300px] lg:min-w-0 flex flex-col transition-all duration-300 ${dragOverColumn === column.id
+              className={`glass-card rounded-xl p-4 h-full min-h-0 min-w-[300px] lg:min-w-0 flex flex-col transition-all duration-300 ${activeTab === column.id ? 'flex' : 'hidden lg:flex'} ${dragOverColumn === column.id
                 ? 'border-2 border-blue-400 bg-blue-500/10 shadow-2xl shadow-blue-500/20 scale-[1.02]'
                 : 'border-2 border-slate-700/50'
                 }`}
@@ -584,7 +623,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                  <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                     {column.title}
                   </h3>
                 </div>
@@ -597,7 +636,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                 {getProjectsByStatus(column.id).map((project) => (
                   <div
                     key={project.id}
-                    className={`group bg-[#0d1117]/50 border border-gray-800/50 hover:border-blue-500/30 rounded-[10px] p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''}`}
+                    className={`group bg-[#0d1117]/50 border border-gray-800/50 hover:border-blue-500/30 rounded-[10px] p-4 sm:p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''}`}
                     draggable={isAdmin}
                     onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
                     onDragEnd={isAdmin ? handleDragEnd : undefined}
@@ -667,7 +706,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     <div className={`mb-4 p-3 rounded-full border-2 border-dashed ${dragOverColumn === column.id ? 'border-green-400 bg-green-400/20' : 'border-slate-700'}`}>
                       <ArrowDownIcon className={`h-8 w-8 ${dragOverColumn === column.id ? 'text-green-400 animate-bounce' : 'text-slate-600'}`} />
                     </div>
-                    <p className={`text-base font-bold uppercase tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <p className={`text-base font-bold tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       No Project Here
                     </p>
                     <p className="text-gray-500 text-xs text-center max-w-[150px]">

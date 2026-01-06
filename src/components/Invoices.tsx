@@ -287,111 +287,115 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       </div>
 
       {/* Main Charts & Revenue Snapshot Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quarterly Earnings Chart */}
-        <div className="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/5 to-transparent opacity-50 pointer-events-none" />
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>MONTHLY EARNINGS</h2>
-          </div>
+      {isAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quarterly Earnings Chart */}
+          <div className="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/5 to-transparent opacity-50 pointer-events-none" />
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>MONTHLY EARNINGS</h2>
+            </div>
 
-          <div className="h-64 w-full relative group/chart">
-            {/* Simple SVG Chart */}
-            <svg viewBox="0 0 800 200" className="w-full h-full drop-shadow-[0_0_15px_rgba(58,163,235,0.3)]">
-              <defs>
-                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Grid Lines */}
-              {[0, 1, 2, 3].map(i => (
-                <line key={i} x1="0" y1={i * 50 + 20} x2="800" y2={i * 50 + 20} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              ))}
+            <div className="h-64 w-full relative group/chart">
+              {/* Simple SVG Chart */}
+              <svg viewBox="0 0 800 200" className="w-full h-full drop-shadow-[0_0_15px_rgba(58,163,235,0.3)]">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Grid Lines */}
+                {[0, 1, 2, 3].map(i => (
+                  <line key={i} x1="0" y1={i * 50 + 20} x2="800" y2={i * 50 + 20} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                ))}
 
-              {/* Chart Line Path */}
-              <path
-                d={linePath}
-                fill="none"
-                stroke="#3aa3eb"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="animate-[draw_2s_ease-out]"
-              />
-              <path
-                d={areaPath}
-                fill="url(#chartGradient)"
-              />
-              {/* Points */}
-              {chartPoints.map((p, i) => (
-                <circle
-                  key={i}
-                  cx={p.x}
-                  cy={p.y}
-                  r="4"
-                  fill="#ffffff"
+                {/* Chart Line Path */}
+                <path
+                  d={linePath}
+                  fill="none"
                   stroke="#3aa3eb"
-                  strokeWidth="2"
-                  className="hover:r-6 transition-all cursor-pointer"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="animate-[draw_2s_ease-out]"
                 />
-              ))}
-            </svg>
+                <path
+                  d={areaPath}
+                  fill="url(#chartGradient)"
+                />
+                {/* Points */}
+                {chartPoints.map((p, i) => (
+                  <circle
+                    key={i}
+                    cx={p.x}
+                    cy={p.y}
+                    r="4"
+                    fill="#ffffff"
+                    stroke="#3aa3eb"
+                    strokeWidth="2"
+                    className="hover:r-6 transition-all cursor-pointer"
+                  />
+                ))}
+              </svg>
 
-            {/* Axis Labels */}
-            <div className="flex justify-between text-[10px] text-gray-500 font-bold uppercase mt-4 px-12">
-              {chartData.map((d, i) => (
-                <span key={i}>{d.label}</span>
-              ))}
-            </div>
-
-            {/* Y-Axis Labels */}
-            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
-              <span>${Math.round(maxVal / 1000)}k</span>
-              <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
-              <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
-              <span>$0</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Revenue Snapshot */}
-        <div className="glass-card rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
-          <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
-          <div className="space-y-4">
-            {[
-              { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}` },
-              { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}` },
-              { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` }
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                <span className="text-sm text-gray-300 font-medium">{item.label}</span>
-                <span className="text-xl font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{item.value}</span>
+              {/* Axis Labels */}
+              <div className="flex justify-between text-[10px] text-gray-500 font-bold uppercase mt-4 px-12">
+                {chartData.map((d, i) => (
+                  <span key={i}>{d.label}</span>
+                ))}
               </div>
-            ))}
+
+              {/* Y-Axis Labels */}
+              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
+                <span>${Math.round(maxVal / 1000)}k</span>
+                <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
+                <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
+                <span>$0</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Snapshot */}
+          <div className="glass-card rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
+            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
+            <div className="space-y-4">
+              {[
+                { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}` },
+                { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}` },
+                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` }
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                  <span className="text-sm text-gray-300 font-medium">{item.label}</span>
+                  <span className="text-xl font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Mini Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, color: 'text-white', iconBg: 'bg-[#3aa3eb]/20' },
-          { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, color: 'text-white', iconBg: 'bg-green-500/20' },
-          { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, color: 'text-white', iconBg: 'bg-red-500/20' },
-          { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, color: 'text-white', iconBg: 'bg-blue-500/20' }
-        ].map((stat, idx) => (
-          <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
-            <div className={`p-3 rounded-lg ${stat.iconBg}`}>
-              <stat.icon className="h-6 w-6 text-white" />
+      {isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, color: 'text-white', iconBg: 'bg-[#3aa3eb]/20' },
+            { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, color: 'text-white', iconBg: 'bg-green-500/20' },
+            { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, color: 'text-white', iconBg: 'bg-red-500/20' },
+            { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, color: 'text-white', iconBg: 'bg-blue-500/20' }
+          ].map((stat, idx) => (
+            <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
+              <div className={`p-3 rounded-lg ${stat.iconBg}`}>
+                <stat.icon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-white font-medium mb-1">{stat.label}</p>
+                <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.value}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-white font-medium mb-1">{stat.label}</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Filter Tabs and Table */}
       <div className="space-y-4">
@@ -429,12 +433,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 border-b border-white/10">
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Invoice</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Client</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Status</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Amount</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Due</th>
+                <tr className="bg-white/5 border-b border-white/10 text-gray-400">
+                  <th className="px-8 py-5 text-xs font-bold tracking-tight">Invoice</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Status</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Amount</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Due</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>
@@ -456,11 +460,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       <span className="text-sm font-bold text-gray-200">{invoice.client}</span>
                     </td>
                     <td className="px-6 py-6 text-center">
-                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 ${invoice.status === 'overdue' ? 'bg-red-500/20 text-red-500 border-red-500/30' :
+                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-white/10 ${invoice.status === 'overdue' ? 'bg-red-500/20 text-red-500 border-red-500/30' :
                         invoice.status === 'paid' ? 'bg-green-500/20 text-green-500 border-green-500/30' :
                           'bg-white/5 text-gray-400'
                         }`}>
-                        {invoice.status}
+                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-6">
@@ -526,7 +530,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         {!isAdmin && (invoice.status === 'pending' || invoice.status === 'overdue') && (
                           <button
                             onClick={() => handlePayInvoice(invoice)}
-                            className="px-4 py-2 rounded-xl bg-[#3aa3eb] text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(58,163,235,0.4)]"
+                            className="px-4 py-2 rounded-xl bg-[#3aa3eb] text-white text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(58,163,235,0.4)]"
                           >
                             Pay Now
                           </button>

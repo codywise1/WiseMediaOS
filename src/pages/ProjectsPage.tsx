@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [formData, setFormData] = useState({ title: '', description: '', status: 'active' });
+  const [formData, setFormData] = useState({ title: '', description: '', status: 'not_started' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   }, [profile]);
 
   async function fetchProjects() {
-    if (!profile) return;
+    if (!profile || !supabase) return;
 
     try {
       const { data, error } = await supabase
@@ -47,7 +47,7 @@ export default function ProjectsPage() {
   }
 
   async function handleSave() {
-    if (!profile || !formData.title.trim()) return;
+    if (!profile || !formData.title.trim() || !supabase) return;
 
     setSaving(true);
     try {
@@ -97,7 +97,7 @@ export default function ProjectsPage() {
 
   function openNewModal() {
     setEditingProject(null);
-    setFormData({ title: '', description: '', status: 'active' });
+    setFormData({ title: '', description: '', status: 'not_started' });
     setShowModal(true);
   }
 
@@ -107,8 +107,6 @@ export default function ProjectsPage() {
       case 'in_progress': return 'bg-blue-500/20 text-blue-400';
       case 'in_review': return 'bg-amber-500/20 text-amber-400';
       case 'completed': return 'bg-green-500/20 text-green-400';
-      case 'active': return 'bg-blue-500/20 text-blue-400';
-      case 'on_hold': return 'bg-red-500/20 text-red-400';
       default: return 'bg-gray-500/20 text-gray-400';
     }
   };
@@ -193,7 +191,6 @@ export default function ProjectsPage() {
                       <option value="in_progress">In Progress</option>
                       <option value="in_review">In Review</option>
                       <option value="completed">Completed</option>
-                      <option value="on_hold">On Hold</option>
                     </select>
                   </div>
                   <div className="flex gap-3 pt-4">

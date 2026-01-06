@@ -524,7 +524,7 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${appointmentStatusColors[appointment.status]}`}>
-                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                    {appointment.status}
                   </span>
                   {isAdmin && (
                     <div className="flex items-center space-x-2">

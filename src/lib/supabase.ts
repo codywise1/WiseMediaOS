@@ -220,7 +220,7 @@ export interface Project {
   client_id: string;
   name: string;
   description?: string;
-  status: 'not_started' | 'in_progress' | 'in_review' | 'completed' | 'active' | 'on_hold' | 'planning';
+  status: 'not_started' | 'in_progress' | 'in_review' | 'completed';
   progress: number;
   budget?: number;
   start_date?: string;

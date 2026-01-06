@@ -1,4 +1,3 @@
-import React from 'react';
 import { format } from 'date-fns';
 import {
     VideoCameraIcon,
@@ -10,7 +9,7 @@ import {
     PencilSquareIcon,
     TrashIcon
 } from '@heroicons/react/24/outline';
-import { Meeting, MeetingStatus, UserRole } from '../lib/supabase';
+import { Meeting, UserRole } from '../lib/supabase';
 import { meetingStatusColors } from '../lib/statusColors';
 
 interface MeetingCardProps {
@@ -74,7 +73,7 @@ export default function MeetingCard({
                 </div>
 
                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${meetingStatusColors[meeting.status]}`}>
-                    {meeting.status === 'live' ? 'LIVE' : meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                    {meeting.status}
                 </span>
             </div>
 
@@ -111,7 +110,7 @@ export default function MeetingCard({
                     {isLive && onJoin && (
                         <button
                             onClick={() => onJoin(meeting)}
-                            className="px-4 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-full text-xs font-bold uppercase tracking-wide transition-all shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center gap-2"
+                            className="px-4 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-full text-xs font-bold transition-all shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center gap-2"
                         >
                             <VideoCameraIcon className="h-3.5 w-3.5" />
                             Join
@@ -121,7 +120,7 @@ export default function MeetingCard({
                     {!isLive && meeting.status === 'scheduled' && onJoin && (
                         <button
                             onClick={() => onJoin(meeting)}
-                            className="px-4 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 rounded-full text-xs font-bold uppercase tracking-wide transition-all"
+                            className="px-4 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 rounded-full text-xs font-bold transition-all"
                         >
                             Join
                         </button>

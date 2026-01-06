@@ -10,7 +10,7 @@ interface BadgeProps {
 
 const variantStyles = {
   primary: 'bg-[#3aa3eb]/20 text-[#3aa3eb] border-[#3aa3eb]/30',
-  secondary: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  secondary: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
   success: 'bg-green-500/20 text-green-400 border-green-500/30',
   warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   error: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -34,7 +34,7 @@ export default function Badge({
   return (
     <span
       className={`
-        inline-flex items-center gap-1.5 rounded-lg border font-medium whitespace-nowrap
+        inline-flex items-center gap-1.5 rounded-full border font-medium whitespace-nowrap
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}

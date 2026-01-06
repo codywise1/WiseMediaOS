@@ -193,19 +193,18 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     className="flex items-center space-x-2 text-gray-500 hover:text-white transition-colors group"
                 >
                     <ArrowLeftIcon className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Back to Library</span>
+                    <span className="text-[10px] font-black tracking-wider">Back to Library</span>
                 </button>
 
                 <div className="flex items-center gap-4">
                     {isSaving ? (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[#3aa3eb] uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[#3aa3eb] tracking-wider">
                             <div className="h-2 w-2 bg-[#3aa3eb] rounded-full animate-ping" />
-                            Autosaving...
+                            <span>Saving Intelligence...</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                            <CheckCircleIcon className="h-4 w-4" />
-                            Changes Saved
+                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 tracking-wider">
+                            <span>Intelligence Synchronized</span>
                         </div>
                     )}
                     <div className="h-4 w-px bg-white/10 mx-2" />
@@ -243,23 +242,23 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     const newTitle = e.target.value;
                                     setNote({ ...note, title: newTitle });
                                 }}
-                                className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800 uppercase"
-                                placeholder="UNTITLED NOTE"
+                                className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800"
+                                placeholder="Note Title"
                             />
 
-                            <div className="flex flex-wrap gap-2">
-                                <span className="px-3 py-1 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] border border-[#3aa3eb]/20 text-[10px] font-black uppercase tracking-widest">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-3 py-1 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] border border-[#3aa3eb]/20 text-[10px] font-black">
                                     {note.category}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${note.visibility === 'client_visible'
-                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                <span className={`px-3 py-1 rounded-full border text-[10px] font-black ${note.visibility === 'client_visible'
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                    : 'bg-white/5 text-gray-400 border-white/10'
                                     }`}>
-                                    {note.visibility === 'client_visible' ? 'Shared with Client' : 'Internal Agency Only'}
+                                    {note.visibility === 'client_visible' ? 'Client visible' : 'Internal'}
                                 </span>
-                                {note.tags.map(tag => (
-                                    <span key={tag} className="px-3 py-1 rounded-full bg-white/5 text-gray-500 border border-white/5 text-[10px] font-bold uppercase tracking-wider">
-                                        #{tag}
+                                {note.tags?.map(tag => (
+                                    <span key={tag} className="px-3 py-1 rounded-full bg-white/5 text-gray-500 border border-white/5 text-[10px] font-bold">
+                                        {tag}
                                     </span>
                                 ))}
                             </div>
@@ -287,15 +286,15 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-1 h-full bg-[#3aa3eb]" />
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Contextual Data</h2>
+                            <h2 className="text-[10px] font-black text-white/40 tracking-wider">Contextual Data</h2>
                             {isSaving ? (
-                                <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] uppercase tracking-widest animate-pulse">
+                                <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] tracking-wider animate-pulse">
                                     <div className="w-1 h-1 rounded-full bg-[#3aa3eb]" />
-                                    Synchronizing...
+                                    Live Content
                                 </span>
                             ) : (
-                                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-40">
-                                    Secured
+                                <span className="text-[9px] font-black text-emerald-500 tracking-wider opacity-40">
+                                    Static Snapshot
                                 </span>
                             )}
                         </div>
@@ -317,14 +316,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                 }
                                 noteService.update(note.id, { visibility: note.visibility === 'internal' ? 'client_visible' : 'internal' }).then(setNote);
                             }}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white uppercase tracking-widest transition-all"
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white tracking-widest transition-all"
                         >
                             <ShareIcon className="h-4 w-4" />
                             {note.visibility === 'client_visible' ? 'Unshare Note' : 'Share with Client'}
                         </button>
                         <button
                             onClick={() => setIsDeleteDialogOpen(true)}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-bold text-red-500 uppercase tracking-widest transition-all"
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-bold text-red-500 tracking-widest transition-all"
                         >
                             <TrashIcon className="h-4 w-4" />
                             Delete Record
@@ -333,7 +332,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                     {/* Linked Entities */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Linked Intelligence</h2>
+                        <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6">Linked Intelligence</h2>
                         <div className="space-y-2">
                             {note.projectId && (
                                 <LinkedItem label="Project" value={note.project?.name || 'Project'} icon={FolderIcon} />
@@ -356,14 +355,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* History / Audit Log */}
                     {showHistory && (
                         <div className="glass-card rounded-2xl p-6 border border-white/10 animate-in fade-in duration-300">
-                            <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center justify-between">
+                            <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6 flex items-center justify-between">
                                 <span>Audit Trail</span>
                                 <ClockIcon className="h-4 w-4" />
                             </h2>
                             <div className="space-y-4 h-[400px] overflow-y-auto pr-2 scrollbar-hide">
                                 {auditLogs.map(log => (
                                     <div key={log.id} className="border-l border-white/10 pl-4 py-1">
-                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">{log.action.replace('note_', '').replace('_', ' ')}</p>
+                                        <p className="text-[10px] font-bold text-white tracking-wider">{log.action.replace('note_', '').replace('_', ' ')}</p>
                                         <p className="text-[9px] text-gray-600 font-medium">{new Date(log.created_at).toLocaleString()}</p>
                                     </div>
                                 ))}

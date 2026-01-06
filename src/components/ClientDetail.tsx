@@ -517,7 +517,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               <span className="text-gray-400 text-sm font-medium">Client State</span>
               {(() => {
                 const statusInfo = statusConfig[client.status as keyof typeof statusConfig];
-                if (!statusInfo) return <span className="text-white text-sm font-semibold uppercase tracking-wider">{client.status}</span>;
+                if (!statusInfo) return <span className="text-white text-sm font-semibold tracking-wider">{client.status.charAt(0).toUpperCase() + client.status.slice(1)}</span>;
                 return (
                   <span
                     className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"

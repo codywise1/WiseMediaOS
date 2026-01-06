@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseAvailable, noteService, projectService, supabase, UserRole } from '../lib/supabase';
@@ -31,11 +31,11 @@ interface ProjectDetailProps {
   currentUser: User | null;
 }
 
-const priorityConfig: Record<string, { color: string; label: string }> = {
-  urgent: { color: 'rgba(239,68,68,0.33) text-white border-#ef4444', label: 'Urgent' },
-  high: { color: 'rgba(249,115,22,0.33) text-white border-#f97316', label: 'High' },
-  medium: { color: 'rgba(234,179,8,0.33) text-white border-#eab308', label: 'Medium' },
-  low: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Low' },
+const priorityConfig: Record<string, { bg: string; border: string; text: string; label: string }> = {
+  urgent: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgb(239, 68, 68)', text: 'text-white', label: 'Urgent' },
+  high: { bg: 'rgba(249, 115, 22, 0.33)', border: 'rgb(249, 115, 22)', text: 'text-white', label: 'High' },
+  medium: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgb(234, 179, 8)', text: 'text-white', label: 'Medium' },
+  low: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgb(34, 197, 94)', text: 'text-white', label: 'Low' },
 };
 
 export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
@@ -209,7 +209,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'not_started':
-      case 'planning':
         return 'bg-slate-500';
       case 'in_progress':
         return 'bg-[#3aa3eb]';
@@ -217,10 +216,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         return 'bg-amber-500';
       case 'completed':
         return 'bg-green-500';
-      case 'on_hold':
-        return 'bg-red-500';
-      case 'active':
-        return 'bg-blue-500';
       default:
         return 'bg-gray-500';
     }
@@ -228,7 +223,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
   const formatStatusLabel = (status: unknown) => {
     const value = typeof status === 'string' ? status : '';
-    return value.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+    // Convert to normal case (e.g., "not_started" -> "Not started")
+    return value.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
   };
 
   const formatDate = (dateString: string) => {
@@ -266,6 +262,22 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     return `Overdue by ${Math.abs(diffDays)} days`;
   };
 
+  const renderContentPreview = (content: any, maxLength: number) => {
+    if (!content) return '';
+
+    let plainText = '';
+    if (Array.isArray(content)) {
+      plainText = content
+        .map((block: any) => block.content || '')
+        .join(' ');
+    } else {
+      plainText = String(content);
+    }
+
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.slice(0, maxLength) + '...';
+  };
+
   const isAdmin = currentUser?.role === 'admin';
 
   if (loading) {
@@ -282,26 +294,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
   const description = project.description || '';
   const shouldTruncate = description.length > 200;
-  const displayDescription = shouldTruncate && !showFullDescription
-    ? description.slice(0, 200) + '...'
-    : description;
 
-  const fallbackNotes = [
-    {
-      id: 'fallback-note-1',
-      title: `${project?.client?.name || 'Client'} Website Call`,
-      category: 'Meeting',
-      content: 'Cover Page, Logo centered, Tagline: "Brand. Website. System"\nReal Estate OS, Target: Developers, STR operators',
-    },
-    {
-      id: 'fallback-note-2',
-      title: `${project?.client?.name || 'Client'} Discovery Call`,
-      category: 'Meeting',
-      content: 'Cover Page, Logo centered, Tagline: "Brand. Website. System"\nReal Estate OS, Target: Developers, STR operators',
-    },
-  ];
-
-  const notesToRender = (notes && notes.length > 0 ? notes : fallbackNotes).slice(0, 4);
+  const notesToRender = (notes || []).slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -371,7 +365,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Main Details Grid */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h2 className="text-xl font-black text-white tracking-wider mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           Project Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -380,7 +374,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <ChartBarIcon className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Status</p>
+              <p className="text-xs text-gray-500 font-bold mb-1">Status</p>
               <p className="text-white font-bold text-base">{formatStatusLabel(project.status)}</p>
               <p className="text-xs text-gray-500 font-bold mt-1">
                 {project.status === 'in_progress'
@@ -396,7 +390,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-3 mb-2">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Progress</p>
+                <p className="text-xs text-gray-500 font-bold">Progress</p>
                 <p className="text-xs text-gray-300 font-bold tabular-nums">{project.progress || 0}%</p>
               </div>
               <div className="w-full bg-white/10 rounded-full h-2">
@@ -414,7 +408,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <CurrencyDollarIcon className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Value</p>
+              <p className="text-xs text-gray-500 font-bold mb-1">Value</p>
               <p className="text-white font-black text-lg tabular-nums">${(project.budget || 0).toLocaleString()}</p>
               <p className="text-xs text-gray-500 font-bold mt-1">{project.billing_type || 'Fixed'}</p>
             </div>
@@ -425,7 +419,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Timeline</p>
+              <p className="text-xs text-gray-500 font-bold mb-1">Timeline</p>
               <p className="text-white font-bold text-base">{formatRangeDate(project.start_date, project.due_date)}</p>
             </div>
           </div>
@@ -435,14 +429,20 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <SparklesIcon className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Priority</p>
+              <p className="text-xs text-gray-500 font-bold mb-1">Priority</p>
               {(() => {
                 const priorityKey = (project.priority || 'medium').toLowerCase();
                 const priorityInfo = priorityConfig[priorityKey] || priorityConfig['medium'];
                 return (
-                  <p className="text-white font-bold text-base">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${priorityInfo.text}`}
+                    style={{
+                      backgroundColor: priorityInfo.bg,
+                      border: `1px solid ${priorityInfo.border}`,
+                    }}
+                  >
                     {priorityInfo.label}
-                  </p>
+                  </span>
                 );
               })()}
             </div>
@@ -453,7 +453,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
               <UserIcon className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Assigned Owner</p>
+              <p className="text-xs text-gray-500 font-bold mb-1">Assigned Owner</p>
               <p className="text-white font-bold text-base min-w-0 truncate">{project.owner || currentUser?.name || 'Unassigned'}</p>
             </div>
           </div>
@@ -461,48 +461,58 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       </div>
 
       {/* Description */}
-      {description && (
-        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-            Description
-          </h2>
-          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-            {displayDescription}
-          </p>
-          {shouldTruncate && (
-            <button
-              onClick={() => setShowFullDescription(!showFullDescription)}
-              className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"
-            >
-              {showFullDescription ? 'Show less' : 'Show more'}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          Description
+        </h2>
+        <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+          {showFullDescription
+            ? (Array.isArray(project.description)
+              ? project.description.map((b: any) => b.content).join('\n')
+              : project.description)
+            : renderContentPreview(project.description, 200)}
+        </p>
+        {(project.description?.length > 200 || (Array.isArray(project.description) && project.description.length > 1)) && (
+          <button
+            onClick={() => setShowFullDescription(!showFullDescription)}
+            className="mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium"
+          >
+            {showFullDescription ? 'Show less' : 'Show more'}
+          </button>
+        )}
+      </div>
 
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           Notes
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {notesToRender.map((note: any) => (
-            <div key={note.id} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
-              <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
-                <p className="text-white font-bold min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {note.title}
+        {notesToRender.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {notesToRender.map((note: any) => (
+              <div key={note.id} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
+                <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
+                  <p className="text-white font-bold min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    {note.title}
+                  </p>
+                  {note.category && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
+                      {note.category}
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {renderContentPreview(note.content, 160)}
                 </p>
-                {note.category && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
-                    {note.category}
-                  </span>
-                )}
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                {(note.content || '').length > 160 ? `${note.content.slice(0, 160)}...` : (note.content || '')}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 bg-slate-800/20 rounded-xl border border-slate-700/50 border-dashed">
+            <ClipboardDocumentListIcon className="h-10 w-10 text-slate-600 mb-3" />
+            <p className="text-gray-500 font-medium">No hay notas para este proyecto</p>
+            <p className="text-gray-600 text-xs mt-1">Las notas que crees aquí aparecerán en esta sección</p>
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}

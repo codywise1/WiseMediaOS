@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ClipboardDocumentListIcon,
-  CurrencyDollarIcon,
-  CalendarIcon,
-  CheckCircleIcon,
-  ClockIcon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
@@ -32,16 +28,6 @@ interface User {
 interface ProposalsProps {
   currentUser: User | null;
 }
-
-const statusConfig = {
-  draft: { color: 'text-gray-400', border: 'border-gray-500/50', label: 'Draft' },
-  sent: { color: 'text-blue-400', border: 'border-blue-500/50', label: 'Sent' },
-  viewed: { color: 'text-blue-400', border: 'border-blue-500/50', label: 'Viewed' },
-  approved: { color: 'text-green-400', border: 'border-green-500/50', label: 'Approved' },
-  declined: { color: 'text-red-400', border: 'border-red-500/50', label: 'Declined' },
-  expired: { color: 'text-red-400', border: 'border-red-500/50', label: 'Expired' },
-  archived: { color: 'text-gray-500', border: 'border-gray-500/30', label: 'Archived' },
-};
 
 export default function Proposals({ currentUser }: ProposalsProps) {
   const navigate = useNavigate();
@@ -172,28 +158,6 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     deleteProposal();
   };
 
-  const handleApprove = async (proposalId: string) => {
-    try {
-      await newProposalService.approve(proposalId, currentUser?.id);
-      await loadProposals();
-      toastSuccess('Proposal approved! Invoice has been activated.');
-    } catch (error) {
-      console.error('Error approving proposal:', error);
-      toastError('Error approving proposal. Please try again.');
-    }
-  };
-
-  const handleDecline = async (proposalId: string) => {
-    try {
-      await newProposalService.decline(proposalId, currentUser?.id);
-      await loadProposals();
-      toastSuccess('Proposal declined. Invoice has been voided.');
-    } catch (error) {
-      console.error('Error declining proposal:', error);
-      toastError('Error declining proposal. Please try again.');
-    }
-  };
-
   const getStatusTimeline = (proposal: any) => {
     if (proposal.status === 'approved' && proposal.approved_at) {
       return `Signed on ${formatAppDate(proposal.approved_at)}`;
@@ -233,7 +197,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   console.log('Render Proposals - User:', { id: currentUserId, role: userRole, isAgency });
 
-  const visibleProposals = proposals.filter(p => {
+  const visibleProposals = proposals.filter((p: any) => {
     if (statusFilter === 'all') return true;
     if (statusFilter === 'approved') return p.status === 'approved';
     if (statusFilter === 'pending') return p.status === 'sent' || p.status === 'viewed';
@@ -242,10 +206,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   // Stats calculations
   const statsProposals = isAgency ? (proposals || []) : (visibleProposals || []);
-  const awaitingCount = statsProposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
-  const approvedRevenue = statsProposals.filter(p => p.status === 'approved').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
-  const totalPipeline = statsProposals.reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
-  const expiredValue = statsProposals.filter(p => p.status === 'expired').reduce((sum, p) => sum + (Number(p?.value) || 0), 0);
+  const awaitingCount = statsProposals.filter((p: any) => p.status === 'sent' || p.status === 'viewed').length;
+  const approvedRevenue = statsProposals.filter((p: any) => p.status === 'approved').reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
+  const totalPipeline = statsProposals.reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
+  const expiredValue = statsProposals.filter((p: any) => p.status === 'expired').reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -253,12 +217,12 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       <div className="glass-card neon-glow rounded-3xl p-8 lg:p-10 mb-8 border border-white/5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>PROPOSALS</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>Proposals</h1>
             <p className="text-gray-400 text-lg font-medium">Create, track, and manage project proposals</p>
           </div>
           {isAgency && (
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleNewProposal}
               className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
             >
               <PlusIcon className="h-5 w-5" />
@@ -309,12 +273,12 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 border-b border-white/10">
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Proposal Name</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Client</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Deal Stage</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Value</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Status Timeline</th>
+                <tr className="bg-white/5 border-b border-white/10 text-gray-400">
+                  <th className="px-8 py-5 text-xs font-bold tracking-tight">Proposal Name</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Deal Stage</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Value</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Status Timeline</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>
@@ -331,10 +295,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       </p>
                     </td>
                   </tr>
-                ) : visibleProposals.map((proposal) => {
-                  const statusInfo = statusConfig[proposal.status as keyof typeof statusConfig] || statusConfig.draft;
+                ) : visibleProposals.map((proposal: any) => {
                   const timelineStatus = getStatusTimeline(proposal);
                   const isApproved = proposal.status === 'approved';
+                  const isDraft = proposal.status === 'draft';
                   const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
 
                   return (
@@ -346,18 +310,18 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                               'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
                             }`} />
                           <div>
-                            <h3 className="text-sm font-black text-white tracking-widest truncate max-w-[200px]" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                            <h3 className="text-sm font-black text-white truncate max-w-[200px]" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
                               {proposal.title}
                             </h3>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {proposal.services && proposal.services.length > 0 ? (
                                 proposal.services.map((service: string, sIdx: number) => (
-                                  <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                                  <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb]">
                                     {service}
                                   </span>
                                 ))
                               ) : (
-                                <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                                <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb]">
                                   Website
                                 </span>
                               )}
@@ -369,11 +333,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                         <span className="text-sm font-bold text-gray-200">{proposal.client}</span>
                       </td>
                       <td className="px-6 py-6 text-center">
-                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 ${isApproved ? 'bg-green-500/20 text-green-500 border-green-500/30' :
-                          isExpired ? 'bg-red-500/20 text-red-500 border-red-500/30' :
-                            statusInfo.color + ' ' + statusInfo.border + ' bg-black/20'
+                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black border border-white/10 ${isApproved ? 'bg-green-500/20 text-green-500 border-green-500/30' :
+                          isDraft ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' :
+                            'bg-blue-500/20 text-blue-400 border-blue-500/30'
                           }`}>
-                          {statusInfo.label}
+                          {proposal.status}
                         </span>
                       </td>
                       <td className="px-6 py-6 text-center">
