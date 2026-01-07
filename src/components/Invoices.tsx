@@ -53,6 +53,15 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceView | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid'>('all');
+  const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     loadInvoices();
@@ -111,10 +120,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= currentQuarterStart)
     .reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Chart Data: Last 8 groups (e.g., months or quarters)
-  // For simplicity and visual impact, let's group by month for the last 8 months
-  const chartData = Array.from({ length: 8 }).map((_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (7 - i), 1);
+  // Chart Data: Last 8 months (Desktop) or 3 months (Mobile)
+  const chartPointsCount = isMobile ? 3 : 8;
+  const chartData = Array.from({ length: chartPointsCount }).map((_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (chartPointsCount - 1 - i), 1);
     const monthRevenue = invoices
       .filter(inv => {
         const invDate = new Date(inv.updated_at || inv.created_at);
@@ -123,10 +132,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           invDate.getFullYear() === d.getFullYear();
       })
       .reduce((sum, inv) => sum + inv.amount, 0);
+
+    // Distribute points evenly across the 800px width
+    const spacing = 800 / (chartPointsCount + 1);
     return {
       label: d.toLocaleDateString('default', { month: 'short' }),
       value: monthRevenue,
-      x: 50 + i * 100,
+      x: spacing * (i + 1),
     };
   });
 
@@ -266,7 +278,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   };
 
   return (
-    <div className="space-y-8 bg-black/20 min-h-screen pb-12">
+    <div className="space-y-8">
       {/* Header */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -324,25 +336,72 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   d={areaPath}
                   fill="url(#chartGradient)"
                 />
+                {/* Interactive Hover Zones */}
+                {chartData.map((d, i) => {
+                  const hitboxWidth = 800 / chartPointsCount;
+                  return (
+                    <rect
+                      key={`hitbox-${i}`}
+                      x={d.x - hitboxWidth / 2}
+                      y="0"
+                      width={hitboxWidth}
+                      height="200"
+                      fill="transparent"
+                      className="cursor-pointer"
+                      onMouseEnter={() => setHoveredMonthIndex(i)}
+                      onMouseLeave={() => setHoveredMonthIndex(null)}
+                    />
+                  );
+                })}
+
                 {/* Points */}
                 {chartPoints.map((p, i) => (
                   <circle
                     key={i}
                     cx={p.x}
                     cy={p.y}
-                    r="4"
-                    fill="#ffffff"
-                    stroke="#3aa3eb"
-                    strokeWidth="2"
-                    className="hover:r-6 transition-all cursor-pointer"
+                    r={hoveredMonthIndex === i ? '6' : '4'}
+                    fill={hoveredMonthIndex === i ? '#ffffff' : '#3aa3eb'}
+                    stroke="#ffffff"
+                    strokeWidth={hoveredMonthIndex === i ? '3' : '2'}
+                    className="transition-all duration-300"
                   />
                 ))}
               </svg>
 
+              {/* Enhanced Tooltip */}
+              {hoveredMonthIndex !== null && (
+                <div
+                  className="absolute z-50 pointer-events-none transition-all duration-300"
+                  style={{
+                    left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
+                    top: `${(chartPoints[hoveredMonthIndex].y / 200) * 100}%`,
+                    marginTop: '-45px',
+                    transform: 'translateX(-50%)'
+                  }}
+                >
+                  <div className="bg-[#0f172a] border border-[#3aa3eb]/30 rounded-xl px-4 py-2 shadow-[0_0_20px_rgba(58,163,235,0.2)] flex flex-col items-center gap-0.5">
+                    <span className="text-[10px] font-black text-[#3aa3eb] uppercase tracking-widest">
+                      {chartData[hoveredMonthIndex].label} Revenue
+                    </span>
+                    <span className="text-sm font-bold text-white tabular-nums">
+                      ${chartData[hoveredMonthIndex].value.toLocaleString()}
+                    </span>
+                  </div>
+                  {/* Tooltip arrow */}
+                  <div className="w-2 h-2 bg-[#0f172a] border-r border-b border-[#3aa3eb]/30 rotate-45 mx-auto -mt-1" />
+                </div>
+              )}
+
               {/* Axis Labels */}
-              <div className="flex justify-between text-[10px] text-gray-500 font-bold uppercase mt-4 px-12">
+              <div className="flex justify-between text-[10px] font-bold uppercase mt-4 px-12">
                 {chartData.map((d, i) => (
-                  <span key={i}>{d.label}</span>
+                  <span
+                    key={i}
+                    className={`transition-colors duration-300 ${hoveredMonthIndex === i ? 'text-white' : 'text-gray-500'}`}
+                  >
+                    {d.label}
+                  </span>
                 ))}
               </div>
 
