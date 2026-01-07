@@ -3,7 +3,6 @@ import {
     XMarkIcon,
     TagIcon,
     LinkIcon,
-    ShareIcon,
     BookmarkIcon,
     SparklesIcon
 } from '@heroicons/react/24/outline';
@@ -153,10 +152,14 @@ export default function CreateEditNoteModal({
         }
     };
 
-    const applyTemplate = (cat: NoteCategory) => {
+    const applyTemplate = (cat: NoteCategory, force = false) => {
+        const oldCategory = category;
         setCategory(cat);
-        // Only apply if blocks are mostly empty or it's a new note
-        if (blocks.length <= 1) {
+
+        // If force is true, or if blocks are unedited (match previous template or are empty)
+        const isUnedited = blocks.length <= 1 || JSON.stringify(blocks) === JSON.stringify(TEMPLATES[oldCategory]);
+
+        if (force || (mode === 'create' && isUnedited)) {
             setBlocks(TEMPLATES[cat]);
         }
     };
@@ -180,7 +183,7 @@ export default function CreateEditNoteModal({
             isOpen={isOpen}
             onClose={onClose}
             title={mode === 'create' ? 'Create Note' : 'Edit Note'}
-            size="2xl"
+            maxWidth="max-w-2xl"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Title & Category Row */}
@@ -223,13 +226,23 @@ export default function CreateEditNoteModal({
                                 type="button"
                                 onClick={() => applyTemplate(cat as NoteCategory)}
                                 className={`px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all ${category === cat
-                                        ? 'bg-[#3aa3eb]/20 border-[#3aa3eb]/50 text-[#3aa3eb]'
-                                        : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
+                                    ? 'bg-[#3aa3eb]/20 border-[#3aa3eb]/50 text-[#3aa3eb]'
+                                    : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
                                     }`}
                             >
                                 {cat.replace('_', ' ')}
                             </button>
                         ))}
+                        {/* Reset Option if content was edited but category matches */}
+                        {mode === 'create' && JSON.stringify(blocks) !== JSON.stringify(TEMPLATES[category]) && (
+                            <button
+                                type="button"
+                                onClick={() => applyTemplate(category, true)}
+                                className="px-3 py-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-wider hover:bg-yellow-500/20 transition-all ml-auto"
+                            >
+                                Reset to Template
+                            </button>
+                        )}
                     </div>
                 )}
 

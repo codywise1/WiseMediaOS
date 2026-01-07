@@ -302,9 +302,6 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     return null;
   }
 
-  const description = project.description || '';
-  const shouldTruncate = description.length > 200;
-
   const notesToRender = (notes || []).slice(0, 4);
 
   return (
