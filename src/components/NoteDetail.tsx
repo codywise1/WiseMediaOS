@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import {
     noteService,
@@ -18,7 +18,6 @@ import {
     CalendarDaysIcon,
     BookmarkIcon,
     ShareIcon,
-    CheckCircleIcon,
     ClockIcon,
     UserIcon,
     VideoCameraIcon
@@ -335,7 +334,12 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                         <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6">Linked Intelligence</h2>
                         <div className="space-y-2">
                             {note.projectId && (
-                                <LinkedItem label="Project" value={note.project?.name || 'Project'} icon={FolderIcon} />
+                                <LinkedItem
+                                    label="Project"
+                                    value={note.project?.name || 'Project'}
+                                    icon={FolderIcon}
+                                    to={`/projects/${note.projectId}`}
+                                />
                             )}
                             {note.meetingId && (
                                 <LinkedItem label="Meeting" value="Meeting Records" icon={VideoCameraIcon} />
@@ -395,16 +399,26 @@ function MetaItem({ label, value, icon: Icon }: any) {
     );
 }
 
-function LinkedItem({ label, value, icon: Icon }: any) {
-    return (
-        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer group">
+function LinkedItem({ label, value, icon: Icon, to }: any) {
+    const content = (
+        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer group h-full">
             <div className="p-2 bg-white/5 rounded-lg group-hover:bg-[#3aa3eb]/20 transition-colors">
                 <Icon className="h-4 w-4 text-gray-500 group-hover:text-[#3aa3eb]" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
                 <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{label}</p>
                 <p className="text-xs font-bold text-white truncate">{value}</p>
             </div>
         </div>
     );
+
+    if (to) {
+        return (
+            <Link to={to} className="block">
+                {content}
+            </Link>
+        );
+    }
+
+    return content;
 }

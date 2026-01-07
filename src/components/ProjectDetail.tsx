@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isSupabaseAvailable, noteService, projectService, supabase, UserRole } from '../lib/supabase';
 import {
@@ -31,11 +31,20 @@ interface ProjectDetailProps {
   currentUser: User | null;
 }
 
-const priorityConfig: Record<string, { bg: string; border: string; text: string; label: string }> = {
-  urgent: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgb(239, 68, 68)', text: 'text-white', label: 'Urgent' },
-  high: { bg: 'rgba(249, 115, 22, 0.33)', border: 'rgb(249, 115, 22)', text: 'text-white', label: 'High' },
-  medium: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgb(234, 179, 8)', text: 'text-white', label: 'Medium' },
-  low: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgb(34, 197, 94)', text: 'text-white', label: 'Low' },
+const priorityConfig: Record<string, { color: string; label: string }> = {
+  urgent: { color: 'rgba(239,68,68,0.33) text-white border-#ef4444', label: 'Urgent' },
+  high: { color: 'rgba(249,115,22,0.33) text-white border-#f97316', label: 'High' },
+  medium: { color: 'rgba(234,179,8,0.33) text-white border-#eab308', label: 'Medium' },
+  low: { color: 'rgba(34,197,94,0.33) text-white border-#22c55e', label: 'Low' },
+};
+
+const noteCategoryConfigs: Record<string, { label: string }> = {
+  idea: { label: 'Idea' },
+  meeting: { label: 'Meeting' },
+  sales_call: { label: 'Sales Call' },
+  sop: { label: 'SOP' },
+  task: { label: 'Task' },
+  general: { label: 'General' }
 };
 
 export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
@@ -365,7 +374,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Main Details Grid */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-xl font-black text-white tracking-wider mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-8" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           Project Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -434,13 +443,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
                 const priorityKey = (project.priority || 'medium').toLowerCase();
                 const priorityInfo = priorityConfig[priorityKey] || priorityConfig['medium'];
                 return (
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${priorityInfo.text}`}
-                    style={{
-                      backgroundColor: priorityInfo.bg,
-                      border: `1px solid ${priorityInfo.border}`,
-                    }}
-                  >
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${priorityInfo.color}`}>
                     {priorityInfo.label}
                   </span>
                 );
@@ -491,18 +494,24 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
             {notesToRender.map((note: any) => (
               <div key={note.id} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50 min-w-0">
                 <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
-                  <p className="text-white font-bold min-w-0 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Link
+                    to={`/notes/${note.id}`}
+                    className="text-white font-bold min-w-0 truncate hover:text-[#3aa3eb] transition-colors"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
                     {note.title}
-                  </p>
+                  </Link>
                   {note.category && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
-                      {note.category}
+                      {noteCategoryConfigs[note.category]?.label || note.category}
                     </span>
                   )}
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                  {renderContentPreview(note.content, 160)}
-                </p>
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[160px]">
+                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {renderContentPreview(note.content, 2000)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

@@ -30,6 +30,116 @@ const parseMarkdown = (text: string) => {
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[#3aa3eb] border-b border-[#3aa3eb]/30 hover:border-[#3aa3eb] transition-all">$1</a>');
 };
 
+const parseMarkdownToBlocks = (text: string): NoteBlock[] => {
+    const lines = text.split('\n');
+    const blocks: NoteBlock[] = [];
+    let i = 0;
+    let codeBuffer: string[] = [];
+    let inCodeBlock = false;
+    let codeLang = 'text';
+
+    while (i < lines.length) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        // Handle code blocks
+        if (trimmed.startsWith('```')) {
+            if (!inCodeBlock) {
+                inCodeBlock = true;
+                codeLang = trimmed.slice(3).trim() || 'text';
+                codeBuffer = [];
+            } else {
+                blocks.push({
+                    id: uuidv4(),
+                    type: 'code',
+                    content: codeBuffer.join('\n'),
+                    lang: codeLang
+                });
+                inCodeBlock = false;
+                codeBuffer = [];
+            }
+            i++;
+            continue;
+        }
+
+        if (inCodeBlock) {
+            codeBuffer.push(line);
+            i++;
+            continue;
+        }
+
+        // Skip empty lines
+        if (!trimmed) {
+            i++;
+            continue;
+        }
+
+        // Headings
+        if (trimmed.startsWith('### ')) {
+            blocks.push({ id: uuidv4(), type: 'heading', level: 3, content: trimmed.slice(4) });
+        } else if (trimmed.startsWith('## ')) {
+            blocks.push({ id: uuidv4(), type: 'heading', level: 2, content: trimmed.slice(3) });
+        } else if (trimmed.startsWith('# ')) {
+            blocks.push({ id: uuidv4(), type: 'heading', level: 1, content: trimmed.slice(2) });
+        }
+        // Bulleted lists (handles •, -, *)
+        else if (/^[•\-\*]\s/.test(trimmed)) {
+            const items: string[] = [];
+            while (i < lines.length && /^[•\-\*]\s/.test(lines[i].trim())) {
+                items.push(lines[i].trim().slice(2));
+                i++;
+            }
+            blocks.push({ id: uuidv4(), type: 'bullets', items });
+            continue;
+        }
+        // Numbered lists
+        else if (/^\d+\.\s/.test(trimmed)) {
+            const items: string[] = [];
+            while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+                items.push(lines[i].trim().replace(/^\d+\.\s/, ''));
+                i++;
+            }
+            blocks.push({ id: uuidv4(), type: 'numbered', items });
+            continue;
+        }
+        // Todo items (checkboxes)
+        else if (/^\- \[([ x])\]/.test(trimmed)) {
+            const todos: { text: string; done: boolean }[] = [];
+            while (i < lines.length && /^\- \[([ x])\]/.test(lines[i].trim())) {
+                const match = lines[i].trim().match(/^\- \[([ x])\]\s*(.*)/);
+                if (match) {
+                    todos.push({ text: match[2], done: match[1] === 'x' });
+                }
+                i++;
+            }
+            blocks.push({ id: uuidv4(), type: 'todo', todos });
+            continue;
+        }
+        // Horizontal rule / divider
+        else if (/^[\-]{3,}$/.test(trimmed)) {
+            blocks.push({ id: uuidv4(), type: 'divider' });
+        }
+        // Quote
+        else if (trimmed.startsWith('> ')) {
+            let quoteText = '';
+            while (i < lines.length && lines[i].trim().startsWith('> ')) {
+                quoteText += lines[i].trim().slice(2) + ' ';
+                i++;
+            }
+            blocks.push({ id: uuidv4(), type: 'quote', content: quoteText.trim() });
+            continue;
+        }
+        // Regular paragraph
+        else {
+            blocks.push({ id: uuidv4(), type: 'paragraph', content: trimmed });
+        }
+
+        i++;
+    }
+
+    return blocks.length > 0 ? blocks : [{ id: uuidv4(), type: 'paragraph', content: text }];
+};
+
 interface NoteEditorProps {
     content: NoteBlock[];
     onChange: (content: NoteBlock[]) => void;
@@ -164,6 +274,31 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
 
     const handleBlockChange = (id: string, updates: Partial<NoteBlock>) => {
         updateBlocks(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
+    };
+
+    const handlePaste = (e: React.ClipboardEvent, block: NoteBlock, index: number) => {
+        const pastedText = e.clipboardData.getData('text/plain');
+
+        // Only auto-convert if pasting markdown-like content (contains headers, lists, code blocks, etc.)
+        const hasMarkdown = /^(#{1,3}\s|[•\-\*]\s|\d+\.\s|```|>\s|---)/m.test(pastedText);
+
+        if (hasMarkdown && pastedText.includes('\n')) {
+            e.preventDefault();
+
+            const newBlocks = parseMarkdownToBlocks(pastedText);
+            const allBlocks = [...blocks];
+
+            // Remove current block and insert parsed blocks
+            allBlocks.splice(index, 1, ...newBlocks);
+            updateBlocks(allBlocks);
+
+            // Focus on first new block
+            if (newBlocks.length > 0) {
+                setTimeout(() => {
+                    setFocusInfo({ id: newBlocks[0].id, offset: 0 });
+                }, 0);
+            }
+        }
     };
 
     useEffect(() => {
@@ -458,6 +593,7 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                         closeSlashMenu={closeSlashMenu}
                         showInlineToolbar={showInlineToolbar}
                         onKeyDown={(e, itemIdx) => handleKeyDown(e, block, index, itemIdx)}
+                        onPaste={(e) => handlePaste(e, block, index)}
                         isActive={activeBlockId === block.id}
                         onActivate={() => setActiveBlockId(block.id)}
                         isFirst={index === 0}
@@ -514,6 +650,7 @@ interface BlockComponentProps {
     closeSlashMenu: () => void;
     showInlineToolbar: (index: number) => void;
     onKeyDown?: (e: React.KeyboardEvent, itemIndex?: number) => void;
+    onPaste?: (e: React.ClipboardEvent) => void;
     isActive: boolean;
     onActivate: () => void;
     isFirst: boolean;
@@ -522,7 +659,7 @@ interface BlockComponentProps {
 
 function BlockComponent({
     block, onChange, onRemove, onMove, readOnly, index, refs, slashMenu,
-    handleSlashCommand, onKeyDown,
+    handleSlashCommand, onKeyDown, onPaste,
     isActive, onActivate, isFirst, isLast
 }: BlockComponentProps) {
     const baseClasses = "w-full bg-transparent focus:outline-none placeholder:text-gray-700 text-white/90 transition-all selection:bg-[#3aa3eb]/30";
@@ -547,7 +684,7 @@ function BlockComponent({
                     <BlockRenderer
                         block={block} onChange={onChange} readOnly={readOnly} index={index}
                         refs={refs} slashMenu={slashMenu} handleSlashCommand={handleSlashCommand}
-                        onKeyDown={onKeyDown} isActive={isActive} onActivate={onActivate} baseClasses={baseClasses}
+                        onKeyDown={onKeyDown} onPaste={onPaste} isActive={isActive} onActivate={onActivate} baseClasses={baseClasses}
                     />
                 </div>
             </div>
@@ -567,7 +704,7 @@ function BlockComponent({
 
 function BlockRenderer({
     block, onChange, readOnly, index, refs, slashMenu, handleSlashCommand,
-    onKeyDown, isActive, onActivate, baseClasses
+    onKeyDown, onPaste, isActive, onActivate, baseClasses
 }: any) {
     const typographyClasses = "text-[15px] sm:text-[16px] leading-[1.55] tracking-normal";
 
@@ -623,10 +760,23 @@ function BlockRenderer({
                             handleSlashCommand(index, e.target as any, (e.target as any).selectionStart, (e.target as any).value);
                         }
                     }}
+                    onPaste={onPaste}
                 />
             );
         case 'bullets': {
             const items = block.items || [''];
+            if (readOnly) {
+                return (
+                    <ul className="space-y-2 list-none">
+                        {items.map((item: string, i: number) => (
+                            <li key={i} className="flex items-start gap-3">
+                                <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#3aa3eb]/40 shrink-0" />
+                                <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                            </li>
+                        ))}
+                    </ul>
+                );
+            }
             return (
                 <ul className="space-y-2 list-none" ref={(el) => refs.current[index] = el as any}>
                     {items.map((item: string, i: number) => (
@@ -645,6 +795,18 @@ function BlockRenderer({
         }
         case 'numbered': {
             const items = block.items || [''];
+            if (readOnly) {
+                return (
+                    <ol className="space-y-2 list-none">
+                        {items.map((item: string, i: number) => (
+                            <li key={i} className="flex items-start gap-3">
+                                <span className="mt-0.5 text-[14px] font-mono text-[#3aa3eb]/50 w-5 text-right shrink-0">{i + 1}.</span>
+                                <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                            </li>
+                        ))}
+                    </ol>
+                );
+            }
             return (
                 <ol className="space-y-2 list-none" ref={(el) => refs.current[index] = el as any}>
                     {items.map((item: string, i: number) => (
@@ -663,6 +825,20 @@ function BlockRenderer({
         }
         case 'todo': {
             const todos = block.todos || [{ text: '', done: false }];
+            if (readOnly) {
+                return (
+                    <div className="space-y-2">
+                        {todos.map((todo: { text: string, done: boolean }, i: number) => (
+                            <div key={i} className="flex items-start gap-3">
+                                <div className={`mt-1 w-5 h-5 rounded border transition-all flex items-center justify-center shrink-0 ${todo.done ? 'bg-[#3aa3eb] border-[#3aa3eb]' : 'bg-white/5 border-white/20'}`}>
+                                    {todo.done && <CheckCircleIcon className="h-3.5 w-3.5 text-white" />}
+                                </div>
+                                <div className={`${typographyClasses} ${todo.done ? 'line-through text-white/30' : 'text-white/80'}`} dangerouslySetInnerHTML={{ __html: parseMarkdown(todo.text) }} />
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
             return (
                 <div className="space-y-2" ref={(el) => refs.current[index] = el as any}>
                     {todos.map((todo: { text: string, done: boolean }, i: number) => (
@@ -704,11 +880,27 @@ function BlockRenderer({
             );
         }
         case 'quote':
+            if (readOnly) {
+                return (
+                    <div className="relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3aa3eb] rounded-full" />
+                        <div className={`${typographyClasses} pl-6 italic text-white/90`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
+                    </div>
+                );
+            }
+            if (!isActive) {
+                return (
+                    <div className="relative cursor-text" onClick={onActivate} tabIndex={0} onFocus={onActivate} ref={(el) => refs.current[index] = el as any}>
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3aa3eb] rounded-full" />
+                        <div className={`${typographyClasses} pl-6 italic text-white/90 min-h-[1.55em]`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="text-gray-700 opacity-50">Inspiring quote...</span>' }} />
+                    </div>
+                );
+            }
             return (
                 <div className="relative" ref={(el) => refs.current[index] = el as any}>
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3aa3eb] rounded-full" />
                     <textarea
-                        autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                        autoFocus value={block.content} onChange={(e) => onChange({ content: e.target.value })}
                         onClick={onActivate} placeholder="Inspiring quote..." disabled={readOnly} rows={1}
                         className={`${baseClasses} ${typographyClasses} pl-6 italic text-white/90 resize-none overflow-hidden`}
                         onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
@@ -725,11 +917,28 @@ function BlockRenderer({
             };
             const tone = toneMap[block.tone || 'info'];
             const Icon = tone.icon;
+
+            if (readOnly) {
+                return (
+                    <div className={`p-4 rounded-[20px] border ${tone.bg} ${tone.border} flex gap-4 shadow-lg shadow-black/20`}>
+                        <Icon className={`h-5 w-5 shrink-0 ${tone.text} mt-1`} />
+                        <div className={`${typographyClasses} ${tone.text} font-medium`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
+                    </div>
+                );
+            }
+            if (!isActive) {
+                return (
+                    <div className={`p-4 rounded-[20px] border ${tone.bg} ${tone.border} flex gap-4 shadow-lg shadow-black/20 cursor-text`} onClick={onActivate} tabIndex={0} onFocus={onActivate} ref={(el) => refs.current[index] = el as any}>
+                        <Icon className={`h-5 w-5 shrink-0 ${tone.text} mt-1`} />
+                        <div className={`${typographyClasses} ${tone.text} font-medium min-h-[1.55em]`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="opacity-50">Important information...</span>' }} />
+                    </div>
+                );
+            }
             return (
                 <div className={`p-4 rounded-[20px] border ${tone.bg} ${tone.border} flex gap-4 shadow-lg shadow-black/20`} ref={(el) => refs.current[index] = el as any}>
                     <Icon className={`h-5 w-5 shrink-0 ${tone.text} mt-1`} />
                     <textarea
-                        autoFocus={isActive} value={block.content} onChange={(e) => onChange({ content: e.target.value })}
+                        autoFocus value={block.content} onChange={(e) => onChange({ content: e.target.value })}
                         onClick={onActivate} placeholder="Important information..." disabled={readOnly} rows={1}
                         className={`${baseClasses} ${typographyClasses} ${tone.text} font-medium resize-none overflow-hidden`}
                         onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}

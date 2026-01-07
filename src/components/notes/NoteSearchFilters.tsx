@@ -1,6 +1,5 @@
 import {
     MagnifyingGlassIcon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Client, Project } from '../../lib/supabase';
 
@@ -90,23 +89,35 @@ export default function NoteSearchFilters({
             {/* Project Filter */}
             <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project</label>
-                <div className="flex items-center gap-2">
-                    <select
-                        value={projectId}
-                        onChange={(e) => onProjectChange(e.target.value)}
-                        className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
-                    >
-                        <option value="all">All Projects</option>
-                        {projects.filter((p: Project) => clientId === 'all' || p.client_id === clientId).map((p: Project) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
-                </div>
+                <select
+                    value={projectId}
+                    onChange={(e) => onProjectChange(e.target.value)}
+                    className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+                >
+                    <option value="all">All Projects</option>
+                    {projects.filter((p: Project) => clientId === 'all' || p.client_id === clientId).map((p: Project) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                </select>
             </div>
+
+            {/* Visibility Filter */}
+            {/* <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Visibility</label>
+                <select
+                    value={visibility}
+                    onChange={(e) => onVisibilityChange(e.target.value)}
+                    className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+                >
+                    <option value="all">All Visibility</option>
+                    <option value="internal">Internal Only</option>
+                    <option value="client_visible">Shared with Client</option>
+                </select>
+            </div> */}
 
             {/* Active filters display */}
             {(searchQuery || category !== 'all' || clientId !== 'all' || projectId !== 'all' || visibility !== 'all') && (
-                <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-wrap items-center gap-2 mt-2 text-sm">
+                <div className="col-span-1 sm:col-span-2 lg:col-span-5 flex flex-wrap items-center gap-2 mt-2 text-sm">
                     <span className="text-gray-400">Active filters:</span>
                     {searchQuery && (
                         <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
@@ -126,6 +137,11 @@ export default function NoteSearchFilters({
                     {projectId !== 'all' && (
                         <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
                             Project: {projects.find((p: Project) => p.id === projectId)?.name}
+                        </span>
+                    )}
+                    {visibility !== 'all' && (
+                        <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                            Visibility: {visibility === 'client_visible' ? 'Shared' : 'Internal'}
                         </span>
                     )}
                     <button
