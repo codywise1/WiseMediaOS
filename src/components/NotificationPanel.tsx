@@ -250,7 +250,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
             </div>
           </div>
 
-          <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-8rem)] sm:max-h-[60vh]">
+          <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-8rem)] sm:max-h-[60vh] custom-scrollbar">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
