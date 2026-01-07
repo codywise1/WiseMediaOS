@@ -81,20 +81,14 @@ export default function Login({ onLogin }: LoginProps) {
       {/* Background overlay for readability */}
       <div className="fixed inset-0 bg-black/20 -z-10 pointer-events-none" />
 
-      <div className="glass-card neon-glow rounded-2xl p-8 w-full max-w-md relative z-10">
+      <div className="glass-card rounded-2xl p-8 w-full max-w-sm relative z-10 border border-white/5 bg-black/60 backdrop-blur-2xl">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <img
             src="https://codywise.io/wp-content/uploads/2025/02/Wise-Media-Logo.svg"
             alt="Wise Media"
             className="h-12 w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h1>
-          <p className="text-gray-400">
-            {isLogin ? 'Sign in to your Wise Media portal' : 'Join the Wise Media platform'}
-          </p>
         </div>
 
 
@@ -108,8 +102,8 @@ export default function Login({ onLogin }: LoginProps) {
         {/* Form */}
         <form onSubmit={isLogin ? handleSubmit : handleSignUp} className="space-y-6">
           {!isLogin && (
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="animate-in slide-in-from-top fade-in duration-300">
+              <label htmlFor="name" className="block text-xs font-semibold text-gray-300 mb-2 ml-1">
                 Full Name *
               </label>
               <input
@@ -117,7 +111,7 @@ export default function Login({ onLogin }: LoginProps) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="form-input w-full px-4 py-3 rounded-lg focus:outline-none transition-colors"
+                className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
                 placeholder="Enter your full name"
                 required
               />
@@ -125,7 +119,7 @@ export default function Login({ onLogin }: LoginProps) {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="email" className="block text-xs font-semibold text-gray-300 mb-2 ml-1">
               Email *
             </label>
             <input
@@ -133,15 +127,15 @@ export default function Login({ onLogin }: LoginProps) {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="form-input w-full px-4 py-3 rounded-lg focus:outline-none transition-colors"
+              className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
               placeholder="Enter your email"
               required
             />
           </div>
 
           {!isLogin && (
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="animate-in slide-in-from-top fade-in duration-300">
+              <label htmlFor="phone" className="block text-xs font-semibold text-gray-300 mb-2 ml-1">
                 Phone (Optional)
               </label>
               <input
@@ -149,14 +143,14 @@ export default function Login({ onLogin }: LoginProps) {
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="form-input w-full px-4 py-3 rounded-lg focus:outline-none transition-colors"
+                className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
                 placeholder="Enter your phone number"
               />
             </div>
           )}
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="password" className="block text-xs font-semibold text-gray-300 mb-2 ml-1">
               Password *
             </label>
             <div className="relative">
@@ -165,63 +159,48 @@ export default function Login({ onLogin }: LoginProps) {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="form-input w-full px-4 py-3 rounded-lg focus:outline-none transition-colors pr-12"
+                className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all pr-12"
                 placeholder="Enter your password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
+                  <EyeSlashIcon className="h-4 w-4" />
                 ) : (
-                  <EyeIcon className="h-5 w-5" />
+                  <EyeIcon className="h-4 w-4" />
                 )}
               </button>
             </div>
           </div>
 
-          {isLogin && (
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-300">Remember me</span>
-              </label>
-              <button type="button" className="text-sm text-blue-400 hover:text-blue-300">
-                Forgot password?
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center group cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-[#3aa3eb] focus:ring-[#3aa3eb] focus:ring-offset-0 transition-colors"
+              />
+              <span className="ml-2 text-[10px] font-medium text-gray-400 group-hover:text-gray-300 transition-colors">Remember me</span>
+            </label>
+            <button type="button" className="text-[10px] font-medium text-[#3aa3eb] hover:text-blue-300 transition-colors">
+              Forgot password?
+            </button>
+          </div>
 
           <button
             type="submit"
-            className="w-full btn-primary"
+            className="w-full py-3 px-4 bg-[#3aa3eb] hover:bg-[#4ab3fb] text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="mt-6 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-600"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-slate-900 text-gray-400">or</span>
-          </div>
-        </div>
-
-        {/* Toggle Form */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-400">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
-          </p>
+        <div className="mt-8 pt-6 border-t border-white/5 text-center">
           <button
             type="button"
             onClick={() => {
@@ -232,9 +211,9 @@ export default function Login({ onLogin }: LoginProps) {
               setName('');
               setPhone('');
             }}
-            className="mt-2 text-blue-400 hover:text-blue-300 font-medium"
+            className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase letter-spacing-[0.1em]"
           >
-            {isLogin ? 'Create an account' : 'Sign in instead'}
+            {isLogin ? 'Register account' : 'Back to login'}
           </button>
         </div>
       </div>
