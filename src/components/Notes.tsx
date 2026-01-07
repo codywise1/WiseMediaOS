@@ -155,14 +155,6 @@ export default function Notes({ currentUser }: NotesProps) {
     }
   };
 
-  const handleToggleShare = async (note: Note) => {
-    try {
-      await noteService.update(note.id, { visibility: note.visibility === 'client_visible' ? 'internal' : 'client_visible' });
-      await loadData();
-    } catch (error) {
-      console.error('Error toggling share:', error);
-    }
-  };
 
   const resetFilters = () => {
     setSearchQuery('');
@@ -297,17 +289,8 @@ export default function Notes({ currentUser }: NotesProps) {
           </button>
 
           {isPinnedExpanded && (
-            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "glass-card rounded-2xl overflow-hidden border border-white/5"}>
-              {viewMode === 'list' && (
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                  <span>Title</span>
-                  <span>Client</span>
-                  <span className="text-center">Type</span>
-                  <span className="text-center">Last Edited</span>
-                  <span className="text-right pr-8">Action</span>
-                </div>
-              )}
-              <div className={viewMode === 'list' ? "divide-y divide-white/5" : ""}>
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pinnedNotes.map(note => (
                   <NoteItem
                     key={note.id}
@@ -316,11 +299,32 @@ export default function Notes({ currentUser }: NotesProps) {
                     onEdit={handleEditNote}
                     onDelete={handleDeleteNote}
                     onTogglePin={handleTogglePin}
-                    onToggleShare={handleToggleShare}
                   />
                 ))}
               </div>
-            </div>
+            ) : (
+              <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <span>Title</span>
+                  <span>Client</span>
+                  <span className="text-center">Type</span>
+                  <span className="text-center">Last Edited</span>
+                  <span className="text-right pr-8">Action</span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {pinnedNotes.map(note => (
+                    <NoteItem
+                      key={note.id}
+                      note={note}
+                      viewMode={viewMode}
+                      onEdit={handleEditNote}
+                      onDelete={handleDeleteNote}
+                      onTogglePin={handleTogglePin}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
           )}
           <div className="h-px bg-white/5 w-full mt-8" />
         </div>
@@ -328,17 +332,8 @@ export default function Notes({ currentUser }: NotesProps) {
 
       {/* Main List */}
       {regularNotes.length > 0 ? (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "glass-card rounded-2xl overflow-hidden border border-white/5"}>
-          {viewMode === 'list' && (
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
-              <span>Title</span>
-              <span>Client</span>
-              <span className="text-center">Type</span>
-              <span className="text-center">Last Edited</span>
-              <span className="text-right pr-8">Action</span>
-            </div>
-          )}
-          <div className={viewMode === 'list' ? "divide-y divide-white/5" : ""}>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularNotes.map(note => (
               <NoteItem
                 key={note.id}
@@ -347,11 +342,32 @@ export default function Notes({ currentUser }: NotesProps) {
                 onEdit={handleEditNote}
                 onDelete={handleDeleteNote}
                 onTogglePin={handleTogglePin}
-                onToggleShare={handleToggleShare}
               />
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <span>Title</span>
+              <span>Client</span>
+              <span className="text-center">Type</span>
+              <span className="text-center">Last Edited</span>
+              <span className="text-right pr-8">Action</span>
+            </div>
+            <div className="divide-y divide-white/5">
+              {regularNotes.map(note => (
+                <NoteItem
+                  key={note.id}
+                  note={note}
+                  viewMode={viewMode}
+                  onEdit={handleEditNote}
+                  onDelete={handleDeleteNote}
+                  onTogglePin={handleTogglePin}
+                />
+              ))}
+            </div>
+          </div>
+        )
       ) : filteredNotes.length === 0 ? (
         <div className="glass-card rounded-3xl p-20 text-center border border-white/10">
           <DocumentTextIcon className="h-16 w-16 text-gray-700 mx-auto mb-6" />
@@ -388,13 +404,12 @@ export default function Notes({ currentUser }: NotesProps) {
   );
 }
 
-function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare }: {
+function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
   note: Note;
   viewMode: 'grid' | 'list';
   onEdit: (n: Note) => void;
   onDelete: (n: Note) => void;
   onTogglePin: (e: React.MouseEvent, n: Note) => void;
-  onToggleShare?: (n: Note) => void;
 }) {
   const categoryConfigs: Record<string, { bg: string, border: string, text: string, label: string }> = {
     idea: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Idea' },
