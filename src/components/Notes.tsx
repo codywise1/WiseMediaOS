@@ -413,11 +413,11 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
 }) {
   const categoryConfigs: Record<string, { bg: string, border: string, text: string, label: string }> = {
     idea: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Idea' },
-    meeting: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff', label: 'Meeting' },
-    sales_call: { bg: 'rgba(234, 59, 59, 0.33)', border: 'rgba(234, 59, 59, 1)', text: '#ffffff', label: 'Sales Call' },
-    sop: { bg: 'rgba(250, 204, 21, 0.33)', border: 'rgba(250, 204, 21, 1)', text: '#ffffff', label: 'SOP' },
-    task: { bg: 'rgba(168, 85, 247, 0.33)', border: 'rgba(168, 85, 247, 1)', text: '#ffffff', label: 'Task' },
-    general: { bg: 'rgba(107, 114, 128, 0.33)', border: 'rgba(107, 114, 128, 1)', text: '#ffffff', label: 'Note' }
+    meeting: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Meeting' },
+    sales_call: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Sales Call' },
+    sop: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'SOP' },
+    task: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Task' },
+    general: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'General' }
   };
 
   const config = categoryConfigs[note.category] || categoryConfigs.general;
@@ -451,7 +451,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
 
           <div className="flex flex-wrap gap-2 mb-4">
             <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold tracking-wider transition-all"
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
               style={{
                 backgroundColor: config.bg,
                 border: `1px solid ${config.border} `,
@@ -516,7 +516,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
 
       <div className="flex items-center justify-center">
         <span
-          className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold transition-all"
+          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
           style={{
             backgroundColor: config.bg,
             border: `1px solid ${config.border}`,

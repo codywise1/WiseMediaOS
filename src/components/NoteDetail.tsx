@@ -20,9 +20,11 @@ import {
     ShareIcon,
     ClockIcon,
     UserIcon,
-    VideoCameraIcon
+    VideoCameraIcon,
+    ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
+import { generateNotePDF } from '../utils/pdfGenerator';
 import ConfirmDialog from './ConfirmDialog';
 import NoteEditor from './notes/NoteEditor';
 
@@ -242,6 +244,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     setNote({ ...note, title: newTitle });
                                 }}
                                 className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800"
+                                style={{ fontFamily: 'Integral CF, sans-serif' }}
                                 placeholder="Note Title"
                             />
 
@@ -307,6 +310,13 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                     {/* Actions Card */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-3">
+                        <button
+                            onClick={() => note && generateNotePDF(note)}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#3aa3eb]/10 hover:bg-[#3aa3eb]/20 border border-[#3aa3eb]/20 rounded-xl text-xs font-bold text-[#3aa3eb] tracking-widest transition-all"
+                        >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            Download PDF
+                        </button>
                         <button
                             onClick={() => {
                                 if (!note.clientId) {
@@ -394,7 +404,7 @@ function MetaItem({ label, value, icon: Icon }: any) {
                 <Icon className="h-3.5 w-3.5" />
                 {label}
             </div>
-            <span className="text-gray-300 font-black">{value}</span>
+            <span className="text-white font-bold">{value}</span>
         </div>
     );
 }
