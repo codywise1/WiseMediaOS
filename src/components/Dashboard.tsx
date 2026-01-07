@@ -504,7 +504,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       <div className="glass-card neon-glow rounded-2xl p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}!</span>
             </h1>
             <p className="text-gray-300">Here's what's happening with your projects today.</p>
@@ -572,10 +572,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               <div className={`p-3 rounded-lg ${action.color}`}>
                 <action.icon className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">{action.count}</span>
+              <span className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{action.count}</span>
             </div>
 
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>{action.name}</h3>
+            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{action.name}</h3>
             <p className="text-gray-300 mb-1">{action.description}</p>
             <p className="text-sm text-[#59a1e5] font-semibold mb-4">{action.status}</p>
 
@@ -597,7 +597,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       {/* Recent Activity */}
       <div className="glass-card rounded-xl p-6 neon-glow">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Recent Activity</h2>
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Recent Activity</h2>
           <button
             onClick={() => console.log('View all activities')}
             className="btn-pill shrink-glow-button"

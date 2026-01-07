@@ -532,7 +532,7 @@ function App() {
             }
           />
           <Route
-            path="/community/chat"
+            path="/community/messages"
             element={
               <CommunityGuard>
                 <CommunityPage />

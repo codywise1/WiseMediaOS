@@ -15,6 +15,7 @@ import {
     Project,
     noteService
 } from '../../lib/supabase';
+import { useToast } from '../../contexts/ToastContext';
 import NoteEditor from './NoteEditor';
 import Modal from '../Modal';
 
@@ -83,6 +84,7 @@ export default function CreateEditNoteModal({
     defaultClientId,
     defaultProjectId
 }: CreateEditNoteModalProps) {
+    const { success: toastSuccess, error: toastError } = useToast();
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState<NoteCategory>('general');
     const [tags, setTags] = useState<string[]>([]);
@@ -140,13 +142,16 @@ export default function CreateEditNoteModal({
 
             if (mode === 'edit' && note) {
                 await noteService.update(note.id, noteData as any);
+                toastSuccess('Note updated successfully.');
             } else {
                 await noteService.create(noteData as any);
+                toastSuccess('Note created successfully.');
             }
             onSave();
             onClose();
         } catch (error) {
             console.error('Error saving note:', error);
+            toastError(mode === 'edit' ? 'Failed to update note.' : 'Failed to create note.');
         } finally {
             setIsSubmitting(false);
         }

@@ -26,6 +26,7 @@ import ConfirmDialog from './ConfirmDialog';
 import { formatAppDate } from '../lib/dateFormat';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../contexts/ToastContext';
 import NoteSearchFilters from './notes/NoteSearchFilters';
 import CreateEditNoteModal from './notes/CreateEditNoteModal';
 
@@ -42,6 +43,7 @@ interface NotesProps {
 
 export default function Notes({ currentUser }: NotesProps) {
   const navigate = useNavigate();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [notes, setNotes] = useState<Note[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -139,8 +141,10 @@ export default function Notes({ currentUser }: NotesProps) {
         await noteService.delete(selectedNote.id);
         await loadData();
         setIsDeleteDialogOpen(false);
+        toastSuccess('Note deleted successfully.');
       } catch (error) {
         console.error('Error deleting note:', error);
+        toastError('Failed to delete note. Please try again.');
       }
     }
   };
@@ -150,8 +154,10 @@ export default function Notes({ currentUser }: NotesProps) {
     try {
       await noteService.togglePin(note.id, !note.pinned);
       await loadData();
+      toastSuccess(note.pinned ? 'Note unpinned.' : 'Note pinned.');
     } catch (error) {
       console.error('Error toggling pin:', error);
+      toastError('Failed to update pin status.');
     }
   };
 
