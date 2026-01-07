@@ -509,8 +509,8 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 bg-slate-800/20 rounded-xl border border-slate-700/50 border-dashed">
             <ClipboardDocumentListIcon className="h-10 w-10 text-slate-600 mb-3" />
-            <p className="text-gray-500 font-medium">No hay notas para este proyecto</p>
-            <p className="text-gray-600 text-xs mt-1">Las notas que crees aquí aparecerán en esta sección</p>
+            <p className="text-gray-500 font-medium">No notes found for this project</p>
+            <p className="text-gray-600 text-xs mt-1">Notes you create here will appear in this section</p>
           </div>
         )}
       </div>
