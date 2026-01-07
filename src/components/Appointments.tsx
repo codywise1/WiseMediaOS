@@ -16,7 +16,6 @@ import {
 import { formatAppDate } from '../lib/dateFormat';
 import AppointmentModal from './AppointmentModal';
 import ConfirmDialog from './ConfirmDialog';
-import { appointmentStatusColors } from '../lib/statusColors';
 
 interface User {
   email: string;
@@ -523,9 +522,29 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${appointmentStatusColors[appointment.status]}`}>
-                    {appointment.status}
-                  </span>
+                  {(() => {
+                    const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
+                      confirmed: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+                      pending: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                      cancelled: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
+                      default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                    };
+
+                    const style = statusStyles[appointment.status.toLowerCase()] || statusStyles.default;
+
+                    return (
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0"
+                        style={{
+                          backgroundColor: style.bg,
+                          border: `1px solid ${style.border}`,
+                          color: style.text
+                        }}
+                      >
+                        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                      </span>
+                    );
+                  })()}
                   {isAdmin && (
                     <div className="flex items-center space-x-2">
                       <button

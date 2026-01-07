@@ -1114,7 +1114,7 @@ export const invoiceService = {
     const sb = getSupabaseClient();
     const { data, error } = await sb
       .from('invoices')
-      .update({ ...updates })
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select(`
         *,

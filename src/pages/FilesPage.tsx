@@ -250,7 +250,7 @@ export default function FilesPage() {
           <div className="col-span-2">Linked To</div>
           <div className="col-span-2">Owner</div>
           <div className="col-span-2">Last Updated</div>
-          <div className="col-span-1">Status</div>
+          <div className="col-span-1 text-left">Status</div>
           <div className="col-span-1">Actions</div>
         </div>
         <div className="divide-y divide-white/10">
@@ -285,10 +285,32 @@ export default function FilesPage() {
 
                 <div className="sm:col-span-2 text-xs text-gray-300">{formatAppDate(file.updated_at)}</div>
 
-                <div className="sm:col-span-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fileStatusColors[file.status]}`}>
-                    {file.status.replace('_', ' ').toUpperCase()}
-                  </span>
+                <div className="sm:col-span-1 flex items-center justify-start">
+                  {(() => {
+                    const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
+                      draft: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                      in_review: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgba(234, 179, 8, 1)', text: '#ffffff' },
+                      awaiting_client: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
+                      approved: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+                      archived: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' },
+                      default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                    };
+
+                    const style = statusStyles[file.status.toLowerCase()] || statusStyles.default;
+
+                    return (
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                        style={{
+                          backgroundColor: style.bg,
+                          border: `1px solid ${style.border}`,
+                          color: style.text
+                        }}
+                      >
+                        {file.status.replace('_', ' ').charAt(0).toUpperCase() + file.status.replace('_', ' ').slice(1)}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <div className="sm:col-span-1 flex gap-2">

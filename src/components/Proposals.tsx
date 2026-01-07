@@ -276,9 +276,9 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 <tr className="bg-white/5 border-b border-white/10 text-gray-400">
                   <th className="px-8 py-5 text-xs font-bold tracking-tight">Proposal Name</th>
                   <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Deal Stage</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Value</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Status Timeline</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Deal Stage</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Value</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Status Timeline</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>
@@ -298,7 +298,6 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 ) : visibleProposals.map((proposal: any) => {
                   const timelineStatus = getStatusTimeline(proposal);
                   const isApproved = proposal.status === 'approved';
-                  const isDraft = proposal.status === 'draft';
                   const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
 
                   return (
@@ -332,24 +331,47 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       <td className="px-6 py-6">
                         <span className="text-sm font-bold text-gray-200">{proposal.client}</span>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black border border-white/10 ${isApproved ? 'bg-green-500/20 text-green-500 border-green-500/30' :
-                          isDraft ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' :
-                            'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                          }`}>
-                          {proposal.status}
-                        </span>
+                      <td className="px-6 py-6">
+                        {(() => {
+                          const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
+                            approved: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+                            draft: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgba(234, 179, 8, 1)', text: '#ffffff' },
+                            sent: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                            viewed: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                            expired: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
+                            default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                          };
+
+                          const style = statusStyles[proposal.status.toLowerCase()] || statusStyles.default;
+
+                          return (
+                            <span
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                              style={{
+                                backgroundColor: style.bg,
+                                border: `1px solid ${style.border}`,
+                                color: style.text
+                              }}
+                            >
+                              {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
+                            </span>
+                          );
+                        })()}
                       </td>
-                      <td className="px-6 py-6 text-center">
+                      <td className="px-6 py-6">
                         <span className="text-base font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
                           ${((proposal.value || 0) / 100).toLocaleString()}
                         </span>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold tracking-tight border ${isApproved ? 'bg-green-500/10 border-green-500/50 text-green-400' :
-                          isExpired ? 'bg-red-500/10 border-red-500/50 text-red-400' :
-                            'bg-[#3aa3eb]/10 border-[#3aa3eb]/50 text-blue-400'
-                          }`}>
+                      <td className="px-6 py-6 transition-all">
+                        <span
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+                          style={{
+                            backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.15)' : isExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 163, 234, 0.15)',
+                            borderColor: isApproved ? 'rgba(34, 197, 94, 0.5)' : isExpired ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 163, 234, 0.5)',
+                            color: isApproved ? '#4ade80' : isExpired ? '#f87171' : '#60a5fa'
+                          }}
+                        >
                           {timelineStatus}
                         </span>
                       </td>

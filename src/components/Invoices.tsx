@@ -495,7 +495,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 <tr className="bg-white/5 border-b border-white/10 text-gray-400">
                   <th className="px-8 py-5 text-xs font-bold tracking-tight">Invoice</th>
                   <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight text-center">Status</th>
+                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Status</th>
                   <th className="px-6 py-5 text-xs font-bold tracking-tight">Amount</th>
                   <th className="px-6 py-5 text-xs font-bold tracking-tight">Due</th>
                   <th className="px-8 py-5 text-right"></th>
@@ -518,13 +518,32 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <td className="px-6 py-6">
                       <span className="text-sm font-bold text-gray-200">{invoice.client}</span>
                     </td>
-                    <td className="px-6 py-6 text-center">
-                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-white/10 ${invoice.status === 'overdue' ? 'bg-red-500/20 text-red-500 border-red-500/30' :
-                        invoice.status === 'paid' ? 'bg-green-500/20 text-green-500 border-green-500/30' :
-                          'bg-white/5 text-gray-400'
-                        }`}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </span>
+                    <td className="px-6 py-6 transition-all">
+                      {(() => {
+                        const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
+                          paid: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+                          overdue: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
+                          pending: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                          unpaid: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                          ready: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                          default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                        };
+
+                        const style = statusStyles[invoice.status.toLowerCase()] || statusStyles.default;
+
+                        return (
+                          <span
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                            style={{
+                              backgroundColor: style.bg,
+                              border: `1px solid ${style.border}`,
+                              color: style.text
+                            }}
+                          >
+                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-6">
                       <span className="text-lg font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
@@ -534,9 +553,20 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <td className="px-6 py-6">
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-gray-300">
-                          {invoice.status === 'overdue' ? '5 Days Overdue' : `Due in ${Math.floor((new Date(invoice.dueDate || '').getTime() - new Date().getTime()) / (1000 * 3600 * 24))} Days`}
+                          {invoice.status === 'paid' ? (
+                            `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at || '')}`
+                          ) : invoice.status === 'overdue' ? (
+                            (() => {
+                              const diff = Math.floor((new Date().getTime() - new Date(invoice.dueDate || '').getTime()) / (1000 * 3600 * 24));
+                              return `${diff > 0 ? diff : 1} ${diff === 1 ? 'Day' : 'Days'} Overdue`;
+                            })()
+                          ) : (
+                            (() => {
+                              const diff = Math.floor((new Date(invoice.dueDate || '').getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+                              return `Due in ${diff > 0 ? diff : 0} ${diff === 1 ? 'Day' : 'Days'}`;
+                            })()
+                          )}
                         </span>
-                        {invoice.status === 'paid' && <span className="text-[10px] text-gray-500">Paid {formatAppDate(invoice.updated_at || '')}</span>}
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">

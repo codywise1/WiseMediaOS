@@ -307,8 +307,8 @@ export default function Notes({ currentUser }: NotesProps) {
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
                   <span>Title</span>
                   <span>Client</span>
-                  <span className="text-center">Type</span>
-                  <span className="text-center">Last Edited</span>
+                  <span className="text-left">Type</span>
+                  <span className="text-left">Last Edited</span>
                   <span className="text-right pr-8">Action</span>
                 </div>
                 <div className="divide-y divide-white/5">
@@ -350,8 +350,8 @@ export default function Notes({ currentUser }: NotesProps) {
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
               <span>Title</span>
               <span>Client</span>
-              <span className="text-center">Type</span>
-              <span className="text-center">Last Edited</span>
+              <span className="text-left">Type</span>
+              <span className="text-left">Last Edited</span>
               <span className="text-right pr-8">Action</span>
             </div>
             <div className="divide-y divide-white/5">
@@ -514,7 +514,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
         {note.client?.name || 'Wise Media'}
       </div>
 
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-start">
         <span
           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
           style={{
@@ -527,7 +527,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
         </span>
       </div>
 
-      <div className="text-sm text-gray-400 font-medium text-center">
+      <div className="text-sm text-gray-400 font-medium text-left">
         {formatAppDate(note.updated_at)}
       </div>
 

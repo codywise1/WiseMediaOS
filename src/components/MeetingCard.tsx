@@ -10,7 +10,6 @@ import {
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { Meeting, UserRole } from '../lib/supabase';
-import { meetingStatusColors } from '../lib/statusColors';
 
 interface MeetingCardProps {
     meeting: Meeting;
@@ -72,9 +71,32 @@ export default function MeetingCard({
                     </div>
                 </div>
 
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${meetingStatusColors[meeting.status]}`}>
-                    {meeting.status}
-                </span>
+                {(() => {
+                    const statusStyles: Record<string, { bg: string, border: string, text: string, pulse?: boolean }> = {
+                        scheduled: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                        live: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff', pulse: true },
+                        processing: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgba(234, 179, 8, 1)', text: '#ffffff' },
+                        ready: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
+                        shared: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
+                        archived: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' },
+                        default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                    };
+
+                    const style = statusStyles[meeting.status.toLowerCase()] || statusStyles.default;
+
+                    return (
+                        <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${style.pulse ? 'animate-pulse' : ''}`}
+                            style={{
+                                backgroundColor: style.bg,
+                                border: `1px solid ${style.border}`,
+                                color: style.text
+                            }}
+                        >
+                            {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                        </span>
+                    );
+                })()}
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-400">

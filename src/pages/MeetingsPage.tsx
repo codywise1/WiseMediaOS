@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     VideoCameraIcon,
-    FunnelIcon,
     MagnifyingGlassIcon,
     VideoCameraSlashIcon,
     ClipboardDocumentCheckIcon,
     CheckCircleIcon,
-    ShareIcon
+    ShareIcon,
+    PlusIcon
 } from '@heroicons/react/24/outline';
 import {
     meetingService,
@@ -159,33 +159,104 @@ export default function MeetingsPage() {
 
     return (
         <div className="space-y-8 pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight font-display">
-                        MEETINGS
-                    </h1>
-                    <p className="text-gray-400 mt-1">Manage calls, recordings, and transcripts</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    {filteredMeetings.some(m => m.status === 'live') && (
+            {/* Header and Filters Section */}
+            <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+                    <div className="min-w-0">
+                        <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                            MEETINGS
+                        </h1>
+                        <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Manage calls, recordings, and transcripts
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {filteredMeetings.some(m => m.status === 'live') && (
+                            <button
+                                onClick={() => {
+                                    const liveMeeting = filteredMeetings.find(m => m.status === 'live');
+                                    if (liveMeeting) handleJoinMeeting(liveMeeting);
+                                }}
+                                className="px-6 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-full font-bold uppercase tracking-wide transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse flex items-center gap-2"
+                            >
+                                <VideoCameraIcon className="h-5 w-5" />
+                                Join Live Now
+                            </button>
+                        )}
                         <button
-                            onClick={() => {
-                                const liveMeeting = filteredMeetings.find(m => m.status === 'live');
-                                if (liveMeeting) handleJoinMeeting(liveMeeting);
-                            }}
-                            className="px-6 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-full font-bold uppercase tracking-wide transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse flex items-center gap-2"
+                            onClick={() => setIsScheduleModalOpen(true)}
+                            className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
                         >
-                            <VideoCameraIcon className="h-5 w-5" />
-                            Join Live Now
+                            <PlusIcon className="h-5 w-5" />
+                            <span>Schedule Meeting</span>
                         </button>
-                    )}
-                    <button
-                        onClick={() => setIsScheduleModalOpen(true)}
-                        className="btn-primary shrink-glow-button px-6 py-2.5 rounded-full font-medium"
-                    >
-                        Schedule Meeting
-                    </button>
+                    </div>
+                </div>
+
+                {/* Search & Filters Inside Header Container */}
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        {/* Search Filter */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+                            <div className="relative">
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search meetings..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Date Filter */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Date</label>
+                            <select
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value as any)}
+                                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                            >
+                                <option value="upcoming">Upcoming</option>
+                                <option value="past">Past</option>
+                                <option value="all">All Dates</option>
+                            </select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Status</label>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value as any)}
+                                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="live">Live</option>
+                                <option value="processing">Processing</option>
+                                <option value="ready">Ready</option>
+                                <option value="shared">Shared</option>
+                            </select>
+                        </div>
+
+                        {/* Client Filter */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
+                            <select
+                                value={clientFilter}
+                                onChange={(e) => setClientFilter(e.target.value)}
+                                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                            >
+                                <option value="all">All Clients</option>
+                                {clients.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -219,51 +290,6 @@ export default function MeetingsPage() {
                     color="text-purple-400"
                     bg="bg-purple-500/10"
                 />
-            </div>
-
-            {/* Filters */}
-            <div className="glass-card rounded-2xl p-4 border border-white/10 flex flex-col lg:flex-row gap-4">
-                <div className="flex-1 relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-                    <input
-                        type="text"
-                        placeholder="Search meetings..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500/50"
-                    />
-                </div>
-                <div className="flex flex-wrap gap-3">
-                    <FilterSelect
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value as any)}
-                        options={[
-                            { value: 'upcoming', label: 'Upcoming' },
-                            { value: 'past', label: 'Past' },
-                            { value: 'all', label: 'All Dates' }
-                        ]}
-                    />
-                    <FilterSelect
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as any)}
-                        options={[
-                            { value: 'all', label: 'All Status' },
-                            { value: 'scheduled', label: 'Scheduled' },
-                            { value: 'live', label: 'Live' },
-                            { value: 'processing', label: 'Processing' },
-                            { value: 'ready', label: 'Ready' },
-                            { value: 'shared', label: 'Shared' }
-                        ]}
-                    />
-                    <FilterSelect
-                        value={clientFilter}
-                        onChange={(e) => setClientFilter(e.target.value)}
-                        options={[
-                            { value: 'all', label: 'All Clients' },
-                            ...clients.map(c => ({ value: c.id, label: c.name }))
-                        ]}
-                    />
-                </div>
             </div>
 
             {/* Meetings Grid */}
@@ -317,27 +343,6 @@ function StatCard({ label, count, icon: Icon, color, bg }: any) {
             <div>
                 <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">{label}</p>
                 <p className="text-2xl font-black text-white mt-0.5">{count}</p>
-            </div>
-        </div>
-    );
-}
-
-function FilterSelect({ value, onChange, options }: any) {
-    return (
-        <div className="relative">
-            <select
-                value={value}
-                onChange={onChange}
-                className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-blue-500/50 cursor-pointer hover:bg-white/10 transition-colors min-w-[140px]"
-            >
-                {options.map((opt: any) => (
-                    <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <FunnelIcon className="h-4 w-4 text-gray-400" />
             </div>
         </div>
     );
