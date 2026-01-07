@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, Search, ChevronDown, User, Settings, LogOut, LayoutGrid, Menu, X } from 'lucide-react';
+import { Bell, Search, ChevronDown, Settings, LogOut, LayoutGrid, Menu, X, LifeBuoy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
@@ -396,17 +396,15 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
                   onClick={() => handleNavigate('/community/profile')}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors"
                 >
-                  <User size={16} /> Profile
+                  <Settings size={16} /> Settings
                 </button>
-                {(role === 'admin' || role === 'staff') && (
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleNavigate('/community/profile')}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors"
-                  >
-                    <Settings size={16} /> Settings
-                  </button>
-                )}
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleNavigate('/support')}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors"
+                >
+                  <LifeBuoy size={16} /> Support
+                </button>
                 <button
                   disabled
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 cursor-not-allowed"

@@ -98,13 +98,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
-    },
-    {
-      label: 'System',
-      items: [
-        { name: 'Support', href: '/support', icon: LifebuoyIcon },
-        { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
-      ]
     }
   ],
   staff: [
@@ -130,14 +123,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
-    },
-    {
-      label: 'System',
-      items: [
-        { name: 'Support', href: '/support', icon: LifebuoyIcon },
-
-        { name: 'Settings', href: '/community/profile', icon: Cog6ToothIcon }
-      ]
     }
   ],
   client: [
@@ -157,8 +142,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Messages', href: '/support', icon: ChatBubbleLeftRightIcon }
       ]
     },
-    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpenIcon }] },
-    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpenIcon }] }
   ],
   member: [
     { label: 'Overview', items: [{ name: 'Creator Home', href: '/creator', icon: HomeIcon }] },
@@ -179,8 +163,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
     {
       label: 'Marketplace',
       items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
-    },
-    { label: 'Support', items: [{ name: 'Support', href: '/support', icon: LifebuoyIcon }] }
+    }
   ]
 }
 
