@@ -19,6 +19,7 @@ import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
 import Modal from './Modal';
 import { formatAppDate } from '../lib/dateFormat';
+import { parseMarkdown } from '../lib/markdown';
 
 interface User {
   email: string;
@@ -508,9 +509,10 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[160px]">
-                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {renderContentPreview(note.content, 2000)}
-                  </p>
+                  <div
+                    className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words"
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(renderContentPreview(note.content, 5000)) }}
+                  />
                 </div>
               </div>
             ))}

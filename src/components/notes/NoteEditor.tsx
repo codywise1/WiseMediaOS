@@ -22,13 +22,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { NoteBlock } from '../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { parseMarkdown } from '../../lib/markdown';
 
-const parseMarkdown = (text: string) => {
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em class="italic text-gray-200">$1</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[#3aa3eb] border-b border-[#3aa3eb]/30 hover:border-[#3aa3eb] transition-all">$1</a>');
-};
 
 const parseMarkdownToBlocks = (text: string): NoteBlock[] => {
     const lines = text.split('\n');
@@ -739,10 +734,10 @@ function BlockRenderer({
             );
         }
         case 'paragraph':
-            if (readOnly) return <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
+            if (readOnly) return <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
             if (!isActive) return (
                 <div
-                    className={`${typographyClasses} text-white/80 cursor-text min-h-[1.55em]`}
+                    className={`${typographyClasses} text-white/80 whitespace-pre-wrap cursor-text min-h-[1.55em]`}
                     dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') || '<span class="text-gray-700 opacity-30">Type \'/\' for commands...</span>' }}
                     onClick={onActivate} tabIndex={0} onFocus={onActivate} ref={(el) => refs.current[index] = el as any}
                 />
@@ -771,7 +766,7 @@ function BlockRenderer({
                         {items.map((item: string, i: number) => (
                             <li key={i} className="flex items-start gap-3">
                                 <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#3aa3eb]/40 shrink-0" />
-                                <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
                             </li>
                         ))}
                     </ul>
@@ -801,7 +796,7 @@ function BlockRenderer({
                         {items.map((item: string, i: number) => (
                             <li key={i} className="flex items-start gap-3">
                                 <span className="mt-0.5 text-[14px] font-mono text-[#3aa3eb]/50 w-5 text-right shrink-0">{i + 1}.</span>
-                                <div className={`${typographyClasses} text-white/80`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
                             </li>
                         ))}
                     </ol>
