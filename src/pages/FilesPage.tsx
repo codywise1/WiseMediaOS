@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
@@ -139,12 +140,12 @@ export default function FilesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header and Filters Section */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-              Files
+              FILES
             </h1>
             <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               Deliverables, assets, and working files
@@ -154,89 +155,87 @@ export default function FilesPage() {
             onClick={() => setIsUploadModalOpen(true)}
             className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
           >
+            <PlusIcon className="h-5 w-5" />
             <span>Upload File</span>
           </button>
         </div>
-      </div>
 
-      {/* Search */}
-      <div className="glass-card rounded-2xl p-6">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search files, clients, or projects"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-4 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-          />
-        </div>
-      </div>
+        {/* Search & Filters Inside Header Container */}
+        <div className="space-y-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search files, clients, or projects"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-4 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
 
-      {/* Smart Filters */}
-      <div className="glass-card rounded-2xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <select
-            value={selectedClient}
-            onChange={(e) => setSelectedClient(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-          >
-            <option value="">All Clients</option>
-            {linkedClients.map(client => (
-              <option key={client.id} value={client.id}>{client.name}</option>
-            ))}
-          </select>
-          <select
-            value={selectedProject}
-            onChange={(e) => setSelectedProject(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-          >
-            <option value="">All Projects</option>
-            {linkedProjects.map(project => (
-              <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
-          </select>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-          >
-            <option value="">All Types</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="pdf">PDFs</option>
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as FileStatus)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-          >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="in_review">In Review</option>
-            <option value="awaiting_client">Awaiting Client</option>
-            <option value="approved">Approved</option>
-            <option value="archived">Archived</option>
-          </select>
-          <input
-            type="date"
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white"
-          />
-        </div>
-
-        {/* Quick Filter Chips */}
-        <div className="flex flex-wrap gap-2">
-          {['all', 'deliverables', 'internal', 'meetings', 'recent', 'shared'].map(filter => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activeFilter === filter
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                }`}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             >
-              {filter.charAt(0).toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
+              <option value="">All Clients</option>
+              {linkedClients.map(client => (
+                <option key={client.id} value={client.id}>{client.name}</option>
+              ))}
+            </select>
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            >
+              <option value="">All Projects</option>
+              {linkedProjects.map(project => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            >
+              <option value="">All Types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="pdf">PDFs</option>
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as FileStatus)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            >
+              <option value="">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="in_review">In Review</option>
+              <option value="awaiting_client">Awaiting Client</option>
+              <option value="approved">Approved</option>
+              <option value="archived">Archived</option>
+            </select>
+            <input
+              type="date"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          {/* Quick Filter Chips */}
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5 mt-4">
+            {['all', 'deliverables', 'internal', 'meetings', 'recent', 'shared'].map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === filter
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                  : 'bg-white/5 text-gray-400 border border-white/10 hover:border-white/30 hover:text-white'
+                  }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
