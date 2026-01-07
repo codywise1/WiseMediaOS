@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
@@ -21,9 +21,7 @@ export default function FilesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<FileStatus | ''>('');
-  const [activeFilter, setActiveFilter] = useState<string>('all');
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -93,19 +91,11 @@ export default function FilesPage() {
 
       const matchesClient = !selectedClient || file.client_id === selectedClient;
       const matchesProject = !selectedProject || file.project_id === selectedProject;
-      const matchesType = !selectedType || file.content_type?.includes(selectedType);
       const matchesStatus = !selectedStatus || file.status === selectedStatus;
 
-      let matchesFilter = true;
-      if (activeFilter === 'deliverables') matchesFilter = file.status === 'approved';
-      if (activeFilter === 'internal') matchesFilter = !file.client_id;
-      if (activeFilter === 'meetings') matchesFilter = !!file.meeting_id;
-      if (activeFilter === 'recent') matchesFilter = new Date(file.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      if (activeFilter === 'shared') matchesFilter = file.visibility === 'shared';
-
-      return matchesSearch && matchesClient && matchesProject && matchesType && matchesStatus && matchesFilter;
+      return matchesSearch && matchesClient && matchesProject && matchesStatus;
     });
-  }, [files, searchQuery, selectedClient, selectedProject, selectedType, selectedStatus, activeFilter]);
+  }, [files, searchQuery, selectedClient, selectedProject, selectedStatus]);
 
   const stats = useMemo(() => {
     const total = files.length;
@@ -162,79 +152,68 @@ export default function FilesPage() {
 
         {/* Search & Filters Inside Header Container */}
         <div className="space-y-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search files, clients, or projects"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            {/* Search Filter */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search files..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <select
-              value={selectedClient}
-              onChange={(e) => setSelectedClient(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <option value="">All Clients</option>
-              {linkedClients.map(client => (
-                <option key={client.id} value={client.id}>{client.name}</option>
-              ))}
-            </select>
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <option value="">All Projects</option>
-              {linkedProjects.map(project => (
-                <option key={project.id} value={project.id}>{project.name}</option>
-              ))}
-            </select>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <option value="">All Types</option>
-              <option value="image">Images</option>
-              <option value="video">Videos</option>
-              <option value="pdf">PDFs</option>
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value as FileStatus)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="in_review">In Review</option>
-              <option value="awaiting_client">Awaiting Client</option>
-              <option value="approved">Approved</option>
-              <option value="archived">Archived</option>
-            </select>
-            <input
-              type="date"
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            />
-          </div>
-
-          {/* Quick Filter Chips */}
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5 mt-4">
-            {['all', 'deliverables', 'internal', 'meetings', 'recent', 'shared'].map(filter => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeFilter === filter
-                  ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                  : 'bg-white/5 text-gray-400 border border-white/10 hover:border-white/30 hover:text-white'
-                  }`}
+            {/* Status Filter */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Status</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value as FileStatus)}
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
               >
-                {filter}
-              </button>
-            ))}
+                <option value="">All Statuses</option>
+                <option value="draft">Draft</option>
+                <option value="in_review">In Review</option>
+                <option value="awaiting_client">Awaiting Client</option>
+                <option value="approved">Approved</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+
+            {/* Client Filter */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client</label>
+              <select
+                value={selectedClient}
+                onChange={(e) => setSelectedClient(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+              >
+                <option value="">All Clients</option>
+                {linkedClients.map(client => (
+                  <option key={client.id} value={client.id}>{client.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project Filter */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Project</label>
+              <select
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent transition-all"
+              >
+                <option value="">All Projects</option>
+                {linkedProjects.map(project => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
