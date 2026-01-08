@@ -101,9 +101,9 @@ body {
 }
 
 .btn-primary {
-  background: #3aa3eb;
+  background: rgba(58, 163, 235, 0.15);
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(58, 163, 235, 0.6);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   color: #ffffff;
@@ -113,10 +113,13 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .btn-primary:hover {
-  background: #4ab3fb;
+  background: rgba(58, 163, 235, 0.25);
+  border-color: rgba(58, 163, 235, 0.8);
   transform: translateY(-1px);
   box-shadow: 0 0 20px rgba(58, 163, 235, 0.4), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }

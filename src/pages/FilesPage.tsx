@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
 import { fileStatusColors } from '../lib/statusColors';
+import { useAuth } from '../contexts/AuthContext';
 
 function getFileType(file: FileRecord) {
   if (file.content_type && file.content_type.includes('/')) {
@@ -16,6 +17,7 @@ function getFileType(file: FileRecord) {
 
 export default function FilesPage() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -138,7 +140,9 @@ export default function FilesPage() {
               FILES
             </h1>
             <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Deliverables, assets, and working files
+              {profile?.role === 'admin'
+                ? 'Store and manage deliverables, assets, and working files.'
+                : 'Access finalized files, assets, and project outputs.'}
             </p>
           </div>
           <button
@@ -245,10 +249,9 @@ export default function FilesPage() {
       {/* File List Table */}
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-white/5 border-b border-white/10">
-          <div className="col-span-3">File Name</div>
+          <div className="col-span-4">File Name</div>
           <div className="col-span-1">Type</div>
-          <div className="col-span-2">Linked To</div>
-          <div className="col-span-2">Owner</div>
+          <div className="col-span-3">Linked To</div>
           <div className="col-span-2">Last Updated</div>
           <div className="col-span-1 text-left">Status</div>
           <div className="col-span-1">Actions</div>
@@ -265,7 +268,7 @@ export default function FilesPage() {
                 className="flex flex-col gap-3 px-4 py-4 text-sm text-white/90 hover:bg-white/5 transition sm:grid sm:grid-cols-12 sm:gap-0 sm:items-center cursor-pointer"
                 onClick={() => handleFileClick(file)}
               >
-                <div className="flex items-center gap-3 min-w-0 sm:col-span-3">
+                <div className="flex items-center gap-3 min-w-0 sm:col-span-4">
                   <span className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
                     📄
                   </span>
@@ -277,11 +280,9 @@ export default function FilesPage() {
 
                 <div className="sm:col-span-1 text-xs text-gray-300">{getFileType(file)}</div>
 
-                <div className="sm:col-span-2 text-xs text-gray-300">
+                <div className="sm:col-span-3 text-xs text-gray-300">
                   {file.client?.name || file.project?.name || file.meeting?.title || '—'}
                 </div>
-
-                <div className="sm:col-span-2 text-xs text-gray-300">{file.owner_id}</div>
 
                 <div className="sm:col-span-2 text-xs text-gray-300">{formatAppDate(file.updated_at)}</div>
 
@@ -314,8 +315,18 @@ export default function FilesPage() {
                 </div>
 
                 <div className="sm:col-span-1 flex gap-2">
-                  <button className="text-blue-300 hover:text-blue-200">⬇️</button>
-                  <button className="text-green-300 hover:text-green-200">📤</button>
+                  <button
+                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                    title="Download"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
+                    title="Share"
+                  >
+                    <PaperAirplaneIcon className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))

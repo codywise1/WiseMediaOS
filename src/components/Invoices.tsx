@@ -284,7 +284,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Invoices</h1>
-            <p className="text-gray-300">Manage payments and track outstanding balances</p>
+            <p className="text-gray-300">
+              {currentUser?.role === 'admin'
+                ? 'Track billing, payments, and outstanding balances.'
+                : 'View invoices, payment status, and billing history.'}
+            </p>
           </div>
           {isAdmin && (
             <button
@@ -550,24 +554,33 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-6 py-6">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-300">
-                          {invoice.status === 'paid' ? (
-                            `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at || '')}`
-                          ) : invoice.status === 'overdue' ? (
-                            (() => {
-                              const diff = Math.floor((new Date().getTime() - new Date(invoice.dueDate || '').getTime()) / (1000 * 3600 * 24));
-                              return `${diff > 0 ? diff : 1} ${diff === 1 ? 'Day' : 'Days'} Overdue`;
-                            })()
-                          ) : (
-                            (() => {
-                              const diff = Math.floor((new Date(invoice.dueDate || '').getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-                              return `Due in ${diff > 0 ? diff : 0} ${diff === 1 ? 'Day' : 'Days'}`;
-                            })()
-                          )}
-                        </span>
-                      </div>
+                    <td className="px-6 py-6 transition-all">
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+                        style={{
+                          backgroundColor: invoice.status === 'paid' ? 'rgba(34, 197, 94, 0.33)' :
+                            invoice.status === 'overdue' ? 'rgba(239, 68, 68, 0.33)' :
+                              'rgba(59, 163, 234, 0.33)',
+                          borderColor: invoice.status === 'paid' ? 'rgba(34, 197, 94, 1)' :
+                            invoice.status === 'overdue' ? 'rgba(239, 68, 68, 1)' :
+                              'rgba(59, 163, 234, 1)',
+                          color: '#ffffff'
+                        }}
+                      >
+                        {invoice.status === 'paid' ? (
+                          `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at || '')}`
+                        ) : invoice.status === 'overdue' ? (
+                          (() => {
+                            const diff = Math.floor((new Date().getTime() - new Date(invoice.dueDate || '').getTime()) / (1000 * 3600 * 24));
+                            return `${diff > 0 ? diff : 1} ${diff === 1 ? 'Day' : 'Days'} Overdue`;
+                          })()
+                        ) : (
+                          (() => {
+                            const diff = Math.floor((new Date(invoice.dueDate || '').getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+                            return `Due in ${diff > 0 ? diff : 0} ${diff === 1 ? 'Day' : 'Days'}`;
+                          })()
+                        )}
+                      </span>
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">

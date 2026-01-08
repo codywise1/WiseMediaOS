@@ -212,7 +212,7 @@ export default function InvoicesPage() {
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Amount</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>\$</span>
-                      <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }} placeholder="0.00" />
+                      <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }} placeholder="0.00" />
                     </div>
                   </div>
                   <div>
@@ -221,17 +221,16 @@ export default function InvoicesPage() {
                       selected={formData.due_date ? new Date(formData.due_date) : null}
                       onChange={(date: Date | null) => {
                         const iso = date ? formatToISODate(date) : '';
-                        setFormData({...formData, due_date: iso});
+                        setFormData({ ...formData, due_date: iso });
                       }}
                       dateFormat="MMM. dd, yyyy"
                       placeholderText="Dec. 10, 2025"
-                      className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
-                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                      className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none font-['Montserrat'] text-base"
                     />
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Status</label>
-                    <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
                       <option value="pending">Pending</option>
                       <option value="paid">Paid</option>
                       <option value="overdue">Overdue</option>

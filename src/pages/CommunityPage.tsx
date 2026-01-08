@@ -592,370 +592,374 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col lg:flex-row gap-6 chat-no-hover">
-      <div className="lg:w-80 flex-shrink-0">
-        <GlassCard disableHover className="h-full flex flex-col">
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setView('channels')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'channels'
-                ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                }`}
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
-            >
-              <Hash className="inline mr-2" size={16} />
-              Channels
-            </button>
-            <button
-              onClick={() => setView('private')}
-              className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'private'
-                ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                }`}
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
-            >
-              <MessageSquare className="inline mr-2" size={16} />
-              Direct
-            </button>
-          </div>
+    <div className="h-full overflow-hidden flex flex-col gap-6 chat-no-hover">
 
-          <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
-            {view === 'channels' ? (
-              channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => setSelectedChannel(channel)}
-                  className={`w-full text-left p-3 rounded-lg transition-all ${selectedChannel?.id === channel.id
-                    ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
-                    : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                    }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
-                    <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
-                      {channel.name}
-                    </span>
-                  </div>
-                  {channel.description && (
-                    <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {channel.description}
-                    </p>
-                  )}
-                </button>
-              ))
-            ) : (
-              <div className="space-y-1">
-                {/* Direct Messages Section */}
-                <div>
+      {/* Chat Content */}
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-6">
+        <div className="lg:w-80 flex-shrink-0">
+          <GlassCard disableHover className="h-full flex flex-col">
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setView('channels')}
+                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'channels'
+                  ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                  }`}
+                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+              >
+                <Hash className="inline mr-2" size={16} />
+                Channels
+              </button>
+              <button
+                onClick={() => setView('private')}
+                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'private'
+                  ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                  }`}
+                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+              >
+                <MessageSquare className="inline mr-2" size={16} />
+                Direct
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+              {view === 'channels' ? (
+                channels.map((channel) => (
                   <button
-                    onClick={() => setShowDirectMessages(!showDirectMessages)}
-                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
+                    key={channel.id}
+                    onClick={() => setSelectedChannel(channel)}
+                    className={`w-full text-left p-3 rounded-lg transition-all ${selectedChannel?.id === channel.id
+                      ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                      : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                      }`}
                   >
-                    <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Direct Messages
-                    </span>
-                    {showDirectMessages ? (
-                      <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
-                    ) : (
-                      <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                    <div className="flex items-center gap-2 mb-1">
+                      <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
+                      <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                        {channel.name}
+                      </span>
+                    </div>
+                    {channel.description && (
+                      <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {channel.description}
+                      </p>
                     )}
                   </button>
-                  {showDirectMessages && (
-                    <div className="mt-1 space-y-1">
-                      {privateConversations.length > 0 ? (
-                        privateConversations.map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => setSelectedUser(user)}
-                            className={`w-full text-left p-3 rounded-lg transition-all ${selectedUser?.id === user.id
-                              ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
-                              : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                              }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              {user.avatar_url ? (
-                                <img
-                                  src={user.avatar_url}
-                                  alt={getConversationName(user)}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                  {getInitials(getConversationName(user))}
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {getConversationName(user)}
-                                  </span>
-                                  <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {user.role.toUpperCase()}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center">
-                          <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            No conversations yet
-                          </p>
-                          {canViewClients && (
-                            <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                              Start a chat from Clients below
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Clients Section */}
-                {canViewClients && (
-                  <div className="mt-3">
+                ))
+              ) : (
+                <div className="space-y-1">
+                  {/* Direct Messages Section */}
+                  <div>
                     <button
-                      onClick={() => setShowClients(!showClients)}
+                      onClick={() => setShowDirectMessages(!showDirectMessages)}
                       className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
                     >
                       <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        Clients ({clients.length})
+                        Direct Messages
                       </span>
-                      {showClients ? (
+                      {showDirectMessages ? (
                         <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
                       ) : (
                         <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
                       )}
                     </button>
-                    {showClients && (
+                    {showDirectMessages && (
                       <div className="mt-1 space-y-1">
-                        {clients.map((client) => {
-                          // Check if this client is currently selected
-                          const isSelected = selectedUser?.id === client.id ||
-                            (selectedUser && privateConversations.find(u => u.id === selectedUser.id && u.full_name === client.name));
-
-                          return (
+                        {privateConversations.length > 0 ? (
+                          privateConversations.map((user) => (
                             <button
-                              key={client.id}
-                              onClick={() => {
-                                // Find or create a conversation entry for this client
-                                const existingConvo = privateConversations.find(u => u.full_name === client.name || u.id === client.id);
-                                if (existingConvo) {
-                                  setSelectedUser(existingConvo);
-                                } else {
-                                  // Create temporary user object for client (don't add to conversations yet)
-                                  // They'll be added when the first message is sent
-                                  const clientUser: PrivateConversation = {
-                                    id: client.id,
-                                    full_name: client.name,
-                                    avatar_url: null,
-                                    role: 'user',
-                                    unreadCount: 0
-                                  };
-
-                                  setSelectedUser(clientUser);
-                                }
-                              }}
-                              className={`w-full text-left p-3 rounded-lg transition-all ${isSelected
+                              key={user.id}
+                              onClick={() => setSelectedUser(user)}
+                              className={`w-full text-left p-3 rounded-lg transition-all ${selectedUser?.id === user.id
                                 ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
                                 : 'bg-white/5 hover:bg-white/10 border border-transparent'
                                 }`}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-gray-300 font-bold text-sm">
-                                  {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                      {client.name}
-                                    </span>
-                                    {client.status === 'active' && (
-                                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    )}
+                                {user.avatar_url ? (
+                                  <img
+                                    src={user.avatar_url}
+                                    alt={getConversationName(user)}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                    {getInitials(getConversationName(user))}
                                   </div>
-                                  <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                    {client.company || client.email}
-                                  </p>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                      {getConversationName(user)}
+                                    </span>
+                                    <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                      {user.role.toUpperCase()}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </button>
-                          );
-                        })}
+                          ))
+                        ) : (
+                          <div className="p-4 text-center">
+                            <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              No conversations yet
+                            </p>
+                            {canViewClients && (
+                              <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                Start a chat from Clients below
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </GlassCard>
-      </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
-        <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden">
-          <div className="pb-4 border-b border-white/10">
-            {view === 'channels' && selectedChannel ? (
-              <div>
-                <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                  <Hash size={24} className="text-[#59a1e5]" />
-                  {selectedChannel.name}
-                </h2>
-                {selectedChannel.description && (
-                  <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {selectedChannel.description}
-                  </p>
-                )}
-              </div>
-            ) : view === 'private' && selectedUser ? (
-              <div className="flex items-center gap-3">
-                {selectedUser.avatar_url ? (
-                  <img
-                    src={selectedUser.avatar_url}
-                    alt={getConversationName(selectedUser)}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {getInitials(getConversationName(selectedUser))}
-                  </div>
-                )}
-                <div>
-                  <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                    {getConversationName(selectedUser)}
-                  </h2>
-                  <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {selectedUser.role.toUpperCase()}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                Select a {view === 'channels' ? 'channel' : 'conversation'}
-              </h2>
-            )}
-          </div>
+                  {/* Clients Section */}
+                  {canViewClients && (
+                    <div className="mt-3">
+                      <button
+                        onClick={() => setShowClients(!showClients)}
+                        className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
+                      >
+                        <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          Clients ({clients.length})
+                        </span>
+                        {showClients ? (
+                          <ChevronDown size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                        ) : (
+                          <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+                        )}
+                      </button>
+                      {showClients && (
+                        <div className="mt-1 space-y-1">
+                          {clients.map((client) => {
+                            // Check if this client is currently selected
+                            const isSelected = selectedUser?.id === client.id ||
+                              (selectedUser && privateConversations.find(u => u.id === selectedUser.id && u.full_name === client.name));
 
-          <div className="flex-1 overflow-y-auto py-4 space-y-4">
-            {view === 'channels' && selectedChannel && messages.length === 0 && (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  No messages yet. Be the first to say hi.
-                </p>
-              </div>
-            )}
-            {view === 'channels' && messages.map((msg) => (
-              <div key={msg.id} className="flex gap-3">
-                {msg.profiles?.avatar_url ? (
-                  <img
-                    src={msg.profiles?.avatar_url}
-                    alt={msg.profiles?.full_name}
-                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {getInitials(msg.profiles?.full_name || 'User')}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-white font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {msg.profiles?.full_name || 'User'}
-                    </span>
-                    <span className={`text-xs font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {msg.profiles?.role?.toUpperCase() || 'FREE'}
-                    </span>
-                    <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {formatAppDateTime(msg.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                    {msg.message}
-                  </p>
-                </div>
-              </div>
-            ))}
+                            return (
+                              <button
+                                key={client.id}
+                                onClick={() => {
+                                  // Find or create a conversation entry for this client
+                                  const existingConvo = privateConversations.find(u => u.full_name === client.name || u.id === client.id);
+                                  if (existingConvo) {
+                                    setSelectedUser(existingConvo);
+                                  } else {
+                                    // Create temporary user object for client (don't add to conversations yet)
+                                    // They'll be added when the first message is sent
+                                    const clientUser: PrivateConversation = {
+                                      id: client.id,
+                                      full_name: client.name,
+                                      avatar_url: null,
+                                      role: 'user',
+                                      unreadCount: 0
+                                    };
 
-            {view === 'private' && selectedUser && privateMessages.length === 0 && (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  No messages yet. Send the first message.
-                </p>
-              </div>
-            )}
-            {view === 'private' && privateMessages.map((msg) => {
-              const isMyMessage = msg.sender_id === profile?.id;
-
-              return (
-                <div key={msg.id} className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}>
-                  {!isMyMessage && selectedUser && (
-                    selectedUser.avatar_url ? (
-                      <img
-                        src={selectedUser.avatar_url}
-                        alt={getConversationName(selectedUser)}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {getInitials(getConversationName(selectedUser))}
-                      </div>
-                    )
-                  )}
-                  <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
-                    <div className={`p-3 rounded-lg ${isMyMessage
-                      ? 'bg-[#59a1e5] text-white shadow-lg'
-                      : 'bg-white/10 text-gray-300'
-                      }`}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                        {msg.message}
-                      </p>
+                                    setSelectedUser(clientUser);
+                                  }
+                                }}
+                                className={`w-full text-left p-3 rounded-lg transition-all ${isSelected
+                                  ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                                  : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-gray-300 font-bold text-sm">
+                                    {client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                      <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                        {client.name}
+                                      </span>
+                                      {client.status === 'active' && (
+                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                      )}
+                                    </div>
+                                    <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                      {client.company || client.email}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {formatAppDateTime(msg.created_at)}
-                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        </div>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden">
+            <div className="pb-4 border-b border-white/10">
+              {view === 'channels' && selectedChannel ? (
+                <div>
+                  <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                    <Hash size={24} className="text-[#59a1e5]" />
+                    {selectedChannel.name}
+                  </h2>
+                  {selectedChannel.description && (
+                    <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {selectedChannel.description}
+                    </p>
+                  )}
+                </div>
+              ) : view === 'private' && selectedUser ? (
+                <div className="flex items-center gap-3">
+                  {selectedUser.avatar_url ? (
+                    <img
+                      src={selectedUser.avatar_url}
+                      alt={getConversationName(selectedUser)}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                      {getInitials(getConversationName(selectedUser))}
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                      {getConversationName(selectedUser)}
+                    </h2>
+                    <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {selectedUser.role.toUpperCase()}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {((view === 'channels' && selectedChannel) || (view === 'private' && selectedUser)) && (
-            <div className="pt-4 border-t border-white/10">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  sendMessage();
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
-                  className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
-                  disabled={sending}
-                />
-                <button
-                  type="submit"
-                  disabled={sending || !newMessage.trim()}
-                  className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}
-                >
-                  <Send size={20} />
-                  Send
-                </button>
-              </form>
+              ) : (
+                <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                  Select a {view === 'channels' ? 'channel' : 'conversation'}
+                </h2>
+              )}
             </div>
-          )}
-        </GlassCard>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-4">
+              {view === 'channels' && selectedChannel && messages.length === 0 && (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    No messages yet. Be the first to say hi.
+                  </p>
+                </div>
+              )}
+              {view === 'channels' && messages.map((msg) => (
+                <div key={msg.id} className="flex gap-3">
+                  {msg.profiles?.avatar_url ? (
+                    <img
+                      src={msg.profiles?.avatar_url}
+                      alt={msg.profiles?.full_name}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {getInitials(msg.profiles?.full_name || 'User')}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-white font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {msg.profiles?.full_name || 'User'}
+                      </span>
+                      <span className={`text-xs font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {msg.profiles?.role?.toUpperCase() || 'FREE'}
+                      </span>
+                      <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {formatAppDateTime(msg.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                      {msg.message}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {view === 'private' && selectedUser && privateMessages.length === 0 && (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    No messages yet. Send the first message.
+                  </p>
+                </div>
+              )}
+              {view === 'private' && privateMessages.map((msg) => {
+                const isMyMessage = msg.sender_id === profile?.id;
+
+                return (
+                  <div key={msg.id} className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}>
+                    {!isMyMessage && selectedUser && (
+                      selectedUser.avatar_url ? (
+                        <img
+                          src={selectedUser.avatar_url}
+                          alt={getConversationName(selectedUser)}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {getInitials(getConversationName(selectedUser))}
+                        </div>
+                      )
+                    )}
+                    <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
+                      <div className={`p-3 rounded-lg ${isMyMessage
+                        ? 'bg-[#59a1e5] text-white shadow-lg'
+                        : 'bg-white/10 text-gray-300'
+                        }`}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                          {msg.message}
+                        </p>
+                      </div>
+                      <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {formatAppDateTime(msg.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {((view === 'channels' && selectedChannel) || (view === 'private' && selectedUser)) && (
+              <div className="pt-4 border-t border-white/10">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    sendMessage();
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
+                    className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
+                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    disabled={sending}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !newMessage.trim()}
+                    className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    <Send size={20} />
+                    Send
+                  </button>
+                </form>
+              </div>
+            )}
+          </GlassCard>
+        </div>
       </div>
     </div>
-  );
+  )
 }

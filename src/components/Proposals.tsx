@@ -218,7 +218,11 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>Proposals</h1>
-            <p className="text-gray-400 text-lg font-medium">Create, track, and manage project proposals</p>
+            <p className="text-gray-400 text-lg font-medium">
+              {currentUser?.role === 'admin'
+                ? 'Create, send, and manage structured project proposals.'
+                : 'View project proposals, scopes, and approvals.'}
+            </p>
           </div>
           {isAgency && (
             <button
@@ -367,9 +371,9 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                         <span
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
                           style={{
-                            backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.15)' : isExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 163, 234, 0.15)',
-                            borderColor: isApproved ? 'rgba(34, 197, 94, 0.5)' : isExpired ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 163, 234, 0.5)',
-                            color: isApproved ? '#4ade80' : isExpired ? '#f87171' : '#60a5fa'
+                            backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.33)' : isExpired ? 'rgba(239, 68, 68, 0.33)' : 'rgba(59, 163, 234, 0.33)',
+                            borderColor: isApproved ? 'rgba(34, 197, 94, 1)' : isExpired ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 163, 234, 1)',
+                            color: '#ffffff'
                           }}
                         >
                           {timelineStatus}

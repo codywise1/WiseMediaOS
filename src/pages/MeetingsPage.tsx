@@ -167,7 +167,9 @@ export default function MeetingsPage() {
                             MEETINGS
                         </h1>
                         <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            Manage calls, recordings, and transcripts
+                            {currentUser?.role === 'admin'
+                                ? 'Calls, recordings, transcripts, and follow-ups in one place.'
+                                : 'Review call recordings, summaries, and agreed outcomes.'}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">

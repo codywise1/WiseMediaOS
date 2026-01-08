@@ -4,6 +4,7 @@ import {
   projectService,
   invoiceService,
   meetingService,
+  appointmentService,
   clientService,
   UserRole
 } from '../lib/supabase';
@@ -346,6 +347,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           status: dashboardData.pendingInvoices > 0 ? `$${dashboardData.pendingInvoices.toLocaleString()} Pending` : 'No Invoices'
         };
       case 'Appointments':
+      case 'Meetings':
         return {
           ...action,
           count: dashboardData.appointments,
@@ -507,7 +509,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}!</span>
             </h1>
-            <p className="text-gray-300">Here's what's happening with your projects today.</p>
+            <p className="text-gray-300">Your command center for projects, clients, and activity.</p>
           </div>
           {currentUser?.role === 'admin' && (
             <button

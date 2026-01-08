@@ -10,6 +10,9 @@ export default function CoursesPage() {
       <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Courses
       </h1>
+      <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+        Courses, playbooks, and internal knowledge.
+      </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, MessageCircle, Plus, X } from 'lucide-react';
+import { Heart, MessageCircle, Plus, PlusIcon, X } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
@@ -327,9 +327,9 @@ export default function CommunityFeedPage() {
   const composerCanSelectPro = isPro;
   const visibilityOptions: { value: Visibility; label: string }[] = composerCanSelectPro
     ? [
-        { value: 'all', label: 'All Creators' },
-        { value: 'pro', label: 'Pro Creators only' },
-      ]
+      { value: 'all', label: 'All Creators' },
+      { value: 'pro', label: 'Pro Creators only' },
+    ]
     : [{ value: 'all', label: 'All Creators' }];
 
   const addAttachment = () => {
@@ -357,38 +357,35 @@ export default function CommunityFeedPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Creator Club
-          </h1>
-          <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            Announcements, wins, questions, and creator-to-creator support.
-          </p>
-        </div>
+      {/* Header Section */}
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div className="min-w-0">
+            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Creator Club
+            </h1>
+            <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Announcements, wins, questions, and creator-to-creator support.
+            </p>
+          </div>
 
-        <div className="flex items-center gap-3">
           <button
             onClick={() => setComposerOpen(true)}
-            className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-colors font-medium shadow-lg flex items-center gap-2"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
           >
-            <Plus size={18} />
-            New Post
+            <PlusIcon className="h-5 w-5" />
+            <span>New Post</span>
           </button>
-        </div>
-      </div>
 
-      <GlassCard className="p-4">
+        </div>
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedTag('All')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${
-                selectedTag === 'All'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-              }`}
+              className={`px-3 py-2 rounded-lg text-sm transition-all border ${selectedTag === 'All'
+                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               All
@@ -397,11 +394,10 @@ export default function CommunityFeedPage() {
               <button
                 key={tag}
                 onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-2 rounded-lg text-sm transition-all border ${
-                  selectedTag === tag
-                    ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
+                className={`px-3 py-2 rounded-lg text-sm transition-all border ${selectedTag === tag
+                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                  }`}
                 style={{ fontFamily: 'Montserrat, sans-serif' }}
               >
                 {tag}
@@ -412,22 +408,20 @@ export default function CommunityFeedPage() {
           <div className="lg:ml-auto flex items-center gap-2">
             <button
               onClick={() => setVisibilityFilter('all')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${
-                visibilityFilter === 'all'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-              }`}
+              className={`px-3 py-2 rounded-lg text-sm transition-all border ${visibilityFilter === 'all'
+                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               All Posts
             </button>
             <button
               onClick={() => setVisibilityFilter('pro_only')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${
-                visibilityFilter === 'pro_only'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-              }`}
+              className={`px-3 py-2 rounded-lg text-sm transition-all border ${visibilityFilter === 'pro_only'
+                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif' }}
               disabled={!isPro}
             >
@@ -435,7 +429,7 @@ export default function CommunityFeedPage() {
             </button>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {loading ? (
         <div className="glass-card p-6 rounded-2xl border border-white/10">
@@ -549,11 +543,10 @@ export default function CommunityFeedPage() {
                     <button
                       onClick={() => toggleLike(post.id)}
                       disabled={!profile?.id || togglingLike[post.id]}
-                      className={`px-3 py-2 rounded-lg transition-all border flex items-center gap-2 ${
-                        liked
-                          ? 'bg-red-500/15 border-red-500/30 text-red-200'
-                          : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                      }`}
+                      className={`px-3 py-2 rounded-lg transition-all border flex items-center gap-2 ${liked
+                        ? 'bg-red-500/15 border-red-500/30 text-red-200'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                        }`}
                       style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                       <Heart size={18} className={liked ? 'fill-red-400 text-red-400' : ''} />
@@ -678,11 +671,10 @@ export default function CommunityFeedPage() {
                         prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
                       );
                     }}
-                    className={`px-3 py-2 rounded-lg text-sm transition-all border ${
-                      active
-                        ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                        : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm transition-all border ${active
+                      ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                      }`}
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   >
                     {tag}

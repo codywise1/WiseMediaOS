@@ -49,7 +49,7 @@ export default function CreatorDashboard() {
   }, [profile]);
 
   async function fetchStats() {
-    if (!profile?.id) return;
+    if (!profile?.id || !supabase) return;
 
     const [enrollmentsRes, coursesRes, marketplaceRes, referralsRes] = await Promise.all([
       supabase

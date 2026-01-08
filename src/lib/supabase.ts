@@ -468,6 +468,20 @@ export type FileStatus = 'draft' | 'in_review' | 'awaiting_client' | 'approved' 
 
 export type FileVisibility = 'private' | 'shared';
 
+export interface DocumentRecord {
+  id: string;
+  bucket_id: string;
+  path: string;
+  filename: string;
+  content_type?: string | null;
+  size_bytes?: number | null;
+  owner_team?: string | null;
+  status?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FileRecord {
   id: string;
   bucket_id: string;

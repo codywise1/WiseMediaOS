@@ -28,8 +28,11 @@ export default function ProposalsPage() {
   }, [profile]);
 
   async function fetchProposals() {
-    if (!profile) return;
-    
+    if (!profile || !supabase) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('proposals')
@@ -47,7 +50,7 @@ export default function ProposalsPage() {
   }
 
   async function handleSave() {
-    if (!profile || !formData.title.trim()) return;
+    if (!profile || !supabase || !formData.title.trim()) return;
 
     setSaving(true);
     try {
@@ -140,11 +143,11 @@ export default function ProposalsPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Title</label>
-                    <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" placeholder="Enter proposal title" />
+                    <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" placeholder="Enter proposal title" />
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Content</label>
-                    <textarea value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none h-32" placeholder="Enter proposal details" />
+                    <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none h-32" placeholder="Enter proposal details" />
                   </div>
                   <div className="flex gap-3 pt-4">
                     <button onClick={handleSave} disabled={saving || !formData.title.trim()} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white rounded-lg transition-colors font-medium">

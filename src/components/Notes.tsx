@@ -187,7 +187,11 @@ export default function Notes({ currentUser }: NotesProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>NOTES</h1>
-            <p className="text-gray-300">Intelligence Layer of Wise Media Agency Wide</p>
+            <p className="text-gray-300">
+              {currentUser?.role === 'admin'
+                ? 'The intelligence layer for ideas, decisions, SOPs, and insights.'
+                : 'Shared notes, summaries, and action items from your projects.'}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
             <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1 shrink-0">

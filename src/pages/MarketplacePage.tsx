@@ -80,7 +80,7 @@ export default function MarketplacePage() {
           Marketplace
         </h1>
         <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-          Discover premium tools, templates, and resources for creators
+          Premium tools, templates, and resources.
         </p>
       </div>
 
@@ -89,11 +89,10 @@ export default function MarketplacePage() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-lg transition-all font-medium ${
-              selectedCategory === cat.id
-                ? 'bg-[#3AA3EB] text-white shadow-lg shadow-[#3AA3EB]/20'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg transition-all font-medium ${selectedCategory === cat.id
+              ? 'bg-[#3AA3EB] text-white shadow-lg shadow-[#3AA3EB]/20'
+              : 'bg-white/5 text-gray-300 hover:bg-white/10'
+              }`}
             style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
           >
             {cat.label}

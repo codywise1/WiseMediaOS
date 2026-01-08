@@ -447,7 +447,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
   };
 
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="h-full flex flex-col space-y-0">
       <ScrollbarStyles />
 
       {/* Header & Filters Section */}
@@ -457,7 +457,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div className="min-w-0">
               <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Projects</h1>
-              <p className="text-gray-400 text-sm sm:text-base">Manage and track all your active projects</p>
+              <p className="text-gray-400 text-sm sm:text-base">
+                {currentUser?.role === 'admin'
+                  ? 'Track progress, timelines, and deliverables across all work.'
+                  : 'View active work, progress, and milestones.'}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -608,7 +612,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
 
       {/* Kanban Board - Scrollable Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-x-visible pb-4 custom-scrollbar">
+        <div className="h-full flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-x-visible pb-4 pt-8 custom-scrollbar">
           {kanbanColumns.map((column) => (
             <div
               key={column.id}
