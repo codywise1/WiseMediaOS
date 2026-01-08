@@ -212,10 +212,10 @@ export default function Notes({ currentUser }: NotesProps) {
             </div>
             <button
               onClick={handleCreateNote}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
+              className="btn-header-glass space-x-2 shrink-0"
             >
               <PlusIcon className="h-5 w-5" />
-              <span>New Note</span>
+              <span className="btn-text-glow">New Note</span>
             </button>
           </div>
         </div>

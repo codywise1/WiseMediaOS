@@ -147,10 +147,10 @@ export default function FilesPage() {
           </div>
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
+            className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
           >
             <PlusIcon className="h-5 w-5" />
-            <span>Upload File</span>
+            <span className="btn-text-glow">Upload File</span>
           </button>
         </div>
 

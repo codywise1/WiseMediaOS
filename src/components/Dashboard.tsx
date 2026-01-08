@@ -514,9 +514,9 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           {currentUser?.role === 'admin' && (
             <button
               onClick={() => navigate('/projects')}
-              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 shrink-glow-button shrink-0 w-full sm:w-auto"
+              className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
             >
-              Start New Project
+              <span className="btn-text-glow">Start New Project</span>
               <ArrowRightIcon className="h-4 w-4 ml-1" />
             </button>
           )}

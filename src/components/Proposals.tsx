@@ -227,10 +227,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           {isAgency && (
             <button
               onClick={handleNewProposal}
-              className="btn-primary text-white font-medium flex items-center space-x-2 shrink-glow-button shrink-0"
+              className="btn-header-glass space-x-2 shrink-0"
             >
               <PlusIcon className="h-5 w-5" />
-              <span>New Proposal</span>
+              <span className="btn-text-glow">New Proposal</span>
             </button>
           )}
         </div>

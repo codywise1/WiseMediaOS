@@ -386,10 +386,10 @@ export default function Appointments({ currentUser }: AppointmentsProps) {
           {isAdmin && (
             <button
               onClick={handleNewAppointment}
-              className="btn-primary text-white font-medium flex items-center justify-center space-x-2 glass-button shrink-glow-button shrink-0 w-full sm:w-auto"
+              className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
             >
               <PlusIcon className="h-5 w-5" />
-              Book Meeting
+              <span className="btn-text-glow">Book Meeting</span>
             </button>
           )}
         </div>
