@@ -249,17 +249,36 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                             />
 
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="px-3 py-1 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] border border-[#3aa3eb]/20 text-[10px] font-black">
+                                <span
+                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                    style={{
+                                        backgroundColor: 'rgba(59, 163, 234, 0.33)',
+                                        border: '1px solid rgba(59, 163, 234, 1)'
+                                    }}
+                                >
                                     {note.category}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full border text-[10px] font-black ${note.visibility === 'client_visible'
-                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                    : 'bg-white/5 text-gray-400 border-white/10'
-                                    }`}>
+                                <span
+                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                    style={note.visibility === 'client_visible' ? {
+                                        backgroundColor: 'rgba(34, 197, 94, 0.33)',
+                                        border: '1px solid #22c55e'
+                                    } : {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)'
+                                    }}
+                                >
                                     {note.visibility === 'client_visible' ? 'Client visible' : 'Internal'}
                                 </span>
                                 {note.tags?.map(tag => (
-                                    <span key={tag} className="px-3 py-1 rounded-full bg-white/5 text-gray-500 border border-white/5 text-[10px] font-bold">
+                                    <span
+                                        key={tag}
+                                        className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                        style={{
+                                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                            border: '1px solid rgba(255, 255, 255, 0.15)'
+                                        }}
+                                    >
                                         {tag}
                                     </span>
                                 ))}
