@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { ShoppingBag, Star, Package, Zap, Users, Shield, FileText } from 'lucide-react';
+import { Star, Package, Zap, Users, Shield, FileText } from 'lucide-react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { supabase } from '../lib/supabase';
 
@@ -30,14 +30,93 @@ export default function MarketplacePage() {
 
   async function fetchProducts() {
     try {
-      const { data, error } = await supabase
+      const dbProducts = supabase ? (await supabase
         .from('marketplace_products')
         .select('id, title, price, old_price, category, rating, reviews_count, cover_image_url, is_featured, discount_enabled, platform')
         .order('is_featured', { ascending: false })
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })).data || [] : [];
+      const mockProducts: Product[] = [
+        {
+          id: 'mock-1',
+          title: 'Premium Agency Notion OS',
+          price: 49.99,
+          old_price: 99.99,
+          category: 'templates',
+          rating: 5.0,
+          reviews_count: 128,
+          cover_image_url: '/src/media/marketplace_notion.png',
+          is_featured: true,
+          discount_enabled: true,
+          platform: 'Notion'
+        },
+        {
+          id: 'mock-2',
+          title: 'Creator Contract Bundle',
+          price: 149.00,
+          old_price: 299.00,
+          category: 'docs',
+          rating: 4.9,
+          reviews_count: 85,
+          cover_image_url: '/src/media/marketplace_legal.png',
+          is_featured: true,
+          discount_enabled: true,
+          platform: 'PDF/Word'
+        },
+        {
+          id: 'mock-3',
+          title: 'Vibrant Social Assets',
+          price: 29.00,
+          old_price: null,
+          category: 'graphics',
+          rating: 4.8,
+          reviews_count: 56,
+          cover_image_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=800',
+          is_featured: false,
+          discount_enabled: false,
+          platform: 'Canva/Figma'
+        },
+        {
+          id: 'mock-4',
+          title: 'Scaling Playbook 2024',
+          price: 79.00,
+          old_price: 120.00,
+          category: 'courses',
+          rating: 5.0,
+          reviews_count: 210,
+          cover_image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800',
+          is_featured: false,
+          discount_enabled: true,
+          platform: 'Digital Access'
+        },
+        {
+          id: 'mock-5',
+          title: 'Client CRM Toolkit',
+          price: 39.00,
+          old_price: null,
+          category: 'toolkits',
+          rating: 4.7,
+          reviews_count: 42,
+          cover_image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800',
+          is_featured: false,
+          discount_enabled: false,
+          platform: 'Airtable'
+        },
+        {
+          id: 'mock-6',
+          title: 'Pitch Deck Master Template',
+          price: 59.00,
+          old_price: 89.00,
+          category: 'templates',
+          rating: 4.9,
+          reviews_count: 73,
+          cover_image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800',
+          is_featured: false,
+          discount_enabled: true,
+          platform: 'PowerPoint/Keynote'
+        }
+      ];
 
-      if (error) throw error;
-      setProducts(data || []);
+      setProducts([...mockProducts, ...dbProducts]);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
