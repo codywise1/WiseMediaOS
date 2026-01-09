@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { clientService, Client } from '../lib/supabase';
 import { proposalService, ProposalItem } from '../lib/proposalService';
-import { serviceTemplates, ServiceTemplate } from '../config/serviceTemplates';
+import { serviceTemplates } from '../config/serviceTemplates';
 import { useToast } from '../contexts/ToastContext';
+import { termsAndConditionsTemplate } from '../config/termsTemplate';
+import { generateTermsAndConditionsPDF } from '../utils/proposalPdfGenerator';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+
 
 interface ProposalBuilderModalProps {
   isOpen: boolean;
@@ -685,32 +689,72 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
             {/* Step 5: Agreement */}
             {currentStep === 5 && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-4">Legal Agreement</h3>
-                  <p className="text-gray-400 mb-6">
-                    Master agreement and service-specific clauses will be automatically assembled and locked when sent.
-                  </p>
-
-                  <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-                    <h4 className="text-sm font-bold text-[#3aa3eb] mb-3">Included Clauses:</h4>
-                    <div className="space-y-2 text-sm text-gray-300">
-                      <p>• Global Clauses (G01-G15): Scope control, deliverables, payment, IP, liability, etc.</p>
-                      {formData.selectedServices.map((service) => {
-                        const template = serviceTemplates.find(t => t.serviceType === service.serviceType);
-                        return (
-                          <p key={service.serviceType}>
-                            • {template?.label} Clauses ({template?.clauseCodes.join(', ')}): Service-specific terms
-                          </p>
-                        );
-                      })}
-                    </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Legal Agreement</h3>
+                    <p className="text-sm text-gray-400">
+                      Review the terms and conditions that will be included in this proposal.
+                    </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      const client = clients.find(c => c.id === formData.client_id);
+                      generateTermsAndConditionsPDF(
+                        formData.title || 'Untitled Proposal',
+                        client?.company || client?.name || 'Client',
+                        termsAndConditionsTemplate
+                      );
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" />
+                    Download T&C Template
+                  </button>
                 </div>
 
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                  <p className="text-sm text-amber-300">
-                    <strong>Important:</strong> Legal terms will be locked and versioned when you send this proposal. No edits will be possible after sending.
-                  </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* T&C Preview */}
+                  <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden flex flex-col h-[400px]">
+                    <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Terms & Conditions Preview</span>
+                      <span className="text-[10px] text-[#3aa3eb] font-bold px-2 py-0.5 bg-[#3aa3eb]/10 rounded">TEMPLATE</span>
+                    </div>
+                    <div className="p-6 overflow-y-auto custom-scrollbar flex-1 prose prose-invert prose-sm max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-300 text-sm font-light leading-relaxed">
+                        {termsAndConditionsTemplate}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clauses Summary */}
+                  <div className="space-y-4">
+                    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+                      <h4 className="text-sm font-bold text-[#3aa3eb] mb-3">Included Clauses:</h4>
+                      <div className="space-y-2 text-sm text-gray-300">
+                        <p>• Global Clauses (G01-G15): Scope control, deliverables, payment, IP, liability, etc.</p>
+                        {formData.selectedServices.map((service) => {
+                          const template = serviceTemplates.find(t => t.serviceType === service.serviceType);
+                          return (
+                            <p key={service.serviceType}>
+                              • {template?.label} Clauses ({template?.clauseCodes.join(', ')}): Service-specific terms
+                            </p>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+                      <p className="text-sm text-amber-300">
+                        <strong>Important:</strong> These terms will be locked and versioned when you send this proposal. The client must accept these terms to approve the proposal.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                      <p className="text-sm text-blue-300">
+                        <strong>Tip:</strong> You can download a PDF copy of these terms for your records or to share with your legal team before sending.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

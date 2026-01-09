@@ -18,12 +18,12 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.text('PROPOSAL', pageWidth / 2, yPosition, { align: 'center' });
-  
+
   yPosition += 15;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Proposal ID: ${proposal.id.substring(0, 8)}`, pageWidth / 2, yPosition, { align: 'center' });
-  
+
   yPosition += 15;
 
   // Client Information
@@ -31,7 +31,7 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
   doc.setFont('helvetica', 'bold');
   doc.text('Client Information', 20, yPosition);
   yPosition += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Client: ${proposal.client?.company || proposal.client?.name || 'N/A'}`, 20, yPosition);
@@ -44,7 +44,7 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
     doc.text(`Phone: ${proposal.client.phone}`, 20, yPosition);
     yPosition += 6;
   }
-  
+
   yPosition += 10;
 
   // Proposal Details
@@ -52,28 +52,28 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
   doc.setFont('helvetica', 'bold');
   doc.text('Proposal Details', 20, yPosition);
   yPosition += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Title: ${proposal.title}`, 20, yPosition);
   yPosition += 6;
-  
+
   if (proposal.description) {
     const descLines = doc.splitTextToSize(`Description: ${proposal.description}`, pageWidth - 40);
     doc.text(descLines, 20, yPosition);
     yPosition += descLines.length * 6;
   }
-  
+
   doc.text(`Status: ${proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}`, 20, yPosition);
   yPosition += 6;
   doc.text(`Created: ${new Date(proposal.created_at).toLocaleDateString()}`, 20, yPosition);
   yPosition += 6;
-  
+
   if (proposal.expires_at) {
     doc.text(`Expires: ${new Date(proposal.expires_at).toLocaleDateString()}`, 20, yPosition);
     yPosition += 6;
   }
-  
+
   yPosition += 10;
 
   // Services & Pricing Table
@@ -194,9 +194,58 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
   doc.save(fileName);
 };
 
-export const generateProposalPreviewPDF = async (proposal: ProposalWithItems, items: ProposalItem[]): Promise<Blob> => {
+export const generateProposalPreviewPDF = async (_proposal: ProposalWithItems, _items: ProposalItem[]): Promise<Blob> => {
   const doc = new jsPDF();
   // Same generation logic as above but return blob instead of saving
   // ... (reuse the same code)
   return doc.output('blob');
 };
+
+
+export const generateTermsAndConditionsPDF = async (proposalTitle: string, clientName: string, termsText: string) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let yPosition = 20;
+
+  // Header
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Terms and Conditions', pageWidth / 2, yPosition, { align: 'center' });
+
+  yPosition += 15;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Proposal: ${proposalTitle}`, 20, yPosition);
+  yPosition += 6;
+  doc.text(`Client: ${clientName}`, 20, yPosition);
+  yPosition += 10;
+
+  // Horizontal line
+  doc.setLineWidth(0.5);
+  doc.line(20, yPosition, pageWidth - 20, yPosition);
+  yPosition += 10;
+
+  // Terms Content
+  doc.setFontSize(10);
+  const lines = doc.splitTextToSize(termsText, pageWidth - 40);
+
+  lines.forEach((line: string) => {
+    if (yPosition > pageHeight - 20) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    doc.text(line, 20, yPosition);
+    yPosition += 6;
+  });
+
+  // Footer
+  const footerY = pageHeight - 15;
+  doc.setFontSize(8);
+  doc.setTextColor(128, 128, 128);
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY, { align: 'center' });
+
+  const fileName = `Terms_and_Conditions_${proposalTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+  doc.save(fileName);
+};
+

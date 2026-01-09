@@ -256,27 +256,6 @@ export const proposalService = {
 
     if (proposalError) throw proposalError;
 
-    // Create draft invoice linked to proposal
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7); // Default 7 days
-
-    const { data: invoiceData, error: invoiceError } = await sb
-      .from('invoices')
-      .insert([{
-        client_id: proposal.client_id,
-        proposal_id: proposalData.id,
-        amount: 0,
-        description: `Proposal: ${proposal.title}`,
-        status: 'draft',
-        due_date: dueDate.toISOString(), // Required field
-        locked_from_send: true,
-        activation_source: 'proposal_approval'
-      }])
-      .select()
-      .single();
-
-    if (invoiceError) throw invoiceError;
-
     // Log proposal created event
     await sb.from('proposal_events').insert([{
       proposal_id: proposalData.id,
@@ -284,17 +263,7 @@ export const proposalService = {
       created_by_user_id: proposal.created_by_user_id
     }]);
 
-    // Log invoice created and linked event
-    await sb.from('invoice_events').insert([{
-      invoice_id: invoiceData.id,
-      type: 'created'
-    }, {
-      invoice_id: invoiceData.id,
-      type: 'linked_to_proposal',
-      meta: { proposal_id: proposalData.id }
-    }]);
-
-    return { ...proposalData, invoice: invoiceData } as Proposal;
+    return proposalData as Proposal;
   },
 
   async update(id: string, data: Partial<Proposal>) {
@@ -596,6 +565,9 @@ export const proposalService = {
           .select('*, client:clients(*), invoice:invoices(*), items:proposal_items(*), billing_plan:billing_plans(*)')
           .eq('id', proposalId)
           .single();
+
+        // If RPC didn't create the invoice (some RPCs might not), we still need to ensure it's handled.
+        // But for now we assume RPC handles the full approval transaction if it succeeds.
         return updatedProposal as Proposal;
       }
 
@@ -615,7 +587,6 @@ export const proposalService = {
     const totalCents = (allItems || []).reduce((sum, item) => sum + (item.line_total_cents || 0), 0);
 
     // Update proposal status AND value
-    // We update status first, then value if it fails we still want status updated
     const { data: proposalData, error: proposalError } = await sb
       .from('proposals')
       .update({
@@ -628,7 +599,6 @@ export const proposalService = {
 
     if (proposalError) {
       console.warn('Full update failed, attempting status-only update:', proposalError);
-      // Fallback: try updating only status if value update is restricted by RLS
       const { data: fallbackData, error: fallbackError } = await sb
         .from('proposals')
         .update({
@@ -657,8 +627,7 @@ export const proposalService = {
       .maybeSingle();
 
     if (invoice) {
-      // Activate invoice - update status to ready AND sync amount
-      // ready: prepared but not yet sent to client manually or automatically
+      // Activate existing invoice
       await sb
         .from('invoices')
         .update({
@@ -674,6 +643,57 @@ export const proposalService = {
         type: 'activated',
         meta: { proposal_id: proposalId }
       }]);
+    } else {
+      // Create new invoice on approval if it doesn't exist
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 7);
+
+      const { data: newInvoice, error: invError } = await sb
+        .from('invoices')
+        .insert([{
+          client_id: proposalData[0].client_id,
+          proposal_id: proposalId,
+          amount: totalCents / 100,
+          description: `Proposal: ${proposalData[0].title}`,
+          status: 'ready',
+          due_date: dueDate.toISOString(),
+          locked_from_send: false,
+          activation_source: 'proposal_approval'
+        }])
+        .select()
+        .single();
+
+      if (invError) {
+        console.error('Error creating invoice on approval:', invError);
+      } else if (newInvoice) {
+        // Mirror items to new invoice
+        const { data: propItems } = await sb
+          .from('proposal_items')
+          .select('*')
+          .eq('proposal_id', proposalId);
+
+        if (propItems && propItems.length > 0) {
+          await sb.from('invoice_items').insert(
+            propItems.map((item: any) => ({
+              invoice_id: newInvoice.id,
+              proposal_item_id: item.id,
+              name: item.name,
+              description: item.description,
+              quantity: item.quantity,
+              unit_price_cents: item.unit_price_cents,
+              line_total_cents: item.line_total_cents,
+              sort_order: item.sort_order
+            }))
+          );
+        }
+
+        // Log events
+        await sb.from('invoice_events').insert([
+          { invoice_id: newInvoice.id, type: 'created' },
+          { invoice_id: newInvoice.id, type: 'linked_to_proposal', meta: { proposal_id: proposalId } },
+          { invoice_id: newInvoice.id, type: 'activated', meta: { proposal_id: proposalId } }
+        ]);
+      }
     }
 
     // Log signature if provided
@@ -693,7 +713,7 @@ export const proposalService = {
       created_by_user_id: userId
     }]);
 
-    return (proposalData[0] as unknown) as Proposal;
+    return proposalData[0] as Proposal;
   },
 
   async decline(proposalId: string, userId?: string) {

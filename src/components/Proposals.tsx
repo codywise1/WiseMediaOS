@@ -59,7 +59,21 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         // Resolve client_id from email for clients
         const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
         const effectiveClientId = clientRecord?.id || currentUser.id || '';
+
+        console.log('Fetching proposals for client:', { email: currentUser.email, effectiveClientId });
         data = await newProposalService.getByClientId(effectiveClientId);
+
+        // For clients, only show non-draft proposals
+        if (Array.isArray(data)) {
+          data = data.filter(p => p.status !== 'draft');
+          console.log('Filtered proposals for client:', data.length);
+        }
+      } else if (currentUser?.id) {
+        // Fallback to fetching by auth ID if no email
+        data = await newProposalService.getByClientId(currentUser.id);
+        if (Array.isArray(data)) {
+          data = data.filter(p => p.status !== 'draft');
+        }
       } else {
         data = [];
       }

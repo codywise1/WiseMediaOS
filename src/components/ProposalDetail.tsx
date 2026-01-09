@@ -14,7 +14,8 @@ import {
   ChatBubbleLeftRightIcon,
   PencilIcon,
   ShieldCheckIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
@@ -23,6 +24,8 @@ import { useToast } from '../contexts/ToastContext';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import { UserRole, clientService } from '../lib/supabase';
 import { generateProposalPDF } from '../utils/pdfGenerator';
+import { termsAndConditionsTemplate } from '../config/termsTemplate';
+
 
 interface User {
   id?: string;
@@ -53,13 +56,15 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   const [proposal, setProposal] = useState<any>(null);
   const [items, setItems] = useState<ProposalItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'sow' | 'pricing' | 'activity' | 'timeline'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'sow' | 'pricing' | 'activity' | 'timeline' | 'legal'>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [clientSignature, setClientSignature] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const [effectiveClientId, setEffectiveClientId] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleDownloadPDF = async () => {
     if (!proposal) return;
@@ -86,8 +91,10 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
     { id: 'pricing', name: 'Pricing & Billing', icon: BanknotesIcon },
     { id: 'sow', name: 'Scope of Work', icon: DocumentTextIcon },
     { id: 'timeline', name: 'Timeline', icon: CalendarIcon },
+    { id: 'legal', name: 'Terms & Conditions', icon: ShieldCheckIcon },
     { id: 'activity', name: 'Activity Log', icon: ChatBubbleLeftRightIcon },
   ];
+
 
   useEffect(() => {
     if (id) {
@@ -120,6 +127,11 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
   };
 
   const handleApprove = () => {
+    if (!termsAccepted) {
+      setActiveTab('legal');
+      toastError('Please read and accept the Terms & Conditions first.');
+      return;
+    }
     setClientSignature(currentUser?.name || '');
     setIsApprovalModalOpen(true);
   };
@@ -273,10 +285,15 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
             {proposal.status === 'sent' && canApproveDecline && (
               <>
                 <button
-                  onClick={handleApprove}
-                  className="flex-1 min-w-[200px] px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => {
+                    setActiveTab('legal');
+                    // Add a tiny scroll to the legal section if needed
+                    const legalSection = document.getElementById('legal-section');
+                    if (legalSection) legalSection.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="flex-1 min-w-[200px] px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
                 >
-                  Approve Proposal
+                  Review & Approve
                 </button>
                 <button
                   onClick={handleDecline}
@@ -521,6 +538,62 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                   <p className="text-xs text-blue-400 mt-1">Legal terms locked</p>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'legal' && (
+        <div id="legal-section" className="glass-card rounded-2xl p-8 transition-all duration-500">
+          <div className="flex items-center gap-3 mb-6">
+            <ShieldCheckIcon className="h-8 w-8 text-[#3aa3eb]" />
+            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              Terms & Conditions
+            </h2>
+          </div>
+
+          <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-8">
+            <div className="prose prose-invert prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-gray-300 text-base font-light leading-relaxed">
+                {termsAndConditionsTemplate}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 p-6 bg-blue-500/5 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex-1">
+              <p className="text-white font-bold mb-1">Agreement Required</p>
+              <p className="text-sm text-gray-400 mb-4">By approving this proposal, you agree to be bound by the terms outlined above.</p>
+
+              {(proposal.status === 'sent' || proposal.status === 'viewed') && canApproveDecline && (
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      className="peer h-5 w-5 appearance-none rounded border border-white/20 bg-white/5 checked:bg-blue-500 checked:border-blue-500 transition-all cursor-pointer"
+                    />
+                    <CheckIcon className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity left-0.5 pointer-events-none" />
+                  </div>
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                    I have read and agree to the Terms and Conditions
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {(proposal.status === 'sent' || proposal.status === 'viewed') && canApproveDecline && (
+              <button
+                onClick={handleApprove}
+                disabled={!termsAccepted}
+                className={`px-8 py-4 font-bold rounded-xl transition-all shadow-lg ${termsAccepted
+                  ? 'bg-[#3aa3eb] text-white hover:bg-[#2d8bc7] shadow-blue-500/20'
+                  : 'bg-gray-700 text-gray-400 cursor-not-allowed grayscale'
+                  }`}
+              >
+                Accept Terms & Approve
+              </button>
             )}
           </div>
         </div>
