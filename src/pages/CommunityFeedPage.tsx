@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Heart, MessageCircle, Plus, PlusIcon, X } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { Heart, MessageCircle, PlusIcon, X, Trash2, Upload, Paperclip } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
@@ -73,6 +73,31 @@ const isImageUrl = (url: string) => {
   return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.webp');
 };
 
+const isVideoUrl = (url: string) => {
+  const lower = url.toLowerCase();
+  return (
+    lower.endsWith('.mp4') ||
+    lower.endsWith('.webm') ||
+    lower.endsWith('.ogg') ||
+    lower.endsWith('.mov') ||
+    lower.includes('youtube.com/watch') ||
+    lower.includes('youtu.be') ||
+    lower.includes('vimeo.com')
+  );
+};
+
+const getYouTubeId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const getVimeoId = (url: string) => {
+  const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:\w+\/)?|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+  const match = url.match(regExp);
+  return (match && match[1]) ? match[1] : null;
+};
+
 export default function CommunityFeedPage() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -96,6 +121,12 @@ export default function CommunityFeedPage() {
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [postingComment, setPostingComment] = useState<Record<string, boolean>>({});
   const [togglingLike, setTogglingLike] = useState<Record<string, boolean>>({});
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isAdmin = useMemo(() => {
+    return (profile?.role || '').toLowerCase() === 'admin';
+  }, [profile?.role]);
 
   const isPro = useMemo(() => {
     const role = (profile?.role || '').toLowerCase();
@@ -289,6 +320,49 @@ export default function CommunityFeedPage() {
     }
   }
 
+  async function deletePost(postId: string) {
+    if (!isSupabaseAvailable() || !profile?.id) return;
+    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+
+    try {
+      const { error } = await supabase!
+        .from('community_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    } catch (e) {
+      console.error('Error deleting post:', e);
+      alert('Failed to delete post. Please try again.');
+    }
+  }
+
+  async function deleteComment(postId: string, commentId: string) {
+    if (!isSupabaseAvailable() || !profile?.id) return;
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      const { error } = await supabase!
+        .from('community_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+      setCommentsByPost(prev => ({
+        ...prev,
+        [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
+      }));
+      setCommentCounts(prev => ({
+        ...prev,
+        [postId]: Math.max(0, (prev[postId] || 1) - 1)
+      }));
+    } catch (e) {
+      console.error('Error deleting comment:', e);
+      alert('Failed to delete comment. Please try again.');
+    }
+  }
+
   async function createPost() {
     if (!isSupabaseAvailable() || !profile?.id) return;
     const body = composerBody.trim();
@@ -332,10 +406,48 @@ export default function CommunityFeedPage() {
     ]
     : [{ value: 'all', label: 'All Creators' }];
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !isSupabaseAvailable() || !profile?.id) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase!.storage
+        .from('community')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase!.storage
+        .from('community')
+        .getPublicUrl(filePath);
+
+      const url = data.publicUrl;
+      let type = 'link';
+      if (isImageUrl(url)) type = 'image';
+      else if (isVideoUrl(url)) type = 'video';
+
+      setComposerAttachments(prev => [...prev, { type, url }]);
+    } catch (e) {
+      console.error('Error uploading file:', e);
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const addAttachment = () => {
     const url = composerAttachmentUrl.trim();
     if (!url) return;
-    const type = isImageUrl(url) ? 'image' : 'link';
+    let type = 'link';
+    if (isImageUrl(url)) type = 'image';
+    else if (isVideoUrl(url)) type = 'video';
+
     setComposerAttachments(prev => [...prev, { type, url }]);
     setComposerAttachmentUrl('');
   };
@@ -496,6 +608,16 @@ export default function CommunityFeedPage() {
                         ))}
                       </div>
                     </div>
+
+                    {(isAdmin || post.user_id === profile?.id) && (
+                      <button
+                        onClick={() => deletePost(post.id)}
+                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                        title="Delete Post"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
 
                   {post.title && (
@@ -520,6 +642,46 @@ export default function CommunityFeedPage() {
                               src={url}
                               alt="attachment"
                               className="w-full max-h-[420px] object-cover rounded-xl border border-white/10"
+                            />
+                          );
+                        }
+
+                        if (isVideoUrl(url)) {
+                          const ytId = getYouTubeId(url);
+                          const vimId = getVimeoId(url);
+
+                          if (ytId) {
+                            return (
+                              <div key={`${post.id}-att-${idx}`} className="relative pb-[56.25%] h-0 rounded-xl overflow-hidden border border-white/10">
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${ytId}`}
+                                  className="absolute top-0 left-0 w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              </div>
+                            );
+                          }
+
+                          if (vimId) {
+                            return (
+                              <div key={`${post.id}-att-${idx}`} className="relative pb-[56.25%] h-0 rounded-xl overflow-hidden border border-white/10">
+                                <iframe
+                                  src={`https://player.vimeo.com/video/${vimId}`}
+                                  className="absolute top-0 left-0 w-full h-full"
+                                  allow="autoplay; fullscreen; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <video
+                              key={`${post.id}-att-${idx}`}
+                              src={url}
+                              controls
+                              className="w-full max-h-[420px] rounded-xl border border-white/10"
                             />
                           );
                         }
@@ -594,6 +756,16 @@ export default function CommunityFeedPage() {
                                   {comment.body}
                                 </p>
                               </div>
+
+                              {(isAdmin || comment.user_id === profile?.id) && (
+                                <button
+                                  onClick={() => deleteComment(post.id, comment.id)}
+                                  className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-start"
+                                  title="Delete Comment"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </div>
                           );
                         })}
@@ -701,7 +873,26 @@ export default function CommunityFeedPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Attachments (URL)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Attachments</label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="text-sm text-[#3AA3EB] hover:text-[#2a92da] flex items-center gap-1.5 transition-colors"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                <Upload size={14} />
+                {uploading ? 'Uploading...' : 'Upload File'}
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="image/*,video/*"
+              />
+            </div>
             <div className="flex gap-2">
               <input
                 type="url"
@@ -709,7 +900,7 @@ export default function CommunityFeedPage() {
                 onChange={(e) => setComposerAttachmentUrl(e.target.value)}
                 className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
                 style={{ fontFamily: 'Montserrat, sans-serif' }}
-                placeholder="https://..."
+                placeholder="Paste Image/Video URL"
               />
               <button
                 type="button"
@@ -718,7 +909,7 @@ export default function CommunityFeedPage() {
                 style={{ fontFamily: 'Montserrat, sans-serif' }}
                 disabled={!composerAttachmentUrl.trim()}
               >
-                Add
+                <Paperclip size={18} />
               </button>
             </div>
             {composerAttachments.length > 0 && (
