@@ -1,6 +1,6 @@
-// PDF Generation utility with branded design
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { termsAndConditionsTemplate } from '../config/termsTemplate';
 
 /**
  * Generates a professional PDF for a proposal and triggers a direct download.
@@ -57,12 +57,20 @@ export const generateProposalPDF = async (proposal: any) => {
       </div>
       <div style="margin-bottom: 40px;">
         <div style="font-size: 12px; font-weight: 700; color: #3aa3eb; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">Included Services</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 40px;">
           ${proposal.services ? proposal.services.map((s: string) => `
             <span style="background: rgba(58, 163, 235, 0.1); border: 1px solid rgba(58, 163, 235, 0.2); color: #3aa3eb; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${s}</span>
           `).join('') : ''}
         </div>
       </div>
+
+      <div style="page-break-before: always; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 40px; margin-bottom: 40px;">
+        <div style="font-size: 12px; font-weight: 700; color: #3aa3eb; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px;">Terms & Conditions</div>
+        <div style="background: rgba(255, 255, 255, 0.02); border-radius: 24px; padding: 32px; border: 1px solid rgba(255, 255, 255, 0.05); color: #94a3b8; font-size: 13px; line-height: 1.6; white-space: pre-wrap;">
+          ${termsAndConditionsTemplate}
+        </div>
+      </div>
+
       <div style="margin-top: 60px; text-align: center; padding-top: 40px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: #64748b; font-size: 12px;">
         Wise Media Operating System · info@wisemedia.io
       </div>
@@ -80,15 +88,61 @@ export const generateProposalPDF = async (proposal: any) => {
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    // Multi-page logic
+    const margin = 10; // 10mm margins
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const innerWidth = pdfWidth - (margin * 2);
+    const innerHeight = pdfHeight - (margin * 2);
+
+    // Calculate scale to fit width
+    const ratio = innerWidth / imgProps.width;
+    const renderedHeight = imgProps.height * ratio;
+
+    let heightLeft = renderedHeight;
+    let position = margin;
+
+    // Background color #020617 for masking
+    const bgColor = { r: 2, g: 6, b: 23 };
+
+    const drawMasks = () => {
+      pdf.setFillColor(bgColor.r, bgColor.g, bgColor.b);
+      // Top mask
+      pdf.rect(0, 0, pdfWidth, margin, 'F');
+      // Bottom mask
+      pdf.rect(0, pdfHeight - margin, pdfWidth, margin, 'F');
+      // Left mask
+      pdf.rect(0, 0, margin, pdfHeight, 'F');
+      // Right mask
+      pdf.rect(pdfWidth - margin, 0, margin, pdfHeight, 'F');
+    };
+
+    // Add first page
+    pdf.addImage(imgData, 'PNG', margin, position, innerWidth, renderedHeight);
+    drawMasks();
+    heightLeft -= innerHeight;
+
+    // Add subsequent pages if content exceeds innerHeight
+    while (heightLeft > 0) {
+      position -= innerHeight;
+      pdf.addPage();
+      // Set background color for new page
+      pdf.setFillColor(bgColor.r, bgColor.g, bgColor.b);
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+
+      pdf.addImage(imgData, 'PNG', margin, position, innerWidth, renderedHeight);
+      drawMasks();
+      heightLeft -= innerHeight;
+    }
+
     pdf.save(filename);
   } catch (error) {
     console.error('Error generating Proposal PDF:', error);
   } finally {
-    document.body.removeChild(container);
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
   }
 };
 
