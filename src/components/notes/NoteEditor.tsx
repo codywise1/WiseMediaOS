@@ -271,7 +271,7 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
         updateBlocks(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
-    const handlePaste = (e: React.ClipboardEvent, block: NoteBlock, index: number) => {
+    const handlePaste = (e: React.ClipboardEvent, _: NoteBlock, index: number) => {
         const pastedText = e.clipboardData.getData('text/plain');
 
         // Only auto-convert if pasting markdown-like content (contains headers, lists, code blocks, etc.)
@@ -508,36 +508,6 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
 
     return (
         <div className="relative min-h-full font-sans selection:bg-[#3aa3eb]/20">
-            {!readOnly && (
-                <div className="sticky top-0 z-50 mb-8 -mx-4 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex items-center justify-between group/toolbar shadow-xl">
-                    <div className="flex items-center gap-1">
-                        <ToolbarButton icon={ArrowUturnLeftIcon} onClick={() => { }} />
-                        <ToolbarButton icon={ArrowUturnRightIcon} onClick={() => { }} />
-                        <div className="h-4 w-px bg-white/10 mx-2" />
-                        <ToolbarButton icon={BoldIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'bold')} />
-                        <ToolbarButton icon={ItalicIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'italic')} />
-                        <ToolbarButton icon={LinkIcon} onClick={() => applyFormatting(inlineToolbar.blockIndex !== -1 ? inlineToolbar.blockIndex : (blocks.length > 0 ? 0 : -1), 'link')} />
-                        <div className="h-4 w-px bg-white/10 mx-2" />
-                        <ToolbarButton icon={HashtagIcon} label="1" onClick={() => addBlock('heading', undefined, { level: 1 })} />
-                        <ToolbarButton icon={HashtagIcon} label="2" onClick={() => addBlock('heading', undefined, { level: 2 })} />
-                        <ToolbarButton icon={ListBulletIcon} onClick={() => addBlock('bullets')} />
-                        <ToolbarButton icon={NumberedListIcon} onClick={() => addBlock('numbered')} />
-                        <ToolbarButton icon={CheckCircleIcon} onClick={() => addBlock('todo')} />
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                        <ToolbarButton icon={CodeBracketIcon} onClick={() => addBlock('code')} />
-                        <ToolbarButton icon={ChatBubbleBottomCenterTextIcon} onClick={() => addBlock('quote')} />
-                        <ToolbarButton icon={InformationCircleIcon} onClick={() => addBlock('callout')} />
-                        <ToolbarButton icon={MinusIcon} onClick={() => addBlock('divider')} />
-                        <div className="h-4 w-px bg-white/10 mx-2" />
-                        <button className="px-4 py-1.5 bg-[#3aa3eb] hover:bg-[#4ab3fb] rounded-full text-[10px] font-black uppercase tracking-widest text-white transition-all">
-                            Share
-                        </button>
-                    </div>
-                </div>
-            )}
-
             <div className="space-y-[12px] pb-32">
                 {slashMenu.show && (
                     <div
@@ -593,6 +563,8 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
                         onActivate={() => setActiveBlockId(block.id)}
                         isFirst={index === 0}
                         isLast={index === blocks.length - 1}
+                        applyFormatting={applyFormatting}
+                        addBlock={addBlock}
                     />
                 ))}
             </div>
@@ -623,14 +595,6 @@ function ToolbarButton({ icon: Icon, label, onClick }: any) {
     );
 }
 
-function BlockTypeButton({ icon: Icon, label, onClick }: any) {
-    return (
-        <button onClick={onClick} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-[#3aa3eb]/20 border border-white/10 hover:border-[#3aa3eb]/30 rounded-xl text-[10px] font-black text-gray-400 hover:text-[#3aa3eb] transition-all whitespace-nowrap uppercase tracking-widest">
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-        </button>
-    );
-}
 
 interface BlockComponentProps {
     block: NoteBlock;
@@ -650,12 +614,15 @@ interface BlockComponentProps {
     onActivate: () => void;
     isFirst: boolean;
     isLast: boolean;
+    applyFormatting: (index: number, format: 'bold' | 'italic' | 'link') => void;
+    addBlock: (type: NoteBlock['type'], index?: number, props?: Partial<NoteBlock>) => void;
 }
 
 function BlockComponent({
     block, onChange, onRemove, onMove, readOnly, index, refs, slashMenu,
     handleSlashCommand, onKeyDown, onPaste,
-    isActive, onActivate, isFirst, isLast
+    isActive, onActivate, isFirst, isLast,
+    applyFormatting, addBlock
 }: BlockComponentProps) {
     const baseClasses = "w-full bg-transparent focus:outline-none placeholder:text-gray-700 text-white/90 transition-all selection:bg-[#3aa3eb]/30";
     const indentLevel = block.indent || 0;
@@ -684,13 +651,33 @@ function BlockComponent({
                 </div>
             </div>
             {!readOnly && isActive && (
-                <div className="flex items-center gap-1 mt-2 opacity-0 group-hover/block:opacity-100 transition-opacity">
-                    <div className="h-px bg-white/5 flex-1" />
-                    <div className="flex items-center gap-1">
-                        <BlockTypeButton icon={PlusIcon} label="Add" onClick={() => handleSlashCommand(index, refs.current[index] as any, 0, '')} />
-                        <BlockTypeButton icon={TrashIcon} label="Delete" onClick={onRemove} />
+                <div className="mt-[20px] animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl px-3 py-1.5 flex items-center justify-between group/toolbar shadow-xl w-full">
+                        <div className="flex items-center gap-0.5">
+                            <ToolbarButton icon={ArrowUturnLeftIcon} onClick={() => { }} />
+                            <ToolbarButton icon={ArrowUturnRightIcon} onClick={() => { }} />
+                            <div className="h-4 w-px bg-white/10 mx-1.5" />
+                            <ToolbarButton icon={BoldIcon} onClick={() => applyFormatting(index, 'bold')} />
+                            <ToolbarButton icon={ItalicIcon} onClick={() => applyFormatting(index, 'italic')} />
+                            <ToolbarButton icon={LinkIcon} onClick={() => applyFormatting(index, 'link')} />
+                            <div className="h-4 w-px bg-white/10 mx-1.5" />
+                            <ToolbarButton icon={HashtagIcon} label="1" onClick={() => addBlock('heading', index, { level: 1 })} />
+                            <ToolbarButton icon={HashtagIcon} label="2" onClick={() => addBlock('heading', index, { level: 2 })} />
+                            <ToolbarButton icon={ListBulletIcon} onClick={() => addBlock('bullets', index)} />
+                            <ToolbarButton icon={NumberedListIcon} onClick={() => addBlock('numbered', index)} />
+                            <ToolbarButton icon={CheckCircleIcon} onClick={() => addBlock('todo', index)} />
+                            <div className="h-4 w-px bg-white/10 mx-1.5" />
+                            <ToolbarButton icon={PlusIcon} onClick={() => handleSlashCommand(index, refs.current[index] as any, 0, '')} />
+                            <ToolbarButton icon={TrashIcon} onClick={onRemove} />
+                        </div>
+
+                        <div className="flex items-center gap-0.5">
+                            <ToolbarButton icon={CodeBracketIcon} onClick={() => addBlock('code', index)} />
+                            <ToolbarButton icon={ChatBubbleBottomCenterTextIcon} onClick={() => addBlock('quote', index)} />
+                            <ToolbarButton icon={InformationCircleIcon} onClick={() => addBlock('callout', index)} />
+                            <ToolbarButton icon={MinusIcon} onClick={() => addBlock('divider', index)} />
+                        </div>
                     </div>
-                    <div className="h-px bg-white/5 flex-1" />
                 </div>
             )}
         </div>
