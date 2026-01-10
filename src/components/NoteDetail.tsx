@@ -244,7 +244,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     const newTitle = e.target.value;
                                     setNote({ ...note, title: newTitle });
                                 }}
-                                className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white tracking-tighter focus:outline-none placeholder:text-gray-800"
+                                className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white focus:outline-none placeholder:text-gray-800"
                                 style={{ fontFamily: 'Integral CF, sans-serif' }}
                                 placeholder="Note Title"
                             />
@@ -288,10 +288,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     </div>
 
                     {/* Editor Area */}
-                    <div className="glass-card rounded-[32px] border border-white/10 hover:border-white/20 transition-all duration-300 shadow-2xl relative overflow-hidden group/editor">
-                        {/* Glow Effect */}
-                        <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover/editor:opacity-100 transition-opacity pointer-events-none" />
-
+                    <div className="glass-card rounded-[32px] border border-white/10 transition-all duration-300 shadow-2xl relative overflow-hidden">
                         <div className="relative max-w-[760px] mx-auto min-h-[800px] px-4 py-6 sm:px-6 sm:py-8">
                             <NoteEditor
                                 content={blocks}
@@ -306,7 +303,6 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                 <div className="space-y-6 lg:sticky lg:top-6 self-start">
                     {/* Details Card */}
                     <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-[#3aa3eb]" />
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-[10px] font-black text-white tracking-wider">Contextual Data</h2>
                             {isSaving ? (
