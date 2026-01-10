@@ -25,6 +25,7 @@ import ProposalBuilderModal from './ProposalBuilderModal';
 import { UserRole, clientService } from '../lib/supabase';
 import { generateProposalPDF } from '../utils/pdfGenerator';
 import { termsAndConditionsTemplate } from '../config/termsTemplate';
+import { parseMarkdown } from '../lib/markdown';
 
 
 interface User {
@@ -247,11 +248,11 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                 {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
               </span>
             </div>
-            <p className="text-gray-400 mb-2">
+            <p className="text-gray-400 mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               Client: <span className="text-white font-semibold">{proposal.client?.company || proposal.client?.name}</span>
             </p>
             {proposal.description && (
-              <p className="text-gray-500">{proposal.description}</p>
+              <p className="text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>{proposal.description}</p>
             )}
           </div>
 
@@ -360,7 +361,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
               <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 Executive Summary
               </h2>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-gray-300 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 This proposal outlines the strategy and deliverables for {proposal.title}.
                 View the specific tabs for a detailed breakdown of services, pricing, and timeline.
               </p>
@@ -443,16 +444,16 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
             <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between items-center p-5 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{item.name}</h3>
+                  <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{item.name}</h3>
                     <p className="text-sm text-gray-400">{item.description}</p>
                     <p className="text-xs text-gray-500 mt-1">{item.quantity} x {formatCurrency(item.unit_price_cents)}</p>
                   </div>
-                  <p className="text-xl font-bold text-white">{formatCurrency(item.line_total_cents)}</p>
+                  <p className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{formatCurrency(item.line_total_cents)}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-8 pt-6 border-t border-slate-700 flex justify-between items-center text-2xl font-bold">
+            <div className="mt-8 pt-6 border-t border-slate-700 flex justify-between items-center text-2xl font-bold" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               <span className="text-gray-400">Total Value</span>
               <span className="text-white">{formatCurrency(proposal.value)}</span>
             </div>
@@ -487,12 +488,12 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
               if (!template) return null;
               return (
                 <div key={item.id} className="space-y-4">
-                  <h3 className="text-xl font-bold text-[#3aa3eb] border-b border-[#3aa3eb]/20 pb-2">{item.name}</h3>
+                  <h3 className="text-xl font-bold text-[#3aa3eb] border-b border-[#3aa3eb]/20 pb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{item.name}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {template.sowBlocks.map((block: any, idx: number) => (
                       <div key={idx}>
-                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">{block.title}</h4>
-                        <ul className="space-y-1">
+                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>{block.title}</h4>
+                        <ul className="space-y-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                           {block.items.map((it: string, i: number) => (
                             <li key={i} className="text-gray-300 text-sm flex gap-2">
                               <span className="text-[#3aa3eb]">•</span> {it}
@@ -533,9 +534,9 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                   </div>
                 </div>
                 <div>
-                  <p className="text-white font-bold">Sent to Client</p>
-                  <p className="text-sm text-gray-400">{formatAppDate(proposal.sent_at)}</p>
-                  <p className="text-xs text-blue-400 mt-1">Legal terms locked</p>
+                  <p className="text-white font-bold" style={{ fontFamily: 'Integral CF, sans-serif' }}>Sent to Client</p>
+                  <p className="text-sm text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>{formatAppDate(proposal.sent_at)}</p>
+                  <p className="text-xs text-blue-400 mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Legal terms locked</p>
                 </div>
               </div>
             )}
@@ -553,10 +554,11 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           </div>
 
           <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-8">
-            <div className="prose prose-invert prose-sm max-w-none">
-              <div className="whitespace-pre-wrap text-gray-300 text-base font-light leading-relaxed">
-                {termsAndConditionsTemplate}
-              </div>
+            <div className="prose prose-invert prose-sm max-w-none" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <div
+                className="text-gray-300 text-base font-light leading-relaxed markdown-content"
+                dangerouslySetInnerHTML={{ __html: parseMarkdown(termsAndConditionsTemplate) }}
+              />
             </div>
           </div>
 
@@ -608,9 +610,9 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                 <div className="bg-slate-800 p-2 rounded-lg">
                   <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400" />
                 </div>
-                <div>
+                <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   <p className="text-sm text-white">
-                    <span className="font-bold capitalize">{event.type.replace('_', ' ')}</span>
+                    <span className="font-bold capitalize" style={{ fontFamily: 'Integral CF, sans-serif' }}>{event.type.replace('_', ' ')}</span>
                     {event.type === 'signed' && event.meta?.signature && (
                       <span className="text-gray-400 font-normal"> by {event.meta.signature}</span>
                     )}

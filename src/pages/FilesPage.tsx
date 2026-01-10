@@ -4,7 +4,6 @@ import { PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, PaperAirplaneIcon } f
 import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
-import { fileStatusColors } from '../lib/statusColors';
 import { useAuth } from '../contexts/AuthContext';
 
 function getFileType(file: FileRecord) {
