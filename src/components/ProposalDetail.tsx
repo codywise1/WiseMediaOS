@@ -358,7 +358,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card rounded-2xl p-6 bg-blue-500/5">
-              <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 Executive Summary
               </h2>
               <p className="text-gray-300 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -368,7 +368,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
             </div>
 
             <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              <h2 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 Timeline Overview
               </h2>
               <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -438,7 +438,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
       {activeTab === 'pricing' && (
         <div className="space-y-6">
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+            <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>
               Service Breakdown
             </h2>
             <div className="space-y-4">
@@ -461,7 +461,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
 
           {proposal.billing_plan && (
             <div className="glass-card rounded-2xl p-6 border-l-4 border-[#3aa3eb]">
-              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              <h2 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 Payment Schedule
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -512,7 +512,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
 
       {activeTab === 'timeline' && (
         <div className="glass-card rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>Project Timeline</h2>
+          <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>Project Timeline</h2>
           <div className="space-y-6">
             <div className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -603,7 +603,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
 
       {activeTab === 'activity' && (
         <div className="glass-card rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>Activity Log</h2>
+          <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Integral CF, sans-serif' }}>Activity Log</h2>
           <div className="space-y-6">
             {(proposal.events || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((event: any) => (
               <div key={event.id} className="flex gap-4">
