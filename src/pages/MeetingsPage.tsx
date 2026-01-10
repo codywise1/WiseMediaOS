@@ -6,9 +6,9 @@ import {
     VideoCameraSlashIcon,
     ClipboardDocumentCheckIcon,
     CheckCircleIcon,
-    ShareIcon,
-    PlusIcon
+    ShareIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import {
     meetingService,
     clientService,
@@ -189,8 +189,8 @@ export default function MeetingsPage() {
                             onClick={() => setIsScheduleModalOpen(true)}
                             className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
                         >
-                            <PlusIcon className="h-5 w-5" />
                             <span className="btn-text-glow">Schedule Meeting</span>
+                            <ArrowRight className="h-4 w-4 ml-1" />
                         </button>
                     </div>
                 </div>

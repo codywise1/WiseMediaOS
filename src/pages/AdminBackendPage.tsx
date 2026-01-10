@@ -163,11 +163,10 @@ export default function AdminBackendPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all font-medium whitespace-nowrap ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all font-medium whitespace-nowrap ${activeTab === tab.id
                   ? 'bg-[#3AA3EB] text-white shadow-lg'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
+                }`}
               style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
             >
               <Icon size={20} />
@@ -201,12 +200,11 @@ export default function AdminBackendPage() {
                       <td className="py-3 px-4 text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{user.full_name || 'N/A'}</td>
                       <td className="py-3 px-4 text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>{user.email}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${
-                          user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                          user.role === 'elite' ? 'bg-yellow-500/20 text-yellow-400' :
-                          user.role === 'pro' ? 'bg-blue-500/20 text-blue-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
+                            user.role === 'elite' ? 'bg-yellow-500/20 text-yellow-400' :
+                              user.role === 'pro' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-gray-500/20 text-gray-400'
+                          }`}>
                           {user.role?.toUpperCase()}
                         </span>
                       </td>

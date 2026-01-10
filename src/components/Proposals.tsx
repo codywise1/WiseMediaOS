@@ -4,11 +4,11 @@ import {
   ClipboardDocumentListIcon,
   EyeIcon,
   PencilIcon,
-  PlusIcon,
   TrashIcon,
   UserIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
 import { clientService } from '../lib/supabase';
@@ -243,8 +243,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
               onClick={handleNewProposal}
               className="btn-header-glass space-x-2 shrink-0"
             >
-              <PlusIcon className="h-5 w-5" />
               <span className="btn-text-glow">New Proposal</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
             </button>
           )}
         </div>

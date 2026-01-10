@@ -1,7 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
-import { FileRecord, FileStatus, filesService, Client, Project, Appointment, clientService, projectService, appointmentService } from '../lib/supabase';
+import {
+  MagnifyingGlassIcon,
+  ArrowDownTrayIcon,
+  PaperAirplaneIcon
+} from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
+import {
+  FileRecord,
+  FileStatus,
+  filesService,
+  Client,
+  Project,
+  Appointment,
+  clientService,
+  projectService,
+  appointmentService
+} from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -148,8 +163,8 @@ export default function FilesPage() {
             onClick={() => setIsUploadModalOpen(true)}
             className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
           >
-            <PlusIcon className="h-5 w-5" />
             <span className="btn-text-glow">Upload File</span>
+            <ArrowRight className="h-4 w-4 ml-1" />
           </button>
         </div>
 

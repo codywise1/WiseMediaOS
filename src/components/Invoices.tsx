@@ -7,15 +7,13 @@ import {
   CreditCardIcon,
   PencilIcon,
   TrashIcon,
-} from '@heroicons/react/24/outline';
-import {
   EnvelopeIcon,
   ArrowDownTrayIcon,
   EyeIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  PlusIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -295,8 +293,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               onClick={handleNewInvoice}
               className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
             >
-              <PlusIcon className="h-5 w-5" />
               <span className="btn-text-glow">New Invoice</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
             </button>
           )}
         </div>

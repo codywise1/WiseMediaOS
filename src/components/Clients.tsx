@@ -6,7 +6,6 @@ import {
   UserGroupIcon,
   PhoneIcon,
   EnvelopeIcon,
-  PlusIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
@@ -15,6 +14,7 @@ import {
   MagnifyingGlassIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
 import ClientTableView from './ClientTableView';
@@ -305,8 +305,8 @@ export default function Clients({ currentUser }: ClientsProps) {
                 onClick={handleNewClient}
                 className="btn-header-glass space-x-2 shrink-0"
               >
-                <PlusIcon className="h-5 w-5" />
                 <span className="btn-text-glow">Add Client</span>
+                <ArrowRight className="h-4 w-4 ml-1" />
               </button>
             )}
           </div>

@@ -4,7 +4,6 @@ import {
   DocumentTextIcon,
   Squares2X2Icon,
   Bars3Icon,
-  PlusIcon,
   BookmarkIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -13,6 +12,7 @@ import {
   VideoCameraIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import {
   noteService,
   clientService,
@@ -214,8 +214,8 @@ export default function Notes({ currentUser }: NotesProps) {
               onClick={handleCreateNote}
               className="btn-header-glass space-x-2 shrink-0"
             >
-              <PlusIcon className="h-5 w-5" />
               <span className="btn-text-glow">New Note</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Heart, MessageCircle, PlusIcon, X, Trash2, Upload, Paperclip } from 'lucide-react';
+import { Heart, MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -499,8 +499,8 @@ export default function CommunityFeedPage() {
               onClick={() => setComposerOpen(true)}
               className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
             >
-              <PlusIcon className="h-5 w-5" />
               <span className="btn-text-glow">New Post</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
             </button>
           )}
 

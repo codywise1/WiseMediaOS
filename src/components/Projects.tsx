@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { projectService, clientService, Project as SbProject, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
-  PlusIcon,
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
   ArrowDownIcon,
-  AdjustmentsHorizontalIcon,
-  ChevronDownIcon,
-  ChevronUpIcon
+  AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
+import { ArrowRight } from 'lucide-react';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
@@ -475,8 +473,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
                   onClick={handleNewProject}
                   className="btn-header-glass flex-1 sm:flex-none space-x-2"
                 >
-                  <PlusIcon className="h-5 w-5 text-white" />
                   <span className="btn-text-glow whitespace-nowrap">New Project</span>
+                  <ArrowRight className="h-4 w-4 ml-1" />
                 </button>
               )}
             </div>
