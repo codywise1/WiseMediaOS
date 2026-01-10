@@ -308,14 +308,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-1 h-full bg-[#3aa3eb]" />
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-[10px] font-black text-white/40 tracking-wider">Contextual Data</h2>
+                            <h2 className="text-[10px] font-black text-white tracking-wider">Contextual Data</h2>
                             {isSaving ? (
                                 <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] tracking-wider animate-pulse">
                                     <div className="w-1 h-1 rounded-full bg-[#3aa3eb]" />
                                     Live Content
                                 </span>
                             ) : (
-                                <span className="text-[9px] font-black text-emerald-500 tracking-wider opacity-40">
+                                <span className="text-[9px] font-black text-emerald-500 tracking-wider opacity-70">
                                     Static Snapshot
                                 </span>
                             )}
@@ -329,13 +329,13 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     </div>
 
                     {/* Actions Card */}
-                    <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-3">
+                    <div className="glass-card rounded-2xl p-4 border border-white/10 flex items-center justify-center gap-4">
                         <button
                             onClick={() => note && generateNotePDF(note)}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#3aa3eb]/10 hover:bg-[#3aa3eb]/20 border border-[#3aa3eb]/20 rounded-xl text-xs font-bold text-[#3aa3eb] tracking-widest transition-all"
+                            className="p-3 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] hover:bg-[#3aa3eb]/20 border border-[#3aa3eb]/20 transition-all"
+                            title="Download PDF"
                         >
-                            <ArrowDownTrayIcon className="h-4 w-4" />
-                            Download PDF
+                            <ArrowDownTrayIcon className="h-5 w-5" />
                         </button>
                         <button
                             onClick={() => {
@@ -345,23 +345,23 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                 }
                                 noteService.update(note.id, { visibility: note.visibility === 'internal' ? 'client_visible' : 'internal' }).then(setNote);
                             }}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white tracking-widest transition-all"
+                            className="p-3 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10 transition-all"
+                            title={note.visibility === 'client_visible' ? 'Unshare Note' : 'Share with Client'}
                         >
-                            <ShareIcon className="h-4 w-4" />
-                            {note.visibility === 'client_visible' ? 'Unshare Note' : 'Share with Client'}
+                            <ShareIcon className="h-5 w-5" />
                         </button>
                         <button
                             onClick={() => setIsDeleteDialogOpen(true)}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-bold text-red-500 tracking-widest transition-all"
+                            className="p-3 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 transition-all"
+                            title="Delete Record"
                         >
-                            <TrashIcon className="h-4 w-4" />
-                            Delete Record
+                            <TrashIcon className="h-5 w-5" />
                         </button>
                     </div>
 
                     {/* Linked Entities */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6">Linked Intelligence</h2>
+                        <h2 className="text-[10px] font-black text-white tracking-widest mb-6">Linked Intelligence</h2>
                         <div className="space-y-2">
                             {note.projectId && (
                                 <LinkedItem
@@ -381,7 +381,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                 <LinkedItem label="Invoice" value="Linked Invoice" icon={CurrencyDollarIcon} />
                             )}
                             {!note.projectId && !note.meetingId && !note.proposalId && !note.invoiceId && (
-                                <p className="text-[10px] text-gray-700 italic">No entities linked to this note.</p>
+                                <p className="text-[10px] text-white/50 italic">No entities linked to this note.</p>
                             )}
                         </div>
                     </div>
@@ -420,7 +420,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 function MetaItem({ label, value, icon: Icon }: any) {
     return (
         <div className="flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-2 text-gray-500 font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-white/70 font-bold uppercase tracking-widest">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
             </div>
@@ -436,7 +436,7 @@ function LinkedItem({ label, value, icon: Icon, to }: any) {
                 <Icon className="h-4 w-4 text-gray-500 group-hover:text-[#3aa3eb]" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{label}</p>
+                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest">{label}</p>
                 <p className="text-xs font-bold text-white truncate">{value}</p>
             </div>
         </div>
