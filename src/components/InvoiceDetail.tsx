@@ -164,7 +164,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div>
               <h1
                 className="text-2xl md:text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: 'Integral CF, sans-serif' }}
               >
                 Invoice for {displayClientName}
               </h1>
@@ -219,14 +219,20 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           <div className="bg-slate-800/30 rounded-xl p-4">
             <div className="flex items-center space-x-2 mb-2">
               <ClockIcon className="h-4 w-4 text-[#3aa3eb]" />
-              <span className="text-xs text-gray-400">Days Until Due</span>
+              <span className="text-xs text-gray-400">{invoice.status === 'paid' ? 'Paid At' : 'Days Until Due'}</span>
             </div>
-            <p className={`text-xl md:text-2xl font-bold ${daysUntilDue < 0 ? 'text-red-400' :
-              daysUntilDue < 7 ? 'text-yellow-400' :
-                'text-green-400'
-              }`}>
-              {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} overdue` : daysUntilDue}
-            </p>
+            {invoice.status === 'paid' ? (
+              <p className="text-sm md:text-base font-medium text-green-400">
+                {formatAppDate(invoice.updated_at)}
+              </p>
+            ) : (
+              <p className={`text-xl md:text-2xl font-bold ${daysUntilDue < 0 ? 'text-red-400' :
+                daysUntilDue < 7 ? 'text-yellow-400' :
+                  'text-green-400'
+                }`}>
+                {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} overdue` : daysUntilDue}
+              </p>
+            )}
           </div>
 
           <div className="bg-slate-800/30 rounded-xl p-4">
@@ -245,7 +251,10 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         <div className="lg:col-span-2 space-y-6">
           {client && (
             <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+              <h2
+                className="text-xl font-bold text-white mb-6 flex items-center"
+                style={{ fontFamily: 'Integral CF, sans-serif' }}
+              >
                 <UserIcon className="h-6 w-6 mr-2 text-[#3aa3eb]" />
                 Client Information
               </h2>
@@ -294,7 +303,10 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           )}
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+            <h2
+              className="text-xl font-bold text-white mb-6 flex items-center"
+              style={{ fontFamily: 'Integral CF, sans-serif' }}
+            >
               <DocumentTextIcon className="h-6 w-6 mr-2 text-[#3aa3eb]" />
               Invoice Details
             </h2>
@@ -321,7 +333,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         <div className="space-y-6">
           {isAdmin && (
             <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Actions</h2>
+              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>Actions</h2>
               <div className="space-y-3">
                 <button
                   onClick={handleDownloadPDF}
@@ -355,7 +367,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           )}
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Summary</h2>
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Integral CF, sans-serif' }}>Summary</h2>
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Subtotal</span>
