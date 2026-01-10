@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight } from 'lucide-react';
+import Modal from '../components/Modal';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client } from '../lib/supabase';
@@ -76,13 +77,18 @@ export default function CommunityPage() {
   const [showDirectMessages, setShowDirectMessages] = useState(true);
   const [showClients, setShowClients] = useState(true);
   const [resolvedRecipientId, setResolvedRecipientId] = useState<string | null>(null);
+  const [isCreateChannelModalOpen, setIsCreateChannelModalOpen] = useState(false);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelDescription, setNewChannelDescription] = useState('');
+  const [creatingChannel, setCreatingChannel] = useState(false);
 
 
   // Use a ref to persist mock messages during session in demo mode
   const localMessagesRef = useRef(mockChannelMessages);
   const [localUpdate, setLocalUpdate] = useState(0); // Force re-render for local mocks
 
-  const canViewClients = (profile?.role || user?.user_metadata?.role || '').toLowerCase() === 'admin';
+  const isAdmin = (profile?.role || user?.user_metadata?.role || '').toLowerCase() === 'admin';
+  const canViewClients = isAdmin;
 
   useEffect(() => {
     fetchChannels();
@@ -207,20 +213,26 @@ export default function CommunityPage() {
       fetchMessages();
       if (!isSupabaseAvailable()) return;
 
-      const subscription = supabase!
-        .channel(`chat:${selectedChannel.id}`)
+      const sub = supabase!
+        .channel(`chat_channel_${selectedChannel.id}`)
         .on('postgres_changes', {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'chat_messages',
-          filter: `channel_id=eq.${selectedChannel.id}`,
-        }, () => {
-          fetchMessages();
+          filter: `channel_id=eq.${selectedChannel.id}`
+        }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            fetchMessages();
+          }
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to real-time chat');
+          }
+        });
 
       return () => {
-        subscription.unsubscribe();
+        supabase!.removeChannel(sub);
       };
     }
   }, [selectedChannel, localUpdate]);
@@ -315,7 +327,53 @@ export default function CommunityPage() {
 
     if (data && data.length > 0) {
       setChannels(data);
-      setSelectedChannel(data[0]);
+      if (!selectedChannel) setSelectedChannel(data[0]);
+    }
+  }
+
+  async function handleCreateChannel() {
+    if (!newChannelName.trim() || !profile?.id || !isAdmin) return;
+
+    setCreatingChannel(true);
+    try {
+      const formattedName = newChannelName.trim().toLowerCase().replace(/\s+/g, '-');
+
+      if (!isSupabaseAvailable()) {
+        const newChannel: Channel = {
+          id: Date.now().toString(),
+          name: formattedName,
+          description: newChannelDescription.trim(),
+          type: 'general'
+        };
+        setChannels(prev => [...prev, newChannel]);
+        setSelectedChannel(newChannel);
+      } else {
+        const { data, error } = await supabase!
+          .from('chat_channels')
+          .insert({
+            name: formattedName,
+            description: newChannelDescription.trim(),
+            type: 'general',
+            created_by: profile.id
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setChannels(prev => [...prev, data]);
+          setSelectedChannel(data);
+        }
+      }
+
+      setIsCreateChannelModalOpen(false);
+      setNewChannelName('');
+      setNewChannelDescription('');
+    } catch (error) {
+      console.error('Error creating channel:', error);
+      alert('Failed to create channel. Please try again.');
+    } finally {
+      setCreatingChannel(false);
     }
   }
 
@@ -480,11 +538,34 @@ export default function CommunityPage() {
           setLocalUpdate(prev => prev + 1); // Trigger re-render
         } else {
           if (profile) {
-            await supabase!.from('chat_messages').insert({
+            // Optimistic update
+            const optimisticMsg: Message = {
+              id: `temp-${Date.now()}`,
+              message: newMessage.trim(),
+              created_at: new Date().toISOString(),
+              profiles: {
+                full_name: profile.full_name || 'User',
+                avatar_url: profile.avatar_url,
+                role: profile.role
+              }
+            };
+            setMessages(prev => [...prev, optimisticMsg]);
+
+            const content = newMessage.trim();
+            setNewMessage('');
+
+            const { error } = await supabase!.from('chat_messages').insert({
               channel_id: selectedChannel.id,
               user_id: profile.id,
-              message: newMessage.trim(),
+              message: content,
             });
+
+            if (error) {
+              setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+              throw error;
+            }
+
+            fetchMessages(); // Refresh to get the real ID and metadata
           }
         }
       } else if (view === 'private' && selectedUser) {
@@ -601,9 +682,9 @@ export default function CommunityPage() {
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setView('channels')}
-                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'channels'
-                  ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'channels'
+                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                   }`}
                 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
               >
@@ -612,9 +693,9 @@ export default function CommunityPage() {
               </button>
               <button
                 onClick={() => setView('private')}
-                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium ${view === 'private'
-                  ? 'bg-[#59a1e5] text-white shadow-[0_0_15px_rgba(89,161,229,0.3)]'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'private'
+                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                   }`}
                 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
               >
@@ -625,28 +706,40 @@ export default function CommunityPage() {
 
             <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
               {view === 'channels' ? (
-                channels.map((channel) => (
-                  <button
-                    key={channel.id}
-                    onClick={() => setSelectedChannel(channel)}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${selectedChannel?.id === channel.id
-                      ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
-                      : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                      }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
-                      <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
-                        {channel.name}
-                      </span>
-                    </div>
-                    {channel.description && (
-                      <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {channel.description}
-                      </p>
-                    )}
-                  </button>
-                ))
+                <>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsCreateChannelModalOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 p-2 mb-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-gray-400 hover:text-white transition-all text-sm font-medium"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
+                      <Plus size={16} />
+                      Create Channel
+                    </button>
+                  )}
+                  {channels.map((channel) => (
+                    <button
+                      key={channel.id}
+                      onClick={() => setSelectedChannel(channel)}
+                      className={`w-full text-left p-3 rounded-lg transition-all ${selectedChannel?.id === channel.id
+                        ? 'bg-[#59a1e5]/20 border border-[#59a1e5] shadow-[0_0_10px_rgba(89,161,229,0.1)]'
+                        : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                        }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
+                        <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                          {channel.name}
+                        </span>
+                      </div>
+                      {channel.description && (
+                        <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          {channel.description}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </>
               ) : (
                 <div className="space-y-1">
                   {/* Direct Messages Section */}
@@ -803,7 +896,7 @@ export default function CommunityPage() {
             <div className="pb-4 border-b border-white/10">
               {view === 'channels' && selectedChannel ? (
                 <div>
-                  <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                  <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                     <Hash size={24} className="text-[#59a1e5]" />
                     {selectedChannel.name}
                   </h2>
@@ -827,7 +920,7 @@ export default function CommunityPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {getConversationName(selectedUser)}
                     </h2>
                     <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -836,13 +929,13 @@ export default function CommunityPage() {
                   </div>
                 </div>
               ) : (
-                <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                   Select a {view === 'channels' ? 'channel' : 'conversation'}
                 </h2>
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar">
               {view === 'channels' && selectedChannel && messages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -960,6 +1053,61 @@ export default function CommunityPage() {
           </GlassCard>
         </div>
       </div>
+
+      <Modal
+        isOpen={isCreateChannelModalOpen}
+        onClose={() => setIsCreateChannelModalOpen(false)}
+        title="Create New Channel"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Channel Name</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">#</span>
+              <input
+                type="text"
+                value={newChannelName}
+                onChange={(e) => setNewChannelName(e.target.value)}
+                placeholder="announcements"
+                className="w-full pl-8 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-500">Names must be lowercase, without spaces or special characters.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Description</label>
+            <textarea
+              value={newChannelDescription}
+              onChange={(e) => setNewChannelDescription(e.target.value)}
+              placeholder="What's this channel about?"
+              rows={3}
+              className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => setIsCreateChannelModalOpen(false)}
+              className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateChannel}
+              disabled={creatingChannel || !newChannelName.trim()}
+              className="px-6 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-all font-bold text-sm shadow-[0_4px_15px_rgba(58,163,235,0.3)] hover:shadow-[0_6px_20px_rgba(58,163,235,0.4)]"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              {creatingChannel ? 'Creating...' : 'Create Channel'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

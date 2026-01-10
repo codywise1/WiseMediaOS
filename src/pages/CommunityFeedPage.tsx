@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { Heart, MessageCircle, PlusIcon, X, Trash2, Upload, Paperclip } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
@@ -122,6 +123,12 @@ export default function CommunityFeedPage() {
   const [postingComment, setPostingComment] = useState<Record<string, boolean>>({});
   const [togglingLike, setTogglingLike] = useState<Record<string, boolean>>({});
   const [uploading, setUploading] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: 'post' | 'comment';
+    id: string;
+    postId?: string;
+  } | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = useMemo(() => {
@@ -320,51 +327,57 @@ export default function CommunityFeedPage() {
     }
   }
 
-  async function deletePost(postId: string) {
-    if (!isSupabaseAvailable() || !profile?.id) return;
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+  async function performDelete() {
+    if (!itemToDelete || !isSupabaseAvailable() || !profile?.id) return;
 
     try {
-      const { error } = await supabase!
-        .from('community_posts')
-        .delete()
-        .eq('id', postId);
+      if (itemToDelete.type === 'post') {
+        const { error } = await supabase!
+          .from('community_posts')
+          .delete()
+          .eq('id', itemToDelete.id);
 
-      if (error) throw error;
-      setPosts(prev => prev.filter(p => p.id !== postId));
+        if (error) throw error;
+        setPosts(prev => prev.filter(p => p.id !== itemToDelete.id));
+      } else if (itemToDelete.type === 'comment' && itemToDelete.postId) {
+        const { error } = await supabase!
+          .from('community_comments')
+          .delete()
+          .eq('id', itemToDelete.id);
+
+        if (error) throw error;
+        const postId = itemToDelete.postId;
+        const commentId = itemToDelete.id;
+        setCommentsByPost(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
+        }));
+        setCommentCounts(prev => ({
+          ...prev,
+          [postId]: Math.max(0, (prev[postId] || 1) - 1)
+        }));
+      }
+
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
     } catch (e) {
-      console.error('Error deleting post:', e);
-      alert('Failed to delete post. Please try again.');
+      console.error('Error deleting item:', e);
+      alert(`Failed to delete ${itemToDelete.type}. Please try again.`);
     }
   }
 
-  async function deleteComment(postId: string, commentId: string) {
-    if (!isSupabaseAvailable() || !profile?.id) return;
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+  function confirmDeletePost(postId: string) {
+    setItemToDelete({ type: 'post', id: postId });
+    setIsDeleteModalOpen(true);
+  }
 
-    try {
-      const { error } = await supabase!
-        .from('community_comments')
-        .delete()
-        .eq('id', commentId);
-
-      if (error) throw error;
-      setCommentsByPost(prev => ({
-        ...prev,
-        [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
-      }));
-      setCommentCounts(prev => ({
-        ...prev,
-        [postId]: Math.max(0, (prev[postId] || 1) - 1)
-      }));
-    } catch (e) {
-      console.error('Error deleting comment:', e);
-      alert('Failed to delete comment. Please try again.');
-    }
+  function confirmDeleteComment(postId: string, commentId: string) {
+    setItemToDelete({ type: 'comment', id: commentId, postId });
+    setIsDeleteModalOpen(true);
   }
 
   async function createPost() {
-    if (!isSupabaseAvailable() || !profile?.id) return;
+    if (!isSupabaseAvailable() || !profile?.id || !isAdmin) return;
     const body = composerBody.trim();
     if (!body) return;
 
@@ -473,7 +486,7 @@ export default function CommunityFeedPage() {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="min-w-0">
-            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Creator Club
             </h1>
             <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -481,13 +494,15 @@ export default function CommunityFeedPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setComposerOpen(true)}
-            className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span className="btn-text-glow">New Post</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setComposerOpen(true)}
+              className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span className="btn-text-glow">New Post</span>
+            </button>
+          )}
 
         </div>
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -611,7 +626,7 @@ export default function CommunityFeedPage() {
 
                     {(isAdmin || post.user_id === profile?.id) && (
                       <button
-                        onClick={() => deletePost(post.id)}
+                        onClick={() => confirmDeletePost(post.id)}
                         className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Delete Post"
                       >
@@ -759,7 +774,7 @@ export default function CommunityFeedPage() {
 
                               {(isAdmin || comment.user_id === profile?.id) && (
                                 <button
-                                  onClick={() => deleteComment(post.id, comment.id)}
+                                  onClick={() => confirmDeleteComment(post.id, comment.id)}
                                   className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-start"
                                   title="Delete Comment"
                                 >
@@ -951,6 +966,18 @@ export default function CommunityFeedPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={performDelete}
+        title={`Delete ${itemToDelete?.type === 'post' ? 'Post' : 'Comment'}`}
+        message={`Are you sure you want to delete this ${itemToDelete?.type}? This action cannot be undone.`}
+        confirmText="Delete"
+      />
     </div>
   );
 }
