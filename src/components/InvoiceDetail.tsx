@@ -223,14 +223,16 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             </div>
             {invoice.status === 'paid' ? (
               <p className="text-sm md:text-base font-medium text-green-400">
-                {formatAppDate(invoice.updated_at)}
+                {formatAppDate(invoice.updated_at || invoice.created_at)}
               </p>
             ) : (
               <p className={`text-xl md:text-2xl font-bold ${daysUntilDue < 0 ? 'text-red-400' :
                 daysUntilDue < 7 ? 'text-yellow-400' :
                   'text-green-400'
                 }`}>
-                {daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} overdue` : daysUntilDue}
+                {daysUntilDue < 0
+                  ? `${Math.abs(daysUntilDue)} ${Math.abs(daysUntilDue) === 1 ? 'day' : 'days'} overdue`
+                  : `${daysUntilDue} ${daysUntilDue === 1 ? 'day' : 'days'}`}
               </p>
             )}
           </div>
@@ -355,12 +357,6 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                 <button className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
                   <EnvelopeIcon className="h-5 w-5" />
                   <span>Send to Client</span>
-                </button>
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="w-full bg-slate-800/50 hover:bg-slate-700/50 text-white py-3 rounded-xl transition-colors shrink-glow-button"
-                >
-                  Edit Invoice
                 </button>
               </div>
             </div>

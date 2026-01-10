@@ -568,7 +568,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         }}
                       >
                         {invoice.status === 'paid' ? (
-                          `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at || '')}`
+                          `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at)}`
                         ) : invoice.status === 'overdue' ? (
                           (() => {
                             const diff = Math.floor((new Date().getTime() - new Date(invoice.dueDate || '').getTime()) / (1000 * 3600 * 24));

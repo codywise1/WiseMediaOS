@@ -199,13 +199,19 @@ body {
 }
 
 .btn-header-glass {
-  background-color: rgba(255, 255, 255, 0.1); /* bg-white/10 */
-  backdrop-filter: blur(12px);              /* backdrop-blur-md */
-  border-radius: 50px;                     /* rounded-lg */
-  border: 1px solid rgba(255, 255, 255, 0.2); /* border & border-white/20 */
+  background-color: rgba(255, 255, 255, 0.1);
+  /* bg-white/10 */
+  backdrop-filter: blur(12px);
+  /* backdrop-blur-md */
+  border-radius: 50px;
+  /* rounded-lg */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* border & border-white/20 */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-              0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
-  transition: transform 0.3s ease; /* Smooth shrink transition */
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* shadow-lg */
+  transition: transform 0.3s ease;
+  /* Smooth shrink transition */
   padding: 12px 24px;
   display: inline-flex;
   align-items: center;
@@ -215,17 +221,21 @@ body {
 }
 
 .btn-header-glass:hover {
-  transform: scale(0.98); /* Slight shrink on hover */
+  transform: scale(0.98);
+  /* Slight shrink on hover */
 }
 
 .btn-header-glass .btn-text-glow {
   transition: color 0.3s ease, text-shadow 0.3s ease;
-  color: #d1d1d1; /* Original text color */
+  color: #d1d1d1;
+  /* Original text color */
 }
 
 .btn-header-glass:hover .btn-text-glow {
-  color: #ffffff; /* Brighter text on hover */
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* Subtle glow effect */
+  color: #ffffff;
+  /* Brighter text on hover */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  /* Subtle glow effect */
 }
 
 /* Pill button base styles */
