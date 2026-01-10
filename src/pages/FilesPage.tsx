@@ -269,9 +269,6 @@ export default function FilesPage() {
                 onClick={() => handleFileClick(file)}
               >
                 <div className="flex items-center gap-3 min-w-0 sm:col-span-4">
-                  <span className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                    📄
-                  </span>
                   <div className="min-w-0">
                     <div className="font-semibold truncate">{file.filename}</div>
                     <span className="text-sm sm:text-gray-300">{formatFileSize(file.size_bytes ?? undefined)}</span>

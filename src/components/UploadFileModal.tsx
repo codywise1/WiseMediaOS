@@ -17,12 +17,14 @@ export default function UploadFileModal({ isOpen, onClose, onUpload, clients, pr
   const [linkedProject, setLinkedProject] = useState<string>('');
   const [linkedMeeting, setLinkedMeeting] = useState<string>('');
   const [visibility, setVisibility] = useState<'private' | 'shared'>('private');
+  const [customFilename, setCustomFilename] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setCustomFilename(file.name);
     }
   };
 
@@ -37,6 +39,7 @@ export default function UploadFileModal({ isOpen, onClose, onUpload, clients, pr
         meeting_id: linkedMeeting || undefined,
         visibility,
         status: 'draft',
+        filename: customFilename || undefined,
       });
       onUpload(uploadedFile);
       onClose();
@@ -55,6 +58,7 @@ export default function UploadFileModal({ isOpen, onClose, onUpload, clients, pr
     setLinkedProject('');
     setLinkedMeeting('');
     setVisibility('private');
+    setCustomFilename('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -108,6 +112,21 @@ export default function UploadFileModal({ isOpen, onClose, onUpload, clients, pr
                 </div>
               )}
             </button>
+            {/* File Name (Editable) */}
+            {selectedFile && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  File Name
+                </label>
+                <input
+                  type="text"
+                  value={customFilename}
+                  onChange={(e) => setCustomFilename(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]"
+                  placeholder="Enter filename"
+                />
+              </div>
+            )}
           </div>
 
           {/* Link to Context */}

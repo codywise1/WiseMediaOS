@@ -2007,6 +2007,7 @@ export const filesService = {
     note_id?: string;
     visibility?: FileVisibility;
     status?: FileStatus;
+    filename?: string;
   }) {
     if (!isSupabaseAvailable()) {
       const id = generateId();
@@ -2015,7 +2016,7 @@ export const filesService = {
         id,
         bucket_id: 'files',
         path: id,
-        filename: file.name,
+        filename: meta.filename || file.name,
         content_type: file.type,
         size_bytes: file.size,
         status: meta.status || 'draft',
@@ -2058,7 +2059,7 @@ export const filesService = {
         {
           bucket_id: 'files',
           path: filePath,
-          filename: file.name,
+          filename: meta.filename || file.name,
           content_type: file.type || null,
           size_bytes: file.size,
           status: meta.status || 'draft',
