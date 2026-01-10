@@ -92,13 +92,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
         }
     };
 
-    const saveNote = async (updatedBlocks: NoteBlock[]) => {
+    const saveNote = async (updatedBlocks: NoteBlock[], updatedTitle?: string) => {
         if (!id || isInitialLoad.current) return;
 
         setIsSaving(true);
         try {
             const plainText = updatedBlocks.map(b => b.content || b.items?.join(' ') || b.todos?.map(t => t.text).join(' ') || '').join(' ').slice(0, 1000);
             await noteService.update(id, {
+                title: updatedTitle ?? note?.title,
                 content: updatedBlocks,
                 plainText,
                 updated_at: new Date().toISOString()
@@ -150,10 +151,10 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
     useEffect(() => {
         if (isInitialLoad.current) return;
         const timer = setTimeout(() => {
-            saveNote(blocks);
+            saveNote(blocks, note?.title);
         }, 2000);
         return () => clearTimeout(timer);
-    }, [blocks]);
+    }, [blocks, note?.title]);
 
     const handleDelete = async () => {
         if (!id) return;
@@ -250,7 +251,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                             <div className="flex flex-wrap items-center gap-2">
                                 <span
-                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white capitalize"
                                     style={{
                                         backgroundColor: 'rgba(59, 163, 234, 0.33)',
                                         border: '1px solid rgba(59, 163, 234, 1)'
@@ -259,7 +260,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     {note.category}
                                 </span>
                                 <span
-                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                    className="px-3 py-1 rounded-full text-xs font-semibold text-white capitalize"
                                     style={note.visibility === 'client_visible' ? {
                                         backgroundColor: 'rgba(34, 197, 94, 0.33)',
                                         border: '1px solid #22c55e'
@@ -268,12 +269,12 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                         border: '1px solid rgba(255, 255, 255, 0.2)'
                                     }}
                                 >
-                                    {note.visibility === 'client_visible' ? 'Client visible' : 'Internal'}
+                                    {note.visibility === 'client_visible' ? 'Client Visible' : 'Internal'}
                                 </span>
                                 {note.tags?.map(tag => (
                                     <span
                                         key={tag}
-                                        className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                        className="px-3 py-1 rounded-full text-xs font-semibold text-white capitalize"
                                         style={{
                                             backgroundColor: 'rgba(255, 255, 255, 0.05)',
                                             border: '1px solid rgba(255, 255, 255, 0.15)'
