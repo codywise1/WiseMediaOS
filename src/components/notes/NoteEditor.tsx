@@ -157,6 +157,7 @@ interface InlineToolbarState {
 export default function NoteEditor({ content, onChange, readOnly = false }: NoteEditorProps) {
     const [blocks, setBlocks] = useState<NoteBlock[]>(content || []);
     const refs = useRef<(HTMLInputElement | HTMLTextAreaElement | null)[]>([]);
+    const editorRef = useRef<HTMLDivElement>(null);
     const [slashMenu, setSlashMenu] = useState<SlashMenuState>({
         show: false,
         index: -1,
@@ -298,6 +299,43 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
 
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            const isDeleteKey = e.key === 'Backspace' || e.key === 'Delete';
+
+            if (isDeleteKey && !readOnly) {
+                const sel = window.getSelection();
+                if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    const selectedIds: string[] = [];
+                    const blockElements = editorRef.current?.querySelectorAll('[data-block-id]');
+
+                    blockElements?.forEach(el => {
+                        if (range.intersectsNode(el)) {
+                            const id = el.getAttribute('data-block-id');
+                            if (id) selectedIds.push(id);
+                        }
+                    });
+
+                    if (selectedIds.length > 1) {
+                        e.preventDefault();
+                        const firstId = selectedIds[0];
+                        const firstIdx = blocks.findIndex(b => b.id === firstId);
+
+                        const newBlocks = blocks.filter(b => !selectedIds.includes(b.id));
+                        if (newBlocks.length === 0) {
+                            newBlocks.push({ id: uuidv4(), type: 'paragraph', content: '' });
+                        }
+
+                        updateBlocks(newBlocks);
+
+                        const focusIdx = Math.max(0, firstIdx - 1);
+                        if (newBlocks[focusIdx]) {
+                            setFocusInfo({ id: newBlocks[focusIdx].id, offset: 0 });
+                        }
+                        return;
+                    }
+                }
+            }
+
             if ((e.metaKey || e.ctrlKey) && !readOnly) {
                 const activeIdx = blocks.findIndex(b => b.id === activeBlockId);
                 if (activeIdx === -1) return;
@@ -507,7 +545,7 @@ export default function NoteEditor({ content, onChange, readOnly = false }: Note
     ];
 
     return (
-        <div className="relative min-h-full font-sans selection:bg-[#3aa3eb]/20">
+        <div ref={editorRef} className="relative min-h-full font-sans selection:bg-[#3aa3eb]/20">
             <div className="space-y-[12px] pb-32">
                 {slashMenu.show && (
                     <div
@@ -629,7 +667,7 @@ function BlockComponent({
     const indentPadding = indentLevel * 24; // 24px per level 
 
     return (
-        <div className="group/block relative -ml-12 pl-12" style={{ marginLeft: `${-48 + indentPadding}px`, paddingLeft: `48px` }}>
+        <div data-block-id={block.id} className="group/block relative -ml-12 pl-12" style={{ marginLeft: `${-48 + indentPadding}px`, paddingLeft: `48px` }}>
             <div className="flex items-start gap-4">
                 {!readOnly && (
                     <div className="flex flex-col items-center gap-1 opacity-0 group-hover/block:opacity-100 transition-opacity absolute left-0 top-1">
