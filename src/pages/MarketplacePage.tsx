@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { Star, Package, Zap, Users, Shield, FileText } from 'lucide-react';
+import { Star, Package, Zap, Users, Shield, FileText, Layout, Grid } from 'lucide-react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { supabase } from '../lib/supabase';
 
@@ -131,6 +131,8 @@ export default function MarketplacePage() {
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
+      case 'all': return Grid;
+      case 'templates': return Layout;
       case 'toolkits': return Package;
       case 'graphics': return Zap;
       case 'courses': return Users;
@@ -154,29 +156,34 @@ export default function MarketplacePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-white font-bold text-[40px] mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Marketplace
-        </h1>
-        <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-          Premium tools, templates, and resources.
-        </p>
-      </div>
+      {/* Header Section */}
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Marketplace
+            </h1>
+            <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Premium tools, templates, and resources to accelerate your growth.
+            </p>
+          </div>
+        </div>
 
-      <div className="flex flex-wrap gap-3">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-lg transition-all font-medium ${selectedCategory === cat.id
-              ? 'bg-[#3AA3EB] text-white shadow-lg shadow-[#3AA3EB]/20'
-              : 'bg-white/5 text-gray-300 hover:bg-white/10'
-              }`}
-            style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
-          >
-            {cat.label}
-          </button>
-        ))}
+        <div className="flex flex-wrap gap-2 mt-6">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${selectedCategory === cat.id
+                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white shadow-[0_0_15px_rgba(58,163,235,0.2)]'
+                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
+                }`}
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
