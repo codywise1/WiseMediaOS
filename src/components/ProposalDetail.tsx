@@ -88,10 +88,10 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ClipboardDocumentListIcon },
-    { id: 'pricing', name: 'Pricing & Billing', icon: BanknotesIcon },
+    { id: 'pricing', name: 'Pricing', icon: BanknotesIcon },
     { id: 'sow', name: 'Scope of Work', icon: DocumentTextIcon },
     { id: 'timeline', name: 'Timeline', icon: CalendarIcon },
-    { id: 'legal', name: 'Terms & Conditions', icon: ShieldCheckIcon },
+    { id: 'legal', name: 'Legal', icon: ShieldCheckIcon },
     { id: 'activity', name: 'Activity Log', icon: ChatBubbleLeftRightIcon },
   ];
 
