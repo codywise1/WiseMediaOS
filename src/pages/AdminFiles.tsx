@@ -114,7 +114,7 @@ export default function AdminFiles() {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>Files</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>Files</h1>
             <p className="text-gray-300">Central resources, contracts, and deliverables organized by team</p>
           </div>
           <input

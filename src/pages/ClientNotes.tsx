@@ -208,7 +208,7 @@ export default function ClientNotes({ currentUser }: ClientNotesProps) {
                                     </div>
                                 </div>
 
-                                <div className="h-1 w-full bg-[#3aa3eb]" style={{ transform: 'scaleX(0)', transformOrigin: 'left' }} className="group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+                                <div className="h-1 w-full bg-[#3aa3eb] group-hover:scale-x-100 transition-transform duration-500 ease-out" style={{ transform: 'scaleX(0)', transformOrigin: 'left' }} />
                             </div>
                         );
                     })}
