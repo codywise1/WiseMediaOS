@@ -494,12 +494,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-gray-400">
-                  <th className="px-8 py-5 text-xs font-bold tracking-tight">Invoice</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Status</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Amount</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Due</th>
+                <tr className="bg-white/5 border-b border-white/10 text-gray-300 uppercase tracking-widest">
+                  <th className="px-8 py-5 text-[10px] font-black">Invoice</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Client</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Status</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Amount</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Due</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>

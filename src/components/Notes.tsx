@@ -105,10 +105,11 @@ export default function Notes({ currentUser }: NotesProps) {
     const matchesPinnedFilter = !showPinnedOnly || note.pinned;
 
     return matchesSearch && matchesCategory && matchesClient && matchesProject && matchesVisibility && matchesPinnedFilter;
+  }).sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
-
-  const pinnedNotes = filteredNotes.filter(n => n.pinned);
-  const regularNotes = filteredNotes.filter(n => !n.pinned);
 
   const linkedClients = useMemo(() => {
     const clientIds = new Set(notes.map(n => n.clientId).filter(Boolean));
@@ -304,67 +305,12 @@ export default function Notes({ currentUser }: NotesProps) {
       </div>
 
 
-      {/* Pinned Section */}
-      {pinnedNotes.length > 0 && (
-        <div className="space-y-4">
-          <button
-            onClick={() => setIsPinnedExpanded(!isPinnedExpanded)}
-            className="flex items-center gap-2 text-[10px] font-black text-yellow-500 uppercase tracking-widest group"
-          >
-            <BookmarkIcon className="h-4 w-4 fill-yellow-500" />
-            <span style={{ fontFamily: 'Integral CF, sans-serif' }}>Pinned Notes ({pinnedNotes.length})</span>
-            {isPinnedExpanded ? <ChevronUpIcon className="h-3 w-3" /> : <ChevronDownIcon className="h-3 w-3" />}
-          </button>
-
-          {isPinnedExpanded && (
-            viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pinnedNotes.map(note => (
-                  <NoteItem
-                    key={note.id}
-                    note={note}
-                    viewMode={viewMode}
-                    onEdit={handleEditNote}
-                    onDelete={handleDeleteNote}
-                    onTogglePin={handleTogglePin}
-                    onToggleShare={handleToggleShare}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                  <span>Title</span>
-                  <span>Client</span>
-                  <span className="text-left">Type</span>
-                  <span className="text-left">Last Edited</span>
-                  <span className="text-right pr-8">Action</span>
-                </div>
-                <div className="divide-y divide-white/5">
-                  {pinnedNotes.map(note => (
-                    <NoteItem
-                      key={note.id}
-                      note={note}
-                      viewMode={viewMode}
-                      onEdit={handleEditNote}
-                      onDelete={handleDeleteNote}
-                      onTogglePin={handleTogglePin}
-                      onToggleShare={handleToggleShare}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          )}
-          <div className="h-px bg-white/5 w-full mt-8" />
-        </div>
-      )}
 
       {/* Main List */}
-      {regularNotes.length > 0 ? (
+      {filteredNotes.length > 0 ? (
         viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {regularNotes.map(note => (
+            {filteredNotes.map(note => (
               <NoteItem
                 key={note.id}
                 note={note}
@@ -378,7 +324,7 @@ export default function Notes({ currentUser }: NotesProps) {
           </div>
         ) : (
           <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] px-8 py-4 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-300">
               <span>Title</span>
               <span>Client</span>
               <span className="text-left">Type</span>
@@ -386,7 +332,7 @@ export default function Notes({ currentUser }: NotesProps) {
               <span className="text-right pr-8">Action</span>
             </div>
             <div className="divide-y divide-white/5">
-              {regularNotes.map(note => (
+              {filteredNotes.map(note => (
                 <NoteItem
                   key={note.id}
                   note={note}
@@ -465,10 +411,10 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         <div className="flex-1">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0 pr-8">
-              <h3 className="text-xl font-bold text-white truncate mb-1 group-hover:text-[#3aa3eb] transition-colors" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#3aa3eb] transition-colors line-clamp-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                 {note.title}
               </h3>
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
+              <p className="text-xs font-bold text-[#3aa3eb]/80 uppercase tracking-widest truncate mb-3">
                 {note.client?.name || 'Internal Record'}
               </p>
             </div>
@@ -514,7 +460,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
             )}
           </div>
 
-          <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3">
+          <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-4 overflow-hidden" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             {note.plainText || 'No preview available...'}
           </p>
         </div>
@@ -545,12 +491,12 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         >
           <BookmarkIcon className={`h-4 w-4 ${note.pinned ? 'fill-yellow-400' : ''}`} />
         </button>
-        <h3 className="text-sm font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate" style={{ fontFamily: 'Integral CF, sans-serif' }}>
           {note.title}
         </h3>
       </div>
 
-      <div className="text-sm text-gray-400 font-medium truncate">
+      <div className="text-sm text-gray-300 font-semibold truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
         {note.client?.name || 'Wise Media'}
       </div>
 
@@ -567,7 +513,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         </span>
       </div>
 
-      <div className="text-sm text-gray-400 font-medium text-left">
+      <div className="text-xs text-gray-400 font-bold text-left uppercase tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
         {formatAppDate(note.updated_at)}
       </div>
 

@@ -119,7 +119,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Chat', href: '/community/chat', icon: ChatBubbleLeftRightIcon },
+        { name: 'Chat', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
@@ -139,7 +139,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
     {
       label: 'Community',
       items: [
-        { name: 'Messages', href: '/support', icon: ChatBubbleLeftRightIcon }
+        { name: 'Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon }
       ]
     },
     { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpenIcon }] }
@@ -150,7 +150,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Direct Messages', href: '/community/chat', icon: ChatBubbleLeftRightIcon }
+        { name: 'Direct Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon }
       ]
     },
     {

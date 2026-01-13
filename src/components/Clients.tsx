@@ -535,8 +535,8 @@ export default function Clients({ currentUser }: ClientsProps) {
                         <span
                           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
                           style={{
-                            backgroundColor: 'rgba(59, 163, 234, 0.33)',
-                            border: '1px solid rgba(59, 163, 234, 1)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
                             color: '#ffffff'
                           }}
                         >

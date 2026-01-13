@@ -447,7 +447,6 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
                   <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{item.name}</h3>
                     <p className="text-sm text-gray-400">{item.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">{item.quantity} x {formatCurrency(item.unit_price_cents)}</p>
                   </div>
                   <p className="text-xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{formatCurrency(item.line_total_cents)}</p>
                 </div>

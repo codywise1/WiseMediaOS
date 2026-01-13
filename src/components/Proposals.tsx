@@ -291,12 +291,12 @@ export default function Proposals({ currentUser }: ProposalsProps) {
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-gray-400">
-                  <th className="px-8 py-5 text-xs font-bold tracking-tight">Proposal Name</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Client</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Deal Stage</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Value</th>
-                  <th className="px-6 py-5 text-xs font-bold tracking-tight">Status Timeline</th>
+                <tr className="bg-white/5 border-b border-white/10 text-gray-300 uppercase tracking-widest">
+                  <th className="px-8 py-5 text-[10px] font-black">Proposal Name</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Client</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Deal Stage</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Value</th>
+                  <th className="px-6 py-5 text-[10px] font-black">Status Timeline</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>

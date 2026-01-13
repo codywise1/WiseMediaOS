@@ -284,7 +284,7 @@ export default function FilesPage() {
 
       {/* File List Table */}
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
-        <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-white/5 border-b border-white/10">
+        <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-[10px] font-black text-gray-300 uppercase tracking-widest bg-white/5 border-b border-white/10">
           <div className="col-span-3">File Name</div>
           <div className="col-span-1">Type</div>
           <div className="col-span-2">Linked To</div>

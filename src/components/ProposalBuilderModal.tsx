@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 import { termsAndConditionsTemplate } from '../config/termsTemplate';
 import { generateTermsAndConditionsPDF } from '../utils/proposalPdfGenerator';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { parseMarkdown } from '../lib/markdown';
 
 
 interface ProposalBuilderModalProps {
@@ -317,7 +318,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
     setFormData({
       ...formData,
       selectedServices: formData.selectedServices.map(s =>
-        s.serviceType === serviceType ? { ...s, unitPrice } : s
+        s.serviceType === serviceType ? { ...s, unitPrice, quantity: 1 } : s
       )
     });
   };
@@ -333,6 +334,24 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       style: 'currency',
       currency: formData.currency
     }).format(cents / 100);
+  };
+
+  const handlePriceChange = (serviceType: string, value: string) => {
+    // Treat the input purely as dollars for simplicity (1000 -> $1,000)
+    const numericValue = value.replace(/[^0-9]/g, '');
+    const dollars = parseInt(numericValue) || 0;
+    updateServicePrice(serviceType, dollars * 100);
+  };
+
+  const formatInputValue = (cents: number) => {
+    if (!cents && cents !== 0) return '';
+    const dollars = cents / 100;
+    return new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: formData.currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(dollars);
   };
 
   if (!isOpen) return null;
@@ -491,7 +510,6 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                           <div className="flex items-start justify-between mb-2">
                             <div>
                               <h4 className="font-bold text-white">{template.label}</h4>
-                              <p className="text-xs text-gray-400">{template.priceRangeHint}</p>
                             </div>
                             <div className={`
                               w-6 h-6 rounded border-2 flex items-center justify-center
@@ -504,27 +522,18 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                           {isSelected && selectedService && (
                             <div className="mt-4 space-y-3" onClick={(e) => e.stopPropagation()}>
                               <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Quantity</label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={selectedService.quantity}
-                                  onChange={(e) => updateServiceQuantity(template.serviceType, parseInt(e.target.value) || 1)}
-                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white text-sm"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-bold text-gray-400 mb-1">Unit Price ($)</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={selectedService.unitPrice / 100}
-                                  onChange={(e) => updateServicePrice(template.serviceType, Math.round(parseFloat(e.target.value) * 100) || 0)}
-                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white text-sm"
-                                />
+                                <label className="block text-xs font-bold text-gray-400 mb-1">Price</label>
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={formatInputValue(selectedService.unitPrice)}
+                                    onChange={(e) => handlePriceChange(template.serviceType, e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white text-sm"
+                                    placeholder="$0"
+                                  />
+                                </div>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {formatCurrency(selectedService.unitPrice)} × {selectedService.quantity} = {formatCurrency(selectedService.unitPrice * selectedService.quantity)}
+                                  Total: {formatCurrency(selectedService.unitPrice * selectedService.quantity)}
                                 </p>
                               </div>
                             </div>
@@ -571,9 +580,6 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                         <div key={service.serviceType} className="flex justify-between items-center">
                           <div>
                             <p className="text-white font-semibold">{template?.label}</p>
-                            <p className="text-sm text-gray-400">
-                              {formatCurrency(service.unitPrice)} × {service.quantity}
-                            </p>
                           </div>
                           <p className="text-white font-bold">
                             {formatCurrency(service.unitPrice * service.quantity)}
@@ -720,9 +726,10 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                       <span className="text-[10px] text-[#3aa3eb] font-bold px-2 py-0.5 bg-[#3aa3eb]/10 rounded">TEMPLATE</span>
                     </div>
                     <div className="p-6 overflow-y-auto custom-scrollbar flex-1 prose prose-invert prose-sm max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-300 text-sm font-light leading-relaxed">
-                        {termsAndConditionsTemplate}
-                      </div>
+                      <div
+                        className="text-gray-300 text-sm font-light leading-relaxed markdown-content"
+                        dangerouslySetInnerHTML={{ __html: parseMarkdown(termsAndConditionsTemplate) }}
+                      />
                     </div>
                   </div>
 
@@ -793,7 +800,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                           return (
                             <div key={service.serviceType} className="flex justify-between text-sm">
                               <span className="text-gray-300">
-                                {template?.label} × {service.quantity}
+                                {template?.label}
                               </span>
                               <span className="text-white font-semibold">
                                 {formatCurrency(service.unitPrice * service.quantity)}
