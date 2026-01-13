@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileRecord, filesService, FileStatus, FileVisibility } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
@@ -43,15 +43,6 @@ export default function FileDetailPage() {
     }
   };
 
-  const handleVisibilityChange = async (newVisibility: FileVisibility) => {
-    if (!file) return;
-    try {
-      const updated = await filesService.update(file.id, { visibility: newVisibility });
-      if (updated) setFile(updated);
-    } catch (error) {
-      console.error('Error updating visibility:', error);
-    }
-  };
 
   if (loading) {
     return <div className="p-8">Loading file...</div>;
@@ -207,16 +198,30 @@ export default function FileDetailPage() {
             <div className="glass-card rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Sharing</h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Visibility</label>
-                  <select
-                    value={file.visibility}
-                    onChange={(e) => handleVisibilityChange(e.target.value as FileVisibility)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-sm text-gray-400">Shared with Client</label>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Visibility across portal</p>
+                  </div>
+                  <div
+                    onClick={async () => {
+                      try {
+                        const newShareState = !file.is_shared_with_client;
+                        const updated = await filesService.toggleShare(file.id, newShareState);
+                        if (updated) setFile(updated);
+                      } catch (err) {
+                        console.error('Error toggling share:', err);
+                      }
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${file.is_shared_with_client ? 'bg-emerald-500/40 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border border-white/10'
+                      }`}
+                    title={file.is_shared_with_client ? 'Unshare with client' : 'Share with client'}
                   >
-                    <option value="private">Private</option>
-                    <option value="shared">Shared with Client</option>
-                  </select>
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${file.is_shared_with_client ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Status</label>

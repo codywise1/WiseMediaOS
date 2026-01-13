@@ -1,4 +1,4 @@
- 
+
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { DocumentIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
@@ -135,12 +135,14 @@ export default function AdminFiles() {
 
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-white/5 border-b border-white/10">
-          <div className="col-span-4">Name</div>
-          <div className="col-span-2">Type</div>
-          <div className="col-span-2">Size</div>
+          <div className="col-span-3">Name</div>
+          <div className="col-span-1">Type</div>
+          <div className="col-span-2 text-right">Status</div>
+          <div className="col-span-1 text-center">Share</div>
+          <div className="col-span-1">Size</div>
           <div className="col-span-2">Updated</div>
           <div className="col-span-1">Team</div>
-          <div className="col-span-1 text-right">Status</div>
+          <div className="col-span-1 text-right">Action</div>
         </div>
         <div className="divide-y divide-white/10">
           {loading && (
@@ -156,7 +158,7 @@ export default function AdminFiles() {
               key={doc.id}
               className="flex flex-col gap-3 px-4 py-4 text-sm text-white/90 hover:bg-white/5 transition sm:grid sm:grid-cols-12 sm:gap-0 sm:items-center"
             >
-              <div className="flex items-center gap-3 min-w-0 sm:col-span-4">
+              <div className="flex items-center gap-3 min-w-0 sm:col-span-3">
                 <span className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
                   <DocumentIcon className="h-5 w-5 text-[#8AB5EB]" />
                 </span>
@@ -173,11 +175,57 @@ export default function AdminFiles() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs text-gray-300 sm:contents">
-                <div className="flex flex-col gap-1 sm:col-span-2">
+                <div className="flex flex-col gap-1 sm:col-span-1">
                   <span className="text-[10px] uppercase tracking-wide text-gray-500 sm:hidden">Type</span>
                   <span className="text-sm sm:text-gray-300">{getFileType(doc)}</span>
                 </div>
-                <div className="flex flex-col gap-1 sm:col-span-2">
+
+                <div className="flex justify-start sm:col-span-2 sm:justify-end">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={doc.status || 'Ready'}
+                      onChange={(e) => handleStatusChange(doc, e.target.value)}
+                      disabled={updatingId === doc.id}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold bg-transparent ${adminFileStatusColors[doc.status || 'Ready'] || 'bg-white/5'} border border-white/10`}
+                      title="Update status"
+                    >
+                      <option value="Ready">Ready</option>
+                      <option value="In Review">In Review</option>
+                      <option value="Signed">Signed</option>
+                      <option value="Approved">Approved</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-1">
+                  <span className="text-[10px] uppercase tracking-wide text-gray-500 sm:hidden">Share</span>
+                  <div className="flex items-center sm:justify-center">
+                    <div
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const newShareState = !doc.is_shared_with_client;
+                          const updated = await documentsService.update(doc.id, { is_shared_with_client: newShareState });
+                          if (updated) {
+                            setDocuments(prev => prev.map(d => (d.id === doc.id ? updated : d)));
+                          }
+                        } catch (err) {
+                          console.error('Error toggling share:', err);
+                        }
+                      }}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${doc.is_shared_with_client ? 'bg-emerald-500/40 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border border-white/10'
+                        }`}
+                      title={doc.is_shared_with_client ? 'Unshare with client' : 'Share with client'}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${doc.is_shared_with_client ? 'translate-x-5' : 'translate-x-1'
+                          }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1 sm:col-span-1">
                   <span className="text-[10px] uppercase tracking-wide text-gray-500 sm:hidden">Size</span>
                   <span className="text-sm sm:text-gray-300">{formatBytes(doc.size_bytes)}</span>
                 </div>
@@ -189,25 +237,10 @@ export default function AdminFiles() {
                   <span className="text-[10px] uppercase tracking-wide text-gray-500 sm:hidden">Team</span>
                   <span className="text-sm sm:text-gray-300">{doc.owner_team || '—'}</span>
                 </div>
-              </div>
-
-              <div className="flex justify-start sm:col-span-1 sm:justify-end">
-                <div className="flex items-center gap-2">
-                  <select
-                    value={doc.status || 'Ready'}
-                    onChange={(e) => handleStatusChange(doc, e.target.value)}
-                    disabled={updatingId === doc.id}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold bg-transparent ${adminFileStatusColors[doc.status || 'Ready'] || 'bg-white/5'} border border-white/10`}
-                    title="Update status"
-                  >
-                    <option value="Ready">Ready</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Signed">Signed</option>
-                    <option value="Approved">Approved</option>
-                  </select>
+                <div className="flex items-center justify-end sm:col-span-1">
                   <button
                     onClick={() => handleDelete(doc)}
-                    className="text-blue-200 hover:text-red-200 p-1"
+                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all border border-white/10"
                     title="Delete"
                   >
                     <TrashIcon className="h-4 w-4" />

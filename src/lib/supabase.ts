@@ -479,6 +479,7 @@ export interface DocumentRecord {
   owner_team?: string | null;
   status?: string | null;
   created_by?: string | null;
+  is_shared_with_client?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -497,6 +498,7 @@ export interface FileRecord {
   project_id?: string | null;
   meeting_id?: string | null;
   note_id?: string | null;
+  is_shared_with_client?: boolean;
   created_at: string;
   updated_at: string;
   // Optional populated relations
@@ -1948,7 +1950,7 @@ export const documentsService = {
     return inserted as DocumentRecord;
   },
 
-  async update(id: string, patch: Partial<Pick<DocumentRecord, 'status' | 'owner_team' | 'filename'>>) {
+  async update(id: string, patch: Partial<Pick<DocumentRecord, 'status' | 'owner_team' | 'filename' | 'is_shared_with_client'>>) {
     if (!id) throw new Error('Document id is required');
 
     if (!isSupabaseAvailable()) {
@@ -2151,6 +2153,13 @@ export const filesService = {
 
     if (error) throw error;
     return (data as FileRecord) || null;
+  },
+
+  async toggleShare(id: string, isShared: boolean) {
+    return this.update(id, {
+      is_shared_with_client: isShared,
+      visibility: isShared ? 'shared' : 'private'
+    });
   },
 
   async getById(id: string) {

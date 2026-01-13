@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
   ArrowDownTrayIcon,
-  PaperAirplaneIcon
+  EyeIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -19,6 +20,7 @@ import {
 } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import UploadFileModal from '../components/UploadFileModal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../contexts/AuthContext';
 
 function getFileType(file: FileRecord) {
@@ -40,6 +42,8 @@ export default function FilesPage() {
   const [selectedStatus, setSelectedStatus] = useState<FileStatus | ''>('');
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [meetings, setMeetings] = useState<Appointment[]>([]);
@@ -142,6 +146,24 @@ export default function FilesPage() {
 
   const handleFileClick = (file: FileRecord) => {
     navigate(`/files/${file.id}`);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, file: FileRecord) => {
+    e.stopPropagation();
+    setSelectedFile(file);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedFile) return;
+    try {
+      await filesService.delete(selectedFile);
+      setFiles(prev => prev.filter(f => f.id !== selectedFile.id));
+      setIsDeleteDialogOpen(false);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
   };
 
   return (
@@ -263,12 +285,12 @@ export default function FilesPage() {
       {/* File List Table */}
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-white/5 border-b border-white/10">
-          <div className="col-span-4">File Name</div>
+          <div className="col-span-3">File Name</div>
           <div className="col-span-1">Type</div>
-          <div className="col-span-3">Linked To</div>
+          <div className="col-span-2">Linked To</div>
+          <div className="col-span-2 text-left">Status</div>
           <div className="col-span-2">Last Updated</div>
-          <div className="col-span-1 text-left">Status</div>
-          <div className="col-span-1">Actions</div>
+          <div className="col-span-2 text-right">Actions</div>
         </div>
         <div className="divide-y divide-white/10">
           {loading ? (
@@ -282,7 +304,7 @@ export default function FilesPage() {
                 className="flex flex-col gap-3 px-4 py-4 text-sm text-white/90 hover:bg-white/5 transition sm:grid sm:grid-cols-12 sm:gap-0 sm:items-center cursor-pointer"
                 onClick={() => handleFileClick(file)}
               >
-                <div className="flex items-center gap-3 min-w-0 sm:col-span-4">
+                <div className="flex items-center gap-3 min-w-0 sm:col-span-3">
                   <div className="min-w-0">
                     <div className="font-semibold truncate">{file.filename}</div>
                     <span className="text-sm sm:text-gray-300">{formatFileSize(file.size_bytes ?? undefined)}</span>
@@ -291,13 +313,11 @@ export default function FilesPage() {
 
                 <div className="sm:col-span-1 text-xs text-gray-300">{getFileType(file)}</div>
 
-                <div className="sm:col-span-3 text-xs text-gray-300">
+                <div className="sm:col-span-2 text-xs text-gray-300 truncate">
                   {file.client?.name || file.project?.name || file.meeting?.title || '—'}
                 </div>
 
-                <div className="sm:col-span-2 text-xs text-gray-300">{formatAppDate(file.updated_at)}</div>
-
-                <div className="sm:col-span-1 flex items-center justify-start">
+                <div className="sm:col-span-2 flex items-center justify-start">
                   {(() => {
                     const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
                       draft: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
@@ -325,19 +345,57 @@ export default function FilesPage() {
                   })()}
                 </div>
 
-                <div className="sm:col-span-1 flex gap-2">
+                <div className="sm:col-span-2 text-xs text-gray-300">{formatAppDate(file.updated_at)}</div>
+
+                <div className="sm:col-span-2 flex items-center justify-end gap-2 pr-2">
+                  <div
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        const newShareState = !file.is_shared_with_client;
+                        const updated = await filesService.toggleShare(file.id, newShareState);
+                        if (updated) {
+                          setFiles(prev => prev.map(f => (f.id === file.id ? updated : f)));
+                        }
+                      } catch (err) {
+                        console.error('Error toggling share:', err);
+                      }
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${file.is_shared_with_client ? 'bg-emerald-500/40 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border border-white/10'
+                      }`}
+                    title={file.is_shared_with_client ? 'Unshare with client' : 'Share with client'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${file.is_shared_with_client ? 'translate-x-5' : 'translate-x-1'
+                        }`}
+                    />
+                  </div>
+
                   <button
-                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                    onClick={(e) => { e.stopPropagation(); handleFileClick(file); }}
+                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
+                    title="View Details"
+                  >
+                    <EyeIcon className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); /* Download logic */ }}
+                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
                     title="Download"
                   >
                     <ArrowDownTrayIcon className="h-4 w-4" />
                   </button>
-                  <button
-                    className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
-                    title="Share"
-                  >
-                    <PaperAirplaneIcon className="h-4 w-4" />
-                  </button>
+
+                  {profile?.role === 'admin' && (
+                    <button
+                      onClick={(e) => handleDeleteClick(e, file)}
+                      className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all border border-white/5"
+                      title="Delete"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -351,6 +409,13 @@ export default function FilesPage() {
         clients={clients}
         projects={projects}
         meetings={meetings}
+      />
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message={`Are you sure you want to delete "${selectedFile?.filename}"? This action cannot be undone.`}
       />
     </div>
   );
