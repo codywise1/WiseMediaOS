@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseAvailable, clientService, Client } from '../lib/supabase';
+import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDateTime } from '../lib/dateFormat';
 
 interface Channel {
@@ -23,16 +23,49 @@ interface Message {
   profiles: {
     full_name: string;
     avatar_url: string | null;
-    role: string;
+    role: UserRole;
   };
+  attachments?: any[];
 }
+
+const COMMON_EMOJIS = ['👍', '❤️', '🔥', '😂', '🙌', '😮', '😢', '💯'];
+
+const isImageUrl = (url: string) => {
+  const lower = url.toLowerCase();
+  return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.webp');
+};
+
+const isVideoUrl = (url: string) => {
+  const lower = url.toLowerCase();
+  return (
+    lower.endsWith('.mp4') ||
+    lower.endsWith('.webm') ||
+    lower.endsWith('.ogg') ||
+    lower.endsWith('.mov') ||
+    lower.includes('youtube.com/watch') ||
+    lower.includes('youtu.be') ||
+    lower.includes('vimeo.com')
+  );
+};
+
+const getYouTubeId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const getVimeoId = (url: string) => {
+  const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:\w+\/)?|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+  const match = url.match(regExp);
+  return (match && match[1]) ? match[1] : null;
+};
 
 interface PrivateConversation {
   id: string;
   full_name: string;
   email?: string | null;
   avatar_url: string | null;
-  role: string;
+  role: UserRole;
   unreadCount: number;
 }
 
@@ -53,11 +86,11 @@ const mockUsers: PrivateConversation[] = [
 
 const mockChannelMessages: Record<string, Message[]> = {
   '1': [
-    { id: 'm1', message: 'Welcome to the new community chat!', created_at: new Date(Date.now() - 86400000).toISOString(), profiles: { full_name: 'System', avatar_url: null, role: 'admin' } },
-    { id: 'm2', message: 'This is looking great!', created_at: new Date(Date.now() - 3600000).toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
+    { id: 'm1', user_id: 'u1', message: 'Welcome to the new community chat!', created_at: new Date(Date.now() - 86400000).toISOString(), profiles: { full_name: 'System', avatar_url: null, role: 'admin' } },
+    { id: 'm2', user_id: 'u2', message: 'This is looking great!', created_at: new Date(Date.now() - 3600000).toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
   ],
   '2': [
-    { id: 'm3', message: 'New course dropping soon!', created_at: new Date().toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
+    { id: 'm3', user_id: 'u3', message: 'New course dropping soon!', created_at: new Date().toISOString(), profiles: { full_name: 'Sarah Connor', avatar_url: null, role: 'admin' } },
   ],
 };
 
@@ -86,6 +119,17 @@ export default function CommunityPage() {
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingMessageText, setEditingMessageText] = useState('');
+
+  const [composerAttachments, setComposerAttachments] = useState<{ type: string; url: string }[]>([]);
+  const [composerAttachmentUrl, setComposerAttachmentUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [chatReactionCounts, setChatReactionCounts] = useState<Record<string, Record<string, number>>>({});
+  const [userChatReactions, setUserChatReactions] = useState<Record<string, string>>({});
+  const [privateReactionCounts, setPrivateReactionCounts] = useState<Record<string, Record<string, number>>>({});
+  const [userPrivateReactions, setUserPrivateReactions] = useState<Record<string, string>>({});
+  const [togglingReaction, setTogglingReaction] = useState<Record<string, boolean>>({});
 
 
   // Use a ref to persist mock messages during session in demo mode
@@ -319,8 +363,9 @@ export default function CommunityPage() {
 
   async function fetchChannels() {
     if (!isSupabaseAvailable()) {
-      setChannels(mockChannels);
-      setSelectedChannel(mockChannels[0]);
+      const sortedMock = [...mockChannels].sort((a, b) => b.name.localeCompare(a.name));
+      setChannels(sortedMock);
+      setSelectedChannel(sortedMock[0]);
       return;
     }
 
@@ -328,7 +373,7 @@ export default function CommunityPage() {
       .from('chat_channels')
       .select('*')
       .eq('type', 'general')
-      .order('created_at', { ascending: true });
+      .order('name', { ascending: false });
 
     if (data && data.length > 0) {
       setChannels(data);
@@ -350,7 +395,7 @@ export default function CommunityPage() {
           description: newChannelDescription.trim(),
           type: 'general'
         };
-        setChannels(prev => [...prev, newChannel]);
+        setChannels(prev => [...prev, newChannel].sort((a, b) => b.name.localeCompare(a.name)));
         setSelectedChannel(newChannel);
       } else {
         const { data, error } = await supabase!
@@ -366,7 +411,7 @@ export default function CommunityPage() {
 
         if (error) throw error;
         if (data) {
-          setChannels(prev => [...prev, data]);
+          setChannels(prev => [...prev, data].sort((a, b) => b.name.localeCompare(a.name)));
           setSelectedChannel(data);
         }
       }
@@ -391,7 +436,7 @@ export default function CommunityPage() {
 
       if (!isSupabaseAvailable()) {
         const updated = { ...editingChannel, name: formattedName, description: newChannelDescription.trim() };
-        setChannels(prev => prev.map(c => c.id === editingChannel.id ? updated : c));
+        setChannels(prev => prev.map(c => c.id === editingChannel.id ? updated : c).sort((a, b) => b.name.localeCompare(a.name)));
         if (selectedChannel?.id === editingChannel.id) setSelectedChannel(updated);
       } else {
         const { data, error } = await supabase!
@@ -406,7 +451,7 @@ export default function CommunityPage() {
 
         if (error) throw error;
         if (data) {
-          setChannels(prev => prev.map(c => c.id === editingChannel.id ? data : c));
+          setChannels(prev => prev.map(c => c.id === editingChannel.id ? data : c).sort((a, b) => b.name.localeCompare(a.name)));
           if (selectedChannel?.id === editingChannel.id) setSelectedChannel(data);
         }
       }
@@ -543,6 +588,26 @@ export default function CommunityPage() {
     }
   }
 
+  async function getFirstAdminId(): Promise<string | null> {
+    if (!isSupabaseAvailable()) return null;
+    if (!profile) return null;
+
+    try {
+      const { data, error } = await supabase!
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (e) {
+      console.error('Error fetching admin:', e);
+      return null;
+    }
+  }
+
   async function handleUpdatePrivateMessage(messageId: string) {
     if (!editingMessageText.trim() || !isAdmin) return;
 
@@ -606,12 +671,329 @@ export default function CommunityPage() {
         .order('created_at', { ascending: true })
         .limit(100);
 
-      if (error) throw error;
-      if (data) setMessages(data);
+      if (data) {
+        setMessages(data);
+        hydrateChatReactions(data.map(m => m.id));
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   }
+
+  async function hydrateChatReactions(messageIds: string[]) {
+    if (!isSupabaseAvailable()) return;
+    const { data, error } = await supabase!
+      .from('chat_reactions')
+      .select('message_id,user_id,reaction')
+      .in('message_id', messageIds);
+
+    if (error) {
+      console.error('Error loading chat reactions:', error);
+      return;
+    }
+
+    const counts: Record<string, Record<string, number>> = {};
+    const mine: Record<string, string> = {};
+
+    for (const row of (data as any[]) || []) {
+      if (!counts[row.message_id]) counts[row.message_id] = {};
+      counts[row.message_id][row.reaction] = (counts[row.message_id][row.reaction] || 0) + 1;
+
+      if (profile?.id && row.user_id === profile.id) {
+        mine[row.message_id] = row.reaction;
+      }
+    }
+    setChatReactionCounts(counts);
+    setUserChatReactions(mine);
+  }
+
+  async function hydratePrivateReactions(messageIds: string[]) {
+    if (!isSupabaseAvailable()) return;
+    const { data, error } = await supabase!
+      .from('private_message_reactions')
+      .select('message_id,user_id,reaction')
+      .in('message_id', messageIds);
+
+    if (error) {
+      console.error('Error loading private reactions:', error);
+      return;
+    }
+
+    const counts: Record<string, Record<string, number>> = {};
+    const mine: Record<string, string> = {};
+
+    for (const row of (data as any[]) || []) {
+      if (!counts[row.message_id]) counts[row.message_id] = {};
+      counts[row.message_id][row.reaction] = (counts[row.message_id][row.reaction] || 0) + 1;
+
+      if (profile?.id && row.user_id === profile.id) {
+        mine[row.message_id] = row.reaction;
+      }
+    }
+    setPrivateReactionCounts(counts);
+    setUserPrivateReactions(mine);
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !isSupabaseAvailable() || !profile?.id) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase!.storage
+        .from('community')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase!.storage
+        .from('community')
+        .getPublicUrl(filePath);
+
+      const url = data.publicUrl;
+      let type = 'link';
+      if (isImageUrl(url)) type = 'image';
+      else if (isVideoUrl(url)) type = 'video';
+
+      setComposerAttachments(prev => [...prev, { type, url }]);
+    } catch (e) {
+      console.error('Error uploading file:', e);
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const addAttachment = () => {
+    const url = composerAttachmentUrl.trim();
+    if (!url) return;
+    let type = 'link';
+    if (isImageUrl(url)) type = 'image';
+    else if (isVideoUrl(url)) type = 'video';
+
+    setComposerAttachments(prev => [...prev, { type, url }]);
+    setComposerAttachmentUrl('');
+  };
+
+  async function handleChatReaction(messageId: string, reaction: string) {
+    if (!isSupabaseAvailable() || !profile?.id) return;
+    if (togglingReaction[messageId]) return;
+    setTogglingReaction(prev => ({ ...prev, [messageId]: true }));
+    try {
+      const currentReaction = userChatReactions[messageId];
+
+      if (currentReaction === reaction) {
+        const { error } = await supabase!
+          .from('chat_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', profile.id)
+          .eq('reaction', reaction);
+        if (error) throw error;
+
+        setUserChatReactions(prev => {
+          const next = { ...prev };
+          delete next[messageId];
+          return next;
+        });
+        setChatReactionCounts(prev => {
+          const next = { ...prev };
+          if (next[messageId] && next[messageId][reaction]) {
+            next[messageId] = { ...next[messageId], [reaction]: Math.max(0, next[messageId][reaction] - 1) };
+          }
+          return next;
+        });
+      } else {
+        if (currentReaction) {
+          const { error } = await supabase!
+            .from('chat_reactions')
+            .update({ reaction })
+            .eq('message_id', messageId)
+            .eq('user_id', profile.id);
+          if (error) throw error;
+
+          setUserChatReactions(prev => ({ ...prev, [messageId]: reaction }));
+          setChatReactionCounts(prev => {
+            const next = { ...prev };
+            if (next[messageId]) {
+              next[messageId] = { ...next[messageId] };
+              if (next[messageId][currentReaction]) {
+                next[messageId][currentReaction] = Math.max(0, next[messageId][currentReaction] - 1);
+              }
+              next[messageId][reaction] = (next[messageId][reaction] || 0) + 1;
+            }
+            return next;
+          });
+        } else {
+          const { error } = await supabase!
+            .from('chat_reactions')
+            .insert({ message_id: messageId, user_id: profile.id, reaction });
+          if (error) throw error;
+
+          setUserChatReactions(prev => ({ ...prev, [messageId]: reaction }));
+          setChatReactionCounts(prev => {
+            const next = { ...prev };
+            if (!next[messageId]) next[messageId] = {};
+            next[messageId] = { ...next[messageId], [reaction]: (next[messageId][reaction] || 0) + 1 };
+            return next;
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error handling chat reaction:', e);
+    } finally {
+      setTogglingReaction(prev => ({ ...prev, [messageId]: false }));
+    }
+  }
+
+  async function handlePrivateReaction(messageId: string, reaction: string) {
+    if (!isSupabaseAvailable() || !profile?.id) return;
+    if (togglingReaction[messageId]) return;
+    setTogglingReaction(prev => ({ ...prev, [messageId]: true }));
+    try {
+      const currentReaction = userPrivateReactions[messageId];
+
+      if (currentReaction === reaction) {
+        const { error } = await supabase!
+          .from('private_message_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', profile.id)
+          .eq('reaction', reaction);
+        if (error) throw error;
+
+        setUserPrivateReactions(prev => {
+          const next = { ...prev };
+          delete next[messageId];
+          return next;
+        });
+        setPrivateReactionCounts(prev => {
+          const next = { ...prev };
+          if (next[messageId] && next[messageId][reaction]) {
+            next[messageId] = { ...next[messageId], [reaction]: Math.max(0, next[messageId][reaction] - 1) };
+          }
+          return next;
+        });
+      } else {
+        if (currentReaction) {
+          const { error } = await supabase!
+            .from('private_message_reactions')
+            .update({ reaction })
+            .eq('message_id', messageId)
+            .eq('user_id', profile.id);
+          if (error) throw error;
+
+          setUserPrivateReactions(prev => ({ ...prev, [messageId]: reaction }));
+          setPrivateReactionCounts(prev => {
+            const next = { ...prev };
+            if (next[messageId]) {
+              next[messageId] = { ...next[messageId] };
+              if (next[messageId][currentReaction]) {
+                next[messageId][currentReaction] = Math.max(0, next[messageId][currentReaction] - 1);
+              }
+              next[messageId][reaction] = (next[messageId][reaction] || 0) + 1;
+            }
+            return next;
+          });
+        } else {
+          const { error } = await supabase!
+            .from('private_message_reactions')
+            .insert({ message_id: messageId, user_id: profile.id, reaction });
+          if (error) throw error;
+
+          setUserPrivateReactions(prev => ({ ...prev, [messageId]: reaction }));
+          setPrivateReactionCounts(prev => {
+            const next = { ...prev };
+            if (!next[messageId]) next[messageId] = {};
+            next[messageId] = { ...next[messageId], [reaction]: (next[messageId][reaction] || 0) + 1 };
+            return next;
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error handling private reaction:', e);
+    } finally {
+      setTogglingReaction(prev => ({ ...prev, [messageId]: false }));
+    }
+  }
+
+  const renderMessageAttachments = (attachments?: any[]) => {
+    if (!attachments || attachments.length === 0) return null;
+    return (
+      <div className="mt-2 space-y-2">
+        {attachments.map((att: any, idx: number) => {
+          const url = att?.url || att?.href || '';
+          if (!url) return null;
+
+          if (isImageUrl(url)) {
+            return (
+              <img
+                key={idx}
+                src={url}
+                alt="attachment"
+                className="max-w-full max-h-[300px] object-cover rounded-lg border border-white/10"
+              />
+            );
+          }
+
+          if (isVideoUrl(url)) {
+            const ytId = getYouTubeId(url);
+            const vimId = getVimeoId(url);
+
+            if (ytId) {
+              return (
+                <div key={idx} className="relative pb-[56.25%] h-0 rounded-lg overflow-hidden border border-white/10 max-w-sm">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${ytId}`}
+                    className="absolute top-0 left-0 w-full h-full"
+                    allowFullScreen
+                  />
+                </div>
+              );
+            }
+
+            if (vimId) {
+              return (
+                <div key={idx} className="relative pb-[56.25%] h-0 rounded-lg overflow-hidden border border-white/10 max-w-sm">
+                  <iframe
+                    src={`https://player.vimeo.com/video/${vimId}`}
+                    className="absolute top-0 left-0 w-full h-full"
+                    allowFullScreen
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <video
+                key={idx}
+                src={url}
+                controls
+                className="max-w-xs rounded-lg border border-white/10"
+              />
+            );
+          }
+
+          return (
+            <a
+              key={idx}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[#59a1e5] text-sm transition-colors truncate max-w-xs"
+            >
+              {url}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
 
   async function fetchPrivateMessages() {
     if (!selectedUser) return;
@@ -657,17 +1039,20 @@ export default function CommunityPage() {
       .limit(100);
 
     if (data) setPrivateMessages(data);
-
     await supabase!
       .from('private_messages')
       .update({ read: true })
       .eq('recipient_id', profile.id)
       .eq('sender_id', recipientId)
       .eq('read', false);
+
+    if (data && data.length > 0) {
+      hydratePrivateReactions(data.map(m => m.id));
+    }
   }
 
   async function sendMessage() {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && composerAttachments.length === 0) return;
 
     const currentUserProfile = profile || {
       id: 'demo-user',
@@ -683,13 +1068,15 @@ export default function CommunityPage() {
           // Add to local mock state
           const newMsg: Message = {
             id: Date.now().toString(),
+            user_id: currentUserProfile.id,
             message: newMessage.trim(),
             created_at: new Date().toISOString(),
             profiles: {
               full_name: currentUserProfile.full_name || 'User',
               avatar_url: currentUserProfile.avatar_url,
               role: currentUserProfile.role
-            }
+            },
+            attachments: composerAttachments
           };
 
           const currentMsgs = localMessagesRef.current[selectedChannel.id] || [];
@@ -699,28 +1086,36 @@ export default function CommunityPage() {
           };
 
           setLocalUpdate(prev => prev + 1); // Trigger re-render
+          setNewMessage('');
+          setComposerAttachments([]);
+          setComposerAttachmentUrl('');
         } else {
           if (profile) {
             // Optimistic update
             const optimisticMsg: Message = {
               id: `temp-${Date.now()}`,
+              user_id: profile.id,
               message: newMessage.trim(),
               created_at: new Date().toISOString(),
               profiles: {
                 full_name: profile.full_name || 'User',
                 avatar_url: profile.avatar_url,
                 role: profile.role
-              }
+              },
+              attachments: composerAttachments
             };
             setMessages(prev => [...prev, optimisticMsg]);
 
             const content = newMessage.trim();
             setNewMessage('');
+            setComposerAttachments([]);
+            setComposerAttachmentUrl('');
 
             const { error } = await supabase!.from('chat_messages').insert({
               channel_id: selectedChannel.id,
               user_id: profile.id,
               message: content,
+              attachments: composerAttachments
             });
 
             if (error) {
@@ -735,27 +1130,41 @@ export default function CommunityPage() {
         if (!isSupabaseAvailable()) {
           // Mock private message sending - just adding to local state for display would require more mock structure
           // For now, let's just clear the input to simulate sending
+          setNewMessage('');
+          setComposerAttachments([]);
+          setComposerAttachmentUrl('');
         } else if (profile) {
-          // Check if selectedUser is a client (no profile yet)
-          // Try to resolve client email to profile ID
-          const client = clients.find(c => c.id === selectedUser.id);
           let recipientId = selectedUser.id;
 
-          if (client) {
-            // This might be a client - try to find their profile by email
-            const { data: profileData } = await supabase!
-              .from('profiles')
-              .select('id')
-              .eq('email', client.email)
-              .maybeSingle();
-
-            if (profileData) {
-              recipientId = profileData.id;
-            } else {
-              // Client doesn't have a profile yet
-              alert(`Cannot send message: ${client.name} hasn't created their account yet. Please ask them to sign up first.`);
+          // If current user is NOT admin/staff, route message to admin
+          if (!isAdmin) {
+            const adminId = await getFirstAdminId();
+            if (!adminId) {
+              alert('Cannot send message: No admin available.');
               setSending(false);
               return;
+            }
+            recipientId = adminId;
+          } else {
+            // Admin/staff sending message - check if selectedUser is a client
+            const client = clients.find(c => c.id === selectedUser.id);
+
+            if (client) {
+              // This might be a client - try to find their profile by email
+              const { data: profileData } = await supabase!
+                .from('profiles')
+                .select('id')
+                .eq('email', client.email)
+                .maybeSingle();
+
+              if (profileData) {
+                recipientId = profileData.id;
+              } else {
+                // Client doesn't have a profile yet
+                alert(`Cannot send message: ${client.name} hasn't created their account yet. Please ask them to sign up first.`);
+                setSending(false);
+                return;
+              }
             }
           }
 
@@ -766,17 +1175,21 @@ export default function CommunityPage() {
             recipient_id: recipientId,
             message: newMessage.trim(),
             created_at: new Date().toISOString(),
-            read: false
+            read: false,
+            attachments: composerAttachments
           };
 
           setPrivateMessages(prev => [...prev, optimisticMessage]);
           setNewMessage('');
+          setComposerAttachments([]);
+          setComposerAttachmentUrl('');
 
           // Then send to server
           const { error } = await supabase!.from('private_messages').insert({
             sender_id: profile.id,
             recipient_id: recipientId,
             message: newMessage.trim(),
+            attachments: composerAttachments
           });
 
           if (error) {
@@ -792,10 +1205,11 @@ export default function CommunityPage() {
           await fetchPrivateMessages();
 
           // Successful send - the real-time subscription will replace the optimistic message
-          return;
         }
       }
       setNewMessage('');
+      setComposerAttachments([]);
+      setComposerAttachmentUrl('');
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Failed to send message. Please try again.');
@@ -826,7 +1240,7 @@ export default function CommunityPage() {
     return 'User';
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'text-red-400';
       case 'elite': return 'text-yellow-400';
@@ -1060,7 +1474,7 @@ export default function CommunityPage() {
               {view === 'channels' && selectedChannel ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       <Hash size={24} className="text-[#59a1e5]" />
                       {selectedChannel.name}
                     </h2>
@@ -1108,7 +1522,7 @@ export default function CommunityPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {getConversationName(selectedUser)}
                     </h2>
                     <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -1117,13 +1531,13 @@ export default function CommunityPage() {
                   </div>
                 </div>
               ) : (
-                <h2 className="text-white font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                   Select a {view === 'channels' ? 'channel' : 'conversation'}
                 </h2>
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-12 pb-4 px-1 space-y-4 custom-scrollbar">
               {view === 'channels' && selectedChannel && messages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -1156,61 +1570,110 @@ export default function CommunityPage() {
                         {formatAppDateTime(msg.created_at)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-start group">
+                    <div className="flex items-center gap-2 group/msg-row">
                       <div className="flex-1">
-                        {editingMessageId === msg.id ? (
-                          <div className="flex gap-2 items-center mt-1">
-                            <input
-                              type="text"
-                              value={editingMessageText}
-                              onChange={(e) => setEditingMessageText(e.target.value)}
-                              className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-[#59a1e5]"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleUpdateMessage(msg.id)}
-                              className="p-1 text-emerald-400 hover:bg-emerald-400/10 rounded"
-                            >
-                              <Check size={16} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingMessageId(null);
-                                setEditingMessageText('');
-                              }}
-                              className="p-1 text-red-400 hover:bg-red-400/10 rounded"
-                            >
-                              <X size={16} />
-                            </button>
+                        <div className="flex justify-between items-start group/msg-content">
+                          <div className="flex-1">
+                            {editingMessageId === msg.id ? (
+                              <div className="flex gap-2 items-center mt-1">
+                                <input
+                                  type="text"
+                                  value={editingMessageText}
+                                  onChange={(e) => setEditingMessageText(e.target.value)}
+                                  className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-[#59a1e5]"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleUpdateMessage(msg.id)}
+                                  className="p-1 text-emerald-400 hover:bg-emerald-400/10 rounded"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingMessageId(null);
+                                    setEditingMessageText('');
+                                  }}
+                                  className="p-1 text-red-400 hover:bg-red-400/10 rounded"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-gray-300 break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                                {msg.message}
+                              </p>
+                            )}
+                            {renderMessageAttachments(msg.attachments)}
+
+                            {/* Reaction Chips */}
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {chatReactionCounts[msg.id] && Object.entries(chatReactionCounts[msg.id]).map(([emoji, count]) => {
+                                if (count === 0) return null;
+                                const isMine = userChatReactions[msg.id] === emoji;
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handleChatReaction(msg.id, emoji)}
+                                    className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 transition-all border duration-200 ${isMine
+                                      ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white shadow-[0_0_12px_rgba(89,161,229,0.2)] scale-105'
+                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
+                                      }`}
+                                  >
+                                    <span className="text-sm">{emoji}</span>
+                                    <span className="font-bold">{count}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        ) : (
-                          <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                            {msg.message}
-                          </p>
-                        )}
+
+                          {isAdmin && msg.user_id === profile?.id && !editingMessageId && (
+                            <div className="opacity-0 group-hover/msg-content:opacity-100 flex gap-1 ml-2 transition-opacity">
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(msg.id);
+                                  setEditingMessageText(msg.message);
+                                }}
+                                className="p-1 text-gray-500 hover:text-white rounded"
+                                title="Edit"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                className="p-1 text-gray-500 hover:text-red-400 rounded"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {isAdmin && msg.user_id === profile?.id && !editingMessageId && (
-                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 ml-2 transition-opacity">
-                          <button
-                            onClick={() => {
-                              setEditingMessageId(msg.id);
-                              setEditingMessageText(msg.message);
-                            }}
-                            className="p-1 text-gray-500 hover:text-white rounded"
-                            title="Edit"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            className="p-1 text-gray-500 hover:text-red-400 rounded"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                      {/* Centered Reaction Picker Button */}
+                      <div className="relative group/picker opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200 flex-shrink-0 mr-1">
+                        <button
+                          className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all duration-200"
+                          title="Add reaction"
+                        >
+                          <SmilePlus size={20} />
+                        </button>
+                        <div className="absolute bottom-full mb-2 right-0 opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100] transform translate-y-2 group-hover/picker:translate-y-0">
+                          <div className="flex items-center gap-1 p-1.5 bg-[#1a1c1e]/95 border border-white/20 rounded-full shadow-[0_8_32px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+                            {COMMON_EMOJIS.map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={() => handleChatReaction(msg.id, emoji)}
+                                className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-all hover:scale-125 active:scale-90 ${userChatReactions[msg.id] === emoji ? 'bg-[#59a1e5]/30' : ''}`}
+                              >
+                                <span className="text-lg">{emoji}</span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1242,64 +1705,113 @@ export default function CommunityPage() {
                       )
                     )}
                     <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
-                      <div className="group relative">
-                        <div className={`p-3 rounded-lg ${isMyMessage
-                          ? 'bg-[#59a1e5] text-white shadow-lg'
-                          : 'bg-white/10 text-gray-300'
-                          }`}>
-                          {editingMessageId === msg.id ? (
-                            <div className="flex gap-2 items-center">
-                              <input
-                                type="text"
-                                value={editingMessageText}
-                                onChange={(e) => setEditingMessageText(e.target.value)}
-                                className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-white"
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => handleUpdatePrivateMessage(msg.id)}
-                                className="p-1 text-emerald-400 hover:bg-white/10 rounded"
-                              >
-                                <Check size={16} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditingMessageId(null);
-                                  setEditingMessageText('');
-                                }}
-                                className="p-1 text-red-400 hover:bg-white/10 rounded"
-                              >
-                                <X size={16} />
-                              </button>
+                      <div className={`flex items-center gap-2 group/msg-row ${isMyMessage ? 'flex-row-reverse' : ''}`}>
+                        <div className="flex-1 max-w-lg">
+                          <div className="group/msg-content relative">
+                            <div className={`p-3 rounded-lg ${isMyMessage
+                              ? 'bg-[#59a1e5] text-white shadow-lg'
+                              : 'bg-white/10 text-gray-300'
+                              }`}>
+                              {editingMessageId === msg.id ? (
+                                <div className="flex gap-2 items-center">
+                                  <input
+                                    type="text"
+                                    value={editingMessageText}
+                                    onChange={(e) => setEditingMessageText(e.target.value)}
+                                    className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-white"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleUpdatePrivateMessage(msg.id)}
+                                    className="p-1 text-emerald-400 hover:bg-white/10 rounded"
+                                  >
+                                    <Check size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingMessageId(null);
+                                      setEditingMessageText('');
+                                    }}
+                                    className="p-1 text-red-400 hover:bg-white/10 rounded"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <p className="break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                                  {msg.message}
+                                </p>
+                              )}
+                              {renderMessageAttachments(msg.attachments)}
                             </div>
-                          ) : (
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                              {msg.message}
-                            </p>
-                          )}
+
+                            {/* Reaction Chips */}
+                            <div className={`flex flex-wrap gap-1.5 mt-2 ${isMyMessage ? 'justify-end' : ''}`}>
+                              {privateReactionCounts[msg.id] && Object.entries(privateReactionCounts[msg.id]).map(([emoji, count]) => {
+                                if (count === 0) return null;
+                                const isMine = userPrivateReactions[msg.id] === emoji;
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handlePrivateReaction(msg.id, emoji)}
+                                    className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 transition-all border duration-200 ${isMine
+                                      ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white shadow-[0_0_12px_rgba(89,161,229,0.2)] scale-105'
+                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
+                                      }`}
+                                  >
+                                    <span className="text-sm">{emoji}</span>
+                                    <span className="font-bold">{count}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {isAdmin && isMyMessage && !editingMessageId && (
+                              <div className={`absolute top-0 ${isMyMessage ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 group-hover/msg-content:opacity-100 flex gap-1 transition-opacity`}>
+                                <button
+                                  onClick={() => {
+                                    setEditingMessageId(msg.id);
+                                    setEditingMessageText(msg.message);
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-white rounded"
+                                  title="Edit"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePrivateMessage(msg.id)}
+                                  className="p-1 text-gray-500 hover:text-red-400 rounded"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {isAdmin && isMyMessage && !editingMessageId && (
-                          <div className={`absolute top-0 ${isMyMessage ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity`}>
-                            <button
-                              onClick={() => {
-                                setEditingMessageId(msg.id);
-                                setEditingMessageText(msg.message);
-                              }}
-                              className="p-1 text-gray-500 hover:text-white rounded"
-                              title="Edit"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeletePrivateMessage(msg.id)}
-                              className="p-1 text-gray-500 hover:text-red-400 rounded"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                        {/* Centered Reaction Picker Button */}
+                        <div className={`relative group/picker opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200 flex-shrink-0 ${isMyMessage ? 'ml-1' : 'mr-1'}`}>
+                          <button
+                            className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all duration-200"
+                            title="Add reaction"
+                          >
+                            <SmilePlus size={20} />
+                          </button>
+                          <div className={`absolute bottom-full mb-2 ${isMyMessage ? 'left-0' : 'right-0'} opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100] transform translate-y-2 group-hover/picker:translate-y-0`}>
+                            <div className="flex items-center gap-1 p-1.5 bg-[#1a1c1e]/95 border border-white/20 rounded-full shadow-[0_8_32px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+                              {COMMON_EMOJIS.map(emoji => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => handlePrivateReaction(msg.id, emoji)}
+                                  className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-all hover:scale-125 active:scale-90 ${userPrivateReactions[msg.id] === emoji ? 'bg-[#59a1e5]/30' : ''}`}
+                                >
+                                  <span className="text-lg">{emoji}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                       <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                         {formatAppDateTime(msg.created_at)}
@@ -1314,31 +1826,93 @@ export default function CommunityPage() {
 
             {((view === 'channels' && selectedChannel) || (view === 'private' && selectedUser)) && (
               <div className="pt-4 border-t border-white/10">
+                {/* Attachment Preview */}
+                {composerAttachments.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {composerAttachments.map((att, idx) => (
+                      <div key={idx} className="relative group">
+                        {att.type === 'image' ? (
+                          <img src={att.url} alt="preview" className="w-16 h-16 object-cover rounded-lg border border-white/20" />
+                        ) : (
+                          <div className="w-16 h-16 bg-white/5 border border-white/20 rounded-lg flex items-center justify-center text-gray-400">
+                            <Paperclip size={20} />
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setComposerAttachments(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     sendMessage();
                   }}
-                  className="flex gap-2"
+                  className="flex flex-col gap-2"
                 >
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
-                    className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
-                    disabled={sending}
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !newMessage.trim()}
-                    className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  >
-                    <Send size={20} />
-                    Send
-                  </button>
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
+                        className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
+                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        disabled={sending}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="p-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-all border border-white/10"
+                      title="Upload file"
+                    >
+                      <Upload size={20} />
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept="image/*,video/*"
+                    />
+                    <button
+                      type="submit"
+                      disabled={sending || (!newMessage.trim() && composerAttachments.length === 0)}
+                      className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
+                      <Send size={20} />
+                      Send
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={composerAttachmentUrl}
+                      onChange={(e) => setComposerAttachmentUrl(e.target.value)}
+                      placeholder="Paste Link/Video URL..."
+                      className="flex-1 px-3 py-1.5 bg-black/20 border border-white/5 rounded text-xs text-gray-400 focus:border-[#59a1e5] focus:outline-none transition-all"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addAttachment}
+                      disabled={!composerAttachmentUrl.trim()}
+                      className="p-1 text-gray-500 hover:text-[#59a1e5] transition-colors"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
                 </form>
               </div>
             )}

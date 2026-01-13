@@ -6,7 +6,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: string;
+  role: UserRole;
   avatar_url: string | null;
   subscription_type?: string | null;
   location?: string | null;

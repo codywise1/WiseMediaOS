@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Heart, MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip } from 'lucide-react';
+import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, Edit2, Plus } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { supabase, isSupabaseAvailable } from '../lib/supabase';
+import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
 
@@ -14,7 +14,7 @@ interface PostAuthor {
   full_name: string | null;
   email?: string | null;
   avatar_url: string | null;
-  role: string;
+  role: UserRole;
 }
 
 interface CommunityPost {
@@ -49,6 +49,7 @@ type CommentRow = Omit<CommunityComment, 'profiles'> & {
 };
 
 const TAGS: FeedTag[] = ['General', 'Design', 'Dev', 'Branding', 'Wins', 'Questions'];
+const COMMON_EMOJIS = ['👍', '❤️', '🔥', '😂', '🙌', '😮', '😢', '💯'];
 
 const getInitials = (name?: string | null) => {
   const safe = (name || '').trim();
@@ -113,15 +114,20 @@ export default function CommunityFeedPage() {
   const [composerAttachmentUrl, setComposerAttachmentUrl] = useState('');
   const [composerAttachments, setComposerAttachments] = useState<{ type: string; url: string }[]>([]);
   const [creating, setCreating] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [updating, setUpdating] = useState(false);
 
-  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
-  const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({});
+  const [reactionCounts, setReactionCounts] = useState<Record<string, Record<string, number>>>({});
+  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [commentsByPost, setCommentsByPost] = useState<Record<string, CommunityComment[]>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [postingComment, setPostingComment] = useState<Record<string, boolean>>({});
-  const [togglingLike, setTogglingLike] = useState<Record<string, boolean>>({});
+  const [togglingReaction, setTogglingReaction] = useState<Record<string, boolean>>({});
   const [uploading, setUploading] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
     type: 'post' | 'comment';
@@ -192,7 +198,7 @@ export default function CommunityFeedPage() {
         await Promise.all([hydrateReactions(ids), hydrateCommentCounts(ids)]);
       } else {
         setReactionCounts({});
-        setLikedByMe({});
+        setUserReactions({});
         setCommentCounts({});
       }
     } catch (e) {
@@ -207,23 +213,26 @@ export default function CommunityFeedPage() {
     const { data, error } = await supabase!
       .from('community_reactions')
       .select('post_id,user_id,reaction')
-      .in('post_id', postIds)
-      .eq('reaction', 'like');
+      .in('post_id', postIds);
+
     if (error) {
       console.error('Error loading reactions:', error);
       return;
     }
 
-    const counts: Record<string, number> = {};
-    const mine: Record<string, boolean> = {};
+    const counts: Record<string, Record<string, number>> = {};
+    const mine: Record<string, string> = {};
+
     for (const row of (data as any[]) || []) {
-      counts[row.post_id] = (counts[row.post_id] || 0) + 1;
+      if (!counts[row.post_id]) counts[row.post_id] = {};
+      counts[row.post_id][row.reaction] = (counts[row.post_id][row.reaction] || 0) + 1;
+
       if (profile?.id && row.user_id === profile.id) {
-        mine[row.post_id] = true;
+        mine[row.post_id] = row.reaction;
       }
     }
     setReactionCounts(counts);
-    setLikedByMe(mine);
+    setUserReactions(mine);
   }
 
   async function hydrateCommentCounts(postIds: string[]) {
@@ -243,36 +252,78 @@ export default function CommunityFeedPage() {
     setCommentCounts(counts);
   }
 
-  async function toggleLike(postId: string) {
+  async function handleReaction(postId: string, reaction: string) {
     if (!isSupabaseAvailable() || !profile?.id) return;
-    if (togglingLike[postId]) return;
-    setTogglingLike(prev => ({ ...prev, [postId]: true }));
+    if (togglingReaction[postId]) return;
+    setTogglingReaction(prev => ({ ...prev, [postId]: true }));
     try {
-      const liked = !!likedByMe[postId];
-      if (liked) {
+      const currentReaction = userReactions[postId];
+
+      // If clicking the same reaction, remove it
+      if (currentReaction === reaction) {
         const { error } = await supabase!
           .from('community_reactions')
           .delete()
           .eq('post_id', postId)
           .eq('user_id', profile.id)
-          .eq('reaction', 'like');
+          .eq('reaction', reaction);
         if (error) throw error;
 
-        setLikedByMe(prev => ({ ...prev, [postId]: false }));
-        setReactionCounts(prev => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 1) - 1) }));
+        setUserReactions(prev => {
+          const next = { ...prev };
+          delete next[postId];
+          return next;
+        });
+        setReactionCounts(prev => {
+          const next = { ...prev };
+          if (next[postId] && next[postId][reaction]) {
+            next[postId] = { ...next[postId], [reaction]: Math.max(0, next[postId][reaction] - 1) };
+          }
+          return next;
+        });
       } else {
-        const { error } = await supabase!
-          .from('community_reactions')
-          .insert({ post_id: postId, user_id: profile.id, reaction: 'like' });
-        if (error) throw error;
+        // If they had a different reaction, we need to update or delete/insert
+        if (currentReaction) {
+          // Update existing reaction
+          const { error } = await supabase!
+            .from('community_reactions')
+            .update({ reaction })
+            .eq('post_id', postId)
+            .eq('user_id', profile.id);
+          if (error) throw error;
 
-        setLikedByMe(prev => ({ ...prev, [postId]: true }));
-        setReactionCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
+          setUserReactions(prev => ({ ...prev, [postId]: reaction }));
+          setReactionCounts(prev => {
+            const next = { ...prev };
+            if (next[postId]) {
+              next[postId] = { ...next[postId] };
+              if (next[postId][currentReaction]) {
+                next[postId][currentReaction] = Math.max(0, next[postId][currentReaction] - 1);
+              }
+              next[postId][reaction] = (next[postId][reaction] || 0) + 1;
+            }
+            return next;
+          });
+        } else {
+          // Insert new reaction
+          const { error } = await supabase!
+            .from('community_reactions')
+            .insert({ post_id: postId, user_id: profile.id, reaction });
+          if (error) throw error;
+
+          setUserReactions(prev => ({ ...prev, [postId]: reaction }));
+          setReactionCounts(prev => {
+            const next = { ...prev };
+            if (!next[postId]) next[postId] = {};
+            next[postId] = { ...next[postId], [reaction]: (next[postId][reaction] || 0) + 1 };
+            return next;
+          });
+        }
       }
     } catch (e) {
-      console.error('Error toggling reaction:', e);
+      console.error('Error handling reaction:', e);
     } finally {
-      setTogglingLike(prev => ({ ...prev, [postId]: false }));
+      setTogglingReaction(prev => ({ ...prev, [postId]: false }));
     }
   }
 
@@ -411,6 +462,38 @@ export default function CommunityFeedPage() {
     }
   }
 
+  async function handleUpdatePost() {
+    if (!editingPost || !isSupabaseAvailable() || !profile?.id) return;
+    const body = editBody.trim();
+    if (!body) return;
+
+    setUpdating(true);
+    try {
+      const { error } = await supabase!
+        .from('community_posts')
+        .update({
+          title: editTitle.trim() || null,
+          body: body,
+          content: body,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingPost.id);
+
+      if (error) throw error;
+
+      setPosts(prev => prev.map(p => p.id === editingPost.id ? { ...p, title: editTitle.trim() || null, body, content: body } : p));
+      setIsEditModalOpen(false);
+      setEditingPost(null);
+      setEditTitle('');
+      setEditBody('');
+    } catch (e) {
+      console.error('Error updating post:', e);
+      alert('Failed to update post.');
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   const composerCanSelectPro = isPro;
   const visibilityOptions: { value: Visibility; label: string }[] = composerCanSelectPro
     ? [
@@ -486,7 +569,7 @@ export default function CommunityFeedPage() {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="min-w-0">
-            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h1 className="text-4xl font-bold gradient-text text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Creator Club
             </h1>
             <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -574,14 +657,14 @@ export default function CommunityFeedPage() {
         <div className="space-y-6">
           {visiblePosts.map(post => {
             const authorName = getAuthorLabel(post.profiles);
-            const likes = reactionCounts[post.id] || 0;
+            const reactions = reactionCounts[post.id] || {};
             const comments = commentCounts[post.id] || 0;
-            const liked = !!likedByMe[post.id];
+            const myReaction = userReactions[post.id];
             const attachments = Array.isArray(post.attachments) ? post.attachments : [];
             const postBody = post.body || post.content || '';
 
             return (
-              <GlassCard key={post.id} className="p-6">
+              <GlassCard key={post.id} className="p-6" disableHover>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     {post.profiles?.avatar_url ? (
@@ -625,13 +708,27 @@ export default function CommunityFeedPage() {
                     </div>
 
                     {(isAdmin || post.user_id === profile?.id) && (
-                      <button
-                        onClick={() => confirmDeletePost(post.id)}
-                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                        title="Delete Post"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingPost(post);
+                            setEditTitle(post.title || '');
+                            setEditBody(post.body || post.content || '');
+                            setIsEditModalOpen(true);
+                          }}
+                          className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                          title="Edit Post"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => confirmDeletePost(post.id)}
+                          className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                          title="Delete Post"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -656,7 +753,7 @@ export default function CommunityFeedPage() {
                               key={`${post.id}-att-${idx}`}
                               src={url}
                               alt="attachment"
-                              className="w-full max-h-[420px] object-cover rounded-xl border border-white/10"
+                              className="w-full max-h-[420px] object-contain rounded-xl border border-white/10"
                             />
                           );
                         }
@@ -716,19 +813,55 @@ export default function CommunityFeedPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      onClick={() => toggleLike(post.id)}
-                      disabled={!profile?.id || togglingLike[post.id]}
-                      className={`px-3 py-2 rounded-lg transition-all border flex items-center gap-2 ${liked
-                        ? 'bg-red-500/15 border-red-500/30 text-red-200'
-                        : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                        }`}
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
-                    >
-                      <Heart size={18} className={liked ? 'fill-red-400 text-red-400' : ''} />
-                      {likes}
-                    </button>
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    {/* Existing Reactions */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(reactions).map(([emoji, count]) => {
+                        if (count === 0) return null;
+                        const isMine = myReaction === emoji;
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(post.id, emoji)}
+                            className={`px-2 py-1 rounded-full text-sm flex items-center gap-1.5 transition-all border ${isMine
+                              ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                              : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                              }`}
+                          >
+                            <span>{emoji}</span>
+                            <span className="text-xs font-semibold">{count}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add Reaction Picker Popover/Button */}
+                    <div className="relative group/picker">
+                      <button
+                        className="p-2 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+                        title="Add reaction"
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                      {/* Tooltip Content (Emoji Picker) */}
+                      <div className="absolute bottom-full mb-2 left-0 opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-200 z-50">
+                        <div className="flex items-center gap-1 p-1 bg-[#1a1c1e] border border-white/10 rounded-full shadow-2xl backdrop-blur-xl">
+                          {COMMON_EMOJIS.map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => handleReaction(post.id, emoji)}
+                              className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-transform hover:scale-125 ${myReaction === emoji ? 'bg-[#3AA3EB]/20' : ''
+                                }`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-4 w-px bg-white/10 mx-1"></div>
 
                     <button
                       onClick={() => toggleComments(post.id)}
@@ -962,6 +1095,69 @@ export default function CommunityFeedPage() {
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               {creating ? 'Posting...' : 'Post'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingPost(null);
+          setEditTitle('');
+          setEditBody('');
+        }}
+        title="Edit Post"
+        maxWidth="max-w-3xl"
+      >
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Title</label>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              placeholder="Optional"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Body</label>
+            <textarea
+              value={editBody}
+              onChange={(e) => setEditBody(e.target.value)}
+              rows={6}
+              className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              placeholder="What's on your mind?"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingPost(null);
+                setEditTitle('');
+                setEditBody('');
+              }}
+              className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors font-medium"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleUpdatePost}
+              disabled={updating || !editBody.trim()}
+              className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              {updating ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import {
   Star,
@@ -6,12 +7,13 @@ import {
   ShoppingCart,
   Check,
   X,
+  Shield,
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Package,
   Users,
-  Zap,
-  Shield,
+  Zap
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
@@ -49,7 +51,8 @@ interface Review {
   };
 }
 
-export default function MarketplaceProductPage() {
+export default function MarketplaceDetails() {
+  const { id } = useParams();
   const { profile } = useAuth();
   const { setCurrentPage } = useNavigation();
   const [product, setProduct] = useState<Product | null>(null);
@@ -61,12 +64,14 @@ export default function MarketplaceProductPage() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
-  const [productId, setProductId] = useState<string | null>(null);
+  const [productId, setProductId] = useState<string | null>(id || null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedProductId = localStorage.getItem('selectedProductId');
-    setProductId(storedProductId);
-  }, []);
+    if (id) {
+      setProductId(id);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (productId) {
@@ -78,7 +83,7 @@ export default function MarketplaceProductPage() {
     if (!productId) return;
 
     try {
-      const { data: productData } = await supabase
+      const { data: productData } = await supabase!
         .from('marketplace_products')
         .select('*')
         .eq('id', productId)
@@ -87,7 +92,7 @@ export default function MarketplaceProductPage() {
       if (productData) {
         setProduct(productData);
 
-        const { data: reviewsData } = await supabase
+        const { data: reviewsData } = await supabase!
           .from('product_reviews')
           .select('*, profiles(full_name)')
           .eq('product_id', productId)
@@ -95,7 +100,7 @@ export default function MarketplaceProductPage() {
 
         if (reviewsData) setReviews(reviewsData);
 
-        const { data: relatedData } = await supabase
+        const { data: relatedData } = await supabase!
           .from('marketplace_products')
           .select('*')
           .eq('category', productData.category)
@@ -106,7 +111,7 @@ export default function MarketplaceProductPage() {
       }
 
       if (profile) {
-        const { data: purchaseData } = await supabase
+        const { data: purchaseData } = await supabase!
           .from('product_purchases')
           .select('id')
           .eq('product_id', productId)
@@ -126,7 +131,7 @@ export default function MarketplaceProductPage() {
     if (!profile || !product) return;
 
     try {
-      const { error } = await supabase.from('product_purchases').insert({
+      const { error } = await supabase!.from('product_purchases').insert({
         product_id: product.id,
         user_id: profile.id,
         amount_paid: product.price,
@@ -146,7 +151,7 @@ export default function MarketplaceProductPage() {
     if (!profile || !product) return;
 
     try {
-      const { error } = await supabase.from('product_reviews').insert({
+      const { error } = await supabase!.from('product_reviews').insert({
         product_id: product.id,
         user_id: profile.id,
         rating: reviewForm.rating,
@@ -215,147 +220,195 @@ export default function MarketplaceProductPage() {
   }));
 
   return (
-    <>
-      <div className="space-y-16 pb-24">
-        <button onClick={() => setCurrentPage('marketplace')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-          <ChevronLeft size={20} />
-          Back to Marketplace
-        </button>
+    <div className="pb-24">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/community/marketplace')}
+        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 group"
+        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+      >
+        <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+        Back to Marketplace
+      </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <GlassCard className="relative">
-            {product.discount_enabled && product.old_price && (
-              <div className="absolute top-4 right-4 px-3 py-1 bg-red-500 text-white rounded-lg font-bold text-sm z-10">
-                {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% OFF
+      <div className="space-y-12">
+        {/* Header Section */}
+        <div className="glass-card neon-glow rounded-3xl p-6 sm:p-8 lg:p-10 border border-white/10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Product Image/Gallery */}
+            <div className="relative">
+              <div
+                className="aspect-video bg-white/5 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group cursor-pointer"
+                onClick={() => product.preview_images?.length > 0 && setShowGallery(true)}
+              >
+                {product.cover_image_url ? (
+                  <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#3AA3EB]/10 to-purple-500/10">
+                    <CategoryIcon className="text-[#3AA3EB]/40" size={120} />
+                  </div>
+                )}
+
+                {product.discount_enabled && product.old_price && (
+                  <div className="absolute top-4 right-4 px-4 py-2 bg-[#3AA3EB] text-white rounded-xl font-bold text-sm shadow-xl shadow-[#3AA3EB]/30 z-10">
+                    {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% OFF
+                  </div>
+                )}
               </div>
-            )}
-            <div
-              className="aspect-video bg-gradient-to-br from-[#3AA3EB]/20 to-purple-500/20 rounded-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => product.preview_images?.length > 0 && setShowGallery(true)}
-            >
-              {product.cover_image_url ? (
-                <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover rounded-lg" />
-              ) : (
-                <CategoryIcon className="text-[#3AA3EB]" size={80} />
+              {product.preview_images?.length > 0 && (
+                <div className="flex justify-center mt-4 gap-2">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
+                    Click to view {product.preview_images.length} preview images
+                  </p>
+                </div>
               )}
             </div>
-            {product.preview_images?.length > 0 && (
-              <p className="text-gray-400 text-sm text-center mt-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Click to view {product.preview_images.length} preview images
-              </p>
-            )}
-          </GlassCard>
 
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-[#3AA3EB]/20 text-[#3AA3EB] rounded-lg text-sm font-medium capitalize">
+            {/* Product Info */}
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-[#3AA3EB]/10 border border-[#3AA3EB]/20 text-[#3AA3EB] rounded-full text-xs font-bold uppercase tracking-widest">
                   {product.category}
                 </span>
                 {product.is_featured && (
-                  <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm font-medium">
-                    Featured
+                  <span className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-full text-xs font-bold uppercase tracking-widest">
+                    Featured Item
                   </span>
                 )}
               </div>
-              <h1 className="text-white font-bold text-[32px] mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+
+              <h1 className="text-white text-[48px] font-bold leading-tight" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                 {product.title}
               </h1>
-              <div className="flex items-center gap-4 mb-4">
-                {renderStars(Math.round(product.rating))}
-                <span className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                  {product.rating.toFixed(1)} ({product.reviews_count} reviews)
-                </span>
-              </div>
-            </div>
 
-            <div>
-              <div className="flex items-baseline gap-3 mb-4">
-                {product.discount_enabled && product.old_price && (
-                  <span className="text-gray-500 line-through number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '24px' }}>
-                    ${product.old_price.toFixed(2)}
-                  </span>
-                )}
-                <span className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>
-                  ${product.price.toFixed(2)}
-                </span>
-              </div>
-
-              {hasPurchased ? (
-                <button className="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-green-500/20 flex items-center justify-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                  <Download size={24} />
-                  Download Now
-                </button>
-              ) : (
-                <button onClick={handlePurchase} className="w-full py-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40 flex items-center justify-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                  <ShoppingCart size={24} />
-                  Buy Now
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 text-gray-300">
-                <Check className="text-green-400" size={20} />
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>Lifetime Access</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-300">
-                <Check className="text-green-400" size={20} />
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>Instant Download</span>
-              </div>
-              {product.platform && (
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Check className="text-green-400" size={20} />
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>Built for {product.platform}</span>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  {renderStars(Math.round(product.rating), 18)}
+                  <span className="text-white font-bold text-sm ml-1">{product.rating.toFixed(1)}</span>
+                  <span className="text-gray-500 text-sm">({product.reviews_count} reviews)</span>
                 </div>
-              )}
-              <div className="flex items-center gap-2 text-gray-300">
-                <Check className="text-green-400" size={20} />
-                <span className="number" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>Used by {product.purchases_count}+ creators</span>
+                <div className="h-4 w-[1px] bg-white/10" />
+                <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+                  <Users size={16} className="text-[#3AA3EB]" />
+                  <span className="number">{product.purchases_count}</span>
+                  <span>Sales</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex items-baseline gap-4">
+                  <span className="text-white text-5xl font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                    ${product.price.toFixed(2)}
+                  </span>
+                  {product.discount_enabled && product.old_price && (
+                    <span className="text-gray-500 text-2xl line-through number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                      ${product.old_price.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {hasPurchased ? (
+                    <button className="flex-1 btn-header-glass py-5 px-8 bg-green-500/10 border-green-500/30">
+                      <span className="btn-text-glow flex items-center justify-center gap-3 text-green-400">
+                        <Download size={22} />
+                        Download Product
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePurchase}
+                      className="flex-1 btn-header-glass py-5 px-8"
+                    >
+                      <span className="btn-text-glow flex items-center justify-center gap-3">
+                        <ShoppingCart size={22} />
+                        Purchase Now
+                        <ArrowRight size={20} />
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-
-            {product.tags && product.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {product.tags.map((tag, i) => (
-                  <span key={i} className="px-3 py-1 bg-white/5 text-gray-300 rounded-full text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
-        <GlassCard>
-          <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Product Overview
-          </h2>
-          <p className="text-gray-300 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
-            {product.description || 'No description available.'}
-          </p>
-        </GlassCard>
+        {/* Details Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <GlassCard>
+              <h2 className="text-white font-bold text-xl mb-6 flex items-center gap-3" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
+                <Zap size={20} className="text-[#3AA3EB]" />
+                Product Overview
+              </h2>
+              <div className="prose prose-invert max-w-none">
+                <p className="text-gray-300 leading-relaxed text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {product.description || 'No description available for this product.'}
+                </p>
+              </div>
+            </GlassCard>
 
-        {product.included_files && product.included_files.length > 0 && (
-          <GlassCard>
-            <h2 className="text-white font-bold text-2xl mb-6" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              What's Included
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {product.included_files.map((file: any, i: number) => (
-                <div key={i} className="flex items-start gap-3 p-4 bg-white/5 rounded-lg">
-                  <div className="p-2 bg-[#3AA3EB]/20 rounded-lg">
-                    <Package className="text-[#3AA3EB]" size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{file.name}</h3>
-                    <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>{file.description}</p>
-                  </div>
+            {product.included_files && product.included_files.length > 0 && (
+              <GlassCard>
+                <h2 className="text-white font-bold text-xl mb-6 flex items-center gap-3" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
+                  <Package size={20} className="text-[#3AA3EB]" />
+                  What's Included
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {product.included_files.map((file: any, i: number) => (
+                    <div key={i} className="flex items-start gap-4 p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="p-2 bg-[#3AA3EB]/20 rounded-xl">
+                        <Check className="text-[#3AA3EB]" size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold text-sm mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{file.name}</h3>
+                        <p className="text-gray-500 text-xs leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>{file.description}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </GlassCard>
-        )}
+              </GlassCard>
+            )}
+          </div>
+
+          <div className="space-y-8">
+            <GlassCard>
+              <h2 className="text-white font-bold text-xl mb-6" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
+                Features
+              </h2>
+              <ul className="space-y-4">
+                {[
+                  { label: 'Lifetime Access', icon: Shield },
+                  { label: 'Instant Download', icon: Download },
+                  { label: 'Personal License', icon: Check },
+                  { label: 'Premium Support', icon: Users }
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-gray-300">
+                    <div className="p-1.5 bg-[#3AA3EB]/10 rounded-lg">
+                      <feature.icon size={16} className="text-[#3AA3EB]" />
+                    </div>
+                    <span className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>{feature.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </GlassCard>
+
+            {product.tags && product.tags.length > 0 && (
+              <GlassCard>
+                <h2 className="text-white font-bold text-xl mb-6" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
+                  Tags
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs text-gray-400 transition-colors" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </GlassCard>
+            )}
+          </div>
+        </div>
 
         <GlassCard>
           <div className="flex items-center justify-between mb-6">
@@ -433,8 +486,8 @@ export default function MarketplaceProductPage() {
                   key={relatedProduct.id}
                   className="hover:scale-105 transition-transform cursor-pointer"
                   onClick={() => {
-                    localStorage.setItem('selectedProductId', relatedProduct.id);
-                    window.location.reload();
+                    navigate(`/community/marketplace/${relatedProduct.id}`);
+                    window.scrollTo(0, 0);
                   }}
                 >
                   <div className="aspect-video bg-gradient-to-br from-[#3AA3EB]/20 to-purple-500/20 rounded-lg mb-3 flex items-center justify-center">
@@ -529,6 +582,6 @@ export default function MarketplaceProductPage() {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

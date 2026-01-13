@@ -228,10 +228,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card neon-glow rounded-3xl p-8 lg:p-10 mb-8 border border-white/5">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8 mb-8 border border-white/5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>Proposals</h1>
+            <h1 className="text-3xl font-bold gradient-text mb-2 tracking-tighter" style={{ fontFamily: 'Integral CF, sans-serif' }}>PROPOSALS</h1>
             <p className="text-gray-400 text-lg font-medium">
               {currentUser?.role === 'admin'
                 ? 'Create, send, and manage structured project proposals.'

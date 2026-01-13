@@ -9,13 +9,10 @@ import {
   Lock,
   Download,
   MessageSquare,
-  Plus,
   Edit,
   Trash2,
-  GripVertical,
-  Save,
-  X,
   Award,
+  ArrowRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -47,7 +44,7 @@ interface Resource {
   url: string;
 }
 
-export default function CourseSinglePage() {
+export default function EducationDetails() {
   const { profile } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -58,8 +55,6 @@ export default function CourseSinglePage() {
   const [adminMode, setAdminMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [showAddLessonModal, setShowAddLessonModal] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -75,7 +70,7 @@ export default function CourseSinglePage() {
   async function fetchCourseData() {
     try {
       // Fetch course
-      const { data: courseData } = await supabase
+      const { data: courseData } = await supabase!
         .from('courses')
         .select('*')
         .eq('id', courseId)
@@ -87,7 +82,7 @@ export default function CourseSinglePage() {
       }
 
       // Fetch lessons
-      const { data: lessonsData } = await supabase
+      const { data: lessonsData } = await supabase!
         .from('lessons')
         .select('*')
         .eq('course_id', courseId)
@@ -98,7 +93,7 @@ export default function CourseSinglePage() {
       }
 
       // Fetch resources
-      const { data: resourcesData } = await supabase
+      const { data: resourcesData } = await supabase!
         .from('course_resources')
         .select('*')
         .eq('course_id', courseId);
@@ -109,7 +104,7 @@ export default function CourseSinglePage() {
 
       // Calculate progress if enrolled
       if (profile) {
-        const { data: progressData } = await supabase
+        const { data: progressData } = await supabase!
           .from('lesson_progress')
           .select('completed')
           .eq('user_id', profile.id)
@@ -130,7 +125,7 @@ export default function CourseSinglePage() {
   async function checkEnrollment() {
     if (!profile) return;
 
-    const { data } = await supabase
+    const { data } = await supabase!
       .from('course_enrollments')
       .select('id')
       .eq('user_id', profile.id)
@@ -144,7 +139,7 @@ export default function CourseSinglePage() {
     if (!profile) return;
 
     try {
-      const { error } = await supabase.from('course_enrollments').insert({
+      const { error } = await supabase!.from('course_enrollments').insert({
         user_id: profile.id,
         course_id: courseId,
       });
@@ -161,7 +156,7 @@ export default function CourseSinglePage() {
     if (!profile) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('lesson_progress')
         .upsert({
           user_id: profile.id,
@@ -196,43 +191,70 @@ export default function CourseSinglePage() {
   return (
     <div className="min-h-screen pb-20">
       {/* Hero Section */}
-      <div
-        className="relative h-96 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url(https://wisemedia.io/wp-content/uploads/2025/10/IMG-5-Wise-Media.webp)',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black" />
-        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-8">
-          <div className="mb-4">
+      <div className="relative h-[400px] mb-8 overflow-hidden rounded-3xl">
+        <img
+          src={course?.thumbnail_url || 'https://wisemedia.io/wp-content/uploads/2025/10/IMG-5-Wise-Media.webp'}
+          alt={course?.title}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+      </div>
+
+      {/* Header Info Section */}
+      <div className="glass-card neon-glow rounded-3xl p-6 sm:p-8 lg:p-10 mb-8 border border-white/10">
+        <div className="flex flex-col gap-6">
+          <div className="mb-2">
             <img
               src="https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Logo.svg"
               alt="Creator Club"
-              className="h-12"
+              className="h-10"
             />
           </div>
-          <h1 className="text-white text-[40px] font-bold mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {course?.title || 'Marketing Masterclass'}
+          <h1 className="text-white text-[48px] font-bold leading-tight" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+            {course?.title || 'Education Course'}
           </h1>
-          <div className="flex flex-wrap items-center gap-6 text-white">
-            <div className="flex items-center gap-2">
-              <Clock size={20} className="text-[#3AA3EB]" />
-              <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lessons.length}</span>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Lessons</span>
+
+          <div className="flex flex-wrap items-center gap-8 text-white mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#3AA3EB]/20 rounded-lg">
+                <Clock size={20} className="text-[#3AA3EB]" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Duration</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="number font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lessons.length}</span>
+                  <span className="text-sm font-medium text-gray-400">Lessons</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <BarChart3 size={20} className="text-[#3AA3EB]" />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Intermediate</span>
+
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#3AA3EB]/20 rounded-lg">
+                <BarChart3 size={20} className="text-[#3AA3EB]" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Level</p>
+                <span className="text-sm font-bold text-white uppercase tracking-wide">Intermediate</span>
+              </div>
             </div>
+
             {isEnrolled && (
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={20} className="text-green-400" />
-                <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{progress}%</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Complete</span>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-400/20 rounded-lg">
+                  <CheckCircle2 size={20} className="text-green-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Completion</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="number font-bold text-lg text-green-400" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{progress}%</span>
+                    <span className="text-sm font-medium text-gray-400">Done</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-          <div className="mt-6 flex gap-4">
+
+          <div className="mt-6 flex flex-wrap gap-4 items-center">
             {isEnrolled ? (
               <button
                 onClick={() => {
@@ -240,20 +262,35 @@ export default function CourseSinglePage() {
                   const target = firstIncomplete || lessons[0];
                   if (target) navigate(`/community/courses/${courseId}/lesson/${target.id}`);
                 }}
-                className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40 flex items-center gap-2"
-                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                className="btn-header-glass py-4 px-8 min-w-[220px]"
               >
-                <Play size={20} />
-                Continue Learning
+                <span className="btn-text-glow flex items-center justify-center gap-2">
+                  Continue Learning
+                  <ArrowRight className="h-5 w-5" />
+                </span>
               </button>
             ) : (
-              <button onClick={handleEnroll} className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                Start Course
+              <button
+                onClick={handleEnroll}
+                className="btn-header-glass py-4 px-8 min-w-[220px]"
+              >
+                <span className="btn-text-glow flex items-center justify-center gap-2">
+                  Enroll in Course
+                  <ArrowRight className="h-5 w-5" />
+                </span>
               </button>
             )}
+
             {isAdmin && (
-              <button onClick={() => setAdminMode(!adminMode)} className={`px-6 py-3 ${adminMode ? 'bg-purple-500 hover:bg-purple-600' : 'bg-white/10 hover:bg-white/20'} text-white rounded-lg transition-all font-medium`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                {adminMode ? 'Exit Admin Mode' : 'Admin Mode'}
+              <button
+                onClick={() => setAdminMode(!adminMode)}
+                className={`flex items-center gap-2 px-6 py-4 rounded-xl transition-all font-bold text-xs uppercase tracking-widest border-2 ${adminMode
+                  ? 'bg-purple-500/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                  }`}
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                {adminMode ? 'Exit Admin Mode' : 'Admin Settings'}
               </button>
             )}
           </div>
@@ -268,11 +305,10 @@ export default function CourseSinglePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-[#3AA3EB] text-white'
-                    : 'border-transparent text-gray-400 hover:text-white'
-                }`}
+                className={`py-4 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-[#3AA3EB] text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
+                  }`}
                 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', fontWeight: activeTab === tab.id ? 600 : 400 }}
               >
                 {tab.label}
@@ -308,22 +344,9 @@ export default function CourseSinglePage() {
         {/* Lessons Tab */}
         {activeTab === 'lessons' && (
           <div className="space-y-4">
-            {adminMode && (
-              <div className="flex justify-end mb-4">
-                <button onClick={() => setShowAddLessonModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg">
-                  <Plus size={20} />
-                  Add Lesson
-                </button>
-              </div>
-            )}
             {lessons.map((lesson, index) => (
               <GlassCard key={lesson.id} className="hover:scale-[1.02] transition-transform">
                 <div className="flex items-center gap-4">
-                  {adminMode && (
-                    <button className="text-gray-400 hover:text-white cursor-move">
-                      <GripVertical size={20} />
-                    </button>
-                  )}
                   <div className="w-12 h-12 rounded-lg bg-[#3AA3EB]/20 flex items-center justify-center flex-shrink-0">
                     {lesson.completed ? (
                       <CheckCircle2 className="text-green-400" size={24} />

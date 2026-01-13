@@ -201,7 +201,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <CurrencyDollarIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Amount</span>
             </div>
-            <p className="text-xl md:text-2xl font-bold text-white">
+            <p className="text-lg font-bold text-white">
               ${(invoice.amount || 0).toLocaleString()}
             </p>
           </div>
@@ -211,7 +211,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <CalendarIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Due Date</span>
             </div>
-            <p className="text-sm md:text-base font-medium text-white">
+            <p className="text-lg font-medium text-white">
               {formatAppDate(invoice.due_date)}
             </p>
           </div>
@@ -222,11 +222,11 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <span className="text-xs text-gray-400">{invoice.status === 'paid' ? 'Paid At' : 'Days Until Due'}</span>
             </div>
             {invoice.status === 'paid' ? (
-              <p className="text-sm md:text-base font-medium text-green-400">
+              <p className="text-lg font-medium text-green-400">
                 {formatAppDate(invoice.updated_at || invoice.created_at)}
               </p>
             ) : (
-              <p className={`text-xl md:text-2xl font-bold ${daysUntilDue < 0 ? 'text-red-400' :
+              <p className={`text-lg font-bold ${daysUntilDue < 0 ? 'text-red-400' :
                 daysUntilDue < 7 ? 'text-yellow-400' :
                   'text-green-400'
                 }`}>
@@ -242,9 +242,9 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <BanknotesIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Status</span>
             </div>
-            <span className={`inline-block px-2.5 py-1 rounded-lg text-sm font-medium border ${getStatusColor(invoice.status)}`}>
+            <p className="text-lg font-medium text-white">
               {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-            </span>
+            </p>
           </div>
         </div>
       </div>
@@ -378,25 +378,27 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         </div>
       </div>
 
-      {isAdmin && (
-        <>
-          <InvoiceModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={handleSaveInvoice}
-            invoice={invoice}
-            mode="edit"
-          />
+      {
+        isAdmin && (
+          <>
+            <InvoiceModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onSave={handleSaveInvoice}
+              invoice={invoice}
+              mode="edit"
+            />
 
-          <ConfirmDialog
-            isOpen={isDeleteDialogOpen}
-            onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleDeleteInvoice}
-            title="Delete Invoice"
-            message={`Are you sure you want to delete the invoice for "${displayClientName}" ($${invoice.amount.toLocaleString()})? This action cannot be undone.`}
-          />
-        </>
-      )}
-    </div>
+            <ConfirmDialog
+              isOpen={isDeleteDialogOpen}
+              onClose={() => setIsDeleteDialogOpen(false)}
+              onConfirm={handleDeleteInvoice}
+              title="Delete Invoice"
+              message={`Are you sure you want to delete the invoice for "${displayClientName}" ($${invoice.amount.toLocaleString()})? This action cannot be undone.`}
+            />
+          </>
+        )
+      }
+    </div >
   );
 }

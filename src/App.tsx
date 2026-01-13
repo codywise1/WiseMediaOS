@@ -19,7 +19,7 @@ import { authService, isSupabaseAvailable, clientService, supabase, UserRole } f
 import CommunityPage from './pages/CommunityPage';
 import CommunityFeedPage from './pages/CommunityFeedPage';
 import CoursesPage from './pages/CoursesPage';
-import CourseSinglePage from './pages/CourseSinglePage';
+import EducationDetails from './pages/EducationDetails';
 import ProfilePage from './pages/ProfilePage';
 import AdminBackendPage from './pages/AdminBackendPage';
 import CreatorHome from './pages/CreatorHome';
@@ -29,6 +29,7 @@ import FileDetailPage from './pages/FileDetailPage';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
 import MarketplacePage from './pages/MarketplacePage';
+import MarketplaceDetails from './pages/MarketplaceDetails';
 import MeetingsPage from './pages/MeetingsPage';
 import LiveMeetingPage from './pages/LiveMeetingPage';
 import MeetingDetailPage from './pages/MeetingDetailPage';
@@ -551,7 +552,7 @@ function App() {
             path="/community/courses/:id"
             element={
               <CommunityGuard>
-                <CourseSinglePage />
+                <EducationDetails />
               </CommunityGuard>
             }
           />
@@ -567,6 +568,12 @@ function App() {
             path="/community/marketplace"
             element={
               <MarketplacePage />
+            }
+          />
+          <Route
+            path="/community/marketplace/:id"
+            element={
+              <MarketplaceDetails />
             }
           />
           {/* <Route

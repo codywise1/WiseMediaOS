@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import { Star, Package, Zap, Users, Shield, FileText, Layout, Grid } from 'lucide-react';
-import { useNavigation } from '../contexts/NavigationContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 interface Product {
@@ -19,7 +19,7 @@ interface Product {
 }
 
 export default function MarketplacePage() {
-  const { setCurrentPage } = useNavigation();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -125,8 +125,7 @@ export default function MarketplacePage() {
   }
 
   function handleProductClick(productId: string) {
-    localStorage.setItem('selectedProductId', productId);
-    setCurrentPage('marketplace-product');
+    navigate(`/community/marketplace/${productId}`);
   }
 
   const getCategoryIcon = (category: string) => {
@@ -160,7 +159,7 @@ export default function MarketplacePage() {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h1 className="text-4xl font-bold gradient-text text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Marketplace
             </h1>
             <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>

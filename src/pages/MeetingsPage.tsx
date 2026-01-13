@@ -4,9 +4,6 @@ import {
     VideoCameraIcon,
     MagnifyingGlassIcon,
     VideoCameraSlashIcon,
-    ClipboardDocumentCheckIcon,
-    CheckCircleIcon,
-    ShareIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -45,7 +42,7 @@ export default function MeetingsPage() {
     const currentUser = profile ? {
         id: profile.id,
         role: profile.role,
-        name: profile.name
+        name: profile.full_name || ''
     } : null;
 
     useLoadingGuard(loading, setLoading);
@@ -143,17 +140,6 @@ export default function MeetingsPage() {
 
         return matchesSearch && matchesStatus && matchesClient && matchesProject && matchesDate;
     });
-
-    // Calculate stats
-    const stats = {
-        upcoming: meetings.filter(m => {
-            const date = new Date(`${m.meeting_date}T${m.meeting_time}`);
-            return date >= new Date() && m.status !== 'cancelled';
-        }).length,
-        awaitingSummary: meetings.filter(m => m.status === 'processing' || (m.status === 'ready' && !m.summary_id)).length,
-        completed: meetings.filter(m => m.status === 'ready' || m.status === 'shared').length,
-        shared: meetings.filter(m => m.status === 'shared').length
-    };
 
     if (loading) return null;
 
@@ -262,38 +248,6 @@ export default function MeetingsPage() {
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    label="Upcoming"
-                    count={stats.upcoming}
-                    icon={VideoCameraIcon}
-                    color="text-blue-400"
-                    bg="bg-blue-500/10"
-                />
-                <StatCard
-                    label="Awaiting Summary"
-                    count={stats.awaitingSummary}
-                    icon={ClipboardDocumentCheckIcon}
-                    color="text-amber-400"
-                    bg="bg-amber-500/10"
-                />
-                <StatCard
-                    label="Completed"
-                    count={stats.completed}
-                    icon={CheckCircleIcon}
-                    color="text-emerald-400"
-                    bg="bg-emerald-500/10"
-                />
-                <StatCard
-                    label="Shared with Client"
-                    count={stats.shared}
-                    icon={ShareIcon}
-                    color="text-purple-400"
-                    bg="bg-purple-500/10"
-                />
-            </div>
-
             {/* Meetings Grid */}
             {filteredMeetings.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -336,16 +290,3 @@ export default function MeetingsPage() {
     );
 }
 
-function StatCard({ label, count, icon: Icon, color, bg }: any) {
-    return (
-        <div className="glass-card rounded-xl p-5 border border-white/10 flex items-center gap-4 group hover:border-white/20 transition-all">
-            <div className={`p-3 rounded-lg ${bg} ${color} group-hover:scale-110 transition-transform`}>
-                <Icon className="h-6 w-6" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">{label}</p>
-                <p className="text-2xl font-black text-white mt-0.5">{count}</p>
-            </div>
-        </div>
-    );
-}

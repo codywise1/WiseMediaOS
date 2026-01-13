@@ -258,30 +258,6 @@ export default function FilesPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <div className="text-2xl font-bold text-white">{stats.total}</div>
-          <div className="text-sm text-gray-400">Total Files</div>
-        </div>
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <div className="text-2xl font-bold text-amber-300">{stats.pending}</div>
-          <div className="text-sm text-gray-400">Pending Review</div>
-        </div>
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <div className="text-2xl font-bold text-blue-300">{stats.awaiting}</div>
-          <div className="text-sm text-gray-400">Awaiting Client</div>
-        </div>
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <div className="text-2xl font-bold text-emerald-300">{stats.approved}</div>
-          <div className="text-sm text-gray-400">Approved</div>
-        </div>
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <div className="text-2xl font-bold text-slate-300">{stats.expiring}</div>
-          <div className="text-sm text-gray-400">Expiring Soon</div>
-        </div>
-      </div>
-
       {/* File List Table */}
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-[10px] font-black text-gray-300 uppercase tracking-widest bg-white/5 border-b border-white/10">
