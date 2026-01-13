@@ -698,8 +698,13 @@ export default function CommunityFeedPage() {
                         {(post.tags || []).slice(0, 5).map(tag => (
                           <span
                             key={tag}
-                            className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300"
-                            style={{ fontFamily: 'Montserrat, sans-serif' }}
+                            className="text-xs px-3 py-1 rounded-full font-semibold"
+                            style={{
+                              backgroundColor: 'rgba(59, 163, 234, 0.33)',
+                              border: '1px solid rgba(59, 163, 234, 1)',
+                              color: '#ffffff',
+                              fontFamily: 'Montserrat, sans-serif'
+                            }}
                           >
                             {tag}
                           </span>
