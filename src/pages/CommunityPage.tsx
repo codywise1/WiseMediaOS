@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Edit2, Trash2, X, Check } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client } from '../lib/supabase';
@@ -18,6 +18,7 @@ interface Channel {
 interface Message {
   id: string;
   message: string;
+  user_id: string;
   created_at: string;
   profiles: {
     full_name: string;
@@ -81,6 +82,10 @@ export default function CommunityPage() {
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelDescription, setNewChannelDescription] = useState('');
   const [creatingChannel, setCreatingChannel] = useState(false);
+  const [isEditChannelModalOpen, setIsEditChannelModalOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
 
 
   // Use a ref to persist mock messages during session in demo mode
@@ -377,6 +382,119 @@ export default function CommunityPage() {
     }
   }
 
+  async function handleUpdateChannel() {
+    if (!editingChannel || !newChannelName.trim() || !isAdmin) return;
+
+    setCreatingChannel(true);
+    try {
+      const formattedName = newChannelName.trim().toLowerCase().replace(/\s+/g, '-');
+
+      if (!isSupabaseAvailable()) {
+        const updated = { ...editingChannel, name: formattedName, description: newChannelDescription.trim() };
+        setChannels(prev => prev.map(c => c.id === editingChannel.id ? updated : c));
+        if (selectedChannel?.id === editingChannel.id) setSelectedChannel(updated);
+      } else {
+        const { data, error } = await supabase!
+          .from('chat_channels')
+          .update({
+            name: formattedName,
+            description: newChannelDescription.trim(),
+          })
+          .eq('id', editingChannel.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setChannels(prev => prev.map(c => c.id === editingChannel.id ? data : c));
+          if (selectedChannel?.id === editingChannel.id) setSelectedChannel(data);
+        }
+      }
+
+      setIsEditChannelModalOpen(false);
+      setEditingChannel(null);
+      setNewChannelName('');
+      setNewChannelDescription('');
+    } catch (error) {
+      console.error('Error updating channel:', error);
+      alert('Failed to update channel.');
+    } finally {
+      setCreatingChannel(false);
+    }
+  }
+
+  async function handleDeleteChannel(id: string) {
+    if (!isAdmin || !id) return;
+    if (!confirm('Are you sure you want to delete this channel? This will remove all messages in it.')) return;
+
+    try {
+      if (!isSupabaseAvailable()) {
+        setChannels(prev => prev.filter(c => c.id !== id));
+        if (selectedChannel?.id === id) setSelectedChannel(channels.find(c => c.id !== id) || null);
+      } else {
+        const { error } = await supabase!
+          .from('chat_channels')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        setChannels(prev => prev.filter(c => c.id !== id));
+        if (selectedChannel?.id === id) {
+          const next = channels.find(c => c.id !== id);
+          setSelectedChannel(next || null);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting channel:', error);
+      alert('Failed to delete channel.');
+    }
+  }
+
+  async function handleUpdateMessage(messageId: string) {
+    if (!editingMessageText.trim() || !isAdmin) return;
+
+    try {
+      if (!isSupabaseAvailable()) {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, message: editingMessageText.trim() } : m));
+      } else {
+        const { error } = await supabase!
+          .from('chat_messages')
+          .update({ message: editingMessageText.trim() })
+          .eq('id', messageId);
+
+        if (error) throw error;
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, message: editingMessageText.trim() } : m));
+      }
+      setEditingMessageId(null);
+      setEditingMessageText('');
+    } catch (error) {
+      console.error('Error updating message:', error);
+      alert('Failed to update message.');
+    }
+  }
+
+  async function handleDeleteMessage(messageId: string) {
+    if (!isAdmin || !messageId) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
+
+    try {
+      if (!isSupabaseAvailable()) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      } else {
+        const { error } = await supabase!
+          .from('chat_messages')
+          .delete()
+          .eq('id', messageId);
+
+        if (error) throw error;
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('Failed to delete message.');
+    }
+  }
+
   async function fetchAllUsers() {
     if (!isSupabaseAvailable()) {
       setPrivateConversations(mockUsers);
@@ -422,6 +540,51 @@ export default function CommunityPage() {
         unreadCount: 0,
       }));
       setPrivateConversations(conversations);
+    }
+  }
+
+  async function handleUpdatePrivateMessage(messageId: string) {
+    if (!editingMessageText.trim() || !isAdmin) return;
+
+    try {
+      if (!isSupabaseAvailable()) {
+        setPrivateMessages(prev => prev.map(m => m.id === messageId ? { ...m, message: editingMessageText.trim() } : m));
+      } else {
+        const { error } = await supabase!
+          .from('private_messages')
+          .update({ message: editingMessageText.trim() })
+          .eq('id', messageId);
+
+        if (error) throw error;
+        setPrivateMessages(prev => prev.map(m => m.id === messageId ? { ...m, message: editingMessageText.trim() } : m));
+      }
+      setEditingMessageId(null);
+      setEditingMessageText('');
+    } catch (error) {
+      console.error('Error updating private message:', error);
+      alert('Failed to update message.');
+    }
+  }
+
+  async function handleDeletePrivateMessage(messageId: string) {
+    if (!isAdmin || !messageId) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
+
+    try {
+      if (!isSupabaseAvailable()) {
+        setPrivateMessages(prev => prev.filter(m => m.id !== messageId));
+      } else {
+        const { error } = await supabase!
+          .from('private_messages')
+          .delete()
+          .eq('id', messageId);
+
+        if (error) throw error;
+        setPrivateMessages(prev => prev.filter(m => m.id !== messageId));
+      }
+    } catch (error) {
+      console.error('Error deleting private message:', error);
+      alert('Failed to delete message.');
     }
   }
 
@@ -895,15 +1058,40 @@ export default function CommunityPage() {
           <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden">
             <div className="pb-4 border-b border-white/10">
               {view === 'channels' && selectedChannel ? (
-                <div>
-                  <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                    <Hash size={24} className="text-[#59a1e5]" />
-                    {selectedChannel.name}
-                  </h2>
-                  {selectedChannel.description && (
-                    <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {selectedChannel.description}
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-white font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                      <Hash size={24} className="text-[#59a1e5]" />
+                      {selectedChannel.name}
+                    </h2>
+                    {selectedChannel.description && (
+                      <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {selectedChannel.description}
+                      </p>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingChannel(selectedChannel);
+                          setNewChannelName(selectedChannel.name);
+                          setNewChannelDescription(selectedChannel.description || '');
+                          setIsEditChannelModalOpen(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                        title="Edit Channel"
+                      >
+                        <Settings size={20} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteChannel(selectedChannel.id)}
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                        title="Delete Channel"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : view === 'private' && selectedUser ? (
@@ -968,9 +1156,62 @@ export default function CommunityPage() {
                         {formatAppDateTime(msg.created_at)}
                       </span>
                     </div>
-                    <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                      {msg.message}
-                    </p>
+                    <div className="flex justify-between items-start group">
+                      <div className="flex-1">
+                        {editingMessageId === msg.id ? (
+                          <div className="flex gap-2 items-center mt-1">
+                            <input
+                              type="text"
+                              value={editingMessageText}
+                              onChange={(e) => setEditingMessageText(e.target.value)}
+                              className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-[#59a1e5]"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleUpdateMessage(msg.id)}
+                              className="p-1 text-emerald-400 hover:bg-emerald-400/10 rounded"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(null);
+                                setEditingMessageText('');
+                              }}
+                              className="p-1 text-red-400 hover:bg-red-400/10 rounded"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                            {msg.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {isAdmin && msg.user_id === profile?.id && !editingMessageId && (
+                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 ml-2 transition-opacity">
+                          <button
+                            onClick={() => {
+                              setEditingMessageId(msg.id);
+                              setEditingMessageText(msg.message);
+                            }}
+                            className="p-1 text-gray-500 hover:text-white rounded"
+                            title="Edit"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-1 text-gray-500 hover:text-red-400 rounded"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1001,13 +1242,64 @@ export default function CommunityPage() {
                       )
                     )}
                     <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
-                      <div className={`p-3 rounded-lg ${isMyMessage
-                        ? 'bg-[#59a1e5] text-white shadow-lg'
-                        : 'bg-white/10 text-gray-300'
-                        }`}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                          {msg.message}
-                        </p>
+                      <div className="group relative">
+                        <div className={`p-3 rounded-lg ${isMyMessage
+                          ? 'bg-[#59a1e5] text-white shadow-lg'
+                          : 'bg-white/10 text-gray-300'
+                          }`}>
+                          {editingMessageId === msg.id ? (
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="text"
+                                value={editingMessageText}
+                                onChange={(e) => setEditingMessageText(e.target.value)}
+                                className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-white"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleUpdatePrivateMessage(msg.id)}
+                                className="p-1 text-emerald-400 hover:bg-white/10 rounded"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(null);
+                                  setEditingMessageText('');
+                                }}
+                                className="p-1 text-red-400 hover:bg-white/10 rounded"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                              {msg.message}
+                            </p>
+                          )}
+                        </div>
+
+                        {isAdmin && isMyMessage && !editingMessageId && (
+                          <div className={`absolute top-0 ${isMyMessage ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity`}>
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(msg.id);
+                                setEditingMessageText(msg.message);
+                              }}
+                              className="p-1 text-gray-500 hover:text-white rounded"
+                              title="Edit"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePrivateMessage(msg.id)}
+                              className="p-1 text-gray-500 hover:text-red-400 rounded"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                         {formatAppDateTime(msg.created_at)}
@@ -1055,9 +1347,15 @@ export default function CommunityPage() {
       </div>
 
       <Modal
-        isOpen={isCreateChannelModalOpen}
-        onClose={() => setIsCreateChannelModalOpen(false)}
-        title="Create New Channel"
+        isOpen={isCreateChannelModalOpen || isEditChannelModalOpen}
+        onClose={() => {
+          setIsCreateChannelModalOpen(false);
+          setIsEditChannelModalOpen(false);
+          setEditingChannel(null);
+          setNewChannelName('');
+          setNewChannelDescription('');
+        }}
+        title={isEditChannelModalOpen ? "Edit Channel" : "Create New Channel"}
         maxWidth="max-w-md"
       >
         <div className="space-y-4">
@@ -1091,19 +1389,25 @@ export default function CommunityPage() {
 
           <div className="flex justify-end gap-3 pt-4">
             <button
-              onClick={() => setIsCreateChannelModalOpen(false)}
+              onClick={() => {
+                setIsCreateChannelModalOpen(false);
+                setIsEditChannelModalOpen(false);
+                setEditingChannel(null);
+                setNewChannelName('');
+                setNewChannelDescription('');
+              }}
               className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               Cancel
             </button>
             <button
-              onClick={handleCreateChannel}
+              onClick={isEditChannelModalOpen ? handleUpdateChannel : handleCreateChannel}
               disabled={creatingChannel || !newChannelName.trim()}
-              className="px-6 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-all font-bold text-sm shadow-[0_4px_15px_rgba(58,163,235,0.3)] hover:shadow-[0_6px_20px_rgba(58,163,235,0.4)]"
+              className="px-6 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-all font-bold text-sm shadow-[0_4px_15_rgba(58,163,235,0.3)] hover:shadow-[0_6px_20px_rgba(58,163,235,0.4)]"
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
-              {creatingChannel ? 'Creating...' : 'Create Channel'}
+              {creatingChannel ? (isEditChannelModalOpen ? 'Updating...' : 'Creating...') : (isEditChannelModalOpen ? 'Update Channel' : 'Create Channel')}
             </button>
           </div>
         </div>
