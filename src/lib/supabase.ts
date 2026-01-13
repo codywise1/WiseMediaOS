@@ -441,6 +441,7 @@ export interface Note {
   pinned: boolean; // Renamed from is_pinned in request but I'll support both for transition
   is_pinned?: boolean;
   visibility: NoteVisibility;
+  is_shared_with_client: boolean;
   orgId?: string;
   authorUserId?: string;
   clientId?: string;
@@ -1777,6 +1778,38 @@ export const noteService = {
       actor_id: userData?.user?.id || '',
       action: 'note_updated',
       metadata: { fields: Object.keys(updates) }
+    });
+
+    return data as Note;
+  },
+
+  async toggleShare(id: string, isShared: boolean) {
+    const sb = getSupabaseClient();
+    const { data: userData } = await sb.auth.getUser();
+
+    const { data, error } = await sb
+      .from('notes')
+      .update({
+        is_shared_with_client: isShared,
+        visibility: isShared ? 'client_visible' : 'internal',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients!clientId(*),
+        project:projects!projectId(*)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    // Log audit event
+    await noteAuditService.log({
+      note_id: id,
+      actor_id: userData?.user?.id || '',
+      action: isShared ? 'note_shared' : 'note_unshared',
+      metadata: { is_shared_with_client: isShared }
     });
 
     return data as Note;

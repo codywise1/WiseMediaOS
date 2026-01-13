@@ -224,16 +224,26 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                 <div className="lg:col-span-3 space-y-6">
                     {/* Editor Header */}
                     <div className="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 relative overflow-hidden mb-6">
-                        <div className="absolute top-0 right-0 p-4 sm:p-8">
-                            <button
-                                onClick={handleTogglePin}
-                                className={`p-3 rounded-2xl transition-all border ${note.pinned
-                                    ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
-                                    : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/30'
+                        <div className="absolute top-0 right-0 p-4 sm:p-8 flex flex-col items-end gap-2">
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Share with Client</span>
+                            <div
+                                onClick={() => {
+                                    if (!note.clientId) {
+                                        alert('You must link a client before sharing.');
+                                        return;
+                                    }
+                                    const isShared = note.is_shared_with_client;
+                                    noteService.toggleShare(note.id, !isShared).then(setNote);
+                                }}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${note.is_shared_with_client ? 'bg-emerald-500/40 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border border-white/10'
                                     }`}
+                                title={note.is_shared_with_client ? 'Unshare with client' : 'Share with client'}
                             >
-                                <BookmarkIcon className={`h-6 w-6 ${note.pinned ? 'fill-yellow-500' : ''}`} />
-                            </button>
+                                <span
+                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${note.is_shared_with_client ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-4 max-w-3xl">
@@ -327,24 +337,21 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* Actions Card */}
                     <div className="glass-card rounded-2xl p-4 border border-white/10 flex items-center justify-center gap-4">
                         <button
+                            onClick={handleTogglePin}
+                            className={`p-3 rounded-full transition-all border ${note.pinned
+                                ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
+                                : 'bg-white/5 text-gray-500 border-white/10 hover:text-white hover:bg-white/10'
+                                }`}
+                            title={note.pinned ? 'Unpin' : 'Pin to top'}
+                        >
+                            <BookmarkIcon className={`h-5 w-5 ${note.pinned ? 'fill-yellow-400' : ''}`} />
+                        </button>
+                        <button
                             onClick={() => note && generateNotePDF(note)}
                             className="p-3 rounded-full bg-[#3aa3eb]/10 text-[#3aa3eb] hover:bg-[#3aa3eb]/20 border border-[#3aa3eb]/20 transition-all"
                             title="Download PDF"
                         >
                             <ArrowDownTrayIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (!note.clientId) {
-                                    alert('You must link a client before sharing.');
-                                    return;
-                                }
-                                noteService.update(note.id, { visibility: note.visibility === 'internal' ? 'client_visible' : 'internal' }).then(setNote);
-                            }}
-                            className="p-3 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10 transition-all"
-                            title={note.visibility === 'client_visible' ? 'Unshare Note' : 'Share with Client'}
-                        >
-                            <ShareIcon className="h-5 w-5" />
                         </button>
                         <button
                             onClick={() => setIsDeleteDialogOpen(true)}

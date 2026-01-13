@@ -10,7 +10,8 @@ import {
   TrashIcon,
   ClipboardDocumentCheckIcon,
   VideoCameraIcon,
-  EyeIcon
+  EyeIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -158,6 +159,23 @@ export default function Notes({ currentUser }: NotesProps) {
     } catch (error) {
       console.error('Error toggling pin:', error);
       toastError('Failed to update pin status.');
+    }
+  };
+
+  const handleToggleShare = async (e: React.MouseEvent, note: Note) => {
+    e.stopPropagation();
+    try {
+      if (!note.clientId) {
+        toastError('You must link a client before sharing.');
+        return;
+      }
+      const newShareState = !note.is_shared_with_client;
+      await noteService.toggleShare(note.id, newShareState);
+      await loadData();
+      toastSuccess(newShareState ? 'Note shared with client.' : 'Note unshared.');
+    } catch (error) {
+      console.error('Error toggling share:', error);
+      toastError('Failed to update share status.');
     }
   };
 
@@ -309,6 +327,7 @@ export default function Notes({ currentUser }: NotesProps) {
                     onEdit={handleEditNote}
                     onDelete={handleDeleteNote}
                     onTogglePin={handleTogglePin}
+                    onToggleShare={handleToggleShare}
                   />
                 ))}
               </div>
@@ -330,6 +349,7 @@ export default function Notes({ currentUser }: NotesProps) {
                       onEdit={handleEditNote}
                       onDelete={handleDeleteNote}
                       onTogglePin={handleTogglePin}
+                      onToggleShare={handleToggleShare}
                     />
                   ))}
                 </div>
@@ -352,6 +372,7 @@ export default function Notes({ currentUser }: NotesProps) {
                 onEdit={handleEditNote}
                 onDelete={handleDeleteNote}
                 onTogglePin={handleTogglePin}
+                onToggleShare={handleToggleShare}
               />
             ))}
           </div>
@@ -373,6 +394,7 @@ export default function Notes({ currentUser }: NotesProps) {
                   onEdit={handleEditNote}
                   onDelete={handleDeleteNote}
                   onTogglePin={handleTogglePin}
+                  onToggleShare={handleToggleShare}
                 />
               ))}
             </div>
@@ -414,12 +436,13 @@ export default function Notes({ currentUser }: NotesProps) {
   );
 }
 
-function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
+function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare }: {
   note: Note;
   viewMode: 'grid' | 'list';
   onEdit: (n: Note) => void;
   onDelete: (n: Note) => void;
   onTogglePin: (e: React.MouseEvent, n: Note) => void;
+  onToggleShare: (e: React.MouseEvent, n: Note) => void;
 }) {
   const categoryConfigs: Record<string, { bg: string, border: string, text: string, label: string }> = {
     idea: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff', label: 'Idea' },
@@ -455,6 +478,13 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
                 className={`p-1 transition-colors ${note.pinned ? 'text-yellow-400' : 'text-gray-600 hover:text-gray-400'}`}
               >
                 <BookmarkIcon className={`h-5 w-5 ${note.pinned ? 'fill-yellow-400' : ''}`} />
+              </button>
+              <button
+                onClick={(e) => onToggleShare(e, note)}
+                className={`p-1 transition-colors ${note.is_shared_with_client ? 'text-emerald-400' : 'text-gray-600 hover:text-gray-400'}`}
+                title={note.is_shared_with_client ? 'Shared with client' : 'Private'}
+              >
+                <ShareIcon className={`h-5 w-5 ${note.is_shared_with_client ? 'fill-emerald-400/20' : ''}`} />
               </button>
             </div>
           </div>
@@ -493,7 +523,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
           <span>Last Edited: {formatAppDate(note.updated_at)}</span>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(note); }}
-            className="p-1.5 text-gray-600 hover:text-red-400 transition-colors"
+            className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
             title="Delete Note"
           >
             <TrashIcon className="h-4 w-4" />
@@ -542,16 +572,28 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin }: {
       </div>
 
       <div className="flex items-center justify-end gap-3 px-2">
+        <div
+          onClick={(e) => onToggleShare(e, note)}
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${note.is_shared_with_client ? 'bg-emerald-500/40 border border-emerald-500/50' : 'bg-white/5 border border-white/10'
+            }`}
+          title={note.is_shared_with_client ? 'Unshare with client' : 'Share with client'}
+        >
+          <span
+            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${note.is_shared_with_client ? 'translate-x-5' : 'translate-x-1'
+              }`}
+          />
+        </div>
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(note); }}
-          className="shrink-glow-button px-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-[11px] font-bold text-white transition-all flex items-center gap-2"
+          className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+          title="View Note"
         >
-          <span>View Note</span>
-          <EyeIcon className="h-3.5 w-3.5" />
+          <EyeIcon className="h-4 w-4" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(note); }}
-          className="p-2 hover:bg-red-500/20 text-gray-700 hover:text-red-500 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+          className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
+          title="Delete Note"
         >
           <TrashIcon className="h-4 w-4" />
         </button>
