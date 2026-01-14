@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import GlassCard from '../components/GlassCard';
 import {
     MicrophoneIcon,
     VideoCameraIcon,
     PhoneXMarkIcon,
     ComputerDesktopIcon,
     ChatBubbleLeftRightIcon,
-    UserGroupIcon,
     StopIcon,
     PlayIcon,
-    PauseIcon,
     ArrowsPointingOutIcon
 } from '@heroicons/react/24/solid';
 import {
@@ -115,141 +114,143 @@ export default function LiveMeetingPage() {
 
     if (loading || !meeting) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="h-full flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
         );
     }
 
     return (
-        <div className="h-screen bg-slate-950 flex flex-col overflow-hidden">
-            {/* Top Bar */}
-            <div className="h-16 bg-slate-900/50 backdrop-blur-md border-b border-white/10 px-6 flex items-center justify-between z-10">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-white font-bold text-lg">{meeting.title}</h1>
-                    <div className="h-6 w-px bg-white/10" />
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span className="text-red-400 font-mono font-medium">{formatDuration(duration)}</span>
+        <div className="h-full flex flex-col overflow-hidden gap-6">
+            <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-0 !bg-slate-900/50">
+                {/* Top Bar */}
+                <div className="h-16 border-b border-white/10 px-6 flex items-center justify-between z-10 bg-white/5">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-white font-bold text-lg">{meeting.title}</h1>
+                        <div className="h-6 w-px bg-white/10" />
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            <span className="text-red-400 font-mono font-medium">{formatDuration(duration)}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex -space-x-2">
+                            {meeting.participants.map((p, i) => (
+                                <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-slate-900 flex items-center justify-center text-xs text-white font-bold">
+                                    {p.name.charAt(0)}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex -space-x-2">
-                        {meeting.participants.map((p, i) => (
-                            <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-slate-900 flex items-center justify-center text-xs text-white font-bold">
-                                {p.name.charAt(0)}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* Video Area */}
-                <div className="flex-1 p-4 flex flex-col gap-4 relative">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Self View */}
-                        <div className="bg-slate-900 rounded-2xl relative overflow-hidden border border-white/10 group">
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                                    <span className="text-3xl text-white font-bold">{profile?.name?.charAt(0) || 'M'}</span>
+                {/* Main Content */}
+                <div className="flex-1 flex overflow-hidden">
+                    {/* Video Area */}
+                    <div className="flex-1 p-4 flex flex-col gap-4 relative overflow-hidden">
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
+                            {/* Self View */}
+                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10 group">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                                        <span className="text-3xl text-white font-bold">{profile?.full_name?.charAt(0) || 'M'}</span>
+                                    </div>
+                                </div>
+                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
+                                    You {isMuted && '(Muted)'}
+                                </div>
+                                {/* Fake Audio Waveform */}
+                                <div className="absolute bottom-4 right-4 flex items-end gap-1 h-6">
+                                    {[1, 2, 3, 2, 1].map((h, i) => (
+                                        <div key={i} className={`w-1 bg-green-500 rounded-full animate-pulse`} style={{ height: `${h * 20}%` }} />
+                                    ))}
                                 </div>
                             </div>
-                            <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                You {isMuted && '(Muted)'}
-                            </div>
-                            {/* Fake Audio Waveform */}
-                            <div className="absolute bottom-4 right-4 flex items-end gap-1 h-6">
-                                {[1, 2, 3, 2, 1].map((h, i) => (
-                                    <div key={i} className={`w-1 bg-green-500 rounded-full animate-pulse`} style={{ height: `${h * 20}%` }} />
-                                ))}
+
+                            {/* Client View */}
+                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10">
+                                <img
+                                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
+                                    alt="Client"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-80"
+                                />
+                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
+                                    {meeting.client?.name || 'Client'}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Client View */}
-                        <div className="bg-slate-900 rounded-2xl relative overflow-hidden border border-white/10">
-                            <img
-                                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
-                                alt="Client"
-                                className="absolute inset-0 w-full h-full object-cover opacity-80"
+                        {/* Controls Bar */}
+                        <div className="h-20 bg-white/5 backdrop-blur-xl rounded-2xl mb-2 mx-auto flex items-center gap-6 px-8 border border-white/10 shrink-0">
+                            <ControlBtn
+                                icon={isMuted ? MicOffIcon : MicrophoneIcon}
+                                active={!isMuted}
+                                onClick={() => setIsMuted(!isMuted)}
+                                alert={isMuted}
                             />
-                            <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                {meeting.client?.name || 'Client'}
+                            <ControlBtn
+                                icon={isVideoOff ? VideoOffIcon : VideoCameraIcon}
+                                active={!isVideoOff}
+                                onClick={() => setIsVideoOff(!isVideoOff)}
+                                alert={isVideoOff}
+                            />
+                            <ControlBtn
+                                icon={ComputerDesktopIcon}
+                                active={isScreenSharing}
+                                onClick={() => setIsScreenSharing(!isScreenSharing)}
+                            />
+
+                            <div className="w-px h-8 bg-white/10" />
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={toggleRecording}
+                                    className={`p-4 rounded-full transition-all ${recordingStatus === 'recording'
+                                        ? 'bg-red-500/20 text-red-500 animate-pulse'
+                                        : 'bg-white/5 hover:bg-white/10 text-white'
+                                        }`}
+                                >
+                                    {recordingStatus === 'recording' ? <StopIcon className="h-6 w-6" /> : <PlayIcon className="h-6 w-6" />}
+                                </button>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Controls Bar */}
-                    <div className="h-20 glass-card rounded-2xl mb-4 mx-auto flex items-center gap-6 px-8 border border-white/10">
-                        <ControlBtn
-                            icon={isMuted ? MicOffIcon : MicrophoneIcon}
-                            active={!isMuted}
-                            onClick={() => setIsMuted(!isMuted)}
-                            alert={isMuted}
-                        />
-                        <ControlBtn
-                            icon={isVideoOff ? VideoOffIcon : VideoCameraIcon}
-                            active={!isVideoOff}
-                            onClick={() => setIsVideoOff(!isVideoOff)}
-                            alert={isVideoOff}
-                        />
-                        <ControlBtn
-                            icon={ComputerDesktopIcon}
-                            active={isScreenSharing}
-                            onClick={() => setIsScreenSharing(!isScreenSharing)}
-                        />
+                            <div className="w-px h-8 bg-white/10" />
 
-                        <div className="w-px h-8 bg-white/10" />
+                            <ControlBtn
+                                icon={ChatBubbleLeftRightIcon}
+                                active={showNotes}
+                                onClick={() => setShowNotes(!showNotes)}
+                            />
 
-                        <div className="flex items-center gap-2">
                             <button
-                                onClick={toggleRecording}
-                                className={`p-4 rounded-full transition-all ${recordingStatus === 'recording'
-                                    ? 'bg-red-500/20 text-red-500 animate-pulse'
-                                    : 'bg-white/5 hover:bg-white/10 text-white'
-                                    }`}
+                                onClick={handleEndCall}
+                                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-4 shadow-lg shadow-red-500/20"
                             >
-                                {recordingStatus === 'recording' ? <StopIcon className="h-6 w-6" /> : <PlayIcon className="h-6 w-6" />}
+                                <PhoneXMarkIcon className="h-6 w-6" />
                             </button>
                         </div>
-
-                        <div className="w-px h-8 bg-white/10" />
-
-                        <ControlBtn
-                            icon={ChatBubbleLeftRightIcon}
-                            active={showNotes}
-                            onClick={() => setShowNotes(!showNotes)}
-                        />
-
-                        <button
-                            onClick={handleEndCall}
-                            className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-4 shadow-lg shadow-red-500/20"
-                        >
-                            <PhoneXMarkIcon className="h-6 w-6" />
-                        </button>
                     </div>
+
+                    {/* Notes Side Panel */}
+                    {showNotes && (
+                        <div className="w-96 border-l border-white/10 bg-black/20 p-6 flex flex-col gap-4 transition-all">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-white font-bold">Meeting Notes</h2>
+                                <button onClick={() => setShowNotes(false)} className="text-gray-400 hover:text-white">
+                                    <ArrowsPointingOutIcon className="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                                <MeetingNotesEditor
+                                    onSave={handleSaveNotes}
+                                    autoSaveInterval={2000}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
-
-                {/* Notes Side Panel */}
-                {showNotes && (
-                    <div className="w-96 border-l border-white/10 bg-slate-900/50 backdrop-blur-xl p-6 flex flex-col gap-4 transition-all">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-white font-bold">Meeting Notes</h2>
-                            <button onClick={() => setShowNotes(false)} className="text-gray-400 hover:text-white">
-                                <ArrowsPointingOutIcon className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-hidden rounded-xl border border-white/10">
-                            <MeetingNotesEditor
-                                onSave={handleSaveNotes}
-                                autoSaveInterval={2000}
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
+            </GlassCard>
         </div>
     );
 }

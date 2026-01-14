@@ -195,17 +195,17 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     className="flex items-center space-x-2 text-gray-500 hover:text-white transition-colors group"
                 >
                     <ArrowLeftIcon className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                    <span className="text-[10px] font-black tracking-wider">Back to Library</span>
+                    <span className="text-[10px] font-black tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>Back to Library</span>
                 </button>
 
                 <div className="flex items-center gap-4">
                     {isSaving ? (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[#3aa3eb] tracking-wider">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[#3aa3eb] tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                             <div className="h-2 w-2 bg-[#3aa3eb] rounded-full animate-ping" />
                             <span>Saving Intelligence...</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 tracking-wider">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                             <span>Intelligence Synchronized</span>
                         </div>
                     )}
@@ -314,14 +314,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* Details Card */}
                     <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-[10px] font-black text-white tracking-wider">Contextual Data</h2>
+                            <h2 className="text-[10px] font-black text-white tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>Contextual Data</h2>
                             {isSaving ? (
-                                <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] tracking-wider animate-pulse">
+                                <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] tracking-wider animate-pulse" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                                     <div className="w-1 h-1 rounded-full bg-[#3aa3eb]" />
                                     Live Content
                                 </span>
                             ) : (
-                                <span className="text-[9px] font-black text-emerald-500 tracking-wider opacity-70">
+                                <span className="text-[9px] font-black text-emerald-500 tracking-wider opacity-70" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                                     Static Snapshot
                                 </span>
                             )}
@@ -364,7 +364,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                     {/* Linked Entities */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-[10px] font-black text-white tracking-widest mb-6">Linked Intelligence</h2>
+                        <h2 className="text-[10px] font-black text-white tracking-widest mb-6" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>Linked Intelligence</h2>
                         <div className="space-y-2">
                             {note.projectId && (
                                 <LinkedItem
@@ -392,14 +392,14 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* History / Audit Log */}
                     {showHistory && (
                         <div className="glass-card rounded-2xl p-6 border border-white/10 animate-in fade-in duration-300">
-                            <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6 flex items-center justify-between">
+                            <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6 flex items-center justify-between" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
                                 <span>Audit Trail</span>
                                 <ClockIcon className="h-4 w-4" />
                             </h2>
                             <div className="space-y-4 h-[400px] overflow-y-auto pr-2 scrollbar-hide">
                                 {auditLogs.map(log => (
                                     <div key={log.id} className="border-l border-white/10 pl-4 py-1">
-                                        <p className="text-[10px] font-bold text-white tracking-wider">{log.action.replace('note_', '').replace('_', ' ')}</p>
+                                        <p className="text-[10px] font-bold text-white tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>{log.action.replace('note_', '').replace('_', ' ')}</p>
                                         <p className="text-[9px] text-gray-600 font-medium">{new Date(log.created_at).toLocaleString()}</p>
                                     </div>
                                 ))}
@@ -422,8 +422,8 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
 function MetaItem({ label, value, icon: Icon }: any) {
     return (
-        <div className="flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-2 text-white/70 font-bold uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[11px]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <div className="flex items-center gap-2 text-white/70 font-bold tracking-widest">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
             </div>
@@ -438,8 +438,8 @@ function LinkedItem({ label, value, icon: Icon, to }: any) {
             <div className="p-2 bg-white/5 rounded-lg group-hover:bg-[#3aa3eb]/20 transition-colors">
                 <Icon className="h-4 w-4 text-gray-500 group-hover:text-[#3aa3eb]" />
             </div>
-            <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest">{label}</p>
+            <div className="min-w-0 flex-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <p className="text-[9px] font-black text-white/70 tracking-widest">{label}</p>
                 <p className="text-xs font-bold text-white truncate">{value}</p>
             </div>
         </div>

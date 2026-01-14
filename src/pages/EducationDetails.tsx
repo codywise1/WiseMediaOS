@@ -12,9 +12,11 @@ import {
   Edit,
   Trash2,
   Award,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  X
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Course {
@@ -55,6 +57,19 @@ export default function EducationDetails() {
   const [adminMode, setAdminMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [lessonForm, setLessonForm] = useState({
+    title: '',
+    description: '',
+    video_url: '',
+    duration_minutes: 0,
+    order_index: lessons.length + 1,
+    is_published: true,
+    video_type: 'link' as 'link' | 'upload'
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -152,23 +167,96 @@ export default function EducationDetails() {
     }
   }
 
-  async function markLessonComplete(lessonId: string) {
-    if (!profile) return;
+  async function handleUploadVideo(file: File) {
+    if (!profile || !isSupabaseAvailable()) return;
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${courseId}-${Date.now()}.${fileExt}`;
+      const filePath = `videos/${fileName}`;
+
+      // This is a simplified upload, for real progress we'd need a different approach
+      // but Supabase storage upload doesn't natively expose progress easily in common wrappers
+      const { error: uploadError } = await supabase!.storage
+        .from('course-videos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase!.storage
+        .from('course-videos')
+        .getPublicUrl(filePath);
+
+      setLessonForm(prev => ({ ...prev, video_url: data.publicUrl }));
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      alert('Failed to upload video');
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleSaveLesson(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isSupabaseAvailable()) return;
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        course_id: courseId,
+        title: lessonForm.title,
+        description: lessonForm.description,
+        video_url: lessonForm.video_url,
+        duration_minutes: lessonForm.duration_minutes,
+        order_index: lessonForm.order_index,
+        is_published: lessonForm.is_published,
+      };
+
+      let error;
+      if (editingLesson) {
+        const { error: updateError } = await supabase!
+          .from('lessons')
+          .update(payload)
+          .eq('id', editingLesson.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase!
+          .from('lessons')
+          .insert([payload]);
+        error = insertError;
+      }
+
+      if (error) throw error;
+
+      setIsLessonModalOpen(false);
+      fetchCourseData();
+    } catch (error) {
+      console.error('Error saving lesson:', error);
+      alert('Failed to save lesson');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteLesson(id: string) {
+    if (!window.confirm('Are you sure you want to delete this lesson?')) return;
+    if (!isSupabaseAvailable()) return;
 
     try {
       const { error } = await supabase!
-        .from('lesson_progress')
-        .upsert({
-          user_id: profile.id,
-          lesson_id: lessonId,
-          completed: true,
-        });
+        .from('lessons')
+        .delete()
+        .eq('id', id);
 
-      if (!error) {
-        fetchCourseData();
-      }
+      if (error) throw error;
+      fetchCourseData();
     } catch (error) {
-      console.error('Error marking lesson complete:', error);
+      console.error('Error deleting lesson:', error);
+      alert('Failed to delete lesson');
     }
   }
 
@@ -344,6 +432,28 @@ export default function EducationDetails() {
         {/* Lessons Tab */}
         {activeTab === 'lessons' && (
           <div className="space-y-4">
+            {adminMode && (
+              <button
+                onClick={() => {
+                  setEditingLesson(null);
+                  setLessonForm({
+                    title: '',
+                    description: '',
+                    video_url: '',
+                    duration_minutes: 0,
+                    order_index: lessons.length + 1,
+                    is_published: true,
+                    video_type: 'link'
+                  });
+                  setIsLessonModalOpen(true);
+                }}
+                className="w-full py-4 border-2 border-dashed border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-[#3AA3EB]/50 hover:bg-[#3AA3EB]/5 transition-all font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                <Plus size={18} />
+                Add New Lesson
+              </button>
+            )}
             {lessons.map((lesson, index) => (
               <GlassCard key={lesson.id} className="hover:scale-[1.02] transition-transform">
                 <div className="flex items-center gap-4">
@@ -372,10 +482,28 @@ export default function EducationDetails() {
                   </div>
                   {adminMode && (
                     <div className="flex items-center gap-2">
-                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
+                      <button
+                        onClick={() => {
+                          setEditingLesson(lesson);
+                          setLessonForm({
+                            title: lesson.title,
+                            description: lesson.description || '',
+                            video_url: lesson.video_url || '',
+                            duration_minutes: lesson.duration_minutes,
+                            order_index: lesson.order_index,
+                            is_published: lesson.is_published,
+                            video_type: lesson.video_url && (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('vimeo.com')) ? 'link' : 'upload'
+                          });
+                          setIsLessonModalOpen(true);
+                        }}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+                      >
                         <Edit size={18} />
                       </button>
-                      <button className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-gray-400 hover:text-red-400">
+                      <button
+                        onClick={() => handleDeleteLesson(lesson.id)}
+                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-gray-400 hover:text-red-400"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -482,6 +610,152 @@ export default function EducationDetails() {
           </GlassCard>
         )}
       </div>
+      {/* Lesson Modal */}
+      {isLessonModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsLessonModalOpen(false)} />
+          <GlassCard className="relative w-full max-w-2xl bg-slate-900 border-white/10 p-0 overflow-hidden">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
+              </h2>
+              <button onClick={() => setIsLessonModalOpen(false)} className="p-2 text-gray-400 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLesson} className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Lesson Title</label>
+                <input
+                  required
+                  type="text"
+                  value={lessonForm.title}
+                  onChange={e => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  placeholder="e.g. Introduction to Scaling"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Description</label>
+                <textarea
+                  value={lessonForm.description}
+                  onChange={e => setLessonForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all h-24"
+                  placeholder="What is this lesson about?"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Duration (min)</label>
+                  <input
+                    type="number"
+                    value={lessonForm.duration_minutes}
+                    onChange={e => setLessonForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Order Index</label>
+                  <input
+                    type="number"
+                    value={lessonForm.order_index}
+                    onChange={e => setLessonForm(prev => ({ ...prev, order_index: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t border-white/10 pt-4">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-white cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      checked={lessonForm.video_type === 'link'}
+                      onChange={() => setLessonForm(prev => ({ ...prev, video_type: 'link' }))}
+                      className="accent-[#3AA3EB]"
+                    />
+                    <span className="text-sm font-medium">Video Link (YouTube/Vimeo)</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-white cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      checked={lessonForm.video_type === 'upload'}
+                      onChange={() => setLessonForm(prev => ({ ...prev, video_type: 'upload' }))}
+                      className="accent-[#3AA3EB]"
+                    />
+                    <span className="text-sm font-medium">Upload File</span>
+                  </label>
+                </div>
+
+                {lessonForm.video_type === 'link' ? (
+                  <div className="space-y-2">
+                    <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Video URL</label>
+                    <input
+                      type="url"
+                      value={lessonForm.video_url}
+                      onChange={e => setLessonForm(prev => ({ ...prev, video_url: e.target.value }))}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Upload Video</label>
+                    <div className="mt-1 flex items-center gap-4">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadVideo(file);
+                        }}
+                        className="hidden"
+                        id="video-upload"
+                      />
+                      <label
+                        htmlFor="video-upload"
+                        className={`px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg cursor-pointer transition-all text-sm font-bold ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {isUploading ? 'Uploading...' : 'Choose File'}
+                      </label>
+                      {lessonForm.video_url && !isUploading && (
+                        <span className="text-green-400 text-xs font-medium truncate max-w-[200px]">
+                          Video uploaded!
+                        </span>
+                      )}
+                    </div>
+                    {isUploading && (
+                      <div className="mt-2 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-[#3AA3EB] h-full animate-pulse" style={{ width: '100%' }} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsLessonModalOpen(false)}
+                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#3AA3EB]/20 uppercase tracking-widest text-xs disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Lesson'}
+                </button>
+              </div>
+            </form>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 }

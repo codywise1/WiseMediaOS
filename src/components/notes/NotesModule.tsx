@@ -52,6 +52,8 @@ export default function NotesModule() {
   }, [searchQuery, notes]);
 
   async function fetchNotes() {
+    if (!supabase) return;
+
     const { data, error } = await supabase
       .from('notes')
       .select('*')
@@ -68,7 +70,7 @@ export default function NotesModule() {
   }
 
   async function handleSaveNote() {
-    if (!editForm.title || !profile?.id) return;
+    if (!editForm.title || !profile?.id || !supabase) return;
 
     try {
       if (selectedNote) {
@@ -108,7 +110,7 @@ export default function NotesModule() {
   }
 
   async function handleDeleteNote(noteId: string) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    if (!confirm('Are you sure you want to delete this note?') || !supabase) return;
 
     const { error } = await supabase
       .from('notes')
@@ -214,9 +216,8 @@ export default function NotesModule() {
             filteredNotes.map((note) => (
               <GlassCard
                 key={note.id}
-                className={`p-4 cursor-pointer transition-all ${
-                  selectedNote?.id === note.id ? 'ring-2 ring-blue-500' : ''
-                }`}
+                className={`p-4 cursor-pointer transition-all ${selectedNote?.id === note.id ? 'ring-2 ring-blue-500' : ''
+                  }`}
                 onClick={() => !isEditing && setSelectedNote(note)}
               >
                 <div className="flex items-start justify-between mb-2">

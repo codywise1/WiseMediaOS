@@ -184,7 +184,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
   const navGroups = navByRole[normalizedRole]
   const dockItems = navGroups.flatMap(group => group.items).slice(0, 4)
   const showSidebarUserActions = false
-  const isFixedHeightRoute = location.pathname.startsWith('/community/messages') || location.pathname === '/projects'
+  const isFixedHeightRoute = location.pathname.startsWith('/community/messages') || location.pathname.startsWith('/meetings/live') || location.pathname === '/projects'
 
   const handleProfileUpdate = (userData: Partial<User>) => {
     if (onUpdateProfile) {

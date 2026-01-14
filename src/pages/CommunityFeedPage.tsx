@@ -754,12 +754,13 @@ export default function CommunityFeedPage() {
                         if (!url) return null;
                         if (isImageUrl(url)) {
                           return (
-                            <img
-                              key={`${post.id}-att-${idx}`}
-                              src={url}
-                              alt="attachment"
-                              className="w-full max-h-[420px] object-contain rounded-xl border border-white/10"
-                            />
+                            <div key={`${post.id}-att-${idx}`} className="flex justify-start">
+                              <img
+                                src={url}
+                                alt="attachment"
+                                className="max-w-full max-h-[420px] object-cover rounded-xl border border-white/10"
+                              />
+                            </div>
                           );
                         }
 

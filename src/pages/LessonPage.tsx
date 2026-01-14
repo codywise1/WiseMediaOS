@@ -160,13 +160,23 @@ export default function LessonPage() {
       );
     }
 
-    const lower = url.toLowerCase();
-    if (lower.includes('youtube.com/watch') || lower.includes('youtu.be')) {
-      const embed = lower.includes('watch') ? url.replace('watch?v=', 'embed/') : url.replace('youtu.be/', 'www.youtube.com/embed/');
+    const getYoutubeId = (url: string) => {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    };
+
+    const getVimeoId = (url: string) => {
+      const match = url.match(/(?:www\.|player\.)?vimeo.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:[a-zA-Z0-9_\-]+)?/);
+      return match ? match[1] : null;
+    };
+
+    const youtubeId = getYoutubeId(url);
+    if (youtubeId) {
       return (
         <div className="aspect-video w-full">
           <iframe
-            src={embed}
+            src={`https://www.youtube.com/embed/${youtubeId}`}
             className="w-full h-full rounded-xl border border-white/10"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -175,12 +185,12 @@ export default function LessonPage() {
       );
     }
 
-    if (lower.includes('vimeo.com')) {
-      const id = url.split('/').pop();
+    const vimeoId = getVimeoId(url);
+    if (vimeoId) {
       return (
         <div className="aspect-video w-full">
           <iframe
-            src={`https://player.vimeo.com/video/${id}`}
+            src={`https://player.vimeo.com/video/${vimeoId}`}
             className="w-full h-full rounded-xl border border-white/10"
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
