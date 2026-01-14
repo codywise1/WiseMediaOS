@@ -759,7 +759,7 @@ function BlockRenderer({
             );
         }
         case 'paragraph':
-            if (readOnly) return <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
+            if (readOnly) return <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap break-words`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />;
             if (!isActive) return (
                 <div
                     className={`${typographyClasses} text-white/80 whitespace-pre-wrap cursor-text min-h-[1.55em]`}
@@ -791,7 +791,7 @@ function BlockRenderer({
                         {items.map((item: string, i: number) => (
                             <li key={i} className="flex items-start gap-3">
                                 <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#3aa3eb]/40 shrink-0" />
-                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap break-words`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
                             </li>
                         ))}
                     </ul>
@@ -802,12 +802,22 @@ function BlockRenderer({
                     {items.map((item: string, i: number) => (
                         <li key={i} className="flex items-start gap-3 group/li">
                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#3aa3eb]/40 shrink-0" />
-                            <input
-                                autoFocus={isActive && i === items.length - 1} type="text" value={item}
-                                onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
-                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="List item..."
-                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5`}
-                            />
+                            {isActive ? (
+                                <input
+                                    autoFocus={i === items.length - 1} type="text" value={item}
+                                    onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
+                                    onKeyDown={(e) => onKeyDown?.(e, i)} placeholder="List item..."
+                                    disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5 flex-1`}
+                                />
+                            ) : (
+                                <div
+                                    className={`${typographyClasses} text-white/80 whitespace-pre-wrap break-words cursor-text flex-1 min-h-[1.55em]`}
+                                    dangerouslySetInnerHTML={{ __html: parseMarkdown(item) || '<span class="text-gray-700 opacity-30">List item...</span>' }}
+                                    onClick={onActivate}
+                                    tabIndex={0}
+                                    onFocus={onActivate}
+                                />
+                            )}
                         </li>
                     ))}
                 </ul>
@@ -821,7 +831,7 @@ function BlockRenderer({
                         {items.map((item: string, i: number) => (
                             <li key={i} className="flex items-start gap-3">
                                 <span className="mt-0.5 text-[14px] font-mono text-[#3aa3eb]/50 w-5 text-right shrink-0">{i + 1}.</span>
-                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
+                                <div className={`${typographyClasses} text-white/80 whitespace-pre-wrap break-words`} dangerouslySetInnerHTML={{ __html: parseMarkdown(item) }} />
                             </li>
                         ))}
                     </ol>
@@ -832,12 +842,22 @@ function BlockRenderer({
                     {items.map((item: string, i: number) => (
                         <li key={i} className="flex items-start gap-3 group/li">
                             <span className="mt-0.5 text-[14px] font-mono text-[#3aa3eb]/50 w-5 text-right shrink-0">{i + 1}.</span>
-                            <input
-                                autoFocus={isActive && i === items.length - 1} type="text" value={item}
-                                onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
-                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="List item..."
-                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5`}
-                            />
+                            {isActive ? (
+                                <input
+                                    autoFocus={i === items.length - 1} type="text" value={item}
+                                    onChange={(e) => { const newItems = [...items]; newItems[i] = e.target.value; onChange({ items: newItems }); }}
+                                    onKeyDown={(e) => onKeyDown?.(e, i)} placeholder="List item..."
+                                    disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5 flex-1`}
+                                />
+                            ) : (
+                                <div
+                                    className={`${typographyClasses} text-white/80 whitespace-pre-wrap break-words cursor-text flex-1 min-h-[1.55em]`}
+                                    dangerouslySetInnerHTML={{ __html: parseMarkdown(item) || '<span class="text-gray-700 opacity-30">List item...</span>' }}
+                                    onClick={onActivate}
+                                    tabIndex={0}
+                                    onFocus={onActivate}
+                                />
+                            )}
                         </li>
                     ))}
                 </ol>
@@ -853,7 +873,7 @@ function BlockRenderer({
                                 <div className={`mt-1 w-5 h-5 rounded border transition-all flex items-center justify-center shrink-0 ${todo.done ? 'bg-[#3aa3eb] border-[#3aa3eb]' : 'bg-white/5 border-white/20'}`}>
                                     {todo.done && <CheckCircleIcon className="h-3.5 w-3.5 text-white" />}
                                 </div>
-                                <div className={`${typographyClasses} ${todo.done ? 'line-through text-white/30' : 'text-white/80'}`} dangerouslySetInnerHTML={{ __html: parseMarkdown(todo.text) }} />
+                                <div className={`${typographyClasses} ${todo.done ? 'line-through text-white/30' : 'text-white/80'} whitespace-pre-wrap break-words`} dangerouslySetInnerHTML={{ __html: parseMarkdown(todo.text) }} />
                             </div>
                         ))}
                     </div>
@@ -869,12 +889,22 @@ function BlockRenderer({
                             >
                                 {todo.done && <CheckCircleIcon className="h-3.5 w-3.5 text-white" />}
                             </button>
-                            <input
-                                autoFocus={isActive && i === todos.length - 1} type="text" value={todo.text}
-                                onChange={(e) => { const newTodos = [...todos]; newTodos[i].text = e.target.value; onChange({ todos: newTodos }); }}
-                                onKeyDown={(e) => onKeyDown?.(e, i)} onClick={onActivate} placeholder="To do item..."
-                                disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5 ${todo.done ? 'line-through text-white/30' : ''}`}
-                            />
+                            {isActive ? (
+                                <input
+                                    autoFocus={i === todos.length - 1} type="text" value={todo.text}
+                                    onChange={(e) => { const newTodos = [...todos]; newTodos[i].text = e.target.value; onChange({ todos: newTodos }); }}
+                                    onKeyDown={(e) => onKeyDown?.(e, i)} placeholder="To do item..."
+                                    disabled={readOnly} className={`${baseClasses} ${typographyClasses} py-0.5 flex-1 ${todo.done ? 'line-through text-white/30' : ''}`}
+                                />
+                            ) : (
+                                <div
+                                    className={`${typographyClasses} ${todo.done ? 'line-through text-white/30' : 'text-white/80'} whitespace-pre-wrap break-words cursor-text flex-1 min-h-[1.55em]`}
+                                    dangerouslySetInnerHTML={{ __html: parseMarkdown(todo.text) || '<span class="text-gray-700 opacity-30">To do item...</span>' }}
+                                    onClick={onActivate}
+                                    tabIndex={0}
+                                    onFocus={onActivate}
+                                />
+                            )}
                         </div>
                     ))}
                 </div>
@@ -904,7 +934,7 @@ function BlockRenderer({
                 return (
                     <div className="relative">
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3aa3eb] rounded-full" />
-                        <div className={`${typographyClasses} pl-6 italic text-white/90`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
+                        <div className={`${typographyClasses} pl-6 italic text-white/90 whitespace-pre-wrap break-words`} dangerouslySetInnerHTML={{ __html: parseMarkdown(block.content || '') }} />
                     </div>
                 );
             }
