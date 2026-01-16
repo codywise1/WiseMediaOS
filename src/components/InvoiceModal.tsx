@@ -137,7 +137,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
             <DatePicker
-              selected={formData.dueDate ? new Date(formData.dueDate) : null}
+              selected={formData.dueDate ? new Date(formData.dueDate + 'T00:00:00') : null}
               onChange={(date: Date | null) => {
                 const iso = date ? formatToISODate(date) : '';
                 setFormData(prev => ({ ...prev, dueDate: iso }));

@@ -553,32 +553,63 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </span>
                     </td>
                     <td className="px-6 py-6 transition-all">
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
-                        style={{
-                          backgroundColor: invoice.status === 'paid' ? 'rgba(34, 197, 94, 0.33)' :
-                            invoice.status === 'overdue' ? 'rgba(239, 68, 68, 0.33)' :
-                              'rgba(59, 163, 234, 0.33)',
-                          borderColor: invoice.status === 'paid' ? 'rgba(34, 197, 94, 1)' :
-                            invoice.status === 'overdue' ? 'rgba(239, 68, 68, 1)' :
-                              'rgba(59, 163, 234, 1)',
-                          color: '#ffffff'
-                        }}
-                      >
-                        {invoice.status === 'paid' ? (
-                          `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at)}`
-                        ) : invoice.status === 'overdue' ? (
-                          (() => {
-                            const diff = Math.floor((new Date().getTime() - new Date(invoice.dueDate || '').getTime()) / (1000 * 3600 * 24));
-                            return `${diff > 0 ? diff : 1} ${diff === 1 ? 'Day' : 'Days'} Overdue`;
-                          })()
-                        ) : (
-                          (() => {
-                            const diff = Math.floor((new Date(invoice.dueDate || '').getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-                            return `Due in ${diff > 0 ? diff : 0} ${diff === 1 ? 'Day' : 'Days'}`;
-                          })()
-                        )}
-                      </span>
+                      {(() => {
+                        // Calculate due date info first
+                        const dueDateStr = invoice.dueDate || invoice.due_date || '';
+                        let isOverdue = invoice.status === 'overdue';
+                        let displayText = '';
+
+                        if (invoice.status === 'paid') {
+                          displayText = `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at)}`;
+                        } else if (!dueDateStr) {
+                          displayText = invoice.status === 'overdue' ? 'Overdue' : 'No due date';
+                          isOverdue = invoice.status === 'overdue';
+                        } else {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const dueDate = new Date(dueDateStr.includes('T') ? dueDateStr : dueDateStr + 'T00:00:00');
+
+                          if (isNaN(dueDate.getTime())) {
+                            displayText = invoice.status === 'overdue' ? 'Overdue' : 'Invalid date';
+                            isOverdue = invoice.status === 'overdue';
+                          } else {
+                            dueDate.setHours(0, 0, 0, 0);
+                            const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
+
+                            if (invoice.status === 'overdue') {
+                              const overdueDiff = Math.abs(diff);
+                              displayText = diff === 0 ? 'Overdue · Today' : `Overdue · ${overdueDiff} ${overdueDiff === 1 ? 'Day' : 'Days'}`;
+                              isOverdue = true;
+                            } else if (diff === 0) {
+                              displayText = 'Due Today';
+                            } else if (diff < 0) {
+                              const overdueDays = Math.abs(diff);
+                              displayText = `Overdue  ${overdueDays} ${overdueDays === 1 ? 'Day' : 'Days'}`;
+                              isOverdue = true;
+                            } else {
+                              displayText = `Due in ${diff} ${diff === 1 ? 'Day' : 'Days'}`;
+                            }
+                          }
+                        }
+
+                        // Determine pill color based on status
+                        const isPaid = invoice.status === 'paid';
+                        const bgColor = isPaid ? 'rgba(34, 197, 94, 0.33)' : isOverdue ? 'rgba(239, 68, 68, 0.33)' : 'rgba(59, 163, 234, 0.33)';
+                        const borderColor = isPaid ? 'rgba(34, 197, 94, 1)' : isOverdue ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 163, 234, 1)';
+
+                        return (
+                          <span
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+                            style={{
+                              backgroundColor: bgColor,
+                              borderColor: borderColor,
+                              color: '#ffffff'
+                            }}
+                          >
+                            {displayText}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
