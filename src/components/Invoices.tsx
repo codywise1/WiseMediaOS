@@ -53,6 +53,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid'>('all');
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -118,27 +119,150 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= currentQuarterStart)
     .reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Chart Data: Last 8 months (Desktop) or 3 months (Mobile)
-  const chartPointsCount = isMobile ? 3 : 8;
-  const chartData = Array.from({ length: chartPointsCount }).map((_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (chartPointsCount - 1 - i), 1);
-    const monthRevenue = invoices
-      .filter(inv => {
-        const invDate = new Date(inv.updated_at || inv.created_at);
-        return inv.status === 'paid' &&
-          invDate.getMonth() === d.getMonth() &&
-          invDate.getFullYear() === d.getFullYear();
-      })
-      .reduce((sum, inv) => sum + inv.amount, 0);
+  // Chart Period Title Map
+  const periodTitleMap: Record<typeof chartPeriod, string> = {
+    day: 'DAILY REVENUE',
+    week: 'WEEKLY REVENUE',
+    month: 'MONTHLY REVENUE',
+    quarter: 'QUARTERLY REVENUE',
+    year: 'YEARLY REVENUE'
+  };
 
-    // Distribute points evenly across the 800px width
-    const spacing = 800 / (chartPointsCount + 1);
-    return {
-      label: d.toLocaleDateString('default', { month: 'short' }),
-      value: monthRevenue,
-      x: spacing * (i + 1),
-    };
-  });
+  // Chart Data: Dynamic based on selected period
+  const getChartData = () => {
+    const basePointsCount = isMobile ? 4 : 8;
+
+    switch (chartPeriod) {
+      case 'day': {
+        // Last N days
+        return Array.from({ length: basePointsCount }).map((_, i) => {
+          const d = new Date(now);
+          d.setDate(d.getDate() - (basePointsCount - 1 - i));
+          const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+          const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+
+          const dayRevenue = invoices
+            .filter(inv => {
+              const invDate = new Date(inv.updated_at || inv.created_at);
+              return inv.status === 'paid' && invDate >= dayStart && invDate < dayEnd;
+            })
+            .reduce((sum, inv) => sum + inv.amount, 0);
+
+          const spacing = 800 / (basePointsCount + 1);
+          const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
+          return {
+            label: `${monthAbbr}. ${d.getDate()}`,
+            value: dayRevenue,
+            x: spacing * (i + 1),
+          };
+        });
+      }
+      case 'week': {
+        // Last N weeks
+        return Array.from({ length: basePointsCount }).map((_, i) => {
+          const weekOffset = basePointsCount - 1 - i;
+          const weekStart = new Date(now);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay() - (weekOffset * 7));
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+
+          const weekRevenue = invoices
+            .filter(inv => {
+              const invDate = new Date(inv.updated_at || inv.created_at);
+              return inv.status === 'paid' && invDate >= weekStart && invDate < weekEnd;
+            })
+            .reduce((sum, inv) => sum + inv.amount, 0);
+
+          const spacing = 800 / (basePointsCount + 1);
+          const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
+          return {
+            label: `${monthAbbr}. ${weekStart.getDate()}`,
+            value: weekRevenue,
+            x: spacing * (i + 1),
+          };
+        });
+      }
+      case 'month': {
+        // Last N months
+        return Array.from({ length: basePointsCount }).map((_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (basePointsCount - 1 - i), 1);
+          const monthRevenue = invoices
+            .filter(inv => {
+              const invDate = new Date(inv.updated_at || inv.created_at);
+              return inv.status === 'paid' &&
+                invDate.getMonth() === d.getMonth() &&
+                invDate.getFullYear() === d.getFullYear();
+            })
+            .reduce((sum, inv) => sum + inv.amount, 0);
+
+          const spacing = 800 / (basePointsCount + 1);
+          const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
+          return {
+            label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`,
+            value: monthRevenue,
+            x: spacing * (i + 1),
+          };
+        });
+      }
+      case 'quarter': {
+        // Last N quarters
+        const quarterCount = isMobile ? 4 : 6;
+        return Array.from({ length: quarterCount }).map((_, i) => {
+          const quarterOffset = quarterCount - 1 - i;
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          const targetQuarter = (currentQuarter - quarterOffset + 40) % 4;
+          const yearOffset = Math.floor((quarterOffset - currentQuarter + 3) / 4);
+          const targetYear = now.getFullYear() - yearOffset;
+
+          const quarterStart = new Date(targetYear, targetQuarter * 3, 1);
+          const quarterEnd = new Date(targetYear, targetQuarter * 3 + 3, 1);
+
+          const quarterRevenue = invoices
+            .filter(inv => {
+              const invDate = new Date(inv.updated_at || inv.created_at);
+              return inv.status === 'paid' && invDate >= quarterStart && invDate < quarterEnd;
+            })
+            .reduce((sum, inv) => sum + inv.amount, 0);
+
+          const spacing = 800 / (quarterCount + 1);
+          return {
+            label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`,
+            value: quarterRevenue,
+            x: spacing * (i + 1),
+          };
+        });
+      }
+      case 'year': {
+        // Last N years
+        const yearCount = isMobile ? 3 : 5;
+        return Array.from({ length: yearCount }).map((_, i) => {
+          const targetYear = now.getFullYear() - (yearCount - 1 - i);
+          const yearStart = new Date(targetYear, 0, 1);
+          const yearEnd = new Date(targetYear + 1, 0, 1);
+
+          const yearRevenue = invoices
+            .filter(inv => {
+              const invDate = new Date(inv.updated_at || inv.created_at);
+              return inv.status === 'paid' && invDate >= yearStart && invDate < yearEnd;
+            })
+            .reduce((sum, inv) => sum + inv.amount, 0);
+
+          const spacing = 800 / (yearCount + 1);
+          return {
+            label: String(targetYear),
+            value: yearRevenue,
+            x: spacing * (i + 1),
+          };
+        });
+      }
+      default:
+        return [];
+    }
+  };
+
+  const chartData = getChartData();
+  const chartPointsCount = chartData.length;
 
   const maxVal = Math.max(...chartData.map(d => d.value), 1000);
   const chartPoints = chartData.map(d => ({
@@ -303,11 +427,26 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {/* Main Charts & Revenue Snapshot Section */}
       {isAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quarterly Earnings Chart */}
+          {/* Revenue Chart */}
           <div className="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/5 to-transparent opacity-50 pointer-events-none" />
-            <div className="flex items-center justify-between mb-8 relative z-10">
-              <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>MONTHLY EARNINGS</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
+              <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
+              <div className="flex flex-wrap gap-2">
+                {(['day', 'week', 'month', 'quarter', 'year'] as const).map(period => (
+                  <button
+                    key={period}
+                    onClick={() => setChartPeriod(period)}
+                    className={`px-3 py-2 rounded-lg text-sm transition-all border ${chartPeriod === period
+                      ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                      }`}
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="h-64 w-full relative group/chart">
