@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client, Invoice } from '../lib/supabase';
+import { clientService, Client, Invoice, UserRole } from '../lib/supabase';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
