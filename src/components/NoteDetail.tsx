@@ -7,7 +7,12 @@ import {
     UserRole,
     NoteBlock,
     noteAuditService,
-    NoteAudit
+    NoteAudit,
+    NoteCategory,
+    Client,
+    Project,
+    clientService,
+    projectService
 } from '../lib/supabase';
 import {
     ArrowLeftIcon,
@@ -21,7 +26,10 @@ import {
     ClockIcon,
     UserIcon,
     VideoCameraIcon,
-    ArrowDownTrayIcon
+    ArrowDownTrayIcon,
+    PencilIcon,
+    XMarkIcon,
+    TagIcon
 } from '@heroicons/react/24/outline';
 import { formatAppDate } from '../lib/dateFormat';
 import { generateNotePDF } from '../utils/pdfGenerator';
@@ -49,6 +57,17 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [auditLogs, setAuditLogs] = useState<NoteAudit[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [editForm, setEditForm] = useState({
+        title: '',
+        category: '' as NoteCategory,
+        clientId: '',
+        projectId: '',
+        tags: [] as string[],
+        tagInput: ''
+    });
 
     const isAdminOrStaff = currentUser?.role === 'admin' || currentUser?.role === 'staff';
     const isInitialLoad = useRef(true);
@@ -58,7 +77,21 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
             loadNote();
             loadAuditLogs();
         }
+        loadClientsAndProjects();
     }, [id]);
+
+    const loadClientsAndProjects = async () => {
+        try {
+            const [clientsData, projectsData] = await Promise.all([
+                clientService.getAll(),
+                projectService.getAll()
+            ]);
+            setClients(clientsData);
+            setProjects(projectsData);
+        } catch (error) {
+            console.error('Error loading clients/projects:', error);
+        }
+    };
 
     const loadNote = async () => {
         try {
@@ -174,6 +207,52 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
         } catch (error) {
             console.error('Error toggling pin:', error);
         }
+    };
+
+    const openEditModal = () => {
+        if (!note) return;
+        setEditForm({
+            title: note.title,
+            category: note.category,
+            clientId: note.clientId || '',
+            projectId: note.projectId || '',
+            tags: note.tags || [],
+            tagInput: ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSave = async () => {
+        if (!note || !editForm.title.trim()) return;
+        try {
+            const updated = await noteService.update(note.id, {
+                title: editForm.title.trim(),
+                category: editForm.category,
+                clientId: editForm.clientId || null,
+                projectId: editForm.projectId || null,
+                tags: editForm.tags
+            });
+            setNote(updated);
+            setIsEditModalOpen(false);
+            loadAuditLogs();
+        } catch (error) {
+            console.error('Error updating note:', error);
+        }
+    };
+
+    const addEditTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && editForm.tagInput.trim()) {
+            e.preventDefault();
+            if (!editForm.tags.includes(editForm.tagInput.trim())) {
+                setEditForm({ ...editForm, tags: [...editForm.tags, editForm.tagInput.trim()], tagInput: '' });
+            } else {
+                setEditForm({ ...editForm, tagInput: '' });
+            }
+        }
+    };
+
+    const removeEditTag = (tag: string) => {
+        setEditForm({ ...editForm, tags: editForm.tags.filter(t => t !== tag) });
     };
 
     if (loading) {
@@ -337,6 +416,13 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* Actions Card */}
                     <div className="glass-card rounded-2xl p-4 border border-white/10 flex items-center justify-center gap-4">
                         <button
+                            onClick={openEditModal}
+                            className="p-3 rounded-full bg-white/5 text-gray-500 border border-white/10 hover:text-white hover:bg-white/10 transition-all"
+                            title="Edit Note Details"
+                        >
+                            <PencilIcon className="h-5 w-5" />
+                        </button>
+                        <button
                             onClick={handleTogglePin}
                             className={`p-3 rounded-full transition-all border ${note.pinned
                                 ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
@@ -416,6 +502,128 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                 title="Delete Intelligence Record"
                 message={`Are you sure you want to delete this note? All blocks and audit data will be permanently removed.`}
             />
+
+            {/* Edit Note Details Modal */}
+            {isEditModalOpen && (
+                <>
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsEditModalOpen(false)} />
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="w-full max-w-lg glass-card rounded-3xl border border-white/10 p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Edit Note Details</h2>
+                                <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                    <XMarkIcon className="h-5 w-5 text-gray-400" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Title */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Title</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.title}
+                                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/50 transition-all"
+                                        placeholder="Note Title"
+                                    />
+                                </div>
+
+                                {/* Category */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Category</label>
+                                    <select
+                                        value={editForm.category}
+                                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value as NoteCategory })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-all"
+                                    >
+                                        <option value="general">General</option>
+                                        <option value="idea">Idea</option>
+                                        <option value="meeting">Meeting</option>
+                                        <option value="sales_call">Sales Call</option>
+                                        <option value="sop">SOP</option>
+                                        <option value="task">Task</option>
+                                    </select>
+                                </div>
+
+                                {/* Client */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Client</label>
+                                    <select
+                                        value={editForm.clientId}
+                                        onChange={(e) => setEditForm({ ...editForm, clientId: e.target.value, projectId: '' })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-all"
+                                    >
+                                        <option value="">No Client Linked</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Project (only if client selected) */}
+                                {editForm.clientId && (
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Project</label>
+                                        <select
+                                            value={editForm.projectId}
+                                            onChange={(e) => setEditForm({ ...editForm, projectId: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#3aa3eb]/50 transition-all"
+                                        >
+                                            <option value="">No Project Linked</option>
+                                            {projects.filter(p => p.client_id === editForm.clientId).map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Tags */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+                                        <TagIcon className="h-3 w-3" /> Tags (Press Enter)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.tagInput}
+                                        onChange={(e) => setEditForm({ ...editForm, tagInput: e.target.value })}
+                                        onKeyDown={addEditTag}
+                                        placeholder="Add a tag..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/50 transition-all"
+                                    />
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {editForm.tags.map(tag => (
+                                            <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-[#3aa3eb]/10 border border-[#3aa3eb]/20 rounded-full text-[10px] font-bold text-[#3aa3eb] uppercase tracking-wider">
+                                                {tag}
+                                                <button type="button" onClick={() => removeEditTag(tag)}>
+                                                    <XMarkIcon className="h-3 w-3 hover:text-white" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold text-white transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleEditSave}
+                                    disabled={!editForm.title.trim()}
+                                    className="flex-1 px-4 py-3 bg-[#3aa3eb] hover:bg-[#2a92da] disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
