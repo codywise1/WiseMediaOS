@@ -161,6 +161,24 @@ export const generateProposalPDF = async (proposal: ProposalWithItems, items: Pr
       yPosition += 4;
     });
 
+    // Add clause codes for this service
+    if (template.clauseCodes && template.clauseCodes.length > 0) {
+      if (yPosition > pageHeight - 30) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Applicable Clauses', 25, yPosition);
+      yPosition += 6;
+
+      doc.setFont('helvetica', 'normal');
+      const clauseText = `${template.label} Terms: ${template.clauseCodes.join(', ')}`;
+      const clauseLines = doc.splitTextToSize(clauseText, pageWidth - 50);
+      doc.text(clauseLines, 30, yPosition);
+      yPosition += clauseLines.length * 5 + 4;
+    }
+
     yPosition += 8;
   });
 
