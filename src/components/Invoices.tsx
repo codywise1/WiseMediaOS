@@ -12,6 +12,9 @@ import {
   EyeIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  CalendarIcon,
+  ClockIcon,
+  ArrowTrendingUpIcon,
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
@@ -106,6 +109,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const currentQuarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  const currentYearStart = new Date(now.getFullYear(), 0, 1);
 
   const revenue7d = invoices
     .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= sevenDaysAgo)
@@ -117,6 +121,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   const revenueQuarter = invoices
     .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= currentQuarterStart)
+    .reduce((sum, inv) => sum + inv.amount, 0);
+
+  const revenueYear = invoices
+    .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= currentYearStart)
     .reduce((sum, inv) => sum + inv.amount, 0);
 
   // Chart Period Title Map
@@ -148,12 +156,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-          const spacing = 800 / (basePointsCount + 1);
+          const spacing = (800 - 80) / (basePointsCount - 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
           return {
             label: `${monthAbbr}. ${d.getDate()}`,
             value: dayRevenue,
-            x: spacing * (i + 1),
+            x: 40 + (spacing * i),
           };
         });
       }
@@ -174,12 +182,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-          const spacing = 800 / (basePointsCount + 1);
+          const spacing = (800 - 80) / (basePointsCount - 1);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
           return {
             label: `${monthAbbr}. ${weekStart.getDate()}`,
             value: weekRevenue,
-            x: spacing * (i + 1),
+            x: 40 + (spacing * i),
           };
         });
       }
@@ -196,12 +204,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-          const spacing = 800 / (basePointsCount + 1);
+          const spacing = (800 - 80) / (basePointsCount - 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
           return {
             label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`,
             value: monthRevenue,
-            x: spacing * (i + 1),
+            x: 40 + (spacing * i),
           };
         });
       }
@@ -225,11 +233,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-          const spacing = 800 / (quarterCount + 1);
+          const spacing = (800 - 80) / (quarterCount - 1);
           return {
             label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`,
             value: quarterRevenue,
-            x: spacing * (i + 1),
+            x: 40 + (spacing * i),
           };
         });
       }
@@ -248,11 +256,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-          const spacing = 800 / (yearCount + 1);
+          const spacing = (800 - 80) / (yearCount - 1);
           return {
             label: String(targetYear),
             value: yearRevenue,
-            x: spacing * (i + 1),
+            x: 40 + (spacing * i),
           };
         });
       }
@@ -267,12 +275,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const maxVal = Math.max(...chartData.map(d => d.value), 1000);
   const chartPoints = chartData.map(d => ({
     x: d.x,
-    y: 180 - (d.value / maxVal) * 150
+    y: 160 - (d.value / maxVal) * 120
   }));
 
-  const areaPath = `M ${chartPoints[0].x} 200 ` +
+  const areaPath = `M ${chartPoints[0].x} 180 ` +
     chartPoints.map(p => `L ${p.x} ${p.y}`).join(' ') +
-    ` L ${chartPoints[chartPoints.length - 1].x} 200 Z`;
+    ` L ${chartPoints[chartPoints.length - 1].x} 180 Z`;
 
   const linePath = `M ${chartPoints[0].x} ${chartPoints[0].y} ` +
     chartPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
@@ -460,7 +468,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 </defs>
                 {/* Grid Lines */}
                 {[0, 1, 2, 3].map(i => (
-                  <line key={i} x1="0" y1={i * 50 + 20} x2="800" y2={i * 50 + 20} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                  <line key={i} x1="40" y1={i * 40 + 40} x2="760" y2={i * 40 + 40} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
                 ))}
 
                 {/* Chart Line Path */}
@@ -479,7 +487,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 />
                 {/* Interactive Hover Zones */}
                 {chartData.map((d, i) => {
-                  const hitboxWidth = 800 / chartPointsCount;
+                  const hitboxWidth = (800 - 80) / (chartData.length - 1);
                   return (
                     <rect
                       key={`hitbox-${i}`}
@@ -517,7 +525,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   style={{
                     left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
                     top: `${(chartPoints[hoveredMonthIndex].y / 200) * 100}%`,
-                    marginTop: '-45px',
+                    marginTop: '-55px',
                     transform: 'translateX(-50%)'
                   }}
                 >
@@ -535,7 +543,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               )}
 
               {/* Axis Labels */}
-              <div className="flex justify-between text-[10px] font-bold uppercase mt-4 px-12">
+              <div className="flex justify-between text-[10px] font-bold uppercase mt-4 px-[40px]">
                 {chartData.map((d, i) => (
                   <span
                     key={i}
@@ -546,56 +554,58 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 ))}
               </div>
 
-              {/* Y-Axis Labels */}
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
-                <span>${Math.round(maxVal / 1000)}k</span>
-                <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
-                <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
-                <span>$0</span>
-              </div>
+              {/* Removed Y-Axis Labels */}
             </div>
           </div>
 
-          {/* Revenue Snapshot */}
           <div className="glass-card rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
             <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
             <div className="space-y-4">
               {[
-                { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}` },
-                { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}` },
-                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` }
+                { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}`, icon: ClockIcon },
+                { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}`, icon: CalendarIcon },
+                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}`, icon: ArrowTrendingUpIcon },
+                { label: 'This Year', value: `$${revenueYear.toLocaleString()}`, icon: ArrowTrendingUpIcon }
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                  <span className="text-sm text-gray-300 font-medium">{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-[#3aa3eb]/10">
+                      <item.icon className="h-5 w-5 text-[#3aa3eb]" />
+                    </div>
+                    <span className="text-sm text-gray-300 font-medium">{item.label}</span>
+                  </div>
                   <span className="text-xl font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Mini Stats Cards */}
-      {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, color: 'text-white', iconBg: 'bg-[#3aa3eb]/20' },
-            { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, color: 'text-white', iconBg: 'bg-green-500/20' },
-            { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, color: 'text-white', iconBg: 'bg-red-500/20' },
-            { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, color: 'text-white', iconBg: 'bg-blue-500/20' }
-          ].map((stat, idx) => (
-            <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
-              <div className={`p-3 rounded-lg ${stat.iconBg}`}>
-                <stat.icon className="h-6 w-6 text-white" />
+      {
+        isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, color: 'text-white', iconBg: 'bg-[#3aa3eb]/20' },
+              { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, color: 'text-white', iconBg: 'bg-green-500/20' },
+              { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, color: 'text-white', iconBg: 'bg-red-500/20' },
+              { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, color: 'text-white', iconBg: 'bg-blue-500/20' }
+            ].map((stat, idx) => (
+              <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
+                <div className={`p-3 rounded-lg ${stat.iconBg}`}>
+                  <stat.icon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.value}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-white font-medium mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )
+      }
 
       {/* Filter Tabs and Table */}
       <div className="space-y-4">
@@ -843,17 +853,19 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         }
       />
 
-      {selectedInvoice && (
-        <PaymentModal
-          isOpen={isPaymentModalOpen}
-          onClose={() => {
-            setIsPaymentModalOpen(false);
-            setSelectedInvoice(undefined);
-          }}
-          invoice={selectedInvoice as any}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
-    </div>
+      {
+        selectedInvoice && (
+          <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => {
+              setIsPaymentModalOpen(false);
+              setSelectedInvoice(undefined);
+            }}
+            invoice={selectedInvoice as any}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )
+      }
+    </div >
   );
 }
