@@ -1,121 +1,119 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
+import WherebyRoom from '../components/WherebyRoom';
+import ConfirmDialog from '../components/ConfirmDialog';
 import {
-    MicrophoneIcon,
-    VideoCameraIcon,
-    PhoneXMarkIcon,
-    ComputerDesktopIcon,
     ChatBubbleLeftRightIcon,
-    StopIcon,
-    PlayIcon,
-    ArrowsPointingOutIcon
+    PhoneXMarkIcon,
+    VideoCameraIcon,
+    LinkIcon,
+    CheckIcon
 } from '@heroicons/react/24/solid';
-import {
-    MicrophoneIcon as MicOffIcon,
-    VideoCameraIcon as VideoOffIcon
-} from '@heroicons/react/24/outline';
 import { meetingService, Meeting } from '../lib/supabase';
+import { createWherebyRoom } from '../lib/whereby';
 import { useAuth } from '../contexts/AuthContext';
 import MeetingNotesEditor from '../components/MeetingNotesEditor';
+
+type RoomState = 'loading' | 'ready' | 'error';
 
 export default function LiveMeetingPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { profile } = useAuth();
+
     const [meeting, setMeeting] = useState<Meeting | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [roomUrl, setRoomUrl] = useState<string | null>(null);
+    const [roomState, setRoomState] = useState<RoomState>('loading');
+    const [roomError, setRoomError] = useState<string | null>(null);
+
     const [showNotes, setShowNotes] = useState(true);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOff, setIsVideoOff] = useState(false);
-    const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const [recordingStatus, setRecordingStatus] = useState<'stopped' | 'recording' | 'paused'>('stopped');
-    const [duration, setDuration] = useState(0);
+    const [isEndCallOpen, setIsEndCallOpen] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+    // ── Load meeting + resolve room URL ──────────────────────────
     useEffect(() => {
-        if (id) {
-            loadMeeting(id);
-        }
+        if (id) loadMeetingAndRoom(id);
     }, [id]);
 
-    useEffect(() => {
-        if (recordingStatus === 'recording') {
-            timerRef.current = setInterval(() => {
-                setDuration(prev => prev + 1);
-            }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
-    }, [recordingStatus]);
-
-    const loadMeeting = async (meetingId: string) => {
-        console.log('[LiveMeetingPage] Loading meeting:', meetingId);
+    const loadMeetingAndRoom = async (meetingId: string) => {
         try {
+            setRoomState('loading');
             const data = await meetingService.getById(meetingId);
-            console.log('[LiveMeetingPage] Meeting data loaded:', data);
             setMeeting(data);
-            if (data.is_recording) {
-                setRecordingStatus('recording');
+
+            // Prefer the existing meeting_url if available
+            if (data.meeting_url) {
+                setRoomUrl(data.meeting_url);
+                setRoomState('ready');
+                return;
             }
-            setLoading(false);
-        } catch (error) {
-            console.error('[LiveMeetingPage] Error loading meeting:', error);
-            // If we fail to load, we go back to the list
-            navigate('/meetings');
-        }
-    };
 
-    const toggleRecording = async () => {
-        if (!meeting || !id) return;
+            // No room URL yet — create one via Whereby API
+            const whereby = await createWherebyRoom({
+                roomNamePrefix: 'wisemedia',
+                endDate: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4h
+            });
 
-        try {
-            if (recordingStatus === 'stopped') {
-                await meetingService.startRecording(id);
-                setRecordingStatus('recording');
-            } else if (recordingStatus === 'recording') {
-                // Just pause locally for demo, API doesn't support pause state yet
-                setRecordingStatus('paused');
-            } else {
-                setRecordingStatus('recording');
-            }
-        } catch (error) {
-            console.error('Error toggling recording:', error);
-        }
-    };
+            setRoomUrl(whereby.roomUrl);
+            setRoomState('ready');
 
-    const handleEndCall = async () => {
-        if (!meeting || !id) return;
-        if (window.confirm('Are you sure you want to end the meeting?')) {
+            // Persist the new URL back to the meeting record so future joins reuse it
             try {
-                await meetingService.stopRecording(id);
-                await meetingService.updateStatus(id, 'processing');
-                navigate('/meetings');
-            } catch (error) {
-                console.error('Error ending call:', error);
+                await meetingService.update(meetingId, {
+                    meeting_url: whereby.roomUrl,
+                    status: 'live',
+                });
+            } catch (saveErr) {
+                // Non-fatal — room still works, just won't be persisted
+                console.warn('[LiveMeetingPage] Could not persist room URL:', saveErr);
             }
+
+        } catch (err: any) {
+            console.error('[LiveMeetingPage] Error:', err);
+            const msg = err?.message ?? 'Unknown error';
+
+            // If it's a Whereby API error in dev mode (e.g. missing key), show inline error
+            if (msg.includes('Whereby API error') || msg.includes('Failed to fetch')) {
+                setRoomError(msg);
+                setRoomState('error');
+            } else {
+                // If meeting itself wasn't found, go back
+                navigate('/meetings');
+            }
+        }
+    };
+
+    // ── Controls ─────────────────────────────────────────────────
+    const handleCopyLink = () => {
+        if (!roomUrl) return;
+        navigator.clipboard.writeText(roomUrl);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    const handleEndCall = () => setIsEndCallOpen(true);
+
+    const confirmEndCall = async () => {
+        if (!meeting || !id) return;
+        setIsEndCallOpen(false);
+        try {
+            await meetingService.updateStatus(id, 'ready');
+            navigate('/meetings');
+        } catch (err) {
+            console.error('Error ending call:', err);
         }
     };
 
     const handleSaveNotes = async (content: string) => {
-        // In a real app, we'd save to a notes record linked to the meeting
-        console.log('Saving notes:', content);
+        console.log('[LiveMeetingPage] Saving notes:', content);
     };
 
-    const formatDuration = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    if (loading || !meeting) {
+    // ── Loading state ─────────────────────────────────────────────
+    if (!meeting && roomState === 'loading') {
         return (
             <div className="h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3aa3eb]" />
             </div>
         );
     }
@@ -123,96 +121,84 @@ export default function LiveMeetingPage() {
     return (
         <div className="h-full flex flex-col overflow-hidden gap-6">
             <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-0 !bg-slate-900/50">
-                {/* Top Bar */}
-                <div className="h-16 border-b border-white/10 px-6 flex items-center justify-between z-10 bg-white/5">
+
+                {/* ── Top Bar ──────────────────────────────────────── */}
+                <div className="h-16 border-b border-white/10 px-6 flex items-center justify-between z-10 bg-white/5 shrink-0">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-white font-bold text-lg">{meeting.title}</h1>
-                        <div className="h-6 w-px bg-white/10" />
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            <span className="text-red-400 font-mono font-medium">{formatDuration(duration)}</span>
-                        </div>
+                        <h1 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            {meeting?.title ?? 'Live Meeting'}
+                        </h1>
+                        <div className="h-6 w-px bg-white/10 hidden sm:block" />
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex -space-x-2">
-                            {meeting.participants.map((p, i) => (
-                                <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-slate-900 flex items-center justify-center text-xs text-white font-bold">
-                                    {p.name.charAt(0)}
-                                </div>
-                            ))}
-                        </div>
+                    {/* Participant avatars */}
+                    <div className="flex -space-x-2">
+                        {meeting?.participants?.map((p, i) => (
+                            <div
+                                key={i}
+                                title={p.name}
+                                className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3aa3eb] to-purple-600 border-2 border-slate-900 flex items-center justify-center text-xs text-white font-bold cursor-default"
+                            >
+                                {p.name.charAt(0)}
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1 flex overflow-hidden">
-                    {/* Video Area */}
-                    <div className="flex-1 p-4 flex flex-col gap-4 relative overflow-hidden">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
-                            {/* Self View */}
-                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10 group">
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                                        <span className="text-3xl text-white font-bold">{profile?.full_name?.charAt(0) || 'M'}</span>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                    You {isMuted && '(Muted)'}
-                                </div>
-                                {/* Fake Audio Waveform */}
-                                <div className="absolute bottom-4 right-4 flex items-end gap-1 h-6">
-                                    {[1, 2, 3, 2, 1].map((h, i) => (
-                                        <div key={i} className={`w-1 bg-green-500 rounded-full animate-pulse`} style={{ height: `${h * 20}%` }} />
-                                    ))}
-                                </div>
-                            </div>
+                {/* ── Main Content ──────────────────────────────────── */}
+                <div className="flex-1 flex overflow-hidden min-h-0">
 
-                            {/* Client View */}
-                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10">
-                                <img
-                                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
-                                    alt="Client"
-                                    className="absolute inset-0 w-full h-full object-cover opacity-80"
-                                />
-                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                    {meeting.client?.name || 'Client'}
+                    {/* ── Video Area ───────────────────────────────── */}
+                    <div className="flex-1 flex flex-col gap-4 p-4 min-h-0 min-w-0">
+
+                        {/* Whereby embed or error state */}
+                        <div className="flex-1 min-h-0 rounded-2xl overflow-hidden border border-white/10 bg-slate-950/50">
+                            {roomState === 'loading' && (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3aa3eb]" />
+                                    <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                        Creating your room…
+                                    </p>
                                 </div>
-                            </div>
+                            )}
+
+                            {roomState === 'error' && (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
+                                    <VideoCameraIcon className="h-12 w-12 text-red-400/60" />
+                                    <p className="text-white font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                        Could not start video room
+                                    </p>
+                                    <p className="text-gray-500 text-sm max-w-sm">
+                                        {roomError ?? 'An unexpected error occurred. Please check your Whereby API key and try again.'}
+                                    </p>
+                                    <button
+                                        onClick={() => id && loadMeetingAndRoom(id)}
+                                        className="mt-2 px-5 py-2 bg-[#3aa3eb]/20 hover:bg-[#3aa3eb]/30 text-[#3aa3eb] border border-[#3aa3eb]/30 rounded-xl text-sm font-semibold transition-all"
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            )}
+
+                            {roomState === 'ready' && roomUrl && (
+                                <WherebyRoom
+                                    roomUrl={roomUrl}
+                                    displayName={profile?.full_name ?? 'Host'}
+                                    className="w-full h-full"
+                                    onJoin={() => console.log('[LiveMeetingPage] Joined Whereby room')}
+                                    onLeave={() => console.log('[LiveMeetingPage] Left Whereby room')}
+                                />
+                            )}
                         </div>
 
-                        {/* Controls Bar */}
-                        <div className="h-20 bg-white/5 backdrop-blur-xl rounded-2xl mb-2 mx-auto flex items-center gap-6 px-8 border border-white/10 shrink-0">
+                        {/* ── Controls Bar ─────────────────────────── */}
+                        <div className="h-20 bg-white/5 backdrop-blur-xl rounded-2xl flex items-center justify-center gap-6 px-8 border border-white/10 shrink-0">
+                            {/* Copy Link */}
                             <ControlBtn
-                                icon={isMuted ? MicOffIcon : MicrophoneIcon}
-                                active={!isMuted}
-                                onClick={() => setIsMuted(!isMuted)}
-                                alert={isMuted}
+                                icon={isCopied ? CheckIcon : LinkIcon}
+                                active={isCopied}
+                                onClick={handleCopyLink}
+                                label={isCopied ? 'Copied!' : 'Copy Link'}
                             />
-                            <ControlBtn
-                                icon={isVideoOff ? VideoOffIcon : VideoCameraIcon}
-                                active={!isVideoOff}
-                                onClick={() => setIsVideoOff(!isVideoOff)}
-                                alert={isVideoOff}
-                            />
-                            <ControlBtn
-                                icon={ComputerDesktopIcon}
-                                active={isScreenSharing}
-                                onClick={() => setIsScreenSharing(!isScreenSharing)}
-                            />
-
-                            <div className="w-px h-8 bg-white/10" />
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={toggleRecording}
-                                    className={`p-4 rounded-full transition-all ${recordingStatus === 'recording'
-                                        ? 'bg-red-500/20 text-red-500 animate-pulse'
-                                        : 'bg-white/5 hover:bg-white/10 text-white'
-                                        }`}
-                                >
-                                    {recordingStatus === 'recording' ? <StopIcon className="h-6 w-6" /> : <PlayIcon className="h-6 w-6" />}
-                                </button>
-                            </div>
 
                             <div className="w-px h-8 bg-white/10" />
 
@@ -220,27 +206,34 @@ export default function LiveMeetingPage() {
                                 icon={ChatBubbleLeftRightIcon}
                                 active={showNotes}
                                 onClick={() => setShowNotes(!showNotes)}
+                                label="Notes"
                             />
 
+                            {/* End Call */}
                             <button
                                 onClick={handleEndCall}
-                                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-4 shadow-lg shadow-red-500/20"
+                                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-2 shadow-lg shadow-red-500/20 flex items-center gap-2"
                             >
-                                <PhoneXMarkIcon className="h-6 w-6" />
+                                <PhoneXMarkIcon className="h-5 w-5" />
+                                <span className="text-sm hidden sm:block">End Call</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Notes Side Panel */}
+                    {/* ── Notes Side Panel ─────────────────────────── */}
                     {showNotes && (
-                        <div className="w-96 border-l border-white/10 bg-black/20 p-6 flex flex-col gap-4 transition-all">
+                        <div className="w-80 xl:w-96 border-l border-white/10 bg-black/20 p-5 flex flex-col gap-4 shrink-0">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-white font-bold">Meeting Notes</h2>
-                                <button onClick={() => setShowNotes(false)} className="text-gray-400 hover:text-white">
-                                    <ArrowsPointingOutIcon className="h-4 w-4" />
+                                <h2 className="text-white font-bold text-sm uppercase tracking-wide" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    Meeting Notes
+                                </h2>
+                                <button
+                                    onClick={() => setShowNotes(false)}
+                                    className="text-gray-500 hover:text-white text-xs transition-colors"
+                                >
+                                    Hide
                                 </button>
                             </div>
-
                             <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/40">
                                 <MeetingNotesEditor
                                     onSave={handleSaveNotes}
@@ -251,19 +244,38 @@ export default function LiveMeetingPage() {
                     )}
                 </div>
             </GlassCard>
+
+            {/* ── End Call Confirm Dialog ───────────────────────── */}
+            <ConfirmDialog
+                isOpen={isEndCallOpen}
+                onClose={() => setIsEndCallOpen(false)}
+                onConfirm={confirmEndCall}
+                title="End Meeting?"
+                message={`Are you sure you want to end "${meeting?.title ?? 'this meeting'}"? The session will be marked as processing.`}
+                confirmText="End Call"
+                cancelText="Stay in Call"
+            />
         </div>
     );
 }
 
-function ControlBtn({ icon: Icon, active, onClick, alert }: any) {
+// ── Helper component ──────────────────────────────────────────────
+function ControlBtn({ icon: Icon, active, onClick, alert, label }: {
+    icon: React.ComponentType<{ className?: string }>;
+    active?: boolean;
+    onClick: () => void;
+    alert?: boolean;
+    label?: string;
+}) {
     return (
         <button
             onClick={onClick}
+            title={label}
             className={`p-4 rounded-xl transition-all ${alert
-                ? 'bg-red-500 text-white'
+                ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
                 : active
                     ? 'bg-white/10 text-white hover:bg-white/20'
-                    : 'bg-transparent text-gray-400 hover:text-white'
+                    : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
         >
             <Icon className="h-6 w-6" />
