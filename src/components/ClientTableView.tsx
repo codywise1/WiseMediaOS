@@ -9,6 +9,7 @@ import {
 import { Client } from '../lib/supabase';
 import CategoryBadge from './CategoryBadge';
 import { formatPhoneNumber } from '../lib/phoneFormat';
+import { formatAppDate } from '../lib/dateFormat';
 
 const statusConfig: Record<Client['status'], { color: string; label: string }> = {
   prospect: { color: 'rgba(250,204,21,0.33) text-white border-#facc15', label: 'Prospect' },
@@ -18,20 +19,22 @@ const statusConfig: Record<Client['status'], { color: string; label: string }> =
   archived: { color: 'rgba(217,119,6,0.1) text-white border-#d97706', label: 'Archived' },
 };
 
+type SortField = 'company' | 'name' | 'category' | 'email' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 interface ClientTableViewProps {
   clients: Client[];
   isAdmin: boolean;
   onView: (client: Client) => void;
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
+  initialSortField?: SortField;
+  initialSortDirection?: SortDirection;
 }
 
-type SortField = 'company' | 'name' | 'category' | 'email';
-type SortDirection = 'asc' | 'desc';
-
-export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDelete }: ClientTableViewProps) {
-  const [sortField, setSortField] = useState<SortField>('company');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDelete, initialSortField = 'created_at', initialSortDirection = 'desc' }: ClientTableViewProps) {
+  const [sortField, setSortField] = useState<SortField>(initialSortField);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(initialSortDirection);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -63,6 +66,10 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
         aValue = a.email || '';
         bValue = b.email || '';
         break;
+      case 'created_at':
+        return sortDirection === 'asc'
+          ? (new Date(a.created_at).getTime() || 0) - (new Date(b.created_at).getTime() || 0)
+          : (new Date(b.created_at).getTime() || 0) - (new Date(a.created_at).getTime() || 0);
     }
 
     const comparison = aValue.localeCompare(bValue);
@@ -81,14 +88,14 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
   return (
     <div className="glass-card rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-slate-700">
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
+              <th className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-gray-300">
                 Status
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('company')}
               >
                 <div className="flex items-center space-x-2">
@@ -97,7 +104,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center space-x-2">
@@ -106,7 +113,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors hidden md:table-cell"
                 onClick={() => handleSort('category')}
               >
                 <div className="flex items-center space-x-2">
@@ -115,7 +122,7 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 </div>
               </th>
               <th
-                className="text-left px-6 py-4 text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors hidden lg:table-cell"
                 onClick={() => handleSort('email')}
               >
                 <div className="flex items-center space-x-2">
@@ -123,10 +130,19 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                   <SortIcon field="email" />
                 </div>
               </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">
+              <th className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-gray-300 hidden sm:table-cell">
                 Phone
               </th>
-              <th className="text-right px-6 py-4 text-sm font-semibold text-gray-300">
+              <th
+                className="text-left px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-bold text-gray-200 cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleSort('created_at')}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>Date Added</span>
+                  <SortIcon field="created_at" />
+                </div>
+              </th>
+              <th className="text-right px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-gray-300">
                 Actions
               </th>
             </tr>
@@ -138,12 +154,12 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                 className={`border-b border-slate-800 hover:bg-slate-800/30 transition-colors ${index % 2 === 0 ? 'bg-slate-900/20' : ''
                   }`}
               >
-                <td className="px-6 py-4">
+                <td className="px-3 py-3 sm:px-6 sm:py-4">
                   {['prospect', 'active', 'vip', 'inactive'].includes(client.status) ? (() => {
                     const statusInfo = statusConfig[client.status as keyof typeof statusConfig];
                     return (
                       <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                        className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                         style={{
                           backgroundColor: statusInfo.color.split(' ')[0],
                           border: `1px solid ${statusInfo.color.split(' ')[2].replace('border-', '')}`,
@@ -154,37 +170,40 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                       </span>
                     );
                   })() : (
-                    <span className="text-sm text-gray-500 font-medium capitalize">{client.status}</span>
+                    <span className="text-xs sm:text-sm text-gray-500 font-medium capitalize">{client.status}</span>
                   )}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-3 sm:px-6 sm:py-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs sm:text-sm font-medium text-white">
                       {client.company || client.name}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-200 font-medium">{client.name || '-'}</span>
+                <td className="px-3 py-3 sm:px-6 sm:py-4">
+                  <span className="text-xs sm:text-sm text-gray-200 font-medium">{client.name || '-'}</span>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-3 sm:px-6 sm:py-4 hidden md:table-cell">
                   {client.category ? (
                     <CategoryBadge category={client.category} />
                   ) : (
-                    <span className="text-sm text-gray-400 font-medium">-</span>
+                    <span className="text-xs sm:text-sm text-gray-400 font-medium">-</span>
                   )}
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-200 font-medium">{client.email}</span>
+                <td className="px-3 py-3 sm:px-6 sm:py-4 hidden lg:table-cell">
+                  <span className="text-xs sm:text-sm text-gray-200 font-medium">{client.email}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-200 font-medium">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
+                <td className="px-3 py-3 sm:px-6 sm:py-4 hidden sm:table-cell">
+                  <span className="text-xs sm:text-sm text-gray-200 font-medium">{client.phone ? formatPhoneNumber(client.phone) : '-'}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end space-x-2">
+                <td className="px-3 py-3 sm:px-6 sm:py-4">
+                  <span className="text-xs sm:text-sm text-gray-200 font-medium whitespace-nowrap">{formatAppDate(client.created_at)}</span>
+                </td>
+                <td className="px-3 py-3 sm:px-6 sm:py-4">
+                  <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                     <button
                       onClick={() => onView(client)}
-                      className="text-gray-300 hover:text-white p-1 transition-colors"
+                      className="text-gray-300 hover:text-white p-1.5 sm:p-1 transition-colors"
                       title="View"
                     >
                       <EyeIcon className="h-4 w-4" />
@@ -193,14 +212,14 @@ export default function ClientTableView({ clients, isAdmin, onView, onEdit, onDe
                       <>
                         <button
                           onClick={() => onEdit(client)}
-                          className="text-blue-400 hover:text-blue-300 p-1 transition-colors"
+                          className="text-blue-400 hover:text-blue-300 p-1.5 sm:p-1 transition-colors"
                           title="Edit"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => onDelete(client)}
-                          className="text-red-400 hover:text-red-300 p-1 transition-colors"
+                          className="text-red-400 hover:text-red-300 p-1.5 sm:p-1 transition-colors"
                           title="Delete"
                         >
                           <TrashIcon className="h-4 w-4" />

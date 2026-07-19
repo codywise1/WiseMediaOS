@@ -58,6 +58,7 @@ export default function Clients({ currentUser }: ClientsProps) {
   const [stateFilter, setStateFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
 
   useLoadingGuard(loading, setLoading);
 
@@ -239,6 +240,10 @@ export default function Clients({ currentUser }: ClientsProps) {
     const matchesLocation = locationFilter === 'all' || client.location === locationFilter;
 
     return matchesSearch && matchesState && matchesCategory && matchesLocation;
+  }).sort((a, b) => {
+    const aTime = new Date(a.created_at).getTime() || 0;
+    const bTime = new Date(b.created_at).getTime() || 0;
+    return sortBy === 'newest' ? bTime - aTime : aTime - bTime;
   });
 
   const uniqueCategories = Array.from(new Set(clients.map(c => c.category).filter(Boolean)));
@@ -313,7 +318,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         </div>
 
         {/* Search and Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
             <div className="relative">
@@ -371,10 +376,22 @@ export default function Clients({ currentUser }: ClientsProps) {
               ))}
             </select>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Sort by Date</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+            >
+              <option value="newest">Newest to Oldest</option>
+              <option value="oldest">Oldest to Newest</option>
+            </select>
+          </div>
         </div>
 
         {/* Active Filters Display */}
-        {(searchQuery || stateFilter !== 'all' || categoryFilter !== 'all' || locationFilter !== 'all') && (
+        {(searchQuery || stateFilter !== 'all' || categoryFilter !== 'all' || locationFilter !== 'all' || sortBy !== 'newest') && (
           <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
             <span className="text-gray-400">Active filters:</span>
             {searchQuery && (
@@ -397,12 +414,18 @@ export default function Clients({ currentUser }: ClientsProps) {
                 Location: {locationFilter}
               </span>
             )}
+            {sortBy !== 'newest' && (
+              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+                Sort: {sortBy === 'oldest' ? 'Oldest to Newest' : 'Newest to Oldest'}
+              </span>
+            )}
             <button
               onClick={() => {
                 setSearchQuery('');
                 setStateFilter('all');
                 setCategoryFilter('all');
                 setLocationFilter('all');
+                setSortBy('newest');
               }}
               className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
             >
@@ -413,7 +436,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       </div>
 
       {/* Client Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <div
           onClick={() => setStateFilter('all')}
           className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'all'
@@ -422,12 +445,12 @@ export default function Clients({ currentUser }: ClientsProps) {
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${stateFilter === 'all' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-              <UserGroupIcon className="h-6 w-6 text-white" />
+            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'all' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm text-white font-medium">Total Clients</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{clients.length}</p>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm text-white font-medium truncate">Total Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{clients.length}</p>
             </div>
           </div>
         </div>
@@ -440,12 +463,12 @@ export default function Clients({ currentUser }: ClientsProps) {
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-              <UserGroupIcon className="h-6 w-6 text-white" />
+            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm text-white font-medium">Active Clients</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{activeClients}</p>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm text-white font-medium truncate">Active Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{activeClients}</p>
             </div>
           </div>
         </div>
@@ -458,12 +481,12 @@ export default function Clients({ currentUser }: ClientsProps) {
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-              <UserGroupIcon className="h-6 w-6 text-white" />
+            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm text-white font-medium">VIP Clients</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{clients.filter(c => c.status === 'vip').length}</p>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm text-white font-medium truncate">VIP Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{clients.filter(c => c.status === 'vip').length}</p>
             </div>
           </div>
         </div>
@@ -476,12 +499,12 @@ export default function Clients({ currentUser }: ClientsProps) {
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-              <UserGroupIcon className="h-6 w-6 text-white" />
+            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm text-white font-medium">Prospects</p>
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{prospects}</p>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm text-white font-medium truncate">Prospects</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{prospects}</p>
             </div>
           </div>
         </div>
@@ -495,22 +518,24 @@ export default function Clients({ currentUser }: ClientsProps) {
           onView={handleViewClient}
           onEdit={handleEditClient}
           onDelete={handleDeleteClient}
+          initialSortField="created_at"
+          initialSortDirection={sortBy === 'newest' ? 'desc' : 'asc'}
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredClients.map((client) => {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
 
             return (
-              <div key={client.id} className="glass-card hover-glow rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
+              <div key={client.id} className="glass-card hover-glow rounded-2xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
                 {/* Background Glow Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                 {/* Header Section */}
-                <div className="mb-8 relative z-10">
+                <div className="mb-6 sm:mb-8 relative z-10">
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Integral CF, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
                     <p className="text-gray-300 text-sm font-semibold mb-3 truncate">
@@ -575,15 +600,15 @@ export default function Clients({ currentUser }: ClientsProps) {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
-                  <span className="text-xs text-gray-400 font-semibold">
+                <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10 gap-2">
+                  <span className="text-xs text-gray-400 font-semibold truncate">
                     Added {formatAppDate(client.created_at)}
                   </span>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewClient(client); }}
-                      className="text-gray-400 hover:text-white transition-colors p-1"
+                      className="text-gray-400 hover:text-white transition-colors p-2"
                       title="View Details"
                     >
                       <EyeIcon className="h-5 w-5" />
@@ -592,14 +617,14 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditClient(client); }}
-                          className="text-gray-400 hover:text-[#3aa3eb] transition-colors p-1"
+                          className="text-gray-400 hover:text-[#3aa3eb] transition-colors p-2"
                           title="Edit"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteClient(client); }}
-                          className="text-gray-400 hover:text-red-400 transition-colors p-1"
+                          className="text-gray-400 hover:text-red-400 transition-colors p-2"
                           title="Delete"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -627,6 +652,7 @@ export default function Clients({ currentUser }: ClientsProps) {
               setStateFilter('all');
               setCategoryFilter('all');
               setLocationFilter('all');
+              setSortBy('newest');
             }}
             className="btn-primary shrink-glow-button"
           >
