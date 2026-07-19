@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     while (hasMore) {
       const listParams: Stripe.InvoiceListParams = {
         limit: 100,
-        expand: ['data.customer', 'data.status_transitions'],
+        expand: ['data.customer'],
       };
       if (statusParam && statusParam !== 'all') {
         listParams.status = statusParam as Stripe.InvoiceListParams['status'];

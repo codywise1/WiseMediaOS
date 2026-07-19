@@ -1,5 +1,6 @@
 import { supabase, isSupabaseAvailable } from './supabase';
 import { getClauseCodesForServices } from '../config/serviceTemplates';
+import { syncService } from './syncService';
 
 export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'approved' | 'declined' | 'expired' | 'archived';
 export type InvoiceStatus = 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'void' | 'stale';
@@ -566,8 +567,10 @@ export const proposalService = {
           .eq('id', proposalId)
           .single();
 
-        // If RPC didn't create the invoice (some RPCs might not), we still need to ensure it's handled.
-        // But for now we assume RPC handles the full approval transaction if it succeeds.
+        // Sync: create/activate a linked project from the approved proposal
+        if (updatedProposal) {
+          await syncService.syncOnProposalApproved(proposalId, updatedProposal.client_id, updatedProposal.title);
+        }
         return updatedProposal as Proposal;
       }
 
@@ -713,6 +716,9 @@ export const proposalService = {
       created_by_user_id: userId
     }]);
 
+    // Sync: create/activate a linked project from the approved proposal
+    await syncService.syncOnProposalApproved(proposalId, proposalData[0].client_id, proposalData[0].title);
+
     return proposalData[0] as Proposal;
   },
 
@@ -753,6 +759,9 @@ export const proposalService = {
         type: 'voided',
         meta: { reason: 'proposal_declined' }
       }]);
+
+      // Sync: put linked project on hold
+      await syncService.syncOnInvoiceVoided(invoice.id);
     }
 
     // Log event

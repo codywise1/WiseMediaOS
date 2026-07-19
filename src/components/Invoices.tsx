@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
+import { syncService } from '../lib/syncService';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   DocumentIcon,
@@ -133,6 +134,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       }));
 
       setInvoices(transformedInvoices);
+
+      // Sync: for any paid Stripe invoices linked to projects, ensure projects are in_progress
+      for (const inv of transformedInvoices) {
+        if (inv.status === 'paid') {
+          syncService.syncOnInvoicePaid(inv.id).catch(() => {});
+        }
+      }
     } catch (error) {
       console.error('Error loading invoices:', error);
       toastError('Error loading invoices from Stripe.');
@@ -365,6 +373,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const handlePaymentSuccess = async (_paymentDetails: any) => {
     try {
       await loadInvoices();
+      // Sync: if this invoice is linked to a project, move the project to in_progress
+      if (_paymentDetails?.id) {
+        await syncService.syncOnInvoicePaid(_paymentDetails.id);
+      }
     } catch (error) {
       console.error('Error refreshing invoices:', error);
     }
