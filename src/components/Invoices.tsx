@@ -24,11 +24,13 @@ interface StripeInvoice {
   id: string;
   number: string | null;
   amount: number;
+  amount_paid: number;
   currency: string;
   status: string;
   stripeStatus: string;
   due_date: string | null;
   created_at: string;
+  paid_at: string | null;
   invoice_pdf: string | null;
   hosted_invoice_url: string | null;
   description: string;
@@ -52,10 +54,7 @@ interface InvoicesProps {
 type InvoiceView = StripeInvoice & {
   createdDate: string;
   dueDate: string;
-  due_date: string | null;
-  created_at: string;
   updated_at: string;
-  description: string;
   client_id?: string | null;
 };
 
@@ -127,12 +126,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       const stripeInvoices: StripeInvoice[] = json?.invoices || [];
       const transformedInvoices: InvoiceView[] = stripeInvoices.map(inv => ({
         ...inv,
-        updated_at: inv.created_at,
+        updated_at: inv.paid_at || inv.created_at,
         createdDate: inv.created_at || '',
         dueDate: inv.due_date || '',
-        due_date: inv.due_date,
-        created_at: inv.created_at,
-        description: inv.description || '',
         client_id: null,
       }));
 
@@ -147,7 +143,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   const totalPending = invoices.filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready').reduce((sum, inv) => sum + inv.amount, 0);
   const totalOverdue = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
-  const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
+  const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
   const totalOutstanding = totalPending + totalOverdue;
 
   // Real Data Calculations
@@ -156,17 +152,19 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const currentQuarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
 
+  const paidDate = (inv: InvoiceView) => inv.paid_at || inv.updated_at || inv.created_at;
+
   const revenue7d = invoices
-    .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= sevenDaysAgo)
-    .reduce((sum, inv) => sum + inv.amount, 0);
+    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= sevenDaysAgo)
+    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
 
   const revenue30d = invoices
-    .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= thirtyDaysAgo)
-    .reduce((sum, inv) => sum + inv.amount, 0);
+    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= thirtyDaysAgo)
+    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
 
   const revenueQuarter = invoices
-    .filter(inv => inv.status === 'paid' && new Date(inv.updated_at || inv.created_at) >= currentQuarterStart)
-    .reduce((sum, inv) => sum + inv.amount, 0);
+    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= currentQuarterStart)
+    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
 
   // Chart Period Title Map
   const periodTitleMap: Record<typeof chartPeriod, string> = {
@@ -192,10 +190,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
           const dayRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
+              const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= dayStart && invDate < dayEnd;
             })
-            .reduce((sum, inv) => sum + inv.amount, 0);
+            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
 
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
@@ -218,10 +216,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
           const weekRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
+              const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= weekStart && invDate < weekEnd;
             })
-            .reduce((sum, inv) => sum + inv.amount, 0);
+            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
 
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
@@ -238,12 +236,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const d = new Date(now.getFullYear(), now.getMonth() - (basePointsCount - 1 - i), 1);
           const monthRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
+              const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' &&
                 invDate.getMonth() === d.getMonth() &&
                 invDate.getFullYear() === d.getFullYear();
             })
-            .reduce((sum, inv) => sum + inv.amount, 0);
+            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
 
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
@@ -269,10 +267,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
           const quarterRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
+              const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= quarterStart && invDate < quarterEnd;
             })
-            .reduce((sum, inv) => sum + inv.amount, 0);
+            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
 
           const spacing = 800 / (quarterCount + 1);
           return {
@@ -292,10 +290,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
           const yearRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
+              const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= yearStart && invDate < yearEnd;
             })
-            .reduce((sum, inv) => sum + inv.amount, 0);
+            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
 
           const spacing = 800 / (yearCount + 1);
           return {
@@ -410,7 +408,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const exportCSV = () => {
     const headers = ['Invoice', 'Client', 'Status', 'Amount', 'Due Date'];
     const rows = filteredInvoices.map(inv => [
-      inv.id.slice(0, 8),
+      inv.number || inv.id.slice(0, 8),
       inv.client,
       inv.status,
       inv.amount.toString(),
@@ -680,7 +678,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
                           }`} />
                         <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
-                          INV-{invoice.id.slice(0, 3).toUpperCase()}
+                          {invoice.number || `INV-${invoice.id.slice(0, 3).toUpperCase()}`}
                         </span>
                       </div>
                     </td>
@@ -727,7 +725,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         let displayText = '';
 
                         if (invoice.status === 'paid') {
-                          displayText = `Paid on ${formatAppDate(invoice.updated_at || invoice.created_at)}`;
+                          displayText = `Paid on ${formatAppDate(invoice.paid_at || invoice.updated_at || invoice.created_at)}`;
                         } else if (!dueDateStr) {
                           displayText = invoice.status === 'overdue' ? 'Overdue' : 'No due date';
                           isOverdue = invoice.status === 'overdue';
