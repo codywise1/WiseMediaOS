@@ -23,6 +23,7 @@ import EducationDetails from './pages/EducationDetails';
 import ProfilePage from './pages/ProfilePage';
 import AdminBackendPage from './pages/AdminBackendPage';
 import CreatorHome from './pages/CreatorHome';
+import AnalyticsPage from './pages/AnalyticsPage';
 import Orders from './pages/Orders';
 import { useAuth } from './contexts/AuthContext';
 import LessonPage from './pages/LessonPage';
@@ -693,6 +694,12 @@ function App() {
               <AdminGuard>
                 <Orders />
               </AdminGuard>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AnalyticsPage />
             }
           />
           <Route

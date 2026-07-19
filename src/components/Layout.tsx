@@ -20,7 +20,8 @@ import {
   Cog6ToothIcon,
   Squares2X2Icon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ChartBarSquareIcon
 } from '@heroicons/react/24/outline'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
@@ -89,6 +90,12 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     },
     {
+      label: 'Insights',
+      items: [
+        { name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }
+      ]
+    },
+    {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
@@ -109,6 +116,12 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Meetings', href: '/meetings', icon: CalendarIcon },
         { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
         { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
+      ]
+    },
+    {
+      label: 'Insights',
+      items: [
+        { name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }
       ]
     },
     {
@@ -159,6 +172,10 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
     {
       label: 'Marketplace',
       items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
+    },
+    {
+      label: 'Insights',
+      items: [{ name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }]
     }
   ]
 }
