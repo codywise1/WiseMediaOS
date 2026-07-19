@@ -328,7 +328,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         if (updateError) throw updateError;
         toastSuccess('Invoice updated.');
       } else {
-        const { data: session } = await supabase.auth.getUser();
         const insertPayload: any = {
           amount: Number(invoiceData.amount) || 0,
           description: invoiceData.description || null,
@@ -337,7 +336,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           client_id: invoiceData.client_id || null,
           currency: 'USD',
         };
-        if (session?.user?.id) insertPayload.user_id = session.user.id;
         const { error: insertError } = await supabase.from('invoices').insert(insertPayload);
         if (insertError) throw insertError;
         toastSuccess('Invoice created.');

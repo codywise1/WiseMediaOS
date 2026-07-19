@@ -28,8 +28,21 @@ const isSupabaseConfigured = !forceDemoMode && supabaseUrl && supabaseAnonKey &&
   supabaseAnonKey !== 'your_supabase_anon_key' &&
   supabaseUrl.includes('supabase.co');
 
-// Dedicated storage key so session persistence is deterministic across tabs
-export const SUPABASE_SESSION_STORAGE_KEY = 'wisemedia.auth.session';
+// Use Supabase's default storage key so existing sessions persist.
+// The default is `sb-<project-ref>-auth-token`; we compute it dynamically so
+// cross-tab sync in AuthContext can listen on the right key.
+export function getSupabaseSessionStorageKey(): string {
+  if (!supabaseUrl) return 'sb-auth-token';
+  try {
+    const url = new URL(supabaseUrl);
+    const ref = url.hostname.split('.')[0];
+    return `sb-${ref}-auth-token`;
+  } catch {
+    return 'sb-auth-token';
+  }
+}
+
+export const SUPABASE_SESSION_STORAGE_KEY = getSupabaseSessionStorageKey();
 
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
@@ -38,9 +51,7 @@ export const supabase = isSupabaseConfigured
         autoRefreshToken: true,
         detectSessionInUrl: true,
         flowType: 'implicit',
-        storageKey: SUPABASE_SESSION_STORAGE_KEY,
-        // Defer tab-level token refresh coordination to our own handler below;
-        // the client still refreshes, but we reconcile cross-tab state explicitly.
+        // No custom storageKey: use Supabase's default so existing sessions survive.
       },
     })
   : null;
