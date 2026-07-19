@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '../lib/supabase';
+import { supabase, Profile, SUPABASE_SESSION_STORAGE_KEY } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -124,13 +124,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {      console.log('Auth state changed:', event, session?.user?.email);
 
       if (!mounted) return;
 
-      // Skip events that shouldn't trigger UI updates when switching tabs
-      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+      // TOKEN_REFRESHED: another tab (or this one) rotated the token.
+      // Update the user in place; never wipe profile/data on refresh.
+      if (event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          setUser(prev => (prev?.id === session.user.id ? prev : session.user));
+          // Ensure profile exists for this user; if not yet loaded, load it.
+          const currentProfile = profileRef.current;
+          if (!currentProfile || currentProfile.id !== session.user.id) {
+            setLoading(true);
+            await loadProfile(session.user.id);
+          }
+        }
+        return;
+      }
+
+      // INITIAL_SESSION fires on tab load and on cross-tab storage sync.
+      // Reconcile without forcing a wipe if a valid session still exists.
+      if (event === 'INITIAL_SESSION') {
+        if (session?.user) {
+          setUser(prev => (prev?.id === session.user.id ? prev : session.user));
+          const currentProfile = profileRef.current;
+          if (!currentProfile || currentProfile.id !== session.user.id) {
+            setLoading(true);
+            await loadProfile(session.user.id);
+          } else {
+            setLoading(false);
+          }
+        }
         return;
       }
 
@@ -160,12 +185,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    window.addEventListener('storage', handleStorageEvent);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageEvent);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cross-tab session reconciliation: when another tab refreshes or clears
+  // the session in localStorage, this tab picks up the change instead of
+  // racing to refresh with a stale (already-consumed) refresh token.
+  async function handleStorageEvent(event: StorageEvent) {
+    if (!supabase) return;
+    if (event.key !== SUPABASE_SESSION_STORAGE_KEY) return;
+    // Re-read the authoritative session from storage and reconcile.
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      setUser(prev => (prev?.id === data.session!.user.id ? prev : data.session!.user));
+      const currentProfile = profileRef.current;
+      if (!currentProfile || currentProfile.id !== data.session.user.id) {
+        setLoading(true);
+        await loadProfile(data.session.user.id);
+      }
+    } else {
+      // Session was cleared in another tab — sign out locally without
+      // triggering a network round-trip that could fail.
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+    }
+  }
 
   async function fetchProfile(userId: string) {
     try {

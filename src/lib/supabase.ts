@@ -28,8 +28,21 @@ const isSupabaseConfigured = !forceDemoMode && supabaseUrl && supabaseAnonKey &&
   supabaseAnonKey !== 'your_supabase_anon_key' &&
   supabaseUrl.includes('supabase.co');
 
+// Dedicated storage key so session persistence is deterministic across tabs
+export const SUPABASE_SESSION_STORAGE_KEY = 'wisemedia.auth.session';
+
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'implicit',
+        storageKey: SUPABASE_SESSION_STORAGE_KEY,
+        // Defer tab-level token refresh coordination to our own handler below;
+        // the client still refreshes, but we reconcile cross-tab state explicitly.
+      },
+    })
   : null;
 
 // Helper function to check if Supabase is available
