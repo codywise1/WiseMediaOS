@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,7 +21,7 @@
 }
 
 * {
-  font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Montserrat', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -183,7 +183,10 @@ body {
   box-shadow: 0 0 20px rgba(58, 163, 235, 0.2);
 }
 
-.title-font { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+.title-font { font-family: 'Integral CF', 'Montserrat', sans-serif; font-weight: 700; }
+
+.font-display { font-family: 'Integral CF', 'Montserrat', sans-serif; }
+.font-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif; }
 
 .neon-glow { box-shadow: none; transition: transform 0.3s var(--spring), box-shadow 0.3s var(--ios-ease); }
 .neon-glow:hover {

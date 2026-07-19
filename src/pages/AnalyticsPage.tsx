@@ -1,12 +1,15 @@
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Analytics
-      </h1>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Analytics"
+        subtitle="Track revenue, client growth, and project performance."
+        icon={<BarChart3 className="h-5 w-5" />}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <GlassCard>

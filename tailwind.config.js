@@ -44,6 +44,7 @@ export default {
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Inter', 'Montserrat', 'sans-serif'],
+        body: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Inter', 'sans-serif'],
         display: ['"Integral CF"', 'Montserrat', 'sans-serif'],
       },
       transitionTimingFunction: {

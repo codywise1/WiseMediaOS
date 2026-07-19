@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { FileText, Plus, X, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
@@ -85,16 +86,18 @@ export default function ProposalsPage() {
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Proposals
-          </h1>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40">
-            <Plus size={20} />
-            New Proposal
-          </button>
-        </div>
+      <div className="space-y-6 sm:space-y-8">
+        <PageHeader
+          title="Proposals"
+          subtitle="Create and send professional proposals to clients."
+          icon={<FileText className="h-5 w-5" />}
+          action={
+            <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full sm:w-auto justify-center">
+              <Plus size={20} />
+              New Proposal
+            </button>
+          }
+        />
 
         <div className="space-y-4">
           {loading ? (

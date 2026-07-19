@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { Calendar, Plus, X, Video, Edit } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Calendar, Plus, X, Video, CreditCard as Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatAppDateTime } from '../lib/dateFormat';
 import { useAuth } from '../contexts/AuthContext';
@@ -138,16 +139,18 @@ export default function AppointmentsPage() {
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Appointments
-          </h1>
-          <button onClick={openNewModal} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40">
-            <Plus size={20} />
-            Schedule Appointment
-          </button>
-        </div>
+      <div className="space-y-6 sm:space-y-8">
+        <PageHeader
+          title="Appointments"
+          subtitle="Schedule and manage client meetings and calls."
+          icon={<Calendar className="h-5 w-5" />}
+          action={
+            <button onClick={openNewModal} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full sm:w-auto justify-center">
+              <Plus size={20} />
+              Schedule Appointment
+            </button>
+          }
+        />
 
         <div className="space-y-4">
           {loading ? (

@@ -1,14 +1,17 @@
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { TrendingUp, Users, DollarSign, Copy } from 'lucide-react';
 
 export default function ReferralsPage() {
   const referralLink = 'https://wisemedia.io/ref/your-code';
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-bold text-white text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Referrals
-      </h1>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Referrals"
+        subtitle="Earn rewards by inviting creators to the platform."
+        icon={<TrendingUp className="h-5 w-5" />}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <GlassCard>
