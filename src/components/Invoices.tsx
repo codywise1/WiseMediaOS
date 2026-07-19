@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
-import { syncService } from '../lib/syncService';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   DocumentIcon,
@@ -21,24 +20,37 @@ import ConfirmDialog from './ConfirmDialog';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import PaymentModal from './PaymentModal';
 
-interface StripeInvoice {
+interface InvoiceRow {
   id: string;
-  number: string | null;
+  public_id: string | null;
+  client_id: string | null;
+  amount: number | string | null;
+  description: string | null;
+  status: string | null;
+  currency: string | null;
+  due_date: string | null;
+  due_at: string | null;
+  issued_at: string | null;
+  created_at: string | null;
+  paid_at: string | null;
+  updated_at: string | null;
+  client?: { name: string | null; email: string | null } | null;
+}
+
+interface InvoiceView {
+  id: string;
+  number: string;
   amount: number;
-  amount_paid: number;
   currency: string;
   status: string;
-  stripeStatus: string;
-  due_date: string | null;
-  created_at: string;
-  paid_at: string | null;
-  invoice_pdf: string | null;
-  hosted_invoice_url: string | null;
   description: string;
   client: string;
   client_email: string;
-  paid: boolean;
-  attempt_count: number;
+  client_id: string | null;
+  created_at: string;
+  due_date: string | null;
+  paid_at: string | null;
+  updated_at: string;
 }
 
 interface User {
@@ -52,20 +64,12 @@ interface InvoicesProps {
   currentUser: User | null;
 }
 
-type InvoiceView = StripeInvoice & {
-  createdDate: string;
-  dueDate: string;
-  updated_at: string;
-  client_id?: string | null;
-};
-
-
-
 export default function Invoices({ currentUser }: InvoicesProps) {
   const navigate = useNavigate();
-  const { error: toastError, success: toastSuccess } = useToast();
+  const { error: toastError, success: toastSuccess, info: toastInfo } = useToast();
   const [invoices, setInvoices] = useState<InvoiceView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -75,6 +79,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
+  const [generatingPDFId, setGeneratingPDFId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -83,128 +88,78 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    loadInvoices();
-  }, [currentUser?.id, currentUser?.role]);
-
-  const loadInvoices = async () => {
+  const loadInvoices = useCallback(async () => {
     try {
-      if (invoices.length === 0) {
-        setLoading(true);
-      }
+      setLoading(true);
+      setLoadError(null);
 
       if (!isSupabaseAvailable() || !supabase) {
         setInvoices([]);
-        setLoading(false);
+        setLoadError('Database is not configured.');
         return;
       }
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (sessionError || !accessToken) {
+      const { data, error: queryError } = await supabase
+        .from('invoices')
+        .select(`
+          id, public_id, client_id, amount, description, status, currency,
+          due_date, due_at, issued_at, created_at, paid_at, updated_at,
+          client:clients(name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (queryError) throw queryError;
+      if (!data) {
         setInvoices([]);
-        setLoading(false);
         return;
       }
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-invoices`;
-      const res = await fetch(functionUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+      const mapped: InvoiceView[] = (data as InvoiceRow[]).map(row => {
+        const clientName = row.client?.name || row.client?.email || 'Unknown Client';
+        const clientEmail = row.client?.email || '';
+        return {
+          id: row.id,
+          number: row.public_id || `INV-${row.id.slice(0, 6).toUpperCase()}`,
+          amount: Number(row.amount) || 0,
+          currency: (row.currency || 'USD').toLowerCase(),
+          status: row.status || 'pending',
+          description: row.description || '',
+          client: clientName,
+          client_email: clientEmail,
+          client_id: row.client_id,
+          created_at: row.created_at || '',
+          due_date: row.due_date || row.due_at || null,
+          paid_at: row.paid_at || null,
+          updated_at: row.updated_at || row.paid_at || row.created_at || '',
+        };
       });
 
-      const text = await res.text();
-      let json: any = null;
-      try { json = text ? JSON.parse(text) : null; } catch { json = null; }
-
-      if (!res.ok) {
-        throw new Error(json?.error || `HTTP ${res.status}`);
-      }
-
-      const stripeInvoices: StripeInvoice[] = json?.invoices || [];
-      const stripeIds = new Set(stripeInvoices.map(i => i.id));
-
-      // Also load local invoices from Supabase (created via proposals), excluding any already synced from Stripe
-      const localInvoices: StripeInvoice[] = [];
-      try {
-        const { data: localRows } = await supabase
-          .from('invoices')
-          .select('id, client_id, proposal_id, amount, description, status, due_date, due_at, created_at, updated_at, stripe_invoice_id, amount_paid, paid_at, hosted_invoice_url, invoice_pdf, currency, client:clients(name, email)')
-          .order('created_at', { ascending: false });
-
-        if (localRows) {
-          for (const row of localRows) {
-            // Skip if this local invoice is already represented by a Stripe invoice
-            const stripeRef = row.stripe_invoice_id || row.id;
-            if (stripeIds.has(stripeRef) || stripeIds.has(row.id)) continue;
-
-            const clientName = (row as any).client?.name || (row as any).client?.email || 'Unknown Client';
-            const clientEmail = (row as any).client?.email || '';
-            const amount = Number(row.amount) || 0;
-            const amountPaid = Number(row.amount_paid) || 0;
-
-            localInvoices.push({
-              id: row.id,
-              number: row.id.slice(0, 8).toUpperCase(),
-              amount,
-              amount_paid: amountPaid,
-              currency: row.currency || 'usd',
-              status: row.status || 'draft',
-              stripeStatus: row.status || 'draft',
-              due_date: row.due_date || row.due_at || null,
-              created_at: row.created_at,
-              paid_at: row.paid_at || null,
-              invoice_pdf: row.invoice_pdf || null,
-              hosted_invoice_url: row.hosted_invoice_url || null,
-              description: row.description || '',
-              client: clientName,
-              client_email: clientEmail,
-              paid: row.status === 'paid',
-              attempt_count: 0,
-            });
-          }
-        }
-      } catch (localErr) {
-        console.warn('Could not load local invoices, continuing with Stripe only:', localErr);
-      }
-
-      const allInvoices = [...stripeInvoices, ...localInvoices];
-      const transformedInvoices: InvoiceView[] = allInvoices.map(inv => ({
-        ...inv,
-        updated_at: inv.paid_at || inv.created_at,
-        createdDate: inv.created_at || '',
-        dueDate: inv.due_date || '',
-        client_id: null,
-      }));
-
-      setInvoices(transformedInvoices);
-
-      // Sync: for any paid Stripe invoices linked to projects, ensure projects are in_progress
-      for (const inv of transformedInvoices) {
-        if (inv.status === 'paid') {
-          syncService.syncOnInvoicePaid(inv.id).catch(() => {});
-        }
-      }
+      setInvoices(mapped);
     } catch (error) {
       console.error('Error loading invoices:', error);
-      // Don't toast error if we already have local invoices to show
-      if (invoices.length === 0) {
-        toastError('Unable to load Stripe invoices. Showing local invoices only.');
-      }
+      const msg = error instanceof Error ? error.message : 'Failed to load invoices.';
+      setLoadError(msg);
+      toastError(msg);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toastError]);
 
-  const totalPending = invoices.filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready').reduce((sum, inv) => sum + inv.amount, 0);
-  const totalOverdue = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
-  const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
+  useEffect(() => {
+    loadInvoices();
+  }, [loadInvoices]);
+
+  const totalPending = invoices
+    .filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready')
+    .reduce((sum, inv) => sum + inv.amount, 0);
+  const totalOverdue = invoices
+    .filter(inv => inv.status === 'overdue')
+    .reduce((sum, inv) => sum + inv.amount, 0);
+  const totalPaid = invoices
+    .filter(inv => inv.status === 'paid')
+    .reduce((sum, inv) => sum + inv.amount, 0);
   const totalOutstanding = totalPending + totalOverdue;
 
-  // Real Data Calculations
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -214,82 +169,62 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   const revenue7d = invoices
     .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= sevenDaysAgo)
-    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
-
+    .reduce((sum, inv) => sum + inv.amount, 0);
   const revenue30d = invoices
     .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= thirtyDaysAgo)
-    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
-
+    .reduce((sum, inv) => sum + inv.amount, 0);
   const revenueQuarter = invoices
     .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= currentQuarterStart)
-    .reduce((sum, inv) => sum + inv.amount_paid || inv.amount, 0);
+    .reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Chart Period Title Map
   const periodTitleMap: Record<typeof chartPeriod, string> = {
     day: 'DAILY REVENUE',
     week: 'WEEKLY REVENUE',
     month: 'MONTHLY REVENUE',
     quarter: 'QUARTERLY REVENUE',
-    year: 'YEARLY REVENUE'
+    year: 'YEARLY REVENUE',
   };
 
-  // Chart Data: Dynamic based on selected period
   const getChartData = () => {
     const basePointsCount = isMobile ? 4 : 8;
-
     switch (chartPeriod) {
       case 'day': {
-        // Last N days
         return Array.from({ length: basePointsCount }).map((_, i) => {
           const d = new Date(now);
           d.setDate(d.getDate() - (basePointsCount - 1 - i));
           const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
           const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
-
           const dayRevenue = invoices
             .filter(inv => {
               const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= dayStart && invDate < dayEnd;
             })
-            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
-
+            .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return {
-            label: `${monthAbbr}. ${d.getDate()}`,
-            value: dayRevenue,
-            x: spacing * (i + 1),
-          };
+          return { label: `${monthAbbr}. ${d.getDate()}`, value: dayRevenue, x: spacing * (i + 1) };
         });
       }
       case 'week': {
-        // Last N weeks
         return Array.from({ length: basePointsCount }).map((_, i) => {
           const weekOffset = basePointsCount - 1 - i;
           const weekStart = new Date(now);
-          weekStart.setDate(weekStart.getDate() - weekStart.getDay() - (weekOffset * 7));
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay() - weekOffset * 7);
           weekStart.setHours(0, 0, 0, 0);
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekEnd.getDate() + 7);
-
           const weekRevenue = invoices
             .filter(inv => {
               const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= weekStart && invDate < weekEnd;
             })
-            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
-
+            .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
-          return {
-            label: `${monthAbbr}. ${weekStart.getDate()}`,
-            value: weekRevenue,
-            x: spacing * (i + 1),
-          };
+          return { label: `${monthAbbr}. ${weekStart.getDate()}`, value: weekRevenue, x: spacing * (i + 1) };
         });
       }
       case 'month': {
-        // Last N months
         return Array.from({ length: basePointsCount }).map((_, i) => {
           const d = new Date(now.getFullYear(), now.getMonth() - (basePointsCount - 1 - i), 1);
           const monthRevenue = invoices
@@ -299,19 +234,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 invDate.getMonth() === d.getMonth() &&
                 invDate.getFullYear() === d.getFullYear();
             })
-            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
-
+            .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return {
-            label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`,
-            value: monthRevenue,
-            x: spacing * (i + 1),
-          };
+          return { label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`, value: monthRevenue, x: spacing * (i + 1) };
         });
       }
       case 'quarter': {
-        // Last N quarters
         const quarterCount = isMobile ? 4 : 6;
         return Array.from({ length: quarterCount }).map((_, i) => {
           const quarterOffset = quarterCount - 1 - i;
@@ -319,46 +248,32 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const targetQuarter = (currentQuarter - quarterOffset + 40) % 4;
           const yearOffset = Math.floor((quarterOffset - currentQuarter + 3) / 4);
           const targetYear = now.getFullYear() - yearOffset;
-
           const quarterStart = new Date(targetYear, targetQuarter * 3, 1);
           const quarterEnd = new Date(targetYear, targetQuarter * 3 + 3, 1);
-
           const quarterRevenue = invoices
             .filter(inv => {
               const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= quarterStart && invDate < quarterEnd;
             })
-            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
-
+            .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (quarterCount + 1);
-          return {
-            label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`,
-            value: quarterRevenue,
-            x: spacing * (i + 1),
-          };
+          return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue, x: spacing * (i + 1) };
         });
       }
       case 'year': {
-        // Last N years
         const yearCount = isMobile ? 3 : 5;
         return Array.from({ length: yearCount }).map((_, i) => {
           const targetYear = now.getFullYear() - (yearCount - 1 - i);
           const yearStart = new Date(targetYear, 0, 1);
           const yearEnd = new Date(targetYear + 1, 0, 1);
-
           const yearRevenue = invoices
             .filter(inv => {
               const invDate = new Date(paidDate(inv));
               return inv.status === 'paid' && invDate >= yearStart && invDate < yearEnd;
             })
-            .reduce((sum, inv) => sum + (inv.amount_paid || inv.amount), 0);
-
+            .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (yearCount + 1);
-          return {
-            label: String(targetYear),
-            value: yearRevenue,
-            x: spacing * (i + 1),
-          };
+          return { label: String(targetYear), value: yearRevenue, x: spacing * (i + 1) };
         });
       }
       default:
@@ -368,18 +283,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   const chartData = getChartData();
   const chartPointsCount = chartData.length;
-
   const maxVal = Math.max(...chartData.map(d => d.value), 1000);
   const chartPoints = chartData.map(d => ({
     x: d.x,
-    y: 180 - (d.value / maxVal) * 150
+    y: 180 - (d.value / maxVal) * 150,
   }));
 
-  const areaPath = `M ${chartPoints[0].x} 200 ` +
+  const areaPath = `M ${chartPoints[0]?.x ?? 0} 200 ` +
     chartPoints.map(p => `L ${p.x} ${p.y}`).join(' ') +
-    ` L ${chartPoints[chartPoints.length - 1].x} 200 Z`;
-
-  const linePath = `M ${chartPoints[0].x} ${chartPoints[0].y} ` +
+    ` L ${chartPoints[chartPoints.length - 1]?.x ?? 0} 200 Z`;
+  const linePath = `M ${chartPoints[0]?.x ?? 0} ${chartPoints[0]?.y ?? 0} ` +
     chartPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
 
   const handleNewInvoice = () => {
@@ -399,57 +312,86 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveInvoice = (_invoiceData: any) => {
-    toastInfo('Invoices are managed in Stripe. Use Stripe Dashboard to create or edit invoices.');
-    setIsModalOpen(false);
+  const handleSaveInvoice = async (invoiceData: any) => {
+    try {
+      if (modalMode === 'edit' && selectedInvoice) {
+        const { error: updateError } = await supabase
+          .from('invoices')
+          .update({
+            amount: Number(invoiceData.amount) || 0,
+            description: invoiceData.description || null,
+            status: invoiceData.status || 'pending',
+            due_date: invoiceData.due_date || null,
+            client_id: invoiceData.client_id || null,
+          })
+          .eq('id', selectedInvoice.id);
+        if (updateError) throw updateError;
+        toastSuccess('Invoice updated.');
+      } else {
+        const { data: session } = await supabase.auth.getUser();
+        const insertPayload: any = {
+          amount: Number(invoiceData.amount) || 0,
+          description: invoiceData.description || null,
+          status: invoiceData.status || 'pending',
+          due_date: invoiceData.due_date || null,
+          client_id: invoiceData.client_id || null,
+          currency: 'USD',
+        };
+        if (session?.user?.id) insertPayload.user_id = session.user.id;
+        const { error: insertError } = await supabase.from('invoices').insert(insertPayload);
+        if (insertError) throw insertError;
+        toastSuccess('Invoice created.');
+      }
+      setIsModalOpen(false);
+      await loadInvoices();
+    } catch (error) {
+      console.error('Error saving invoice:', error);
+      toastError(error instanceof Error ? error.message : 'Failed to save invoice.');
+    }
   };
 
   const confirmDelete = async () => {
-    if (selectedInvoice) {
-      toastInfo('Invoices are managed in Stripe. Use Stripe Dashboard to void or delete invoices.');
+    if (!selectedInvoice) return;
+    try {
+      const { error: deleteError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', selectedInvoice.id);
+      if (deleteError) throw deleteError;
+      toastSuccess('Invoice deleted.');
       setIsDeleteDialogOpen(false);
       setSelectedInvoice(undefined);
+      await loadInvoices();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toastError(error instanceof Error ? error.message : 'Failed to delete invoice.');
     }
   };
 
   const handlePayInvoice = (invoice: InvoiceView) => {
-    if (invoice.hosted_invoice_url) {
-      window.open(invoice.hosted_invoice_url, '_blank', 'noopener,noreferrer');
-    } else {
-      toastInfo('This invoice does not have a Stripe payment link yet.');
-    }
+    setSelectedInvoice(invoice);
+    setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentSuccess = async (_paymentDetails: any) => {
-    try {
-      await loadInvoices();
-      // Sync: if this invoice is linked to a project, move the project to in_progress
-      if (_paymentDetails?.id) {
-        await syncService.syncOnInvoicePaid(_paymentDetails.id);
-      }
-    } catch (error) {
-      console.error('Error refreshing invoices:', error);
-    }
+  const handlePaymentSuccess = async () => {
+    await loadInvoices();
   };
-
-  const [generatingPDFId, setGeneratingPDFId] = useState<string | null>(null);
 
   const handleDownloadPDF = async (invoice: InvoiceView) => {
     try {
       setGeneratingPDFId(invoice.id);
-      if (invoice.invoice_pdf) {
-        window.open(invoice.invoice_pdf, '_blank', 'noopener,noreferrer');
-      } else {
-        await generateInvoicePDF({
-          ...invoice,
-          client: invoice.client,
-          createdDate: invoice.created_at,
-          dueDate: invoice.due_date || ''
-        } as any);
-      }
+      await generateInvoicePDF({
+        ...invoice,
+        createdDate: invoice.created_at,
+        dueDate: invoice.due_date || '',
+      } as any);
     } finally {
       setGeneratingPDFId(null);
     }
+  };
+
+  const handleSendReminder = (invoice: InvoiceView) => {
+    toastSuccess(`Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()}).`);
   };
 
   if (loading) {
@@ -470,18 +412,18 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const exportCSV = () => {
     const headers = ['Invoice', 'Client', 'Status', 'Amount', 'Due Date'];
     const rows = filteredInvoices.map(inv => [
-      inv.number || inv.id.slice(0, 8),
+      inv.number,
       inv.client,
       inv.status,
       inv.amount.toString(),
-      inv.dueDate || 'N/A'
+      inv.due_date ? formatAppDate(inv.due_date) : 'N/A',
     ]);
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `invoices_${new Date().toISOString().split('T')[0]}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `invoices_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -495,7 +437,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           <div>
             <h1 className="text-3xl font-bold gradient-text mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>Invoices</h1>
             <p className="text-gray-300">
-              {currentUser?.role === 'admin'
+              {isAdmin
                 ? 'Track billing, payments, and outstanding balances.'
                 : 'View invoices, payment status, and billing history.'}
             </p>
@@ -511,6 +453,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           )}
         </div>
       </div>
+
+      {/* Error banner */}
+      {loadError && (
+        <div className="glass-card rounded-2xl p-4 border border-red-500/30 bg-red-500/5">
+          <div className="flex items-center gap-3">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-400 shrink-0" />
+            <p className="text-sm text-red-200">{loadError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Main Charts & Revenue Snapshot Section */}
       {isAdmin && (
@@ -538,7 +490,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             </div>
 
             <div className="h-64 w-full relative group/chart">
-              {/* Simple SVG Chart */}
               <svg viewBox="0 0 800 200" className="w-full h-full drop-shadow-[0_0_15px_rgba(58,163,235,0.3)]">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -546,26 +497,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                {/* Grid Lines */}
                 {[0, 1, 2, 3].map(i => (
                   <line key={i} x1="0" y1={i * 50 + 20} x2="800" y2={i * 50 + 20} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
                 ))}
-
-                {/* Chart Line Path */}
-                <path
-                  d={linePath}
-                  fill="none"
-                  stroke="#3aa3eb"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="animate-[draw_2s_ease-out]"
-                />
-                <path
-                  d={areaPath}
-                  fill="url(#chartGradient)"
-                />
-                {/* Interactive Hover Zones */}
+                <path d={linePath} fill="none" stroke="#3aa3eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-[draw_2s_ease-out]" />
+                <path d={areaPath} fill="url(#chartGradient)" />
                 {chartData.map((d, i) => {
                   const hitboxWidth = 800 / chartPointsCount;
                   return (
@@ -582,8 +518,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     />
                   );
                 })}
-
-                {/* Points */}
                 {chartPoints.map((p, i) => (
                   <circle
                     key={i}
@@ -598,7 +532,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 ))}
               </svg>
 
-              {/* Enhanced Tooltip */}
               {hoveredMonthIndex !== null && (
                 <div
                   className="absolute z-50 pointer-events-none transition-all duration-300"
@@ -606,7 +539,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
                     top: `${(chartPoints[hoveredMonthIndex].y / 200) * 100}%`,
                     marginTop: '-45px',
-                    transform: 'translateX(-50%)'
+                    transform: 'translateX(-50%)',
                   }}
                 >
                   <div className="bg-[#0f172a] border border-[#3aa3eb]/30 rounded-xl px-4 py-2 shadow-[0_0_20px_rgba(58,163,235,0.2)] flex flex-col items-center gap-0.5">
@@ -617,12 +550,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       ${chartData[hoveredMonthIndex].value.toLocaleString()}
                     </span>
                   </div>
-                  {/* Tooltip arrow */}
                   <div className="w-2 h-2 bg-[#0f172a] border-r border-b border-[#3aa3eb]/30 rotate-45 mx-auto -mt-1" />
                 </div>
               )}
 
-              {/* Axis Labels */}
               <div className="flex justify-between text-[10px] font-bold uppercase mt-4 px-12">
                 {chartData.map((d, i) => (
                   <span
@@ -634,7 +565,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 ))}
               </div>
 
-              {/* Y-Axis Labels */}
               <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
                 <span>${Math.round(maxVal / 1000)}k</span>
                 <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
@@ -651,7 +581,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               {[
                 { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}` },
                 { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}` },
-                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` }
+                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
                   <span className="text-sm text-gray-300 font-medium">{item.label}</span>
@@ -667,10 +597,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {isAdmin && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, color: 'text-white', iconBg: 'bg-[#3aa3eb]/20' },
-            { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, color: 'text-white', iconBg: 'bg-green-500/20' },
-            { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, color: 'text-white', iconBg: 'bg-red-500/20' },
-            { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, color: 'text-white', iconBg: 'bg-blue-500/20' }
+            { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, iconBg: 'bg-[#3aa3eb]/20' },
+            { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, iconBg: 'bg-green-500/20' },
+            { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, iconBg: 'bg-red-500/20' },
+            { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, iconBg: 'bg-blue-500/20' },
           ].map((stat, idx) => (
             <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
               <div className={`p-3 rounded-lg ${stat.iconBg}`}>
@@ -693,7 +623,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               { id: 'all', label: 'All', count: invoices.length },
               { id: 'unpaid', label: 'Unpaid', count: invoices.filter(i => i.status !== 'paid').length },
               { id: 'overdue', label: 'Overdue', count: invoices.filter(i => i.status === 'overdue').length },
-              { id: 'paid', label: 'Paid', count: invoices.filter(i => i.status === 'paid').length }
+              { id: 'paid', label: 'Paid', count: invoices.filter(i => i.status === 'paid').length },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -740,7 +670,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
                           }`} />
                         <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
-                          {invoice.number || `INV-${invoice.id.slice(0, 3).toUpperCase()}`}
+                          {invoice.number}
                         </span>
                       </div>
                     </td>
@@ -755,19 +685,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           pending: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
                           unpaid: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
                           ready: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                          default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
+                          default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' },
                         };
-
                         const style = statusStyles[invoice.status.toLowerCase()] || statusStyles.default;
-
                         return (
                           <span
                             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                            style={{
-                              backgroundColor: style.bg,
-                              border: `1px solid ${style.border}`,
-                              color: style.text
-                            }}
+                            style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
                           >
                             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                           </span>
@@ -781,8 +705,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     </td>
                     <td className="px-6 py-6 transition-all">
                       {(() => {
-                        // Calculate due date info first
-                        const dueDateStr = invoice.dueDate || invoice.due_date || '';
+                        const dueDateStr = invoice.due_date || '';
                         let isOverdue = invoice.status === 'overdue';
                         let displayText = '';
 
@@ -795,14 +718,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           const dueDate = new Date(dueDateStr.includes('T') ? dueDateStr : dueDateStr + 'T00:00:00');
-
                           if (isNaN(dueDate.getTime())) {
                             displayText = invoice.status === 'overdue' ? 'Overdue' : 'Invalid date';
                             isOverdue = invoice.status === 'overdue';
                           } else {
                             dueDate.setHours(0, 0, 0, 0);
                             const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-
                             if (invoice.status === 'overdue') {
                               const overdueDiff = Math.abs(diff);
                               displayText = diff === 0 ? 'Overdue · Today' : `Overdue · ${overdueDiff} ${overdueDiff === 1 ? 'Day' : 'Days'}`;
@@ -819,7 +740,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           }
                         }
 
-                        // Determine pill color based on status
                         const isPaid = invoice.status === 'paid';
                         const bgColor = isPaid ? 'rgba(34, 197, 94, 0.33)' : isOverdue ? 'rgba(239, 68, 68, 0.33)' : 'rgba(59, 163, 234, 0.33)';
                         const borderColor = isPaid ? 'rgba(34, 197, 94, 1)' : isOverdue ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 163, 234, 1)';
@@ -827,11 +747,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         return (
                           <span
                             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
-                            style={{
-                              backgroundColor: bgColor,
-                              borderColor: borderColor,
-                              color: '#ffffff'
-                            }}
+                            style={{ backgroundColor: bgColor, borderColor, color: '#ffffff' }}
                           >
                             {displayText}
                           </span>
@@ -861,11 +777,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         {isAdmin && (
                           <>
                             <button
-                              onClick={() => {
-                                toastSuccess(
-                                  `Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()} · Due ${invoice.dueDate}).`
-                                );
-                              }}
+                              onClick={() => handleSendReminder(invoice)}
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
                               title="Send Reminder"
                             >
@@ -903,7 +815,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               <div className="p-12 text-center">
                 <DocumentIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-gray-500">No invoices found</h3>
-                <p className="text-gray-600 text-sm mt-1">Try adjusting your filters or creating a new invoice</p>
+                <p className="text-gray-600 text-sm mt-1">
+                  {invoices.length === 0
+                    ? 'No invoices have been created yet. Click "New Invoice" to get started.'
+                    : 'Try adjusting your filters.'}
+                </p>
               </div>
             )}
           </div>
