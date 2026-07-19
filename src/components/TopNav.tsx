@@ -192,7 +192,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           }}
         />
       )}
-      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/20 px-4 lg:px-8 flex items-center sticky top-0 z-50">
+      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/30 px-4 lg:px-8 flex items-center sticky top-0 z-50" style={{ backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' }}>
         <div className="flex items-center gap-3 lg:gap-4">
           <button
             type="button"
@@ -216,8 +216,8 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
         </div>
 
         <div className={`hidden md:flex items-center flex-1 max-w-xl pl-1 relative ${isSidebarCollapsed ? 'ml-[50px]' : ''}`}>
-          <div className="flex items-center w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 focus-within:border-[#59a1e5]/70 focus-within:ring-2 focus-within:ring-[#59a1e5]/30 transition-all backdrop-blur">
-            <Search size={18} className="text-gray-400 mr-2" />
+          <div className="flex items-center w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 focus-within:border-brand-500/60 focus-within:ring-2 focus-within:ring-brand-500/25 transition-all backdrop-blur">
+            <Search size={18} className="text-gray-400 mr-2 shrink-0" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -233,7 +233,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           </div>
 
           {isSearchFocused && (
-            <div className="absolute top-12 left-0 w-full bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto animate-in slide-in-from-top">
+            <div className="absolute top-12 left-0 w-full ios-modal-panel rounded-2xl shadow-2xl shadow-black/40 max-h-96 overflow-y-auto animate-in slide-in-from-top custom-scrollbar">
               {groupedOrder.map((groupKey) => {
                 const items = filteredResults[groupKey];
                 if (!items || items.length === 0) return null;
@@ -390,32 +390,34 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
             </button>
 
             {showAvatarMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-slate-950 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in slide-in-from-top">
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleNavigate('/community/profile')}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors"
-                >
-                  <Settings size={16} /> Settings
-                </button>
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleNavigate('/support')}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors"
-                >
-                  <LifeBuoy size={16} /> Support
-                </button>
-                <button
-                  disabled
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 cursor-not-allowed"
-                >
-                  <LayoutGrid size={16} /> Switch workspace (soon)
-                </button>
+              <div className="absolute right-0 mt-2 w-64 ios-modal-panel rounded-2xl shadow-ios-lg overflow-hidden z-50 animate-in slide-in-from-top">
+                <div className="divide-y divide-white/[0.06]">
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleNavigate('/community/profile')}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <Settings size={16} className="text-gray-300" /> Settings
+                  </button>
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleNavigate('/support')}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <LifeBuoy size={16} className="text-gray-300" /> Support
+                  </button>
+                  <button
+                    disabled
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 cursor-not-allowed"
+                  >
+                    <LayoutGrid size={16} /> Switch workspace (soon)
+                  </button>
+                </div>
                 <div className="border-t border-white/10" />
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-200 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-300 hover:bg-red-500/10 transition-colors"
                 >
                   <LogOut size={16} /> Sign out
                 </button>

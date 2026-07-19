@@ -11,16 +11,13 @@ interface GlassCardProps {
 export default function GlassCard({ children, className = '', disableHover = false, onClick, style }: GlassCardProps) {
   const hoverClasses = disableHover
     ? ''
-    : 'transition-[transform,shadow,border-color] duration-200 ease-in-out hover:scale-[1.02] hover:shadow-[#59a1e5]/15 hover:border-[#59a1e5]/30';
+    : 'transition-[transform,box-shadow,border-color] duration-200 ease-out hover:scale-[1.015] hover:border-brand-500/30 hover:shadow-ios-lg';
 
   return (
     <div
       onClick={onClick}
-      className={`p-6 backdrop-blur-xl bg-black/20 border border-white/10 rounded-xl shadow-2xl ${hoverClasses} ${className} ${onClick ? 'cursor-pointer' : ''}`}
-      style={{
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        ...style
-      }}
+      className={`glass-card rounded-2xl ${hoverClasses} ${className} ${onClick ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+      style={style}
     >
       {children}
     </div>

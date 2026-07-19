@@ -234,9 +234,9 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           className={`hidden md:block fixed inset-y-0 left-0 z-50 ${isSidebarCollapsed ? 'w-20' : 'w-64'
             }`}
         >
-          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-2' : 'p-6'} flex flex-col`}>
+          <div className={`glass-card h-full ${isSidebarCollapsed ? 'p-3' : 'p-5'} flex flex-col`}>
             <div
-              className={`flex items-center mb-8 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
+              className={`flex items-center mb-6 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'
                 }`}
             >
               {isSidebarCollapsed ? (
@@ -253,7 +253,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                 type="button"
                 onClick={() => setIsSidebarCollapsed(v => !v)}
                 aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className={`p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors ${isSidebarCollapsed ? 'absolute top-4 right-4' : 'ml-[50px]'
+                className={`p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors ${isSidebarCollapsed ? 'absolute top-4 right-4' : 'ml-[50px]'
                   }`}
               >
                 {isSidebarCollapsed ? (
@@ -264,11 +264,11 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               </button>
             </div>
 
-            <nav className="space-y-6 flex-1 overflow-y-auto">
+            <nav className="space-y-5 flex-1 overflow-y-auto custom-scrollbar ios-scroll">
               {navGroups.map(group => (
                 <div key={group.label} className="space-y-1">
                   <p
-                    className={`text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1 ${isSidebarCollapsed ? 'hidden' : ''
+                    className={`text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3 ${isSidebarCollapsed ? 'hidden' : ''
                       }`}
                   >
                     {group.label}
@@ -280,12 +280,10 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                         key={item.name}
                         to={item.href}
                         title={isSidebarCollapsed ? item.name : undefined}
-                        className={`flex items-center py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-4'
+                        className={`flex items-center text-sm font-medium rounded-xl transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'
                           } ${isActive
-                            ? isSidebarCollapsed
-                              ? 'bg-[#59a1e5]/20 text-[#59a1e5]'
-                              : 'bg-[#59a1e5]/20 text-[#59a1e5] border-l-4 border-[#59a1e5] rounded-l-none'
-                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                            ? 'bg-brand-500/20 text-brand-400 shadow-[0_0_12px_rgba(58,163,235,0.15)]'
+                            : 'text-gray-300 hover:text-white hover:bg-white/5'
                           }`}
                       >
                         <item.icon className={`${isSidebarCollapsed ? 'h-6 w-6' : 'mr-3 h-5 w-5'}`} />
@@ -357,7 +355,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
             onClick={closeMobileMenu}
           >
             <div
-              className="fixed inset-y-0 left-0 w-80 max-w-[85vw] glass-card p-6 transform transition-transform duration-300 ease-out overflow-y-auto"
+              className="fixed inset-y-0 left-0 w-80 max-w-[85vw] glass-card p-6 transform transition-transform duration-300 ease-out overflow-y-auto ios-scroll"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-8">
@@ -377,7 +375,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
               <div className="space-y-6">
                 {navGroups.map(group => (
                   <div key={group.label} className="space-y-1">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
                       {group.label}
                     </p>
                     {group.items.map(item => {
@@ -387,9 +385,9 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                           key={item.name}
                           to={item.href}
                           onClick={closeMobileMenu}
-                          className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                            ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]'
-                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                          className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
+                            ? 'bg-brand-500/20 text-brand-400'
+                            : 'text-gray-300 hover:text-white hover:bg-white/5'
                             }`}
                         >
                           <item.icon className="mr-3 h-5 w-5" />
@@ -404,9 +402,9 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           </div>
         )}
 
-        {/* Mobile Bottom Dock */}
-        <div className="hidden md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
-          <div className="glass-card border-t border-white/10 px-2 py-3 backdrop-blur-xl bg-slate-900/95">
+        {/* Mobile Bottom Tab Bar (iOS style) */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
+          <div className="glass-card border-t border-white/10 px-2 pt-2 pb-1 backdrop-blur-xl bg-black/40">
             <div className="flex items-center justify-around max-w-md mx-auto">
               {dockItems.map(item => {
                 const isActive = location.pathname === item.href
@@ -414,22 +412,22 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={`flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 min-w-[70px] ${isActive
-                      ? 'bg-[#3aa3eb]/20 text-[#3aa3eb] scale-105'
-                      : 'text-gray-400 hover:text-white active:scale-95'
+                    className={`flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 min-w-[60px] ${isActive
+                      ? 'text-brand-400 scale-105'
+                      : 'text-gray-400 active:scale-95'
                       }`}
                   >
                     <item.icon className={`h-6 w-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                    <span className="text-xs font-medium">{item.name}</span>
+                    <span className="text-[10px] font-medium truncate max-w-[64px]">{item.name}</span>
                   </NavLink>
                 )
               })}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 text-gray-400 hover:text-white active:scale-95 min-w-[70px]"
+                className="flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 text-gray-400 active:scale-95 min-w-[60px]"
               >
                 <EllipsisHorizontalIcon className="h-6 w-6" />
-                <span className="text-xs font-medium">More</span>
+                <span className="text-[10px] font-medium">More</span>
               </button>
             </div>
           </div>
@@ -447,7 +445,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
             className={
               isFixedHeightRoute
                 ? 'h-[calc(100vh-80px)] overflow-hidden min-h-0 p-4 md:p-8 pb-8 md:pb-8'
-                : 'min-h-screen p-4 md:p-8 pb-8 md:pb-8'
+                : 'min-h-screen p-4 md:p-8 pb-28 md:pb-8'
             }
           >
             {children}
