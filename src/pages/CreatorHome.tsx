@@ -1,9 +1,25 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightIcon, SparklesIcon, PlayCircleIcon, ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import PageHeader from '../components/PageHeader';
+import { useAuth } from '../contexts/AuthContext';
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getLastName(fullName?: string | null) {
+  if (!fullName?.trim()) return 'Wise';
+  const parts = fullName.trim().split(' ');
+  return parts[parts.length - 1];
+}
 
 export default function CreatorHome() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const shortcuts = [
     { title: 'Courses', description: 'Browse the catalog and pick up where you left off.', icon: PlayCircleIcon, action: () => navigate('/community/courses') },
@@ -11,25 +27,15 @@ export default function CreatorHome() {
     { title: 'Club', description: 'Jump into the Creator Club chat.', icon: ChatBubbleOvalLeftIcon, action: () => navigate('/community') },
   ];
 
+  const greeting = `${getGreeting()}, Mr. ${getLastName(profile?.full_name)}`;
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="glass-card rounded-2xl p-6 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-[#8AB5EB] font-medium">Creator Club</p>
-            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-              Welcome back, Creator
-            </h1>
-            <p className="text-gray-400 mt-2 max-w-2xl">
-              Jump into your courses, resources, and community. Keep your creative flow with clear shortcuts.
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white">
-            <SparklesIcon className="h-5 w-5 text-[#8AB5EB]" />
-            <span className="text-sm">Creator mode active</span>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Creator Club"
+        subtitle={`${greeting} — jump into your courses, resources, and community.`}
+        icon={<SparklesIcon className="h-5 w-5" />}
+      />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         {shortcuts.map(item => (
@@ -44,8 +50,8 @@ export default function CreatorHome() {
                   <item.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">{item.title}</p>
-                  <p className="text-xs text-gray-400">{item.description}</p>
+                  <p className="text-white font-semibold font-body">{item.title}</p>
+                  <p className="text-xs text-gray-400 font-body">{item.description}</p>
                 </div>
               </div>
               <ArrowRightIcon className="h-5 w-5 text-gray-400" />

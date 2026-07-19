@@ -10,7 +10,8 @@ import {
     ClockIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Video } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import {
     meetingService,
     clientService,
@@ -127,16 +128,21 @@ export default function MeetingsPage() {
     return (
         <div className="h-full flex flex-col overflow-hidden gap-4">
             {/* Top bar: title + actions */}
-            <div className="glass-card neon-glow rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
-                <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold gradient-text" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                        Meetings
-                    </h1>
-                    <p className="text-gray-400 text-xs sm:text-sm hidden sm:block truncate">
-                        Conference room is live — join anytime
-                    </p>
+            <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="hidden sm:flex shrink-0 items-center justify-center w-11 h-11 rounded-xl bg-[#3aa3eb]/15 border border-[#3aa3eb]/30 text-[#3aa3eb]">
+                        <Video className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                        <h1 className="font-display font-bold gradient-text leading-tight tracking-tight uppercase truncate" style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>
+                            Meetings
+                        </h1>
+                        <p className="text-gray-300 text-xs sm:text-sm font-body truncate">
+                            Conference room is live — join anytime
+                        </p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     {liveMeeting && (
                         <button
                             onClick={() => handleJoinMeeting(liveMeeting)}

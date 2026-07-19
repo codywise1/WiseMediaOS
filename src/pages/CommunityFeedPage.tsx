@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, Edit2, Plus } from 'lucide-react';
+import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, CreditCard as Edit2, Plus } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
@@ -566,28 +567,21 @@ export default function CommunityFeedPage() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div className="min-w-0">
-            <h1 className="text-4xl font-bold gradient-text text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Creator Club
-            </h1>
-            <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Announcements, wins, questions, and creator-to-creator support.
-            </p>
-          </div>
-
-          {isAdmin && (
-            <button
-              onClick={() => setComposerOpen(true)}
-              className="btn-header-glass space-x-2 shrink-0 w-full sm:w-auto"
-            >
-              <span className="btn-text-glow">New Post</span>
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </button>
-          )}
-
-        </div>
+      <PageHeader
+        title="Creator Club"
+        subtitle="Announcements, wins, questions, and creator-to-creator support."
+        icon={<MessageCircle className="h-5 w-5" />}
+        action={isAdmin ? (
+          <button
+            onClick={() => setComposerOpen(true)}
+            className="btn-header-glass space-x-2 w-full sm:w-auto"
+          >
+            <span className="btn-text-glow">New Post</span>
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </button>
+        ) : undefined}
+      />
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           <div className="flex flex-wrap gap-2">
             <button
