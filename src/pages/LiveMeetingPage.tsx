@@ -2,34 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import {
-    MicrophoneIcon,
-    VideoCameraIcon,
     PhoneXMarkIcon,
-    ComputerDesktopIcon,
-    ChatBubbleLeftRightIcon,
-    StopIcon,
-    PlayIcon,
     ArrowsPointingOutIcon
 } from '@heroicons/react/24/solid';
-import {
-    MicrophoneIcon as MicOffIcon,
-    VideoCameraIcon as VideoOffIcon
-} from '@heroicons/react/24/outline';
 import { meetingService, Meeting } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 import MeetingNotesEditor from '../components/MeetingNotesEditor';
+
+const WHEREBY_URL = 'https://wisemedia.whereby.com/meeting7996a103-885c-42b4-bda1-c2d02d5ee927';
 
 export default function LiveMeetingPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { profile } = useAuth();
     const [meeting, setMeeting] = useState<Meeting | null>(null);
     const [loading, setLoading] = useState(true);
     const [showNotes, setShowNotes] = useState(true);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOff, setIsVideoOff] = useState(false);
-    const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const [recordingStatus, setRecordingStatus] = useState<'stopped' | 'recording' | 'paused'>('stopped');
     const [duration, setDuration] = useState(0);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -41,50 +27,22 @@ export default function LiveMeetingPage() {
     }, [id]);
 
     useEffect(() => {
-        if (recordingStatus === 'recording') {
-            timerRef.current = setInterval(() => {
-                setDuration(prev => prev + 1);
-            }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
+        timerRef.current = setInterval(() => {
+            setDuration(prev => prev + 1);
+        }, 1000);
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [recordingStatus]);
+    }, []);
 
     const loadMeeting = async (meetingId: string) => {
-        console.log('[LiveMeetingPage] Loading meeting:', meetingId);
         try {
             const data = await meetingService.getById(meetingId);
-            console.log('[LiveMeetingPage] Meeting data loaded:', data);
             setMeeting(data);
-            if (data.is_recording) {
-                setRecordingStatus('recording');
-            }
             setLoading(false);
         } catch (error) {
             console.error('[LiveMeetingPage] Error loading meeting:', error);
-            // If we fail to load, we go back to the list
             navigate('/meetings');
-        }
-    };
-
-    const toggleRecording = async () => {
-        if (!meeting || !id) return;
-
-        try {
-            if (recordingStatus === 'stopped') {
-                await meetingService.startRecording(id);
-                setRecordingStatus('recording');
-            } else if (recordingStatus === 'recording') {
-                // Just pause locally for demo, API doesn't support pause state yet
-                setRecordingStatus('paused');
-            } else {
-                setRecordingStatus('recording');
-            }
-        } catch (error) {
-            console.error('Error toggling recording:', error);
         }
     };
 
@@ -92,7 +50,6 @@ export default function LiveMeetingPage() {
         if (!meeting || !id) return;
         if (window.confirm('Are you sure you want to end the meeting?')) {
             try {
-                await meetingService.stopRecording(id);
                 await meetingService.updateStatus(id, 'processing');
                 navigate('/meetings');
             } catch (error) {
@@ -102,7 +59,6 @@ export default function LiveMeetingPage() {
     };
 
     const handleSaveNotes = async (content: string) => {
-        // In a real app, we'd save to a notes record linked to the meeting
         console.log('Saving notes:', content);
     };
 
@@ -148,85 +104,43 @@ export default function LiveMeetingPage() {
                 <div className="flex-1 flex overflow-hidden">
                     {/* Video Area */}
                     <div className="flex-1 p-4 flex flex-col gap-4 relative overflow-hidden">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
-                            {/* Self View */}
-                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10 group">
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                                        <span className="text-3xl text-white font-bold">{profile?.full_name?.charAt(0) || 'M'}</span>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                    You {isMuted && '(Muted)'}
-                                </div>
-                                {/* Fake Audio Waveform */}
-                                <div className="absolute bottom-4 right-4 flex items-end gap-1 h-6">
-                                    {[1, 2, 3, 2, 1].map((h, i) => (
-                                        <div key={i} className={`w-1 bg-green-500 rounded-full animate-pulse`} style={{ height: `${h * 20}%` }} />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Client View */}
-                            <div className="bg-slate-950/50 rounded-2xl relative overflow-hidden border border-white/10">
-                                <img
-                                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
-                                    alt="Client"
-                                    className="absolute inset-0 w-full h-full object-cover opacity-80"
-                                />
-                                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded-lg text-white text-sm font-medium">
-                                    {meeting.client?.name || 'Client'}
-                                </div>
-                            </div>
+                        <div className="flex-1 rounded-2xl relative overflow-hidden border border-white/10 bg-slate-950/50">
+                            <iframe
+                                src={WHEREBY_URL}
+                                allow="camera; microphone; fullscreen; speaker; display-capture; compute-pressure"
+                                className="w-full h-full"
+                                style={{ minHeight: 700, border: 'none' }}
+                                title="Meeting Room"
+                            />
                         </div>
 
                         {/* Controls Bar */}
                         <div className="h-20 bg-white/5 backdrop-blur-xl rounded-2xl mb-2 mx-auto flex items-center gap-6 px-8 border border-white/10 shrink-0">
-                            <ControlBtn
-                                icon={isMuted ? MicOffIcon : MicrophoneIcon}
-                                active={!isMuted}
-                                onClick={() => setIsMuted(!isMuted)}
-                                alert={isMuted}
-                            />
-                            <ControlBtn
-                                icon={isVideoOff ? VideoOffIcon : VideoCameraIcon}
-                                active={!isVideoOff}
-                                onClick={() => setIsVideoOff(!isVideoOff)}
-                                alert={isVideoOff}
-                            />
-                            <ControlBtn
-                                icon={ComputerDesktopIcon}
-                                active={isScreenSharing}
-                                onClick={() => setIsScreenSharing(!isScreenSharing)}
-                            />
+                            <a
+                                href={WHEREBY_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-4 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+                                title="Open in new tab"
+                            >
+                                <ArrowsPointingOutIcon className="h-6 w-6" />
+                            </a>
 
                             <div className="w-px h-8 bg-white/10" />
 
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={toggleRecording}
-                                    className={`p-4 rounded-full transition-all ${recordingStatus === 'recording'
-                                        ? 'bg-red-500/20 text-red-500 animate-pulse'
-                                        : 'bg-white/5 hover:bg-white/10 text-white'
-                                        }`}
-                                >
-                                    {recordingStatus === 'recording' ? <StopIcon className="h-6 w-6" /> : <PlayIcon className="h-6 w-6" />}
-                                </button>
-                            </div>
-
-                            <div className="w-px h-8 bg-white/10" />
-
-                            <ControlBtn
-                                icon={ChatBubbleLeftRightIcon}
-                                active={showNotes}
+                            <button
                                 onClick={() => setShowNotes(!showNotes)}
-                            />
+                                className={`px-4 py-3 rounded-xl font-medium transition-all ${showNotes ? 'bg-white/10 text-white' : 'bg-transparent text-gray-400 hover:text-white'}`}
+                            >
+                                {showNotes ? 'Hide Notes' : 'Show Notes'}
+                            </button>
 
                             <button
                                 onClick={handleEndCall}
-                                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-4 shadow-lg shadow-red-500/20"
+                                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all ml-4 shadow-lg shadow-red-500/20 flex items-center gap-2"
                             >
                                 <PhoneXMarkIcon className="h-6 w-6" />
+                                End Call
                             </button>
                         </div>
                     </div>
@@ -252,21 +166,5 @@ export default function LiveMeetingPage() {
                 </div>
             </GlassCard>
         </div>
-    );
-}
-
-function ControlBtn({ icon: Icon, active, onClick, alert }: any) {
-    return (
-        <button
-            onClick={onClick}
-            className={`p-4 rounded-xl transition-all ${alert
-                ? 'bg-red-500 text-white'
-                : active
-                    ? 'bg-white/10 text-white hover:bg-white/20'
-                    : 'bg-transparent text-gray-400 hover:text-white'
-                }`}
-        >
-            <Icon className="h-6 w-6" />
-        </button>
     );
 }
