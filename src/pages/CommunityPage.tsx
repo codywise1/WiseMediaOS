@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus } from 'lucide-react';
-import ConfirmDialog from '../components/ConfirmDialog';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
@@ -131,18 +130,6 @@ export default function CommunityPage() {
   const [privateReactionCounts, setPrivateReactionCounts] = useState<Record<string, Record<string, number>>>({});
   const [userPrivateReactions, setUserPrivateReactions] = useState<Record<string, string>>({});
   const [togglingReaction, setTogglingReaction] = useState<Record<string, boolean>>({});
-
-  // Deletion Confirmation State
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-  }>({
-    title: '',
-    message: '',
-    onConfirm: () => { },
-  });
 
 
   // Use a ref to persist mock messages during session in demo mode
@@ -482,38 +469,20 @@ export default function CommunityPage() {
   }
 
   async function handleDeleteChannel(id: string) {
-    console.log('[handleDeleteChannel] Preparing deletion for channel:', id);
-    setConfirmDialogConfig({
-      title: 'Delete Channel',
-      message: 'Are you sure you want to delete this channel? This will remove all messages in it and cannot be undone.',
-      onConfirm: () => executeDeleteChannel(id)
-    });
-    setIsConfirmDialogOpen(true);
-  }
-
-  async function executeDeleteChannel(id: string) {
-    setIsConfirmDialogOpen(false);
-    console.log('[executeDeleteChannel] Executing deletion for channel:', { id, isAdmin });
+    if (!isAdmin || !id) return;
+    if (!confirm('Are you sure you want to delete this channel? This will remove all messages in it.')) return;
 
     try {
       if (!isSupabaseAvailable()) {
-        console.log('[executeDeleteChannel] Running in demo mode, updating local state');
         setChannels(prev => prev.filter(c => c.id !== id));
         if (selectedChannel?.id === id) setSelectedChannel(channels.find(c => c.id !== id) || null);
       } else {
-        console.log('[executeDeleteChannel] Calling Supabase to delete channel:', id);
-        const { error, data } = await supabase!
+        const { error } = await supabase!
           .from('chat_channels')
           .delete()
-          .eq('id', id)
-          .select();
+          .eq('id', id);
 
-        if (error) {
-          console.error('[executeDeleteChannel] Supabase error:', error);
-          throw error;
-        }
-
-        console.log('[executeDeleteChannel] Successfully deleted channel, response data:', data);
+        if (error) throw error;
         setChannels(prev => prev.filter(c => c.id !== id));
         if (selectedChannel?.id === id) {
           const next = channels.find(c => c.id !== id);
@@ -521,8 +490,8 @@ export default function CommunityPage() {
         }
       }
     } catch (error) {
-      console.error('[executeDeleteChannel] Final catch error deleting channel:', error);
-      alert('Failed to delete channel. Check the console for more details.');
+      console.error('Error deleting channel:', error);
+      alert('Failed to delete channel.');
     }
   }
 
@@ -551,17 +520,8 @@ export default function CommunityPage() {
 
   async function handleDeleteMessage(messageId: string) {
     if (!isAdmin || !messageId) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
 
-    setConfirmDialogConfig({
-      title: 'Delete Message',
-      message: 'Are you sure you want to delete this message?',
-      onConfirm: () => executeDeleteMessage(messageId)
-    });
-    setIsConfirmDialogOpen(true);
-  }
-
-  async function executeDeleteMessage(messageId: string) {
-    setIsConfirmDialogOpen(false);
     try {
       if (!isSupabaseAvailable()) {
         setMessages(prev => prev.filter(m => m.id !== messageId));
@@ -673,17 +633,8 @@ export default function CommunityPage() {
 
   async function handleDeletePrivateMessage(messageId: string) {
     if (!isAdmin || !messageId) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
 
-    setConfirmDialogConfig({
-      title: 'Delete Message',
-      message: 'Are you sure you want to delete this private message?',
-      onConfirm: () => executeDeletePrivateMessage(messageId)
-    });
-    setIsConfirmDialogOpen(true);
-  }
-
-  async function executeDeletePrivateMessage(messageId: string) {
-    setIsConfirmDialogOpen(false);
     try {
       if (!isSupabaseAvailable()) {
         setPrivateMessages(prev => prev.filter(m => m.id !== messageId));
@@ -2035,13 +1986,6 @@ export default function CommunityPage() {
           </div>
         </div>
       </Modal>
-      <ConfirmDialog
-        isOpen={isConfirmDialogOpen}
-        onClose={() => setIsConfirmDialogOpen(false)}
-        onConfirm={confirmDialogConfig.onConfirm}
-        title={confirmDialogConfig.title}
-        message={confirmDialogConfig.message}
-      />
     </div>
-  );
+  )
 }

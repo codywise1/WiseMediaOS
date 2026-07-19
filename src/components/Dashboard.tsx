@@ -210,34 +210,24 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             meetingService.getAll()
           ]);
 
-          // Calculate month-based data
-          const currentDate = new Date();
-          const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-          const previousMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-          const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-
           const pendingInvoices = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
           const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
-
-          // Current month revenue (since 1st of current month)
-          const revenue = invoices
-            .filter(inv => {
-              const invDate = new Date(inv.updated_at || inv.created_at);
-              return inv.status === 'paid' && invDate >= currentMonthStart;
-            })
-            .reduce((sum, inv) => sum + inv.amount, 0);
-
+          const revenue = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
           const completedProjects = projects.filter(p => p.status === 'completed').length;
 
-          // Previous month data for percentage changes
+          // Calculate previous month data for percentage changes
+          const currentDate = new Date();
+          const previousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+          const previousMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+
           const previousMonthInvoices = invoices.filter(inv => {
-            const invoiceDate = new Date(inv.updated_at || inv.created_at);
-            return invoiceDate >= previousMonthStart && invoiceDate <= previousMonthEnd && inv.status === 'paid';
+            const invoiceDate = new Date(inv.created_at);
+            return invoiceDate >= previousMonth && invoiceDate <= previousMonthEnd && inv.status === 'paid';
           });
 
           const previousMonthProjects = projects.filter(p => {
-            const projectDate = new Date(p.updated_at || p.created_at);
-            return projectDate >= previousMonthStart && projectDate <= previousMonthEnd;
+            const projectDate = new Date(p.created_at);
+            return projectDate >= previousMonth && projectDate <= previousMonthEnd;
           });
 
           const previousMonthRevenue = previousMonthInvoices.reduce((sum, inv) => sum + inv.amount, 0);
