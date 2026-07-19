@@ -125,7 +125,54 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       }
 
       const stripeInvoices: StripeInvoice[] = json?.invoices || [];
-      const transformedInvoices: InvoiceView[] = stripeInvoices.map(inv => ({
+      const stripeIds = new Set(stripeInvoices.map(i => i.id));
+
+      // Also load local invoices from Supabase (created via proposals), excluding any already synced from Stripe
+      const localInvoices: StripeInvoice[] = [];
+      try {
+        const { data: localRows } = await supabase
+          .from('invoices')
+          .select('id, client_id, proposal_id, amount, description, status, due_date, due_at, created_at, updated_at, stripe_invoice_id, amount_paid, paid_at, hosted_invoice_url, invoice_pdf, currency, client:clients(name, email)')
+          .order('created_at', { ascending: false });
+
+        if (localRows) {
+          for (const row of localRows) {
+            // Skip if this local invoice is already represented by a Stripe invoice
+            const stripeRef = row.stripe_invoice_id || row.id;
+            if (stripeIds.has(stripeRef) || stripeIds.has(row.id)) continue;
+
+            const clientName = (row as any).client?.name || (row as any).client?.email || 'Unknown Client';
+            const clientEmail = (row as any).client?.email || '';
+            const amount = Number(row.amount) || 0;
+            const amountPaid = Number(row.amount_paid) || 0;
+
+            localInvoices.push({
+              id: row.id,
+              number: row.id.slice(0, 8).toUpperCase(),
+              amount,
+              amount_paid: amountPaid,
+              currency: row.currency || 'usd',
+              status: row.status || 'draft',
+              stripeStatus: row.status || 'draft',
+              due_date: row.due_date || row.due_at || null,
+              created_at: row.created_at,
+              paid_at: row.paid_at || null,
+              invoice_pdf: row.invoice_pdf || null,
+              hosted_invoice_url: row.hosted_invoice_url || null,
+              description: row.description || '',
+              client: clientName,
+              client_email: clientEmail,
+              paid: row.status === 'paid',
+              attempt_count: 0,
+            });
+          }
+        }
+      } catch (localErr) {
+        console.warn('Could not load local invoices, continuing with Stripe only:', localErr);
+      }
+
+      const allInvoices = [...stripeInvoices, ...localInvoices];
+      const transformedInvoices: InvoiceView[] = allInvoices.map(inv => ({
         ...inv,
         updated_at: inv.paid_at || inv.created_at,
         createdDate: inv.created_at || '',
@@ -143,7 +190,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       }
     } catch (error) {
       console.error('Error loading invoices:', error);
-      toastError('Error loading invoices from Stripe.');
+      // Don't toast error if we already have local invoices to show
+      if (invoices.length === 0) {
+        toastError('Unable to load Stripe invoices. Showing local invoices only.');
+      }
     } finally {
       setLoading(false);
     }

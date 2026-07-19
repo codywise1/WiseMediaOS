@@ -4,6 +4,7 @@ import {
     VideoCameraIcon,
     MagnifyingGlassIcon,
     VideoCameraSlashIcon,
+    ArrowsPointingOutIcon,
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -20,6 +21,8 @@ import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import MeetingCard from '../components/MeetingCard';
 import ScheduleMeetingModal from '../components/ScheduleMeetingModal';
 import ConfirmDialog from '../components/ConfirmDialog';
+
+const WHEREBY_URL = 'https://wisemedia.whereby.com/meeting7996a103-885c-42b4-bda1-c2d02d5ee927';
 
 export default function MeetingsPage() {
     const navigate = useNavigate();
@@ -245,6 +248,39 @@ export default function MeetingsPage() {
                             </select>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Embedded Conference Room */}
+            <div className="glass-card neon-glow rounded-2xl border border-white/10 overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-[#3aa3eb]/20 border border-[#3aa3eb]/30">
+                            <VideoCameraIcon className="h-5 w-5 text-[#3aa3eb]" />
+                        </div>
+                        <div>
+                            <h2 className="text-white font-bold text-lg">Conference Room</h2>
+                            <p className="text-gray-400 text-sm">Join anytime — no meeting link required</p>
+                        </div>
+                    </div>
+                    <a
+                        href={WHEREBY_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+                        title="Open in new tab"
+                    >
+                        <ArrowsPointingOutIcon className="h-5 w-5" />
+                    </a>
+                </div>
+                <div className="relative bg-slate-950/50" style={{ minHeight: 500 }}>
+                    <iframe
+                        src={WHEREBY_URL}
+                        allow="camera; microphone; fullscreen; speaker; display-capture; compute-pressure"
+                        className="w-full h-full absolute inset-0"
+                        style={{ border: 'none', minHeight: 500 }}
+                        title="Conference Room"
+                    />
                 </div>
             </div>
 
