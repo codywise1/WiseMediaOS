@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { invoiceService, Invoice as InvoiceRecord, UserRole } from '../lib/supabase';
+import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   DocumentIcon,
@@ -20,6 +20,24 @@ import ConfirmDialog from './ConfirmDialog';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import PaymentModal from './PaymentModal';
 
+interface StripeInvoice {
+  id: string;
+  number: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  stripeStatus: string;
+  due_date: string | null;
+  created_at: string;
+  invoice_pdf: string | null;
+  hosted_invoice_url: string | null;
+  description: string;
+  client: string;
+  client_email: string;
+  paid: boolean;
+  attempt_count: number;
+}
+
 interface User {
   email: string;
   role: UserRole;
@@ -31,11 +49,14 @@ interface InvoicesProps {
   currentUser: User | null;
 }
 
-type InvoiceView = Omit<InvoiceRecord, 'client'> & {
+type InvoiceView = StripeInvoice & {
   createdDate: string;
   dueDate: string;
-  client: string;
-  clientRecord?: InvoiceRecord['client'];
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+  description: string;
+  client_id?: string | null;
 };
 
 
@@ -71,26 +92,54 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       if (invoices.length === 0) {
         setLoading(true);
       }
-      let data: InvoiceRecord[] = [];
 
-      if (currentUser?.role === 'admin') {
-        data = await invoiceService.getAll();
-      } else if (currentUser) {
-        data = await invoiceService.getForCurrentUser();
+      if (!isSupabaseAvailable() || !supabase) {
+        setInvoices([]);
+        setLoading(false);
+        return;
       }
 
-      const transformedInvoices: InvoiceView[] = data.map(invoice => ({
-        ...invoice,
-        clientRecord: invoice.client,
-        client: invoice.client?.name || 'Unknown Client',
-        createdDate: invoice.created_at || '',
-        dueDate: invoice.due_date || ''
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (sessionError || !accessToken) {
+        setInvoices([]);
+        setLoading(false);
+        return;
+      }
+
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-invoices`;
+      const res = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const text = await res.text();
+      let json: any = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+
+      if (!res.ok) {
+        throw new Error(json?.error || `HTTP ${res.status}`);
+      }
+
+      const stripeInvoices: StripeInvoice[] = json?.invoices || [];
+      const transformedInvoices: InvoiceView[] = stripeInvoices.map(inv => ({
+        ...inv,
+        updated_at: inv.created_at,
+        createdDate: inv.created_at || '',
+        dueDate: inv.due_date || '',
+        due_date: inv.due_date,
+        created_at: inv.created_at,
+        description: inv.description || '',
+        client_id: null,
       }));
 
       setInvoices(transformedInvoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
-      toastError('Error loading invoices.');
+      toastError('Error loading invoices from Stripe.');
     } finally {
       setLoading(false);
     }
@@ -294,49 +343,25 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveInvoice = (invoiceData: any) => {
-    const saveInvoice = async () => {
-      try {
-        const payload = {
-          client_id: invoiceData.client_id,
-          amount: invoiceData.amount,
-          description: invoiceData.description,
-          status: invoiceData.status,
-          due_date: invoiceData.dueDate
-        };
-
-        if (modalMode === 'create') {
-          await invoiceService.create(payload);
-          toastSuccess('Invoice created successfully.');
-        } else if (selectedInvoice) {
-          await invoiceService.update(selectedInvoice.id, payload as any);
-          toastSuccess('Invoice updated successfully.');
-        }
-        await loadInvoices();
-      } catch (error) {
-        console.error('Error saving invoice:', error);
-        toastError('Error saving invoice.');
-      }
-    };
-    saveInvoice();
+  const handleSaveInvoice = (_invoiceData: any) => {
+    toastInfo('Invoices are managed in Stripe. Use Stripe Dashboard to create or edit invoices.');
+    setIsModalOpen(false);
   };
 
   const confirmDelete = async () => {
     if (selectedInvoice) {
-      try {
-        await invoiceService.delete(selectedInvoice.id);
-        await loadInvoices();
-        setIsDeleteDialogOpen(false);
-        setSelectedInvoice(undefined);
-      } catch (error) {
-        toastError('Error deleting invoice.');
-      }
+      toastInfo('Invoices are managed in Stripe. Use Stripe Dashboard to void or delete invoices.');
+      setIsDeleteDialogOpen(false);
+      setSelectedInvoice(undefined);
     }
   };
 
   const handlePayInvoice = (invoice: InvoiceView) => {
-    setSelectedInvoice(invoice);
-    setIsPaymentModalOpen(true);
+    if (invoice.hosted_invoice_url) {
+      window.open(invoice.hosted_invoice_url, '_blank', 'noopener,noreferrer');
+    } else {
+      toastInfo('This invoice does not have a Stripe payment link yet.');
+    }
   };
 
   const handlePaymentSuccess = async (_paymentDetails: any) => {
@@ -352,13 +377,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const handleDownloadPDF = async (invoice: InvoiceView) => {
     try {
       setGeneratingPDFId(invoice.id);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      await generateInvoicePDF({
-        ...invoice,
-        client: invoice.client,
-        createdDate: invoice.created_at,
-        dueDate: invoice.due_date
-      } as any);
+      if (invoice.invoice_pdf) {
+        window.open(invoice.invoice_pdf, '_blank', 'noopener,noreferrer');
+      } else {
+        await generateInvoicePDF({
+          ...invoice,
+          client: invoice.client,
+          createdDate: invoice.created_at,
+          dueDate: invoice.due_date || ''
+        } as any);
+      }
     } finally {
       setGeneratingPDFId(null);
     }
