@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import GlassCard from '../components/GlassCard';
 import {
-  Play,
-  Clock,
-  BarChart3,
-  CheckCircle2,
-  Lock,
-  Download,
-  MessageSquare,
-  Edit,
-  Trash2,
-  Award,
-  ArrowRight,
-  Plus,
-  X
+  Play, Clock, BarChart3, CheckCircle2, Lock, Download,
+  MessageSquare, Edit, Trash2, Award, ArrowRight, Plus, X,
+  BookOpen, FileText, TrendingUp, Users, Settings, Save,
+  ChevronRight, Sparkles, Video, Link2, UploadCloud,
 } from 'lucide-react';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,6 +16,8 @@ interface Course {
   thumbnail_url: string | null;
   creator_id: string;
   enrollment_count: number;
+  level?: string;
+  category?: string;
 }
 
 interface Lesson {
@@ -46,303 +38,207 @@ interface Resource {
   url: string;
 }
 
+type TabId = 'overview' | 'lessons' | 'resources' | 'discussions' | 'progress';
+
 export default function EducationDetails() {
   const { profile } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isCourseEditOpen, setIsCourseEditOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [lessonForm, setLessonForm] = useState({
-    title: '',
-    description: '',
-    video_url: '',
-    duration_minutes: 0,
-    order_index: lessons.length + 1,
-    is_published: true,
-    video_type: 'link' as 'link' | 'upload'
+    title: '', description: '', video_url: '', duration_minutes: 0,
+    order_index: 1, is_published: true, video_type: 'link' as 'link' | 'upload',
   });
+  const [courseForm, setCourseForm] = useState({ title: '', description: '', level: 'Intermediate', category: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingCourse, setIsSavingCourse] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
   const courseId = id || '123';
 
   useEffect(() => {
-    if (profile) {
-      fetchCourseData();
-      checkEnrollment();
-    }
+    if (profile) { fetchCourseData(); checkEnrollment(); }
   }, [profile]);
 
   async function fetchCourseData() {
     try {
-      // Fetch course
       const { data: courseData } = await supabase!
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .single();
-
+        .from('courses').select('*').eq('id', courseId).single();
       if (courseData) {
         setCourse(courseData);
         setIsAdmin(courseData.creator_id === profile?.id || profile?.role === 'admin');
+        setCourseForm({
+          title: courseData.title || '',
+          description: courseData.description || '',
+          level: courseData.level || 'Intermediate',
+          category: courseData.category || '',
+        });
       }
-
-      // Fetch lessons
       const { data: lessonsData } = await supabase!
-        .from('lessons')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true });
-
-      if (lessonsData) {
-        setLessons(lessonsData);
-      }
-
-      // Fetch resources
+        .from('lessons').select('*').eq('course_id', courseId).order('order_index', { ascending: true });
+      if (lessonsData) setLessons(lessonsData);
       const { data: resourcesData } = await supabase!
-        .from('course_resources')
-        .select('*')
-        .eq('course_id', courseId);
-
-      if (resourcesData) {
-        setResources(resourcesData);
-      }
-
-      // Calculate progress if enrolled
-      if (profile) {
+        .from('course_resources').select('*').eq('course_id', courseId);
+      if (resourcesData) setResources(resourcesData);
+      if (profile && lessonsData) {
         const { data: progressData } = await supabase!
-          .from('lesson_progress')
-          .select('completed')
-          .eq('user_id', profile.id)
-          .in('lesson_id', lessonsData?.map(l => l.id) || []);
-
-        if (progressData && lessonsData) {
+          .from('lesson_progress').select('completed').eq('user_id', profile.id)
+          .in('lesson_id', lessonsData.map(l => l.id));
+        if (progressData) {
           const completed = progressData.filter(p => p.completed).length;
-          setProgress(Math.round((completed / lessonsData.length) * 100));
+          setProgress(lessonsData.length ? Math.round((completed / lessonsData.length) * 100) : 0);
         }
       }
-    } catch (error) {
-      console.error('Error fetching course data:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Error fetching course data:', error); }
+    finally { setLoading(false); }
   }
 
   async function checkEnrollment() {
     if (!profile) return;
-
     const { data } = await supabase!
-      .from('course_enrollments')
-      .select('id')
-      .eq('user_id', profile.id)
-      .eq('course_id', courseId)
-      .single();
-
+      .from('course_enrollments').select('id')
+      .eq('user_id', profile.id).eq('course_id', courseId).single();
     setIsEnrolled(!!data);
   }
 
   async function handleEnroll() {
     if (!profile) return;
-
-    try {
-      const { error } = await supabase!.from('course_enrollments').insert({
-        user_id: profile.id,
-        course_id: courseId,
-      });
-
-      if (!error) {
-        setIsEnrolled(true);
-      }
-    } catch (error) {
-      console.error('Error enrolling:', error);
-    }
+    const { error } = await supabase!.from('course_enrollments').insert({ user_id: profile.id, course_id: courseId });
+    if (!error) setIsEnrolled(true);
   }
 
   async function handleUploadVideo(file: File) {
     if (!profile || !isSupabaseAvailable()) return;
     setIsUploading(true);
-
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${courseId}-${Date.now()}.${fileExt}`;
       const filePath = `videos/${fileName}`;
-
-      // This is a simplified upload, for real progress we'd need a different approach
-      // but Supabase storage upload doesn't natively expose progress easily in common wrappers
-      const { error: uploadError } = await supabase!.storage
-        .from('course-videos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
+      const { error: uploadError } = await supabase!.storage.from('course-videos')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
       if (uploadError) throw uploadError;
-
-      const { data } = supabase!.storage
-        .from('course-videos')
-        .getPublicUrl(filePath);
-
+      const { data } = supabase!.storage.from('course-videos').getPublicUrl(filePath);
       setLessonForm(prev => ({ ...prev, video_url: data.publicUrl }));
-    } catch (error) {
-      console.error('Error uploading video:', error);
-      alert('Failed to upload video');
-    } finally {
-      setIsUploading(false);
-    }
+    } catch (error) { console.error('Error uploading video:', error); alert('Failed to upload video'); }
+    finally { setIsUploading(false); }
   }
 
   async function handleSaveLesson(e: React.FormEvent) {
     e.preventDefault();
     if (!isSupabaseAvailable()) return;
     setIsSaving(true);
-
     try {
       const payload = {
-        course_id: courseId,
-        title: lessonForm.title,
-        description: lessonForm.description,
-        video_url: lessonForm.video_url,
-        duration_minutes: lessonForm.duration_minutes,
-        order_index: lessonForm.order_index,
-        is_published: lessonForm.is_published,
+        course_id: courseId, title: lessonForm.title, description: lessonForm.description,
+        video_url: lessonForm.video_url, duration_minutes: lessonForm.duration_minutes,
+        order_index: lessonForm.order_index, is_published: lessonForm.is_published,
       };
-
       let error;
       if (editingLesson) {
-        const { error: updateError } = await supabase!
-          .from('lessons')
-          .update(payload)
-          .eq('id', editingLesson.id);
+        const { error: updateError } = await supabase!.from('lessons').update(payload).eq('id', editingLesson.id);
         error = updateError;
       } else {
-        const { error: insertError } = await supabase!
-          .from('lessons')
-          .insert([payload]);
+        const { error: insertError } = await supabase!.from('lessons').insert([payload]);
         error = insertError;
       }
-
       if (error) throw error;
-
       setIsLessonModalOpen(false);
       fetchCourseData();
-    } catch (error) {
-      console.error('Error saving lesson:', error);
-      alert('Failed to save lesson');
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (error) { console.error('Error saving lesson:', error); alert('Failed to save lesson'); }
+    finally { setIsSaving(false); }
+  }
+
+  async function handleSaveCourse(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isSupabaseAvailable()) return;
+    setIsSavingCourse(true);
+    try {
+      const { error } = await supabase!.from('courses').update({
+        title: courseForm.title, description: courseForm.description,
+        level: courseForm.level, category: courseForm.category,
+      }).eq('id', courseId);
+      if (error) throw error;
+      setIsCourseEditOpen(false);
+      fetchCourseData();
+    } catch (error) { console.error('Error saving course:', error); alert('Failed to save course'); }
+    finally { setIsSavingCourse(false); }
   }
 
   async function handleDeleteLesson(id: string) {
-    if (!window.confirm('Are you sure you want to delete this lesson?')) return;
+    if (!window.confirm('Delete this lesson? This cannot be undone.')) return;
     if (!isSupabaseAvailable()) return;
-
     try {
-      const { error } = await supabase!
-        .from('lessons')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase!.from('lessons').delete().eq('id', id);
       if (error) throw error;
       fetchCourseData();
-    } catch (error) {
-      console.error('Error deleting lesson:', error);
-      alert('Failed to delete lesson');
-    }
+    } catch (error) { console.error('Error deleting lesson:', error); alert('Failed to delete lesson'); }
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'lessons', label: 'Lessons' },
-    { id: 'resources', label: 'Resources' },
-    { id: 'discussions', label: 'Discussions' },
-    { id: 'progress', label: 'Progress' },
+  const tabs: { id: TabId; label: string; icon: typeof BookOpen }[] = [
+    { id: 'overview', label: 'Overview', icon: BookOpen },
+    { id: 'lessons', label: 'Lessons', icon: Play },
+    { id: 'resources', label: 'Resources', icon: Download },
+    { id: 'discussions', label: 'Discussions', icon: MessageSquare },
+    { id: 'progress', label: 'Progress', icon: TrendingUp },
   ];
+
+  const totalMinutes = lessons.reduce((acc, l) => acc + l.duration_minutes, 0);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-white" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Loading course...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-7 h-7 border-2 border-white/20 border-t-[#3AA3EB] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Hero Section */}
-      <div className="relative h-[400px] mb-8 overflow-hidden rounded-3xl">
+    <div className="min-h-screen pb-20 max-w-6xl mx-auto">
+      {/* Hero */}
+      <div className="relative h-[280px] sm:h-[340px] mb-6 overflow-hidden rounded-3xl border border-white/10">
         <img
-          src={course?.thumbnail_url || 'https://wisemedia.io/wp-content/uploads/2025/10/IMG-5-Wise-Media.webp'}
+          src={course?.thumbnail_url || 'https://images.pexels.com/photos/4144923/pexels-photo-4144923.jpeg?auto=compress&cs=tinysrgb&w=1200'}
           alt={course?.title}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-      </div>
-
-      {/* Header Info Section */}
-      <div className="glass-card neon-glow rounded-3xl p-6 sm:p-8 lg:p-10 mb-8 border border-white/10">
-        <div className="flex flex-col gap-6">
-          <div className="mb-2">
-            <img
-              src="https://wisemedia.io/wp-content/uploads/2025/09/Wise-Media-Logo.svg"
-              alt="Creator Club"
-              className="h-10"
-            />
-          </div>
-          <h1 className="text-white text-[48px] font-bold leading-tight" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-            {course?.title || 'Education Course'}
-          </h1>
-
-          <div className="flex flex-wrap items-center gap-8 text-white mt-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#3AA3EB]/20 rounded-lg">
-                <Clock size={20} className="text-[#3AA3EB]" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Duration</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="number font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lessons.length}</span>
-                  <span className="text-sm font-medium text-gray-400">Lessons</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#3AA3EB]/20 rounded-lg">
-                <BarChart3 size={20} className="text-[#3AA3EB]" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Level</p>
-                <span className="text-sm font-bold text-white uppercase tracking-wide">Intermediate</span>
-              </div>
-            </div>
-
-            {isEnrolled && (
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-400/20 rounded-lg">
-                  <CheckCircle2 size={20} className="text-green-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Completion</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="number font-bold text-lg text-green-400" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{progress}%</span>
-                    <span className="text-sm font-medium text-gray-400">Done</span>
-                  </div>
-                </div>
-              </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="px-2.5 py-1 rounded-full bg-[#3AA3EB]/20 border border-[#3AA3EB]/30 text-[#3AA3EB] text-[10px] font-bold uppercase tracking-wider">
+              {course?.category || 'Course'}
+            </span>
+            {course?.level && (
+              <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-gray-300 text-[10px] font-bold uppercase tracking-wider">
+                {course.level}
+              </span>
             )}
           </div>
+        </div>
+      </div>
 
-          <div className="mt-6 flex flex-wrap gap-4 items-center">
+      {/* Title + Actions */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+          <div className="flex-1">
+            <h1 className="text-white text-3xl sm:text-4xl font-bold leading-tight mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              {course?.title || 'Education Course'}
+            </h1>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-2">
+              {course?.description || 'Master the fundamentals and grow your skills with this comprehensive course.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             {isEnrolled ? (
               <button
                 onClick={() => {
@@ -350,411 +246,435 @@ export default function EducationDetails() {
                   const target = firstIncomplete || lessons[0];
                   if (target) navigate(`/community/courses/${courseId}/lesson/${target.id}`);
                 }}
-                className="btn-header-glass py-4 px-8 min-w-[220px]"
+                className="px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl transition-all font-semibold text-sm flex items-center gap-2"
               >
-                <span className="btn-text-glow flex items-center justify-center gap-2">
-                  Continue Learning
-                  <ArrowRight className="h-5 w-5" />
-                </span>
+                Continue Learning <ArrowRight size={16} />
               </button>
             ) : (
-              <button
-                onClick={handleEnroll}
-                className="btn-header-glass py-4 px-8 min-w-[220px]"
-              >
-                <span className="btn-text-glow flex items-center justify-center gap-2">
-                  Enroll in Course
-                  <ArrowRight className="h-5 w-5" />
-                </span>
+              <button onClick={handleEnroll} className="px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl transition-all font-semibold text-sm flex items-center gap-2">
+                Enroll <ArrowRight size={16} />
               </button>
             )}
-
             {isAdmin && (
               <button
                 onClick={() => setAdminMode(!adminMode)}
-                className={`flex items-center gap-2 px-6 py-4 rounded-xl transition-all font-bold text-xs uppercase tracking-widest border-2 ${adminMode
-                  ? 'bg-purple-500/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                className={`p-3 rounded-2xl transition-all border ${adminMode
+                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/40 text-[#3AA3EB]'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'}`}
+                title="Admin Settings"
               >
-                {adminMode ? 'Exit Admin Mode' : 'Admin Settings'}
+                <Settings size={18} />
               </button>
             )}
           </div>
         </div>
+
+        {/* Stats row - clean Apple-style */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { icon: Play, label: 'Lessons', value: `${lessons.length}`, sub: 'modules' },
+            { icon: Clock, label: 'Duration', value: `${totalMinutes}`, sub: 'minutes' },
+            { icon: BarChart3, label: 'Level', value: course?.level || 'Intermediate', sub: 'difficulty' },
+            { icon: TrendingUp, label: 'Progress', value: isEnrolled ? `${progress}%` : '—', sub: isEnrolled ? 'completed' : 'not enrolled' },
+          ].map((stat, i) => (
+            <div key={i} className="ios-card rounded-2xl p-4 border border-white/10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-[#3AA3EB]/15 flex items-center justify-center">
+                  <stat.icon size={14} className="text-[#3AA3EB]" />
+                </div>
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">{stat.label}</p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-white font-bold text-xl tabular-nums font-display leading-none">{stat.value}</span>
+                <span className="text-gray-500 text-[11px]">{stat.sub}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="sticky top-20 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-8 overflow-x-auto scrollbar-hide">
-            {tabs.map((tab) => (
+      {/* Admin banner */}
+      {adminMode && isAdmin && (
+        <div className="mb-6 p-4 rounded-2xl bg-[#3AA3EB]/10 border border-[#3AA3EB]/20 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Settings size={16} className="text-[#3AA3EB]" />
+            <span className="text-[#3AA3EB] text-sm font-semibold">Admin Mode — edit anything in this course</span>
+          </div>
+          <button onClick={() => setIsCourseEditOpen(true)} className="px-3 py-1.5 bg-[#3AA3EB]/20 hover:bg-[#3AA3EB]/30 text-[#3AA3EB] rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5">
+            <Edit size={13} /> Edit Course
+          </button>
+        </div>
+      )}
+
+      {/* Tabs - iOS segmented style */}
+      <div className="mb-8">
+        <div className="ios-segmented w-full sm:w-auto inline-flex flex-wrap">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                  ? 'border-[#3AA3EB] text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
-                  }`}
-                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', fontWeight: activeTab === tab.id ? 600 : 400 }}
+                className={`ios-segmented-btn flex items-center gap-1.5 ${active ? 'active' : ''}`}
               >
+                <tab.icon size={13} />
                 {tab.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            <GlassCard>
-              <h2 className="text-white font-bold text-2xl mb-4" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>About This Course</h2>
-              <p className="text-gray-300 leading-relaxed mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                {course?.description || 'Master the fundamentals of digital marketing and grow your online presence. This comprehensive course covers everything from social media strategy to content creation and analytics.'}
-              </p>
-              <div className="space-y-3">
-                <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What You\'ll Learn</h3>
-                {['Build a comprehensive marketing strategy', 'Create engaging content that converts', 'Master social media algorithms', 'Track and analyze your performance'].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="text-[#3AA3EB] flex-shrink-0 mt-1" size={20} />
-                    <span className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
+      {/* Tab Content */}
+      {/* Overview */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
+            <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>About This Course</h2>
+            <p className="text-gray-300 leading-relaxed text-sm mb-6">
+              {course?.description || 'Master the fundamentals of digital marketing and grow your online presence. This comprehensive course covers everything from social media strategy to content creation and analytics.'}
+            </p>
+            <h3 className="text-white font-bold text-sm mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>What You'll Learn</h3>
+            <div className="space-y-2.5">
+              {['Build a comprehensive marketing strategy', 'Create engaging content that converts', 'Master social media algorithms', 'Track and analyze your performance'].map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <CheckCircle2 className="text-[#3AA3EB] flex-shrink-0 mt-0.5" size={16} />
+                  <span className="text-gray-300 text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Lessons Tab */}
-        {activeTab === 'lessons' && (
-          <div className="space-y-4">
-            {adminMode && (
+      {/* Lessons */}
+      {activeTab === 'lessons' && (
+        <div className="space-y-2.5">
+          {adminMode && (
+            <button
+              onClick={() => {
+                setEditingLesson(null);
+                setLessonForm({ title: '', description: '', video_url: '', duration_minutes: 0, order_index: lessons.length + 1, is_published: true, video_type: 'link' });
+                setIsLessonModalOpen(true);
+              }}
+              className="w-full py-4 border border-dashed border-white/15 rounded-2xl text-gray-400 hover:text-white hover:border-[#3AA3EB]/40 hover:bg-[#3AA3EB]/5 transition-all font-medium text-sm flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Add New Lesson
+            </button>
+          )}
+          {lessons.length === 0 ? (
+            <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <Play size={24} className="text-gray-600" />
+              </div>
+              <p className="text-white font-semibold text-sm mb-1">No lessons yet</p>
+              <p className="text-gray-500 text-xs">{adminMode ? 'Add your first lesson to get started.' : 'Lessons will appear here.'}</p>
+            </div>
+          ) : (
+            lessons.map((lesson, index) => (
               <button
-                onClick={() => {
-                  setEditingLesson(null);
-                  setLessonForm({
-                    title: '',
-                    description: '',
-                    video_url: '',
-                    duration_minutes: 0,
-                    order_index: lessons.length + 1,
-                    is_published: true,
-                    video_type: 'link'
-                  });
-                  setIsLessonModalOpen(true);
-                }}
-                className="w-full py-4 border-2 border-dashed border-white/10 rounded-xl text-gray-400 hover:text-white hover:border-[#3AA3EB]/50 hover:bg-[#3AA3EB]/5 transition-all font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                key={lesson.id}
+                onClick={() => isEnrolled && !adminMode && navigate(`/community/courses/${courseId}/lesson/${lesson.id}`)}
+                className="ios-card w-full rounded-2xl p-5 border border-white/10 text-left transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/20 active:scale-[0.99] group"
               >
-                <Plus size={18} />
-                Add New Lesson
-              </button>
-            )}
-            {lessons.map((lesson, index) => (
-              <GlassCard key={lesson.id} className="hover:scale-[1.02] transition-transform">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-[#3AA3EB]/20 flex items-center justify-center flex-shrink-0">
-                    {lesson.completed ? (
-                      <CheckCircle2 className="text-green-400" size={24} />
-                    ) : isEnrolled ? (
-                      <Play className="text-[#3AA3EB]" size={24} />
-                    ) : (
-                      <Lock className="text-gray-500" size={24} />
-                    )}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    lesson.completed ? 'bg-emerald-500/15' : isEnrolled ? 'bg-[#3AA3EB]/15' : 'bg-white/5'
+                  }`}>
+                    {lesson.completed ? <CheckCircle2 size={18} className="text-emerald-400" /> :
+                     isEnrolled ? <Play size={16} className="text-[#3AA3EB]" /> :
+                     <Lock size={16} className="text-gray-500" />}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Lesson <span className="number">{index + 1}</span>: {lesson.title}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{lesson.duration_minutes}</span> min
-                      </span>
-                      {lesson.completed && (
-                        <span className="text-green-400 font-medium">Completed</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-gray-500 text-[11px] font-semibold tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+                      <p className="text-white font-semibold text-sm truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{lesson.title}</p>
+                      {!lesson.is_published && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[9px] font-bold uppercase">Draft</span>
                       )}
                     </div>
+                    <div className="flex items-center gap-3 text-gray-500 text-xs">
+                      <span className="flex items-center gap-1"><Clock size={11} /> {lesson.duration_minutes} min</span>
+                      {lesson.completed && <span className="text-emerald-400">Completed</span>}
+                    </div>
                   </div>
-                  {adminMode && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingLesson(lesson);
-                          setLessonForm({
-                            title: lesson.title,
-                            description: lesson.description || '',
-                            video_url: lesson.video_url || '',
-                            duration_minutes: lesson.duration_minutes,
-                            order_index: lesson.order_index,
-                            is_published: lesson.is_published,
-                            video_type: lesson.video_url && (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('vimeo.com')) ? 'link' : 'upload'
-                          });
-                          setIsLessonModalOpen(true);
-                        }}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-                      >
-                        <Edit size={18} />
+                  {adminMode ? (
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingLesson(lesson);
+                        setLessonForm({
+                          title: lesson.title, description: lesson.description || '', video_url: lesson.video_url || '',
+                          duration_minutes: lesson.duration_minutes, order_index: lesson.order_index, is_published: lesson.is_published,
+                          video_type: lesson.video_url && (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('vimeo.com')) ? 'link' : 'upload',
+                        });
+                        setIsLessonModalOpen(true);
+                      }} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                        <Edit size={15} />
                       </button>
-                      <button
-                        onClick={() => handleDeleteLesson(lesson.id)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-gray-400 hover:text-red-400"
-                      >
-                        <Trash2 size={18} />
+                      <button onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.id); }} className="p-2 hover:bg-rose-500/15 rounded-xl transition-colors text-gray-400 hover:text-rose-400">
+                        <Trash2 size={15} />
                       </button>
                     </div>
-                  )}
-                  {isEnrolled && !adminMode && (
-                    <Link to={`/community/courses/${courseId}/lesson/${lesson.id}`} className="px-4 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors text-sm font-medium">
-                      {lesson.completed ? 'Review' : 'Start Lesson'}
-                    </Link>
+                  ) : (
+                    isEnrolled && <ChevronRight size={16} className="text-gray-600 group-hover:text-white group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                   )}
                 </div>
-              </GlassCard>
-            ))}
-          </div>
-        )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
-        {/* Resources Tab */}
-        {activeTab === 'resources' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {resources.map((resource) => (
-              <GlassCard key={resource.id} className="hover:scale-105 transition-transform">
-                <div className="flex items-start gap-3">
-                  <div className="p-3 bg-[#3AA3EB]/20 rounded-lg">
-                    <Download className="text-[#3AA3EB]" size={24} />
+      {/* Resources */}
+      {activeTab === 'resources' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {resources.length === 0 ? (
+            <div className="col-span-full ios-card rounded-3xl p-12 text-center border border-white/10">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <Download size={24} className="text-gray-600" />
+              </div>
+              <p className="text-white font-semibold text-sm mb-1">No resources yet</p>
+              <p className="text-gray-500 text-xs">Resources will appear here when added.</p>
+            </div>
+          ) : (
+            resources.map((resource) => (
+              <a key={resource.id} href={resource.url} target="_blank" rel="noopener noreferrer" className="ios-card rounded-2xl p-5 border border-white/10 transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/20 group">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#3AA3EB]/15 flex items-center justify-center flex-shrink-0">
+                    <Download size={16} className="text-[#3AA3EB]" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{resource.title}</h3>
-                    <span className="text-xs text-gray-400 uppercase">{resource.resource_type}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{resource.title}</p>
+                    <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">{resource.resource_type}</span>
                   </div>
                 </div>
-                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="block mt-4 px-4 py-2 bg-[#3AA3EB]/20 hover:bg-[#3AA3EB]/30 text-[#3AA3EB] rounded-lg transition-colors text-center text-sm font-medium">
-                  Download
-                </a>
-              </GlassCard>
-            ))}
-          </div>
-        )}
+                <div className="flex items-center gap-1.5 text-[#3AA3EB] text-xs font-semibold">
+                  Download <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </a>
+            ))
+          )}
+        </div>
+      )}
 
-        {/* Progress Tab */}
-        {activeTab === 'progress' && isEnrolled && (
-          <div className="space-y-6">
-            <GlassCard>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Progress</h2>
+      {/* Progress */}
+      {activeTab === 'progress' && (
+        <div className="space-y-6">
+          {isEnrolled ? (
+            <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your Progress</h2>
                 {progress === 100 && (
-                  <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all font-medium shadow-lg">
-                    <Award size={20} />
-                    Claim Certificate
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl transition-all text-xs font-semibold">
+                    <Award size={15} /> Claim Certificate
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="relative w-32 h-32 mx-auto mb-4">
+                  <div className="relative w-28 h-28 mx-auto mb-4">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="64" cy="64" r="60" fill="none" stroke="#ffffff20" strokeWidth="8" />
-                      <circle cx="64" cy="64" r="60" fill="none" stroke="#3AA3EB" strokeWidth="8" strokeDasharray={`${progress * 3.77} 377`} strokeLinecap="round" />
+                      <circle cx="56" cy="56" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+                      <circle cx="56" cy="56" r="52" fill="none" stroke="#3AA3EB" strokeWidth="6"
+                        strokeDasharray={`${progress * 3.27} 327`} strokeLinecap="round" className="transition-all duration-700" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-white font-bold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '32px' }}>{progress}%</span>
+                      <span className="text-white font-bold text-2xl tabular-nums font-display">{progress}%</span>
                     </div>
                   </div>
-                  <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Overall Progress</p>
+                  <p className="text-gray-400 text-xs">Overall Progress</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>{Math.round(lessons.length * progress / 100)}</div>
-                  <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Lessons Completed</p>
+                <div className="text-center sm:border-l border-white/10 sm:pl-6">
+                  <p className="text-white font-bold text-3xl tabular-nums font-display mb-2">{Math.round(lessons.length * progress / 100)}</p>
+                  <p className="text-gray-400 text-xs">Lessons Completed</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-white font-bold number mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: '40px' }}>{lessons.reduce((acc, l) => acc + l.duration_minutes, 0)}</div>
-                  <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Minutes Watched</p>
+                <div className="text-center sm:border-l border-white/10 sm:pl-6">
+                  <p className="text-white font-bold text-3xl tabular-nums font-display mb-2">{lessons.reduce((acc, l) => acc + l.duration_minutes, 0)}</p>
+                  <p className="text-gray-400 text-xs">Total Minutes</p>
                 </div>
               </div>
-            </GlassCard>
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                <TrendingUp size={24} className="text-gray-600" />
+              </div>
+              <p className="text-white font-semibold text-sm mb-1">Enroll to track progress</p>
+              <p className="text-gray-500 text-xs mb-4">Start learning to see your progress here.</p>
+              <button onClick={handleEnroll} className="px-5 py-2.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl text-sm font-semibold transition-colors">Enroll Now</button>
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* Discussions Tab */}
-        {activeTab === 'discussions' && (
-          <GlassCard>
-            <div className="flex items-center gap-3 mb-6">
-              <MessageSquare className="text-[#3AA3EB]" size={24} />
-              <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Discussions</h2>
-            </div>
-            <div className="mb-6">
-              <textarea className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none h-32" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} placeholder="Share your thoughts or ask a question..." />
-              <button className="mt-3 px-6 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium">
-                Post Comment
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-lg">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">JD</div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>John Doe</span>
-                      <span className="text-gray-500 text-sm">2 hours ago</span>
-                    </div>
-                    <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Great course! The lessons on social media strategy were incredibly helpful.</p>
+      {/* Discussions */}
+      {activeTab === 'discussions' && (
+        <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
+          <div className="flex items-center gap-2.5 mb-6">
+            <MessageSquare size={18} className="text-[#3AA3EB]" />
+            <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>Discussions</h2>
+          </div>
+          <div className="mb-6">
+            <textarea className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none h-28 resize-none text-sm" placeholder="Share your thoughts or ask a question..." />
+            <button className="mt-3 px-5 py-2.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-colors text-sm font-semibold">Post Comment</button>
+          </div>
+          <div className="space-y-3">
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3AA3EB] to-[#2d8bc7] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">JD</div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-semibold text-sm">John Doe</span>
+                    <span className="text-gray-500 text-xs">2 hours ago</span>
                   </div>
+                  <p className="text-gray-300 text-sm">Great course! The lessons on social media strategy were incredibly helpful.</p>
                 </div>
               </div>
             </div>
-          </GlassCard>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
+
       {/* Lesson Modal */}
       {isLessonModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsLessonModalOpen(false)} />
-          <GlassCard className="relative w-full max-w-2xl bg-slate-900 border-white/10 p-0 overflow-hidden">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
-              </h2>
-              <button onClick={() => setIsLessonModalOpen(false)} className="p-2 text-gray-400 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveLesson} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Lesson Title</label>
-                <input
-                  required
-                  type="text"
-                  value={lessonForm.title}
-                  onChange={e => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
-                  placeholder="e.g. Introduction to Scaling"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Description</label>
-                <textarea
-                  value={lessonForm.description}
-                  onChange={e => setLessonForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all h-24"
-                  placeholder="What is this lesson about?"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Duration (min)</label>
-                  <input
-                    type="number"
-                    value={lessonForm.duration_minutes}
-                    onChange={e => setLessonForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 0 }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
-                  />
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsLessonModalOpen(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl">
+              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-white/10 sticky top-0 bg-[#1c1c1e]/95 backdrop-blur-xl">
+                  <h3 className="text-white font-bold text-lg font-display">{editingLesson ? 'Edit Lesson' : 'New Lesson'}</h3>
+                  <button onClick={() => setIsLessonModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                    <X size={18} />
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Order Index</label>
-                  <input
-                    type="number"
-                    value={lessonForm.order_index}
-                    onChange={e => setLessonForm(prev => ({ ...prev, order_index: parseInt(e.target.value) || 1 }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t border-white/10 pt-4">
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-white cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      checked={lessonForm.video_type === 'link'}
-                      onChange={() => setLessonForm(prev => ({ ...prev, video_type: 'link' }))}
-                      className="accent-[#3AA3EB]"
-                    />
-                    <span className="text-sm font-medium">Video Link (YouTube/Vimeo)</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-white cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      checked={lessonForm.video_type === 'upload'}
-                      onChange={() => setLessonForm(prev => ({ ...prev, video_type: 'upload' }))}
-                      className="accent-[#3AA3EB]"
-                    />
-                    <span className="text-sm font-medium">Upload File</span>
-                  </label>
-                </div>
-
-                {lessonForm.video_type === 'link' ? (
-                  <div className="space-y-2">
-                    <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Video URL</label>
-                    <input
-                      type="url"
-                      value={lessonForm.video_url}
-                      onChange={e => setLessonForm(prev => ({ ...prev, video_url: e.target.value }))}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
+                <form onSubmit={handleSaveLesson} className="p-6 space-y-5">
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Title</label>
+                    <input required type="text" value={lessonForm.title}
+                      onChange={e => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all"
+                      placeholder="e.g. Introduction to Scaling" />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Upload Video</label>
-                    <div className="mt-1 flex items-center gap-4">
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadVideo(file);
-                        }}
-                        className="hidden"
-                        id="video-upload"
-                      />
-                      <label
-                        htmlFor="video-upload"
-                        className={`px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg cursor-pointer transition-all text-sm font-bold ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {isUploading ? 'Uploading...' : 'Choose File'}
-                      </label>
-                      {lessonForm.video_url && !isUploading && (
-                        <span className="text-green-400 text-xs font-medium truncate max-w-[200px]">
-                          Video uploaded!
-                        </span>
-                      )}
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Description</label>
+                    <textarea value={lessonForm.description}
+                      onChange={e => setLessonForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all h-24 resize-none"
+                      placeholder="What is this lesson about?" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Duration (min)</label>
+                      <input type="number" value={lessonForm.duration_minutes}
+                        onChange={e => setLessonForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 0 }))}
+                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
                     </div>
-                    {isUploading && (
-                      <div className="mt-2 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-[#3AA3EB] h-full animate-pulse" style={{ width: '100%' }} />
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Order</label>
+                      <input type="number" value={lessonForm.order_index}
+                        onChange={e => setLessonForm(prev => ({ ...prev, order_index: parseInt(e.target.value) || 1 }))}
+                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div className="border-t border-white/10 pt-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'link' }))}
+                        className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'link' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                        <Link2 size={15} /> Video Link
+                      </button>
+                      <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'upload' }))}
+                        className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'upload' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                        <UploadCloud size={15} /> Upload
+                      </button>
+                    </div>
+                    {lessonForm.video_type === 'link' ? (
+                      <input type="url" value={lessonForm.video_url}
+                        onChange={e => setLessonForm(prev => ({ ...prev, video_url: e.target.value }))}
+                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all"
+                        placeholder="https://www.youtube.com/watch?v=..." />
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <input type="file" accept="video/*" className="hidden" id="video-upload"
+                          onChange={e => { const file = e.target.files?.[0]; if (file) handleUploadVideo(file); }} />
+                        <label htmlFor="video-upload" className={`px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl cursor-pointer transition-all text-sm font-medium ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          {isUploading ? 'Uploading...' : 'Choose File'}
+                        </label>
+                        {lessonForm.video_url && !isUploading && <span className="text-emerald-400 text-xs font-medium">Video uploaded</span>}
                       </div>
                     )}
                   </div>
-                )}
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setIsLessonModalOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
+                    <button type="submit" disabled={isSaving} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                      {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
+                      {isSaving ? 'Saving...' : 'Save Lesson'}
+                    </button>
+                  </div>
+                </form>
               </div>
+            </div>
+          </div>
+        </>
+      )}
 
-              <div className="pt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsLessonModalOpen(false)}
-                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#3AA3EB]/20 uppercase tracking-widest text-xs disabled:opacity-50"
-                >
-                  {isSaving ? 'Saving...' : 'Save Lesson'}
-                </button>
+      {/* Course Edit Modal */}
+      {isCourseEditOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsCourseEditOpen(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-lg">
+              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                  <h3 className="text-white font-bold text-lg font-display">Edit Course</h3>
+                  <button onClick={() => setIsCourseEditOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                    <X size={18} />
+                  </button>
+                </div>
+                <form onSubmit={handleSaveCourse} className="p-6 space-y-5">
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Title</label>
+                    <input type="text" value={courseForm.title}
+                      onChange={e => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Description</label>
+                    <textarea value={courseForm.description}
+                      onChange={e => setCourseForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all h-28 resize-none" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Level</label>
+                      <select value={courseForm.level}
+                        onChange={e => setCourseForm(prev => ({ ...prev, level: e.target.value }))}
+                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:outline-none transition-all">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Category</label>
+                      <input type="text" value={courseForm.category}
+                        onChange={e => setCourseForm(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setIsCourseEditOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
+                    <button type="submit" disabled={isSavingCourse} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                      {isSavingCourse ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
+                      Save Course
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </GlassCard>
-        </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
