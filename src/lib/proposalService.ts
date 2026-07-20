@@ -544,7 +544,7 @@ export const proposalService = {
     return proposalData as Proposal;
   },
 
-  async approve(proposalId: string, userId?: string, signature?: string) {
+  async approve(proposalId: string, userId?: string, signature?: string, signatureImageUrl?: string) {
     if (!isSupabaseAvailable()) {
       throw new Error('Supabase not configured');
     }
@@ -560,6 +560,10 @@ export const proposalService = {
         });
 
       if (!rpcError) {
+        // Store the signature image URL on the proposal
+        if (signatureImageUrl) {
+          await sb.from('proposals').update({ signature_image_url: signatureImageUrl }).eq('id', proposalId);
+        }
         // Fetch and return the updated proposal
         const { data: updatedProposal } = await sb
           .from('proposals')
@@ -595,7 +599,8 @@ export const proposalService = {
       .update({
         status: 'approved',
         approved_at: new Date().toISOString(),
-        value: totalCents
+        value: totalCents,
+        signature_image_url: signatureImageUrl || null
       })
       .eq('id', proposalId)
       .select();

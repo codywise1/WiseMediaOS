@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
-  DocumentIcon,
-  CreditCardIcon,
-  PencilIcon,
-  TrashIcon,
-  EnvelopeIcon,
-  ArrowDownTrayIcon,
-  EyeIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import { ArrowRight } from 'lucide-react';
+  FileText,
+  CreditCard,
+  Pencil,
+  Trash2,
+  Mail,
+  Download,
+  Eye,
+  CheckCircle,
+  AlertTriangle,
+  ArrowRight,
+} from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -456,7 +456,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {loadError && (
         <div className="glass-card rounded-2xl p-4 border border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-3">
-            <ExclamationTriangleIcon className="h-5 w-5 text-red-400 shrink-0" />
+            <AlertTriangle size={18} className="text-red-400 shrink-0" />
             <p className="text-sm text-red-200">{loadError}</p>
           </div>
         </div>
@@ -595,10 +595,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {isAdmin && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Invoices Sent · 30d', value: invoices.length, icon: EyeIcon, iconBg: 'bg-[#3aa3eb]/20' },
-            { label: 'Total Cash Collected', value: `$${totalPaid.toLocaleString()}`, icon: CheckCircleIcon, iconBg: 'bg-green-500/20' },
-            { label: 'Overdue Funds', value: `$${totalOverdue.toLocaleString()}`, icon: ExclamationTriangleIcon, iconBg: 'bg-red-500/20' },
-            { label: 'Total Outstanding', value: `$${totalOutstanding.toLocaleString()}`, icon: CreditCardIcon, iconBg: 'bg-blue-500/20' },
+            { label: 'Invoices Sent · 30d', value: invoices.length, icon: Eye, iconBg: 'bg-[#3aa3eb]/20' },
+            { label: 'Total Cash Collected', value: `${totalPaid.toLocaleString()}`, icon: CheckCircle, iconBg: 'bg-green-500/20' },
+            { label: 'Overdue Funds', value: `${totalOverdue.toLocaleString()}`, icon: AlertTriangle, iconBg: 'bg-red-500/20' },
+            { label: 'Total Outstanding', value: `${totalOutstanding.toLocaleString()}`, icon: CreditCard, iconBg: 'bg-blue-500/20' },
           ].map((stat, idx) => (
             <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
               <div className={`p-3 rounded-lg ${stat.iconBg}`}>
@@ -640,13 +640,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             className="text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2 group transition-all"
           >
             Export CSV
-            <ArrowDownTrayIcon className="h-4 w-4 group-hover:translate-y-[1px] transition-transform" />
+            <Download className="h-4 w-4 group-hover:translate-y-[1px] transition-transform" />
           </button>
         </div>
 
         {filteredInvoices.length === 0 ? (
           <div className="glass-card rounded-3xl p-12 text-center border border-white/10">
-            <DocumentIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+            <FileText className="h-12 w-12 text-gray-700 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-500">No invoices found</h3>
             <p className="text-gray-600 text-sm mt-1">
               {invoices.length === 0
@@ -709,9 +709,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   key={invoice.id}
                   className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
                 >
-                  {/* Status accent bar */}
-                  <div className={`h-1 w-full ${style.dot}`} />
-
                   <div className="p-5 space-y-4">
                     {/* Top: Invoice number + status pill */}
                     <div className="flex items-start justify-between gap-3">
@@ -747,7 +744,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         onClick={() => navigate(`/invoices/${invoice.id}`)}
                         className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
                       >
-                        <EyeIcon className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                         View Details
                       </button>
                       <div className="flex items-center gap-1.5">
@@ -760,7 +757,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           {generatingPDFId === invoice.id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
                           ) : (
-                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           )}
                         </button>
                         {isAdmin ? (
@@ -770,19 +767,19 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
                               title="Send Reminder"
                             >
-                              <EnvelopeIcon className="h-4 w-4" />
+                              <Mail className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleEditInvoice(invoice)}
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                             >
-                              <PencilIcon className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteInvoice(invoice)}
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
                             >
-                              <TrashIcon className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </>
                         ) : (invoice.status === 'pending' || invoice.status === 'overdue') ? (

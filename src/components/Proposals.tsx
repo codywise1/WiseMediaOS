@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ClipboardDocumentListIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  UserIcon,
-  ArrowDownTrayIcon
-} from '@heroicons/react/24/outline';
-import { ArrowRight } from 'lucide-react';
+  ClipboardList,
+  Eye,
+  Pencil,
+  Trash2,
+  User,
+  Download,
+  ArrowRight,
+  Clock,
+  CheckCircle,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
 import { clientService } from '../lib/supabase';
@@ -253,10 +257,10 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       {/* Proposal Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Awaiting Approval', value: awaitingCount, icon: UserIcon, filter: 'pending' as const, color: 'text-white', iconBg: 'bg-slate-700/50' },
-          { label: 'Approved Revenue', value: `$${(approvedRevenue / 100).toLocaleString()}`, icon: UserIcon, filter: 'approved' as const, color: 'text-white', iconBg: 'bg-green-500/20' },
-          { label: 'Total Pipeline Value', value: `$${(totalPipeline / 100).toLocaleString()}`, icon: UserIcon, filter: 'all' as const, color: 'text-white', iconBg: 'bg-blue-500/20', isActive: true },
-          { label: 'Expired Value', value: `$${(expiredValue / 100).toLocaleString()}`, icon: UserIcon, filter: 'all' as const, color: 'text-white', iconBg: 'bg-red-500/20' },
+          { label: 'Awaiting Approval', value: awaitingCount, icon: Clock, filter: 'pending' as const, color: 'text-white', iconBg: 'bg-slate-700/50' },
+          { label: 'Approved Revenue', value: `${(approvedRevenue / 100).toLocaleString()}`, icon: CheckCircle, filter: 'approved' as const, color: 'text-white', iconBg: 'bg-green-500/20' },
+          { label: 'Total Pipeline Value', value: `${(totalPipeline / 100).toLocaleString()}`, icon: TrendingUp, filter: 'all' as const, color: 'text-white', iconBg: 'bg-blue-500/20', isActive: true },
+          { label: 'Expired Value', value: `${(expiredValue / 100).toLocaleString()}`, icon: XCircle, filter: 'all' as const, color: 'text-white', iconBg: 'bg-red-500/20' },
         ].map((card, index) => {
           const isFiltering = statusFilter === card.filter;
           const isPipeline = card.label === 'Total Pipeline Value';
@@ -289,7 +293,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       <div className="pt-4">
         {visibleProposals.length === 0 ? (
           <div className="glass-card rounded-3xl p-12 text-center border border-white/10">
-            <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+            <ClipboardList className="h-12 w-12 text-gray-700 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
             <p className="text-gray-500">
               {isAgency
@@ -321,9 +325,6 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                   key={proposal.id}
                   className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
                 >
-                  {/* Status accent bar */}
-                  <div className={`h-1 w-full ${style.dot}`} />
-
                   <div className="p-5 space-y-4">
                     {/* Top: Status pill + value */}
                     <div className="flex items-start justify-between gap-3">
@@ -387,7 +388,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                         onClick={() => handleViewProposal(proposal.id)}
                         className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
                       >
-                        <EyeIcon className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                         View Details
                       </button>
                       <div className="flex items-center gap-1.5">
@@ -400,7 +401,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                           {generatingPDFId === proposal.id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
                           ) : (
-                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           )}
                         </button>
                         {isAgency && (
@@ -410,14 +411,14 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                               title="Edit"
                             >
-                              <PencilIcon className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProposal(proposal)}
                               className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
                               title="Delete"
                             >
-                              <TrashIcon className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </>
                         )}
