@@ -1,26 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import {
-  Home,
-  Folder,
-  FileText,
-  Calendar,
-  ClipboardList,
-  UserCircle,
-  LogOut,
-  Pencil,
-  X,
-  MoreHorizontal,
-  MessageCircle,
-  MessagesSquare,
-  BookOpen,
-  Copy,
-  LayoutGrid,
-  ChevronLeft,
-  ChevronRight,
-  BarChart3,
-  Rss
-} from 'lucide-react'
+import { Home, Folder, FileText, Calendar, ClipboardList, CircleUser as UserCircle, LogOut, Pencil, X, MoreHorizontal, MessageCircle, MessagesSquare, BookOpen, Copy, LayoutGrid, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
 import { UserRole } from '../lib/supabase'
@@ -84,12 +64,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Notes', href: '/notes', icon: FileText },
         { name: 'Meetings', href: '/meetings', icon: Calendar },
         { name: 'Proposals', href: '/proposals', icon: ClipboardList },
-        { name: 'Invoices', href: '/invoices', icon: FileText }
-      ]
-    },
-    {
-      label: 'Insights',
-      items: [
+        { name: 'Invoices', href: '/invoices', icon: FileText },
         { name: 'Analytics', href: '/analytics', icon: BarChart3 }
       ]
     },
@@ -98,7 +73,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: MessageCircle },
         { name: 'Messages', href: '/community/messages', icon: MessagesSquare },
-        { name: 'Content Studio', href: '/community/hub', icon: Rss },
         { name: 'Education', href: '/community/courses', icon: BookOpen },
         { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
@@ -122,7 +96,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: MessageCircle },
         { name: 'Chat', href: '/community/messages', icon: MessagesSquare },
-        { name: 'Content Studio', href: '/community/hub', icon: Rss },
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpen },
         { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
@@ -153,8 +126,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: MessageCircle },
-        { name: 'Direct Messages', href: '/community/messages', icon: MessagesSquare },
-        { name: 'Content Studio', href: '/community/hub', icon: Rss }
+        { name: 'Direct Messages', href: '/community/messages', icon: MessagesSquare }
       ]
     },
     {

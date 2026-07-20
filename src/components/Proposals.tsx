@@ -176,6 +176,9 @@ export default function Proposals({ currentUser }: ProposalsProps) {
     deleteProposal();
   };
 
+  const cleanTitle = (title: string) =>
+    (title || '').replace(/^\s*(INV|PROP)-\d{3,}\s*[-:]?\s*/i, '').trim();
+
   const getStatusTimeline = (proposal: any) => {
     if (proposal.status === 'approved' && proposal.approved_at) {
       return `Signed on ${formatAppDate(proposal.approved_at)}`;
@@ -343,7 +346,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                     {/* Title */}
                     <div>
                       <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
-                        {proposal.title}
+                        {cleanTitle(proposal.title)}
                       </h3>
                       <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>
                     </div>

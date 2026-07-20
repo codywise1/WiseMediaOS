@@ -225,7 +225,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           <span className={`text-sm font-medium ${statusMeta.text}`}>{statusMeta.label}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-3" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-          {proposal.title}
+          {(proposal.title || '').replace(/^\s*(INV|PROP)-\d{3,}\s*[-:]?\s*/i, '').trim()}
         </h1>
         <p className="text-gray-400 text-base leading-relaxed mb-6">
           {proposal.description || `Proposal for ${proposal.client?.company || proposal.client?.name || 'Client'}.`}

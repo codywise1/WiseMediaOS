@@ -466,18 +466,23 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {isAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Chart */}
-          <div className="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
+          <div className="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/5 to-transparent opacity-50 pointer-events-none" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
-              <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
-              <div className="flex flex-wrap gap-2">
+              <div>
+                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
+                <p className="text-xs text-gray-400 mt-1 font-medium">
+                  Total: <span className="text-white font-bold tabular-nums">${chartData.reduce((s, d) => s + d.value, 0).toLocaleString()}</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 p-1 bg-white/5 rounded-xl border border-white/10">
                 {(['day', 'week', 'month', 'quarter', 'year'] as const).map(period => (
                   <button
                     key={period}
                     onClick={() => setChartPeriod(period)}
-                    className={`px-3 py-2 rounded-lg text-sm transition-all border ${chartPeriod === period
-                      ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartPeriod === period
+                      ? 'bg-[#3AA3EB] text-white shadow-[0_0_12px_rgba(58,163,235,0.4)]'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
                       }`}
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   >
@@ -487,19 +492,23 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </div>
             </div>
 
-            <div className="h-64 w-full relative group/chart">
-              <svg viewBox="0 0 800 200" className="w-full h-full drop-shadow-[0_0_15px_rgba(58,163,235,0.3)]">
+            <div className="h-72 w-full relative group/chart pl-10">
+              <svg viewBox="0 0 800 240" className="w-full h-full" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.3" />
+                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.35" />
                     <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
                   </linearGradient>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#3aa3eb" />
+                    <stop offset="100%" stopColor="#60a5fa" />
+                  </linearGradient>
                 </defs>
-                {[0, 1, 2, 3].map(i => (
-                  <line key={i} x1="0" y1={i * 50 + 20} x2="800" y2={i * 50 + 20} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                {[0, 1, 2, 3, 4].map(i => (
+                  <line key={i} x1="0" y1={i * 48 + 16} x2="800" y2={i * 48 + 16} stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray={i === 4 ? '0' : '4 4'} />
                 ))}
-                <path d={linePath} fill="none" stroke="#3aa3eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-[draw_2s_ease-out]" />
                 <path d={areaPath} fill="url(#chartGradient)" />
+                <path d={linePath} fill="none" stroke="url(#lineGradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_2px_8px_rgba(58,163,235,0.4)]" />
                 {chartData.map((d, i) => {
                   const hitboxWidth = 800 / chartPointsCount;
                   return (
@@ -508,7 +517,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       x={d.x - hitboxWidth / 2}
                       y="0"
                       width={hitboxWidth}
-                      height="200"
+                      height="240"
                       fill="transparent"
                       className="cursor-pointer"
                       onMouseEnter={() => setHoveredMonthIndex(i)}
@@ -517,53 +526,57 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   );
                 })}
                 {chartPoints.map((p, i) => (
-                  <circle
-                    key={i}
-                    cx={p.x}
-                    cy={p.y}
-                    r={hoveredMonthIndex === i ? '6' : '4'}
-                    fill={hoveredMonthIndex === i ? '#ffffff' : '#3aa3eb'}
-                    stroke="#ffffff"
-                    strokeWidth={hoveredMonthIndex === i ? '3' : '2'}
-                    className="transition-all duration-300"
-                  />
+                  <g key={i}>
+                    {hoveredMonthIndex === i && (
+                      <line x1={p.x} y1={p.y} x2={p.x} y2="224" stroke="rgba(58,163,235,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+                    )}
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={hoveredMonthIndex === i ? '6' : '4'}
+                      fill={hoveredMonthIndex === i ? '#ffffff' : '#3aa3eb'}
+                      stroke="#0f172a"
+                      strokeWidth={hoveredMonthIndex === i ? '2.5' : '2'}
+                      className="transition-all duration-200"
+                    />
+                  </g>
                 ))}
               </svg>
 
               {hoveredMonthIndex !== null && (
                 <div
-                  className="absolute z-50 pointer-events-none transition-all duration-300"
+                  className="absolute z-50 pointer-events-none transition-all duration-200"
                   style={{
                     left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
-                    top: `${(chartPoints[hoveredMonthIndex].y / 200) * 100}%`,
-                    marginTop: '-45px',
+                    top: `${(chartPoints[hoveredMonthIndex].y / 240) * 100}%`,
+                    marginTop: '-52px',
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <div className="bg-[#0f172a] border border-[#3aa3eb]/30 rounded-xl px-4 py-2 shadow-[0_0_20px_rgba(58,163,235,0.2)] flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] font-black text-[#3aa3eb] uppercase tracking-widest">
-                      {chartData[hoveredMonthIndex].label} Revenue
+                  <div className="bg-[#0f172a] border border-[#3aa3eb]/40 rounded-xl px-3.5 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex flex-col items-center gap-0.5 min-w-[120px]">
+                    <span className="text-[10px] font-bold text-[#3aa3eb] uppercase tracking-widest">
+                      {chartData[hoveredMonthIndex].label}
                     </span>
-                    <span className="text-sm font-bold text-white tabular-nums">
+                    <span className="text-base font-bold text-white tabular-nums">
                       ${chartData[hoveredMonthIndex].value.toLocaleString()}
                     </span>
                   </div>
-                  <div className="w-2 h-2 bg-[#0f172a] border-r border-b border-[#3aa3eb]/30 rotate-45 mx-auto -mt-1" />
+                  <div className="w-2 h-2 bg-[#0f172a] border-r border-b border-[#3aa3eb]/40 rotate-45 mx-auto -mt-1.5" />
                 </div>
               )}
 
-              <div className="flex justify-between text-[10px] font-bold uppercase mt-4 px-12">
+              <div className="flex justify-between text-[10px] font-bold uppercase mt-3">
                 {chartData.map((d, i) => (
                   <span
                     key={i}
-                    className={`transition-colors duration-300 ${hoveredMonthIndex === i ? 'text-white' : 'text-gray-500'}`}
+                    className={`transition-colors duration-200 ${hoveredMonthIndex === i ? 'text-white' : 'text-gray-500'}`}
                   >
                     {d.label}
                   </span>
                 ))}
               </div>
 
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
+              <div className="absolute left-0 top-0 h-[calc(100%-24px)] flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
                 <span>${Math.round(maxVal / 1000)}k</span>
                 <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
                 <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
@@ -573,19 +586,28 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           </div>
 
           {/* Revenue Snapshot */}
-          <div className="glass-card rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
             <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
-                { label: 'Last 7 Days', value: `$${revenue7d.toLocaleString()}` },
-                { label: 'Last 30 Days', value: `$${revenue30d.toLocaleString()}` },
-                { label: 'This Quarter', value: `$${revenueQuarter.toLocaleString()}` },
+                { label: 'Last 7 Days', value: revenue7d, icon: ArrowRight, accent: 'text-[#3aa3eb]' },
+                { label: 'Last 30 Days', value: revenue30d, icon: ArrowRight, accent: 'text-green-400' },
+                { label: 'This Quarter', value: revenueQuarter, icon: ArrowRight, accent: 'text-purple-400' },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                  <span className="text-sm text-gray-300 font-medium">{item.label}</span>
-                  <span className="text-xl font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{item.value}</span>
+                <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-10 rounded-full bg-gradient-to-b from-[#3aa3eb] to-[#3aa3eb]/30" />
+                    <span className="text-sm text-gray-300 font-medium">{item.label}</span>
+                  </div>
+                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Collected</span>
+                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Integral CF, sans-serif' }}>${totalPaid.toLocaleString()}</span>
+              </div>
             </div>
           </div>
         </div>
