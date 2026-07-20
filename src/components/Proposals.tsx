@@ -285,162 +285,150 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         })}
       </div>
 
-      {/* Proposals Table */}
+      {/* Proposals Cards — iOS Style */}
       <div className="pt-4">
-        <div className="glass-card rounded-3xl overflow-hidden border border-white/10">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-gray-300 uppercase tracking-widest">
-                  <th className="px-8 py-5 text-[10px] font-black">Proposal Name</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Client</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Deal Stage</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Value</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Status Timeline</th>
-                  <th className="px-8 py-5 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {visibleProposals.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-12 text-center">
-                      <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
-                      <p className="text-gray-500">
-                        {isAgency
-                          ? "You haven't created any proposals yet."
-                          : "You don't have any matching proposals at this time."}
-                      </p>
-                    </td>
-                  </tr>
-                ) : visibleProposals.map((proposal: any) => {
-                  const timelineStatus = getStatusTimeline(proposal);
-                  const isApproved = proposal.status === 'approved';
-                  const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
-
-                  return (
-                    <tr key={proposal.id} className="group hover:bg-white/[0.03] transition-colors">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-1 h-8 rounded-full ${isApproved ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' :
-                            isExpired ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                              'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
-                            }`} />
-                          <div>
-                            <h3 className="text-sm font-black text-white truncate max-w-[200px]" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
-                              {proposal.title}
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {proposal.services && proposal.services.length > 0 ? (
-                                proposal.services.map((service: string, sIdx: number) => (
-                                  <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb]">
-                                    {service}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[9px] font-bold text-[#3aa3eb]">
-                                  Website
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <span className="text-sm font-bold text-gray-200">{proposal.client}</span>
-                      </td>
-                      <td className="px-6 py-6">
-                        {(() => {
-                          const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
-                            approved: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
-                            draft: { bg: 'rgba(234, 179, 8, 0.33)', border: 'rgba(234, 179, 8, 1)', text: '#ffffff' },
-                            sent: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                            viewed: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                            expired: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
-                            default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' }
-                          };
-
-                          const style = statusStyles[proposal.status.toLowerCase()] || statusStyles.default;
-
-                          return (
-                            <span
-                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                              style={{
-                                backgroundColor: style.bg,
-                                border: `1px solid ${style.border}`,
-                                color: style.text
-                              }}
-                            >
-                              {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-6">
-                        <span className="text-base font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
-                          ${((proposal.value || 0) / 100).toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-6 transition-all">
-                        <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
-                          style={{
-                            backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.33)' : isExpired ? 'rgba(239, 68, 68, 0.33)' : 'rgba(59, 163, 234, 0.33)',
-                            borderColor: isApproved ? 'rgba(34, 197, 94, 1)' : isExpired ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 163, 234, 1)',
-                            color: '#ffffff'
-                          }}
-                        >
-                          {timelineStatus}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleDownloadPDF(proposal)}
-                            disabled={generatingPDFId === proposal.id}
-                            className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
-                            title="Download PDF"
-                          >
-                            {generatingPDFId === proposal.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
-                            ) : (
-                              <ArrowDownTrayIcon className="h-4 w-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleViewProposal(proposal.id)}
-                            className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                            title="View Details"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                          {isAgency && (
-                            <>
-                              <button
-                                onClick={() => navigate(`/proposals/${proposal.id}`)}
-                                className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                                title="Edit"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProposal(proposal)}
-                                className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                                title="Delete"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {visibleProposals.length === 0 ? (
+          <div className="glass-card rounded-3xl p-12 text-center border border-white/10">
+            <ClipboardDocumentListIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>No proposals found</h3>
+            <p className="text-gray-500">
+              {isAgency
+                ? "You haven't created any proposals yet."
+                : "You don't have any matching proposals at this time."}
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {visibleProposals.map((proposal: any) => {
+              const timelineStatus = getStatusTimeline(proposal);
+              const isApproved = proposal.status === 'approved';
+              const isExpired = proposal.status === 'expired' || timelineStatus.includes('Expired');
+              const isPending = proposal.status === 'sent' || proposal.status === 'viewed';
+              const isDraft = proposal.status === 'draft';
+
+              const statusStyles: Record<string, { bg: string, border: string, text: string, dot: string }> = {
+                approved: { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.4)', text: 'rgb(74, 222, 128)', dot: 'bg-green-500' },
+                draft: { bg: 'rgba(234, 179, 8, 0.15)', border: 'rgba(234, 179, 8, 0.4)', text: 'rgb(250, 204, 21)', dot: 'bg-yellow-500' },
+                sent: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                viewed: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                expired: { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', text: 'rgb(248, 113, 113)', dot: 'bg-red-500' },
+                default: { bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)', text: 'rgb(203, 213, 225)', dot: 'bg-slate-500' }
+              };
+              const style = statusStyles[proposal.status.toLowerCase()] || statusStyles.default;
+
+              return (
+                <div
+                  key={proposal.id}
+                  className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
+                >
+                  {/* Status accent bar */}
+                  <div className={`h-1 w-full ${style.dot}`} />
+
+                  <div className="p-5 space-y-4">
+                    {/* Top: Status pill + value */}
+                    <div className="flex items-start justify-between gap-3">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
+                        style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                        {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
+                      </span>
+                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                        ${((proposal.value || 0) / 100).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                        {proposal.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>
+                    </div>
+
+                    {/* Service pills */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {proposal.services && proposal.services.length > 0 ? (
+                        proposal.services.slice(0, 3).map((service: string, sIdx: number) => (
+                          <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb]">
+                            {service}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb]">
+                          Website
+                        </span>
+                      )}
+                      {proposal.services && proposal.services.length > 3 && (
+                        <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-gray-400">
+                          +{proposal.services.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Timeline pill */}
+                    <div>
+                      <span
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all"
+                        style={{
+                          backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.15)' : isExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 163, 234, 0.15)',
+                          borderColor: isApproved ? 'rgba(34, 197, 94, 0.4)' : isExpired ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 163, 234, 0.4)',
+                          color: isApproved ? 'rgb(74, 222, 128)' : isExpired ? 'rgb(248, 113, 113)' : 'rgb(96, 165, 250)'
+                        }}
+                      >
+                        {timelineStatus}
+                      </span>
+                    </div>
+
+                    {/* Bottom: Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <button
+                        onClick={() => handleViewProposal(proposal.id)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                        View Details
+                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleDownloadPDF(proposal)}
+                          disabled={generatingPDFId === proposal.id}
+                          className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                          title="Download PDF"
+                        >
+                          {generatingPDFId === proposal.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
+                          ) : (
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                        {isAgency && (
+                          <>
+                            <button
+                              onClick={() => navigate(`/proposals/${proposal.id}`)}
+                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                              title="Edit"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProposal(proposal)}
+                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                              title="Delete"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <ProposalBuilderModal

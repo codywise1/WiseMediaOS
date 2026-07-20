@@ -1583,98 +1583,115 @@ export default function CommunityPage() {
                   </p>
                 </div>
               )}
-              {view === 'channels' && messages.map((msg) => (
-                <div key={msg.id} className="flex gap-3">
-                  {msg.profiles?.avatar_url ? (
-                    <img
-                      src={msg.profiles?.avatar_url}
-                      alt={msg.profiles?.full_name}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {getInitials(msg.profiles?.full_name || 'User')}
-                    </div>
+              {view === 'channels' && messages.map((msg) => {
+                const isMyMessage = msg.user_id === profile?.id;
+                return (
+                <div key={msg.id} className={`flex gap-2.5 ${isMyMessage ? 'flex-row-reverse' : ''}`}>
+                  {!isMyMessage && (
+                    msg.profiles?.avatar_url ? (
+                      <img
+                        src={msg.profiles?.avatar_url}
+                        alt={msg.profiles?.full_name}
+                        className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">
+                        {getInitials(msg.profiles?.full_name || 'User')}
+                      </div>
+                    )
                   )}
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-white font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {msg.profiles?.full_name || 'User'}
-                      </span>
-                      <span className={`text-xs font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {msg.profiles?.role?.toUpperCase() || 'FREE'}
-                      </span>
-                      <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {formatAppDateTime(msg.created_at)}
-                      </span>
-                    </div>
+                  <div className={`flex-1 max-w-[75%] ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
+                    {!isMyMessage && (
+                      <div className="flex items-baseline gap-2 mb-1 px-1">
+                        <span className="text-white text-sm font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          {msg.profiles?.full_name || 'User'}
+                        </span>
+                        <span className={`text-[10px] font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          {msg.profiles?.role?.toUpperCase() || 'FREE'}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 group/msg-row">
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start group/msg-content">
-                          <div className="flex-1">
-                            {editingMessageId === msg.id ? (
-                              <div className="flex gap-2 items-center mt-1">
-                                <input
-                                  type="text"
-                                  value={editingMessageText}
-                                  onChange={(e) => setEditingMessageText(e.target.value)}
-                                  className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-[#59a1e5]"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleUpdateMessage(msg.id)}
-                                  className="p-1 text-emerald-400 hover:bg-emerald-400/10 rounded"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setEditingMessageId(null);
-                                    setEditingMessageText('');
-                                  }}
-                                  className="p-1 text-red-400 hover:bg-red-400/10 rounded"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            ) : (
-                              <p className="text-gray-300 break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                                {msg.message}
-                              </p>
-                            )}
-                            {renderMessageAttachments(msg.attachments)}
-
-                            {/* Reaction Chips */}
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {chatReactionCounts[msg.id] && Object.entries(chatReactionCounts[msg.id]).map(([emoji, count]) => {
-                                if (count === 0) return null;
-                                const isMine = userChatReactions[msg.id] === emoji;
-                                return (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => handleChatReaction(msg.id, emoji)}
-                                    className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 transition-all border duration-200 ${isMine
-                                      ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white shadow-[0_0_12px_rgba(89,161,229,0.2)] scale-105'
-                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
-                                      }`}
-                                  >
-                                    <span className="text-sm">{emoji}</span>
-                                    <span className="font-bold">{count}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                      <div className={`relative ${isMyMessage ? 'order-2' : ''}`}>
+                        {editingMessageId === msg.id ? (
+                          <div className="flex gap-2 items-center p-2 bg-white/10 rounded-2xl">
+                            <input
+                              type="text"
+                              value={editingMessageText}
+                              onChange={(e) => setEditingMessageText(e.target.value)}
+                              className="flex-1 px-3 py-1.5 bg-black/30 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-[#59a1e5]"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleUpdateMessage(msg.id)}
+                              className="p-1.5 text-emerald-400 hover:bg-emerald-400/10 rounded-lg"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(null);
+                                setEditingMessageText('');
+                              }}
+                              className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-lg"
+                            >
+                              <X size={16} />
+                            </button>
                           </div>
+                        ) : (
+                          <div className={`px-4 py-2.5 rounded-3xl ${isMyMessage
+                            ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
+                            : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
+                            }`}>
+                            <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              {msg.message}
+                            </p>
+                            {renderMessageAttachments(msg.attachments)}
+                          </div>
+                        )}
 
+                        {/* Reaction Chips */}
+                        {chatReactionCounts[msg.id] && Object.keys(chatReactionCounts[msg.id]).length > 0 && (
+                          <div className={`flex flex-wrap gap-1.5 mt-1.5 ${isMyMessage ? 'justify-end' : ''}`}>
+                            {Object.entries(chatReactionCounts[msg.id]).map(([emoji, count]) => {
+                              if (count === 0) return null;
+                              const isMine = userChatReactions[msg.id] === emoji;
+                              return (
+                                <button
+                                  key={emoji}
+                                  onClick={() => handleChatReaction(msg.id, emoji)}
+                                  className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 transition-all border duration-200 ${isMine
+                                    ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white'
+                                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                    }`}
+                                >
+                                  <span className="text-sm">{emoji}</span>
+                                  <span className="font-bold">{count}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Reaction Picker + Edit/Delete */}
+                      <div className={`relative group/picker flex-shrink-0 ${isMyMessage ? 'order-1' : ''}`}>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200">
+                          <button
+                            className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all"
+                            title="Add reaction"
+                          >
+                            <SmilePlus size={18} />
+                          </button>
                           {isAdmin && !editingMessageId && (
-                            <div className="opacity-0 group-hover/msg-content:opacity-100 flex gap-1 ml-2 transition-opacity">
-                              {msg.user_id === profile?.id && (
+                            <>
+                              {isMyMessage && (
                                 <button
                                   onClick={() => {
                                     setEditingMessageId(msg.id);
                                     setEditingMessageText(msg.message);
                                   }}
-                                  className="p-1 text-gray-500 hover:text-white rounded"
+                                  className="p-1.5 text-gray-500 hover:text-white rounded-full hover:bg-white/10 transition-all"
                                   title="Edit"
                                 >
                                   <Edit2 size={14} />
@@ -1682,25 +1699,15 @@ export default function CommunityPage() {
                               )}
                               <button
                                 onClick={() => handleDeleteMessage(msg.id)}
-                                className="p-1 text-gray-500 hover:text-red-400 rounded"
-                                title={msg.user_id === profile?.id ? "Delete" : "Delete (admin)"}
+                                className="p-1.5 text-gray-500 hover:text-red-400 rounded-full hover:bg-red-400/10 transition-all"
+                                title={isMyMessage ? "Delete" : "Delete (admin)"}
                               >
                                 <Trash2 size={14} />
                               </button>
-                            </div>
+                            </>
                           )}
                         </div>
-                      </div>
-
-                      {/* Centered Reaction Picker Button */}
-                      <div className="relative group/picker opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200 flex-shrink-0 mr-1">
-                        <button
-                          className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all duration-200"
-                          title="Add reaction"
-                        >
-                          <SmilePlus size={20} />
-                        </button>
-                        <div className="absolute bottom-full mb-2 right-0 opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100] transform translate-y-2 group-hover/picker:translate-y-0">
+                        <div className={`absolute bottom-full mb-2 ${isMyMessage ? 'right-0' : 'left-0'} opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100]`}>
                           <div className="flex items-center gap-1 p-1.5 bg-[#1a1c1e]/95 border border-white/20 rounded-full shadow-[0_8_32px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
                             {COMMON_EMOJIS.map(emoji => (
                               <button
@@ -1715,9 +1722,13 @@ export default function CommunityPage() {
                         </div>
                       </div>
                     </div>
+                    <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {formatAppDateTime(msg.created_at)}
+                    </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {view === 'private' && selectedUser && privateMessages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
@@ -1730,73 +1741,73 @@ export default function CommunityPage() {
                 const isMyMessage = msg.sender_id === profile?.id;
 
                 return (
-                  <div key={msg.id} className={`flex gap-3 ${isMyMessage ? 'flex-row-reverse' : ''}`}>
+                  <div key={msg.id} className={`flex gap-2.5 ${isMyMessage ? 'flex-row-reverse' : ''}`}>
                     {!isMyMessage && selectedUser && (
                       selectedUser.avatar_url ? (
                         <img
                           src={selectedUser.avatar_url}
                           alt={getConversationName(selectedUser)}
-                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        <div className="w-9 h-9 bg-gradient-to-br from-[#59a1e5] to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">
                           {getInitials(getConversationName(selectedUser))}
                         </div>
                       )
                     )}
-                    <div className={`flex-1 max-w-lg ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
-                      <div className={`flex items-center gap-2 group/msg-row ${isMyMessage ? 'flex-row-reverse' : ''}`}>
-                        <div className="flex-1 max-w-lg">
-                          <div className="group/msg-content relative">
-                            <div className={`p-3 rounded-lg ${isMyMessage
-                              ? 'bg-[#59a1e5] text-white shadow-lg'
-                              : 'bg-white/10 text-gray-300'
+                    <div className={`flex-1 max-w-[75%] ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
+                      <div className="flex items-center gap-2 group/msg-row">
+                        <div className={`relative ${isMyMessage ? 'order-2' : ''}`}>
+                          {editingMessageId === msg.id ? (
+                            <div className="flex gap-2 items-center p-2 bg-white/10 rounded-2xl">
+                              <input
+                                type="text"
+                                value={editingMessageText}
+                                onChange={(e) => setEditingMessageText(e.target.value)}
+                                className="flex-1 px-3 py-1.5 bg-black/30 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-white"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleUpdatePrivateMessage(msg.id)}
+                                className="p-1.5 text-emerald-400 hover:bg-white/10 rounded-lg"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(null);
+                                  setEditingMessageText('');
+                                }}
+                                className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className={`px-4 py-2.5 rounded-3xl ${isMyMessage
+                              ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
+                              : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
                               }`}>
-                              {editingMessageId === msg.id ? (
-                                <div className="flex gap-2 items-center">
-                                  <input
-                                    type="text"
-                                    value={editingMessageText}
-                                    onChange={(e) => setEditingMessageText(e.target.value)}
-                                    className="flex-1 px-3 py-1 bg-black/30 border border-white/10 rounded text-white focus:outline-none focus:border-white"
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => handleUpdatePrivateMessage(msg.id)}
-                                    className="p-1 text-emerald-400 hover:bg-white/10 rounded"
-                                  >
-                                    <Check size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingMessageId(null);
-                                      setEditingMessageText('');
-                                    }}
-                                    className="p-1 text-red-400 hover:bg-white/10 rounded"
-                                  >
-                                    <X size={16} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <p className="break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                                  {msg.message}
-                                </p>
-                              )}
+                              <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                {msg.message}
+                              </p>
                               {renderMessageAttachments(msg.attachments)}
                             </div>
+                          )}
 
-                            {/* Reaction Chips */}
-                            <div className={`flex flex-wrap gap-1.5 mt-2 ${isMyMessage ? 'justify-end' : ''}`}>
-                              {privateReactionCounts[msg.id] && Object.entries(privateReactionCounts[msg.id]).map(([emoji, count]) => {
+                          {/* Reaction Chips */}
+                          {privateReactionCounts[msg.id] && Object.keys(privateReactionCounts[msg.id]).length > 0 && (
+                            <div className={`flex flex-wrap gap-1.5 mt-1.5 ${isMyMessage ? 'justify-end' : ''}`}>
+                              {Object.entries(privateReactionCounts[msg.id]).map(([emoji, count]) => {
                                 if (count === 0) return null;
                                 const isMine = userPrivateReactions[msg.id] === emoji;
                                 return (
                                   <button
                                     key={emoji}
                                     onClick={() => handlePrivateReaction(msg.id, emoji)}
-                                    className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1.5 transition-all border duration-200 ${isMine
-                                      ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white shadow-[0_0_12px_rgba(89,161,229,0.2)] scale-105'
-                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
+                                    className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 transition-all border duration-200 ${isMine
+                                      ? 'bg-[#59a1e5]/20 border-[#59a1e5]/50 text-white'
+                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                                       }`}
                                   >
                                     <span className="text-sm">{emoji}</span>
@@ -1805,16 +1816,27 @@ export default function CommunityPage() {
                                 );
                               })}
                             </div>
+                          )}
+                        </div>
 
+                        {/* Reaction Picker + Edit/Delete */}
+                        <div className={`relative group/picker flex-shrink-0 ${isMyMessage ? 'order-1' : ''}`}>
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200">
+                            <button
+                              className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all"
+                              title="Add reaction"
+                            >
+                              <SmilePlus size={18} />
+                            </button>
                             {isAdmin && !editingMessageId && (
-                              <div className={`absolute top-0 ${isMyMessage ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 group-hover/msg-content:opacity-100 flex gap-1 transition-opacity`}>
+                              <>
                                 {isMyMessage && (
                                   <button
                                     onClick={() => {
                                       setEditingMessageId(msg.id);
                                       setEditingMessageText(msg.message);
                                     }}
-                                    className="p-1 text-gray-500 hover:text-white rounded"
+                                    className="p-1.5 text-gray-500 hover:text-white rounded-full hover:bg-white/10 transition-all"
                                     title="Edit"
                                   >
                                     <Edit2 size={14} />
@@ -1822,25 +1844,15 @@ export default function CommunityPage() {
                                 )}
                                 <button
                                   onClick={() => handleDeletePrivateMessage(msg.id)}
-                                  className="p-1 text-gray-500 hover:text-red-400 rounded"
+                                  className="p-1.5 text-gray-500 hover:text-red-400 rounded-full hover:bg-red-400/10 transition-all"
                                   title={isMyMessage ? "Delete" : "Delete (admin)"}
                                 >
                                   <Trash2 size={14} />
                                 </button>
-                              </div>
+                              </>
                             )}
                           </div>
-                        </div>
-
-                        {/* Centered Reaction Picker Button */}
-                        <div className={`relative group/picker opacity-0 group-hover/msg-row:opacity-100 transition-all duration-200 flex-shrink-0 ${isMyMessage ? 'ml-1' : 'mr-1'}`}>
-                          <button
-                            className="p-1.5 text-gray-500 hover:text-[#59a1e5] rounded-full hover:bg-[#59a1e5]/10 transition-all duration-200"
-                            title="Add reaction"
-                          >
-                            <SmilePlus size={20} />
-                          </button>
-                          <div className={`absolute bottom-full mb-2 ${isMyMessage ? 'left-0' : 'right-0'} opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100] transform translate-y-2 group-hover/picker:translate-y-0`}>
+                          <div className={`absolute bottom-full mb-2 ${isMyMessage ? 'right-0' : 'left-0'} opacity-0 invisible group-hover/picker:opacity-100 group-hover/picker:visible transition-all duration-300 z-[100]`}>
                             <div className="flex items-center gap-1 p-1.5 bg-[#1a1c1e]/95 border border-white/20 rounded-full shadow-[0_8_32px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
                               {COMMON_EMOJIS.map(emoji => (
                                 <button
@@ -1855,7 +1867,7 @@ export default function CommunityPage() {
                           </div>
                         </div>
                       </div>
-                      <span className="text-gray-500 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
                         {formatAppDateTime(msg.created_at)}
                       </span>
                     </div>

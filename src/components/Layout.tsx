@@ -119,12 +119,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     },
     {
-      label: 'Insights',
-      items: [
-        { name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }
-      ]
-    },
-    {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
@@ -172,10 +166,6 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
     {
       label: 'Marketplace',
       items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
-    },
-    {
-      label: 'Insights',
-      items: [{ name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }]
     }
   ]
 }

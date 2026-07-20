@@ -613,7 +613,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         </div>
       )}
 
-      {/* Filter Tabs and Table */}
+      {/* Invoice Cards — iOS Style */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
           <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
@@ -644,122 +644,113 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           </button>
         </div>
 
-        {/* Invoice Table Container */}
-        <div className="glass-card rounded-3xl overflow-hidden border border-white/10">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-gray-300 uppercase tracking-widest">
-                  <th className="px-8 py-5 text-[10px] font-black">Invoice</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Client</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Status</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Amount</th>
-                  <th className="px-6 py-5 text-[10px] font-black">Due</th>
-                  <th className="px-8 py-5 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="group hover:bg-white/[0.03] transition-colors">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-1 h-8 rounded-full ${invoice.status === 'overdue' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                          invoice.status === 'paid' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' :
-                            'bg-[#3aa3eb] shadow-[0_0_10px_rgba(58,163,235,0.5)]'
-                          }`} />
+        {filteredInvoices.length === 0 ? (
+          <div className="glass-card rounded-3xl p-12 text-center border border-white/10">
+            <DocumentIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-500">No invoices found</h3>
+            <p className="text-gray-600 text-sm mt-1">
+              {invoices.length === 0
+                ? 'No invoices have been created yet. Click "New Invoice" to get started.'
+                : 'Try adjusting your filters.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredInvoices.map((invoice) => {
+              const isPaid = invoice.status === 'paid';
+              const isOverdue = invoice.status === 'overdue';
+              const isPending = invoice.status === 'pending' || invoice.status === 'unpaid' || invoice.status === 'ready';
+
+              const statusStyles: Record<string, { bg: string, border: string, text: string, dot: string }> = {
+                paid: { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.4)', text: 'rgb(74, 222, 128)', dot: 'bg-green-500' },
+                overdue: { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', text: 'rgb(248, 113, 113)', dot: 'bg-red-500' },
+                pending: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                unpaid: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                ready: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                default: { bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)', text: 'rgb(203, 213, 225)', dot: 'bg-slate-500' }
+              };
+              const style = statusStyles[invoice.status.toLowerCase()] || statusStyles.default;
+
+              // Due date calculation
+              const dueDateStr = invoice.due_date || '';
+              let dueDisplay = '';
+              let dueColor = 'text-gray-400';
+              if (isPaid) {
+                dueDisplay = `Paid on ${formatAppDate(invoice.paid_at || invoice.updated_at || invoice.created_at)}`;
+                dueColor = 'text-green-400';
+              } else if (!dueDateStr) {
+                dueDisplay = isOverdue ? 'Overdue' : 'No due date';
+                dueColor = isOverdue ? 'text-red-400' : 'text-gray-400';
+              } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const dueDate = new Date(dueDateStr.includes('T') ? dueDateStr : dueDateStr + 'T00:00:00');
+                if (!isNaN(dueDate.getTime())) {
+                  dueDate.setHours(0, 0, 0, 0);
+                  const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
+                  if (isOverdue) {
+                    dueDisplay = diff === 0 ? 'Overdue · Today' : `Overdue · ${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Day' : 'Days'}`;
+                    dueColor = 'text-red-400';
+                  } else if (diff === 0) {
+                    dueDisplay = 'Due Today';
+                    dueColor = 'text-yellow-400';
+                  } else if (diff < 0) {
+                    dueDisplay = `Overdue ${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Day' : 'Days'}`;
+                    dueColor = 'text-red-400';
+                  } else {
+                    dueDisplay = `Due in ${diff} ${diff === 1 ? 'Day' : 'Days'}`;
+                    dueColor = 'text-gray-400';
+                  }
+                }
+              }
+
+              return (
+                <div
+                  key={invoice.id}
+                  className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
+                >
+                  {/* Status accent bar */}
+                  <div className={`h-1 w-full ${style.dot}`} />
+
+                  <div className="p-5 space-y-4">
+                    {/* Top: Invoice number + status pill */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-1 h-8 rounded-full ${style.dot}`} />
                         <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
                           {invoice.number}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-6">
-                      <span className="text-sm font-bold text-gray-200">{invoice.client}</span>
-                    </td>
-                    <td className="px-6 py-6 transition-all">
-                      {(() => {
-                        const statusStyles: Record<string, { bg: string, border: string, text: string }> = {
-                          paid: { bg: 'rgba(34, 197, 94, 0.33)', border: 'rgba(34, 197, 94, 1)', text: '#ffffff' },
-                          overdue: { bg: 'rgba(239, 68, 68, 0.33)', border: 'rgba(239, 68, 68, 1)', text: '#ffffff' },
-                          pending: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                          unpaid: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                          ready: { bg: 'rgba(59, 163, 234, 0.33)', border: 'rgba(59, 163, 234, 1)', text: '#ffffff' },
-                          default: { bg: 'rgba(148, 163, 184, 0.33)', border: 'rgba(148, 163, 184, 1)', text: '#ffffff' },
-                        };
-                        const style = statusStyles[invoice.status.toLowerCase()] || statusStyles.default;
-                        return (
-                          <span
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                            style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
-                          >
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-6 py-6">
-                      <span className="text-lg font-black text-white" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0"
+                        style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      </span>
+                    </div>
+
+                    {/* Client + Amount */}
+                    <div className="flex items-end justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-gray-200">{invoice.client}</p>
+                        <p className={`text-xs font-medium mt-1 ${dueColor}`}>{dueDisplay}</p>
+                      </div>
+                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
-                    </td>
-                    <td className="px-6 py-6 transition-all">
-                      {(() => {
-                        const dueDateStr = invoice.due_date || '';
-                        let isOverdue = invoice.status === 'overdue';
-                        let displayText = '';
+                    </div>
 
-                        if (invoice.status === 'paid') {
-                          displayText = `Paid on ${formatAppDate(invoice.paid_at || invoice.updated_at || invoice.created_at)}`;
-                        } else if (!dueDateStr) {
-                          displayText = invoice.status === 'overdue' ? 'Overdue' : 'No due date';
-                          isOverdue = invoice.status === 'overdue';
-                        } else {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const dueDate = new Date(dueDateStr.includes('T') ? dueDateStr : dueDateStr + 'T00:00:00');
-                          if (isNaN(dueDate.getTime())) {
-                            displayText = invoice.status === 'overdue' ? 'Overdue' : 'Invalid date';
-                            isOverdue = invoice.status === 'overdue';
-                          } else {
-                            dueDate.setHours(0, 0, 0, 0);
-                            const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                            if (invoice.status === 'overdue') {
-                              const overdueDiff = Math.abs(diff);
-                              displayText = diff === 0 ? 'Overdue · Today' : `Overdue · ${overdueDiff} ${overdueDiff === 1 ? 'Day' : 'Days'}`;
-                              isOverdue = true;
-                            } else if (diff === 0) {
-                              displayText = 'Due Today';
-                            } else if (diff < 0) {
-                              const overdueDays = Math.abs(diff);
-                              displayText = `Overdue  ${overdueDays} ${overdueDays === 1 ? 'Day' : 'Days'}`;
-                              isOverdue = true;
-                            } else {
-                              displayText = `Due in ${diff} ${diff === 1 ? 'Day' : 'Days'}`;
-                            }
-                          }
-                        }
-
-                        const isPaid = invoice.status === 'paid';
-                        const bgColor = isPaid ? 'rgba(34, 197, 94, 0.33)' : isOverdue ? 'rgba(239, 68, 68, 0.33)' : 'rgba(59, 163, 234, 0.33)';
-                        const borderColor = isPaid ? 'rgba(34, 197, 94, 1)' : isOverdue ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 163, 234, 1)';
-
-                        return (
-                          <span
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border transition-all"
-                            style={{ backgroundColor: bgColor, borderColor, color: '#ffffff' }}
-                          >
-                            {displayText}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => navigate(`/invoices/${invoice.id}`)}
-                          className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
+                    {/* Bottom: Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <button
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                        View Details
+                      </button>
+                      <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleDownloadPDF(invoice)}
                           disabled={generatingPDFId === invoice.id}
@@ -772,7 +763,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             <ArrowDownTrayIcon className="h-4 w-4" />
                           )}
                         </button>
-                        {isAdmin && (
+                        {isAdmin ? (
                           <>
                             <button
                               onClick={() => handleSendReminder(invoice)}
@@ -794,34 +785,22 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                               <TrashIcon className="h-4 w-4" />
                             </button>
                           </>
-                        )}
-                        {!isAdmin && (invoice.status === 'pending' || invoice.status === 'overdue') && (
+                        ) : (invoice.status === 'pending' || invoice.status === 'overdue') ? (
                           <button
                             onClick={() => handlePayInvoice(invoice)}
                             className="px-4 py-2 rounded-xl bg-[#3aa3eb] text-white text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(58,163,235,0.4)]"
                           >
                             Pay Now
                           </button>
-                        )}
+                        ) : null}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredInvoices.length === 0 && (
-              <div className="p-12 text-center">
-                <DocumentIcon className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-500">No invoices found</h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  {invoices.length === 0
-                    ? 'No invoices have been created yet. Click "New Invoice" to get started.'
-                    : 'Try adjusting your filters.'}
-                </p>
-              </div>
-            )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
 
       <InvoiceModal
