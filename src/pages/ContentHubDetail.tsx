@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Rss, Youtube, Linkedin, Facebook, FileText, Star,
-  MessageCircle, Bookmark, Clock, Eye, ExternalLink, Send, Trash2,
+  MessageCircle, Bookmark, Clock, Eye, ExternalLink, Send, Trash2, Twitter, Instagram,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import NativeVideoPlayer from '../components/NativeVideoPlayer';
@@ -10,7 +10,7 @@ import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
 
-type ContentSource = 'blog' | 'linkedin' | 'youtube' | 'facebook';
+type ContentSource = 'blog' | 'linkedin' | 'youtube' | 'facebook' | 'twitter' | 'instagram';
 
 interface HubItem {
   id: string;
@@ -47,6 +47,8 @@ interface Comment {
 
 const SOURCE_CONFIG: Record<ContentSource, { label: string; icon: typeof Rss; color: string; bg: string }> = {
   blog: { label: 'Blog', icon: FileText, color: 'text-emerald-300', bg: 'bg-emerald-500/20 border-emerald-500/40' },
+  twitter: { label: 'X / Twitter', icon: Twitter, color: 'text-gray-200', bg: 'bg-gray-500/20 border-gray-500/40' },
+  instagram: { label: 'Instagram', icon: Instagram, color: 'text-pink-300', bg: 'bg-pink-500/20 border-pink-500/40' },
   linkedin: { label: 'LinkedIn', icon: Linkedin, color: 'text-blue-300', bg: 'bg-blue-500/20 border-blue-500/40' },
   youtube: { label: 'YouTube', icon: Youtube, color: 'text-red-300', bg: 'bg-red-500/20 border-red-500/40' },
   facebook: { label: 'Facebook', icon: Facebook, color: 'text-sky-300', bg: 'bg-sky-500/20 border-sky-500/40' },

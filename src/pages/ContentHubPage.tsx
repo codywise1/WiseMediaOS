@@ -2,37 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Rss, Youtube, Linkedin, Facebook, FileText, Star, Eye, EyeOff,
-  RefreshCw, Clock, Play, MessageCircle, Bookmark, ArrowRight,
+  RefreshCw, Clock, Play, MessageCircle, Bookmark, ArrowRight, Plus, Pencil, Trash2, Settings,
+  Twitter, Instagram,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import ContentHubAdminModal, { HubItem, ContentSource } from '../components/ContentHubAdminModal';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
 
-type ContentSource = 'blog' | 'linkedin' | 'youtube' | 'facebook';
-
-interface HubItem {
-  id: string;
-  source: ContentSource;
-  external_id: string;
-  title: string;
-  description: string | null;
-  body: string | null;
-  author_name: string | null;
-  author_avatar: string | null;
-  cover_image_url: string | null;
-  category: string | null;
-  tags: string[];
-  media_urls: { type: string; url: string }[];
-  external_url: string | null;
-  published_at: string;
-  duration: string | null;
-  view_count: number;
-  like_count: number;
-  comment_count: number;
-  is_featured: boolean;
-  is_hidden: boolean;
-}
+type ContentSourceAll = ContentSource | 'all';
 
 interface ReactionData {
   counts: Record<string, number>;
@@ -41,6 +20,8 @@ interface ReactionData {
 
 const SOURCE_CONFIG: Record<ContentSource, { label: string; icon: typeof Rss; color: string; bg: string }> = {
   blog: { label: 'Blog', icon: FileText, color: 'text-emerald-300', bg: 'bg-emerald-500/20 border-emerald-500/40' },
+  twitter: { label: 'X / Twitter', icon: Twitter, color: 'text-gray-200', bg: 'bg-gray-500/20 border-gray-500/40' },
+  instagram: { label: 'Instagram', icon: Instagram, color: 'text-pink-300', bg: 'bg-pink-500/20 border-pink-500/40' },
   linkedin: { label: 'LinkedIn', icon: Linkedin, color: 'text-blue-300', bg: 'bg-blue-500/20 border-blue-500/40' },
   youtube: { label: 'YouTube', icon: Youtube, color: 'text-red-300', bg: 'bg-red-500/20 border-red-500/40' },
   facebook: { label: 'Facebook', icon: Facebook, color: 'text-sky-300', bg: 'bg-sky-500/20 border-sky-500/40' },
@@ -80,13 +61,15 @@ export default function ContentHubPage() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<HubItem[]>([]);
-  const [sourceFilter, setSourceFilter] = useState<ContentSource | 'all'>('all');
+  const [sourceFilter, setSourceFilter] = useState<ContentSourceAll>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [reactionData, setReactionData] = useState<Record<string, ReactionData>>({});
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   const [syncing, setSyncing] = useState(false);
-  const [openReactions, setOpenReactions] = useState<Set<string>>(new Set());
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<HubItem | null>(null);
+  const [adminMode, setAdminMode] = useState(false);
 
   const isAdmin = (profile?.role || '').toLowerCase() === 'admin';
 
@@ -106,7 +89,6 @@ export default function ContentHubPage() {
       const { data, error } = await supabase!
         .from('content_hub_items')
         .select('*')
-        .eq('is_hidden', false)
         .order('is_featured', { ascending: false })
         .order('published_at', { ascending: false })
         .limit(60);
@@ -227,7 +209,7 @@ export default function ContentHubPage() {
     setSyncing(true);
     try {
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-content-hub`;
-      await fetch(apiUrl, {
+      const resp = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
@@ -235,11 +217,30 @@ export default function ContentHubPage() {
         },
         body: JSON.stringify({ source: 'youtube', channelId: 'UC-_YourChannelId' }),
       });
+      if (!resp.ok) {
+        const errBody = await resp.text();
+        console.error('Sync failed:', resp.status, errBody);
+        alert('Sync failed. Check console for details.');
+      }
       await fetchItems();
     } catch (e) {
       console.error('Sync error:', e);
+      alert('Sync error: ' + (e as Error).message);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function deleteItem(itemId: string) {
+    if (!window.confirm('Delete this content item? This cannot be undone.')) return;
+    if (!isSupabaseAvailable()) return;
+    try {
+      const { error } = await supabase!.from('content_hub_items').delete().eq('id', itemId);
+      if (error) throw error;
+      fetchItems();
+    } catch (e) {
+      console.error('Delete error:', e);
+      alert('Failed to delete item');
     }
   }
 
@@ -251,7 +252,7 @@ export default function ContentHubPage() {
   }, [items, sourceFilter, showFeaturedOnly]);
 
   const sourceCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: items.length, blog: 0, linkedin: 0, youtube: 0, facebook: 0 };
+    const counts: Record<string, number> = { all: items.length, blog: 0, twitter: 0, instagram: 0, linkedin: 0, youtube: 0, facebook: 0 };
     for (const i of items) counts[i.source] = (counts[i.source] || 0) + 1;
     return counts;
   }, [items]);
@@ -260,16 +261,32 @@ export default function ContentHubPage() {
     <div className="space-y-6">
       <PageHeader
         title="Content Hub"
-        subtitle="All of Cody Wise & Wise Media's content — blog, LinkedIn, YouTube, and Facebook — in one native feed."
+        subtitle="All of Cody Wise & Wise Media's content — blog, X/Twitter, Instagram, YouTube, LinkedIn, and Facebook — in one native feed."
         action={isAdmin ? (
-          <button
-            onClick={syncYouTube}
-            disabled={syncing}
-            className="btn-header-glass space-x-2 w-full sm:w-auto"
-          >
-            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-            <span className="btn-text-glow">{syncing ? 'Syncing...' : 'Sync Sources'}</span>
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => { setEditingItem(null); setAdminModalOpen(true); }}
+              className="btn-header-glass space-x-2"
+            >
+              <Plus size={16} className="text-[#3AA3EB]" />
+              <span className="btn-text-glow">New Content</span>
+            </button>
+            <button
+              onClick={() => setAdminMode(!adminMode)}
+              className={`p-2.5 rounded-2xl border transition-all ${adminMode ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/40 text-[#3AA3EB]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+              title="Toggle admin edit mode"
+            >
+              <Settings size={16} />
+            </button>
+            <button
+              onClick={syncYouTube}
+              disabled={syncing}
+              className="p-2.5 rounded-2xl border bg-white/5 border-white/10 text-gray-400 hover:text-white disabled:opacity-50"
+              title="Sync YouTube"
+            >
+              <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+            </button>
+          </div>
         ) : undefined}
       />
 
@@ -340,11 +357,13 @@ export default function ContentHubPage() {
             const myReaction = reactionData[item.id]?.mine;
             const isBookmarked = bookmarks.has(item.id);
             const comments = commentCounts[item.id] || 0;
+            const visible = !item.is_hidden || adminMode;
+            if (!visible) return null;
 
             return (
               <div
                 key={item.id}
-                onClick={() => navigate(`/community/hub/${item.id}`)}
+                onClick={() => !adminMode && navigate(`/community/hub/${item.id}`)}
                 className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20 active:scale-[0.99]"
               >
                 {/* Cover media */}
@@ -364,12 +383,33 @@ export default function ContentHubPage() {
                   {/* Top badges */}
                   <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
                     <SourceBadge source={item.source} />
-                    {item.is_featured && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/80 backdrop-blur-md text-white uppercase tracking-wider">
-                        <Star size={10} className="fill-white text-white" /> Featured
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {item.is_hidden && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-rose-500/80 backdrop-blur-md text-white uppercase tracking-wider">
+                          <EyeOff size={10} /> Hidden
+                        </span>
+                      )}
+                      {item.is_featured && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/80 backdrop-blur-md text-white uppercase tracking-wider">
+                          <Star size={10} className="fill-white text-white" /> Featured
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Admin overlay controls */}
+                  {adminMode && isAdmin && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 z-10">
+                      <button onClick={(e) => { e.stopPropagation(); setEditingItem(item); setAdminModalOpen(true); }}
+                        className="p-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl transition-all">
+                        <Pencil size={18} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
+                        className="p-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl transition-all">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
 
                   {/* YouTube play overlay */}
                   {isYouTube && (
@@ -449,6 +489,13 @@ export default function ContentHubPage() {
           })}
         </div>
       )}
+
+      <ContentHubAdminModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        onSaved={fetchItems}
+        editingItem={editingItem}
+      />
     </div>
   );
 }
