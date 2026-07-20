@@ -269,6 +269,7 @@ export interface Invoice {
   id: string;
   client_id: string;
   proposal_id?: string;
+  project_id?: string | null;
   amount: number;
   description: string;
   status: 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';
@@ -281,6 +282,7 @@ export interface Invoice {
   created_at: string;
   updated_at: string;
   client?: Client;
+  project?: Project;
 }
 
 export type CreateInvoice = Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'client'>;
@@ -1089,7 +1091,8 @@ export const invoiceService = {
       .from('invoices')
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        project:projects(id, name)
       `)
       .order('created_at', { ascending: false });
 
@@ -1107,7 +1110,8 @@ export const invoiceService = {
       .from('invoices')
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        project:projects(id, name)
       `)
       .order('created_at', { ascending: false });
 
@@ -1125,7 +1129,8 @@ export const invoiceService = {
       .from('invoices')
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        project:projects(id, name)
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
@@ -1145,7 +1150,8 @@ export const invoiceService = {
       .insert([invoice])
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        project:projects(id, name)
       `)
       .single();
 
@@ -1161,7 +1167,8 @@ export const invoiceService = {
       .eq('id', id)
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        project:projects(id, name)
       `)
       .single();
 
