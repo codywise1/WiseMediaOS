@@ -70,6 +70,20 @@ body {
   border: 0.5px solid rgba(255, 255, 255, 0.1);
 }
 
+/* iOS-style content card — flush media + padded body */
+.ios-card {
+  background: rgba(28, 28, 30, 0.6);
+  backdrop-filter: var(--ios-blur);
+  -webkit-backdrop-filter: var(--ios-blur);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset, 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ios-ease), border-color 0.25s var(--ios-ease);
+}
+.ios-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.08) inset, 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
 /* iOS grouped list container */
 .ios-list {
   background: rgba(28, 28, 30, 0.6);

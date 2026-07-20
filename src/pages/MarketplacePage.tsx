@@ -239,130 +239,157 @@ export default function MarketplacePage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <GlassCard key={i}>
-              <div className="animate-pulse space-y-3">
-                <div className="h-40 bg-white/5 rounded-lg" />
-                <div className="h-4 bg-white/5 rounded w-3/4" />
-                <div className="h-6 bg-white/5 rounded w-1/2" />
+            <div key={i} className="ios-card rounded-3xl overflow-hidden border border-white/10">
+              <div className="animate-pulse space-y-3 p-4">
+                <div className="aspect-[4/3] bg-white/5 rounded-2xl" />
+                <div className="h-4 bg-white/5 rounded-full w-3/4" />
+                <div className="h-3 bg-white/5 rounded-full w-1/2" />
+                <div className="flex justify-between pt-2">
+                  <div className="h-6 bg-white/5 rounded-full w-16" />
+                  <div className="h-8 bg-white/5 rounded-xl w-20" />
+                </div>
               </div>
-            </GlassCard>
+            </div>
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
-        <GlassCard>
-          <p className="text-gray-400 text-center py-12" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+        <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
+          <Package className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+          <p className="text-gray-400 text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
             No products found in this category.
           </p>
-        </GlassCard>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredProducts.map((product) => {
             const CategoryIcon = getCategoryIcon(product.category);
             return (
-              <GlassCard
+              <div
                 key={product.id}
-                className="hover:scale-105 transition-transform cursor-pointer relative group"
                 onClick={() => handleProductClick(product.id)}
+                className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20 active:scale-[0.99]"
               >
-                {product.is_featured && (
-                  <div className="absolute top-4 right-4 px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold z-10">
-                    FEATURED
-                  </div>
-                )}
-                {product.is_hidden && isAdmin && (
-                  <div className="absolute top-4 right-4 px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold z-10">
-                    HIDDEN
-                  </div>
-                )}
-                {product.discount_enabled && product.old_price && (
-                  <div className="absolute top-4 left-4 px-2 py-1 bg-red-500 text-white rounded text-xs font-bold z-10">
-                    {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% OFF
-                  </div>
-                )}
-                <div className="space-y-3">
-                  <div className="h-40 bg-gradient-to-br from-[#3AA3EB]/20 to-purple-500/20 rounded-lg flex items-center justify-center overflow-hidden">
-                    {product.cover_image_url ? (
-                      <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
-                    ) : (
+                {/* Flush cover image */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  {product.cover_image_url ? (
+                    <img
+                      src={product.cover_image_url}
+                      alt={product.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#3AA3EB]/20 to-blue-600/10 flex items-center justify-center">
                       <CategoryIcon className="text-[#3AA3EB]" size={48} />
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-400 px-2 py-1 bg-white/5 rounded capitalize" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        {product.category}
+                    </div>
+                  )}
+
+                  {/* Badge pills — top row */}
+                  <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {product.is_featured && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/20 backdrop-blur-md border border-yellow-500/40 text-yellow-300 uppercase tracking-wider">
+                          <Star size={10} className="fill-yellow-400 text-yellow-400" /> Featured
+                        </span>
+                      )}
+                      {product.discount_enabled && product.old_price && (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/90 backdrop-blur-md text-white uppercase tracking-wider">
+                          {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% Off
+                        </span>
+                      )}
+                    </div>
+                    {product.is_hidden && isAdmin && (
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 backdrop-blur-md border border-red-500/40 text-red-300 uppercase tracking-wider">
+                        Hidden
                       </span>
-                      <div className="flex items-center gap-1">
-                        <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                        <span className="text-white text-sm font-semibold number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                          {product.rating.toFixed(1)}
-                        </span>
-                        <span className="text-gray-400 text-xs number" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                          ({product.reviews_count})
-                        </span>
-                      </div>
-                    </div>
-                    <h3 className="text-white font-bold text-lg mb-3 line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {product.title}
-                    </h3>
-                    {product.platform && (
-                      <p className="text-gray-400 text-xs mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                        Built for {product.platform}
-                      </p>
                     )}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-baseline gap-2">
-                        {product.discount_enabled && product.old_price && (
-                          <span className="text-gray-500 line-through text-sm number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                            ${product.old_price.toFixed(2)}
-                          </span>
-                        )}
-                        <span className="text-2xl font-bold text-white number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                          ${product.price.toFixed(2)}
-                        </span>
-                      </div>
-                      <button className="px-4 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-all font-medium shadow-lg shadow-[#3AA3EB]/20 hover:shadow-[#3AA3EB]/40 text-sm">
-                        View
-                      </button>
-                    </div>
                   </div>
                 </div>
 
+                {/* Padded content section */}
+                <div className="p-5 space-y-3">
+                  {/* Category + rating row */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/5 border border-white/10 text-gray-300 capitalize" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <CategoryIcon size={12} className="text-[#3AA3EB]" />
+                      {product.category}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Star className="text-yellow-400 fill-yellow-400" size={14} />
+                      <span className="text-white text-sm font-bold" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                        {product.rating.toFixed(1)}
+                      </span>
+                      <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        ({product.reviews_count})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    {product.title}
+                  </h3>
+
+                  {/* Platform */}
+                  {product.platform && (
+                    <p className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Built for {product.platform}
+                    </p>
+                  )}
+
+                  {/* Price + action */}
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div className="flex items-baseline gap-2">
+                      {product.discount_enabled && product.old_price && (
+                        <span className="text-gray-500 line-through text-sm" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                          ${product.old_price.toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                        {product.price === 0 ? 'Free' : `${product.price.toFixed(2)}`}
+                      </span>
+                    </div>
+                    <button className="px-4 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20">
+                      View
+                    </button>
+                  </div>
+                </div>
+
+                {/* Admin controls */}
                 {isAdmin && !product.id.startsWith('mock-') && (
                   <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                     <button
                       onClick={(e) => toggleFeatured(product, e)}
-                      className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${product.is_featured ? 'text-yellow-400 bg-yellow-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
+                      className={`p-2 rounded-full backdrop-blur-md transition-colors ${product.is_featured ? 'text-yellow-400 bg-yellow-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
                       title={product.is_featured ? 'Unfeature' : 'Feature'}
                     >
                       <Star size={14} />
                     </button>
                     <button
                       onClick={(e) => toggleHide(product, e)}
-                      className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${product.is_hidden ? 'text-red-400 bg-red-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
+                      className={`p-2 rounded-full backdrop-blur-md transition-colors ${product.is_hidden ? 'text-red-400 bg-red-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
                       title={product.is_hidden ? 'Unhide' : 'Hide'}
                     >
                       {product.is_hidden ? <Eye size={14} /> : <EyeOff size={14} />}
                     </button>
                     <button
                       onClick={(e) => openEditModal(product, e)}
-                      className="p-1.5 rounded-lg backdrop-blur-md text-gray-400 bg-black/60 hover:text-white transition-colors"
+                      className="p-2 rounded-full backdrop-blur-md text-gray-400 bg-black/60 hover:text-white transition-colors"
                       title="Edit"
                     >
                       <Edit2 size={14} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeleteTarget(product); }}
-                      className="p-1.5 rounded-lg backdrop-blur-md text-gray-400 bg-black/60 hover:text-red-400 transition-colors"
+                      className="p-2 rounded-full backdrop-blur-md text-gray-400 bg-black/60 hover:text-red-400 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
                 )}
-              </GlassCard>
+              </div>
             );
           })}
         </div>

@@ -201,83 +201,70 @@ export default function CoursesPage() {
         ) : undefined}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {courses.map((course, i) => (
-          <GlassCard key={course.id || i} className="group overflow-hidden">
-            <div className="space-y-4">
-              <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
-                <img
-                  src={course.thumbnail_url || '/src/media/course_agency_scaling.png'}
-                  alt={course.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider">
+          <div
+            key={course.id || i}
+            className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
+          >
+            {/* Flush thumbnail */}
+            <div className="relative aspect-video overflow-hidden">
+              <img
+                src={course.thumbnail_url || '/src/media/course_agency_scaling.png'}
+                alt={course.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {/* Badge pills */}
+              <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/60 backdrop-blur-md text-white uppercase tracking-wider">
                   {course.category}
+                </span>
+                <div className="flex flex-col gap-1.5 items-end">
+                  {course.is_featured && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/80 backdrop-blur-md text-white uppercase tracking-wider">
+                      <Star size={10} className="fill-white text-white" /> Featured
+                    </span>
+                  )}
+                  {isAdmin && course.status === 'draft' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-700/80 backdrop-blur-md text-white uppercase tracking-wider">
+                      <EyeOff size={10} /> Draft
+                    </span>
+                  )}
                 </div>
-                {course.is_featured && (
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500/80 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-1">
-                    <Star size={10} /> Featured
-                  </div>
-                )}
-                {isAdmin && course.status === 'draft' && (
-                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-gray-700/80 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-1">
-                    <EyeOff size={10} /> Draft
-                  </div>
-                )}
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h3 className="text-white font-bold text-lg leading-tight truncate" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {course.title}
-                  </h3>
-                  <div className="flex items-center gap-4 mt-2 text-gray-400 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Play size={14} className="text-[#3AA3EB]" />
-                      {course.lessons_count || 0} lessons
+              {/* Play button overlay */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                  <Play size={24} className="text-white ml-1" fill="white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Padded content */}
+            <div className="p-5 space-y-4">
+              {/* Title + meta */}
+              <div>
+                <h3 className="text-white font-bold text-base leading-snug line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {course.title}
+                </h3>
+                <div className="flex items-center gap-4 mt-2 text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div className="flex items-center gap-1.5">
+                    <Play size={12} className="text-[#3AA3EB]" />
+                    {course.lessons_count || 0} lessons
+                  </div>
+                  {course.duration && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-[#3AA3EB]" />
+                      {course.duration}
                     </div>
-                    {course.duration && (
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} className="text-[#3AA3EB]" />
-                        {course.duration}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      onClick={() => toggleFeatured(course)}
-                      className={`p-1.5 rounded-lg transition-colors ${course.is_featured ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
-                      title={course.is_featured ? 'Unfeature' : 'Feature'}
-                    >
-                      <Star size={16} />
-                    </button>
-                    <button
-                      onClick={() => togglePublish(course)}
-                      className={`p-1.5 rounded-lg transition-colors ${course.status === 'draft' ? 'text-gray-500 hover:text-white hover:bg-white/10' : 'text-green-400 bg-green-400/10'}`}
-                      title={course.status === 'draft' ? 'Publish' : 'Unpublish'}
-                    >
-                      {course.status === 'draft' ? <Eye size={16} /> : <EyeOff size={16} />}
-                    </button>
-                    <button
-                      onClick={() => openEditModal(course)}
-                      className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(course)}
-                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                )}
               </div>
 
+              {/* Progress */}
               <div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1.5" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   <span>Progress</span>
@@ -288,18 +275,53 @@ export default function CoursesPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => navigate(`/community/courses/${course.id}`)}
-                className={`w-full py-3 rounded-lg transition-all font-bold text-sm uppercase tracking-wider ${(course.progress || 0) === 0
-                  ? 'bg-[#3AA3EB] hover:bg-[#2a92da] text-white shadow-lg shadow-[#3AA3EB]/20'
-                  : 'bg-white/10 hover:bg-white/15 text-white'
-                  }`}
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
-              >
-                {(course.progress || 0) === 0 ? 'Start Course' : 'Continue Learning'}
-              </button>
+              {/* CTA + admin actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/community/courses/${course.id}`)}
+                  className={`flex-1 py-2.5 rounded-xl transition-all font-bold text-xs uppercase tracking-widest ${(course.progress || 0) === 0
+                    ? 'bg-[#3AA3EB] hover:bg-[#2a92da] text-white shadow-lg shadow-[#3AA3EB]/20'
+                    : 'bg-white/10 hover:bg-white/15 text-white'
+                    }`}
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
+                  {(course.progress || 0) === 0 ? 'Start Course' : 'Continue'}
+                </button>
+                {isAdmin && (
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => toggleFeatured(course)}
+                      className={`p-2 rounded-lg transition-colors ${course.is_featured ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                      title={course.is_featured ? 'Unfeature' : 'Feature'}
+                    >
+                      <Star size={16} />
+                    </button>
+                    <button
+                      onClick={() => togglePublish(course)}
+                      className={`p-2 rounded-lg transition-colors ${course.status === 'draft' ? 'text-gray-500 hover:text-white hover:bg-white/10' : 'text-green-400 bg-green-400/10'}`}
+                      title={course.status === 'draft' ? 'Publish' : 'Unpublish'}
+                    >
+                      {course.status === 'draft' ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </button>
+                    <button
+                      onClick={() => openEditModal(course)}
+                      className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(course)}
+                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </GlassCard>
+          </div>
         ))}
       </div>
 

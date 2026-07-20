@@ -1277,9 +1277,9 @@ export default function CommunityPage() {
       <PageHeader title="Messages" subtitle="Chat with your community and clients" />
 
       {/* Chat Content */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-5">
         <div className="lg:w-80 flex-shrink-0">
-          <GlassCard disableHover className="h-full flex flex-col">
+          <GlassCard disableHover className="h-full flex flex-col p-4">
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setView('channels')}
@@ -1493,7 +1493,7 @@ export default function CommunityPage() {
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
-          <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden">
+          <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-5">
             <div className="pb-4 border-b border-white/10">
               {view === 'channels' && selectedChannel ? (
                 <div className="flex items-center justify-between">
@@ -1575,7 +1575,7 @@ export default function CommunityPage() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-12 pb-4 px-1 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 pb-4 px-2 space-y-4 custom-scrollbar">
               {view === 'channels' && selectedChannel && messages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -1923,7 +1923,7 @@ export default function CommunityPage() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
-                        className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
+                        className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
                         style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
                         disabled={sending}
                       />
@@ -1932,7 +1932,7 @@ export default function CommunityPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="p-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-all border border-white/10"
+                      className="p-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-2xl transition-all border border-white/10"
                       title="Upload file"
                     >
                       <Upload size={20} />
@@ -1947,7 +1947,7 @@ export default function CommunityPage() {
                     <button
                       type="submit"
                       disabled={sending || (!newMessage.trim() && composerAttachments.length === 0)}
-                      className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-lg transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
+                      className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-2xl transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
                       style={{ fontFamily: 'Montserrat, sans-serif' }}
                     >
                       <Send size={20} />
@@ -1961,14 +1961,14 @@ export default function CommunityPage() {
                       value={composerAttachmentUrl}
                       onChange={(e) => setComposerAttachmentUrl(e.target.value)}
                       placeholder="Paste Link/Video URL..."
-                      className="flex-1 px-3 py-1.5 bg-black/20 border border-white/5 rounded text-xs text-gray-400 focus:border-[#59a1e5] focus:outline-none transition-all"
+                      className="flex-1 px-3 py-2 bg-black/20 border border-white/5 rounded-xl text-xs text-gray-400 focus:border-[#59a1e5] focus:outline-none transition-all"
                       style={{ fontFamily: 'Montserrat, sans-serif' }}
                     />
                     <button
                       type="button"
                       onClick={addAttachment}
                       disabled={!composerAttachmentUrl.trim()}
-                      className="p-1 text-gray-500 hover:text-[#59a1e5] transition-colors"
+                      className="p-2 text-gray-500 hover:text-[#59a1e5] transition-colors"
                     >
                       <Plus size={16} />
                     </button>
