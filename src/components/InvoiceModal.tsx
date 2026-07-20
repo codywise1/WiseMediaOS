@@ -21,6 +21,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     client_name: '',
     amount: '',
     dueDate: '',
+    issuedDate: '',
+    paidDate: '',
     status: 'draft',
     description: ''
   });
@@ -47,6 +49,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         client_name: invoice.client?.name || invoice.client?.company || '',
         amount: invoice.amount.toString(),
         dueDate: invoice.due_date ? formatToISODate(invoice.due_date) : '',
+        issuedDate: invoice.issued_at ? formatToISODate(invoice.issued_at) : '',
+        paidDate: invoice.paid_at ? formatToISODate(invoice.paid_at) : '',
         status: invoice.status,
         description: invoice.description
       });
@@ -56,6 +60,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         client_name: '',
         amount: '',
         dueDate: '',
+        issuedDate: '',
+        paidDate: '',
         status: 'draft',
         description: ''
       });
@@ -73,6 +79,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
       amount: parseInt(formData.amount),
       description: formData.description,
       due_date: formData.dueDate,
+      issued_at: formData.issuedDate || null,
+      paid_at: formData.status === 'paid' ? (formData.paidDate || new Date().toISOString()) : (formData.paidDate || null),
       status: formData.status as 'draft' | 'pending' | 'paid' | 'overdue'
     };
     onSave(invoiceData);
@@ -135,6 +143,20 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Date Issued</label>
+            <DatePicker
+              selected={formData.issuedDate ? new Date(formData.issuedDate + 'T00:00:00') : null}
+              onChange={(date: Date | null) => {
+                const iso = date ? formatToISODate(date) : '';
+                setFormData(prev => ({ ...prev, issuedDate: iso }));
+              }}
+              dateFormat="MMM. dd, yyyy"
+              placeholderText="Dec. 10, 2025"
+              className="form-input w-full px-4 py-3 rounded-lg"
+              isClearable
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
             <DatePicker
               selected={formData.dueDate ? new Date(formData.dueDate + 'T00:00:00') : null}
@@ -148,6 +170,28 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
               required
             />
           </div>
+        </div>
+
+        {formData.status === 'paid' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Date Paid</label>
+              <DatePicker
+                selected={formData.paidDate ? new Date(formData.paidDate + 'T00:00:00') : null}
+                onChange={(date: Date | null) => {
+                  const iso = date ? formatToISODate(date) : '';
+                  setFormData(prev => ({ ...prev, paidDate: iso }));
+                }}
+                dateFormat="MMM. dd, yyyy"
+                placeholderText="Dec. 10, 2025"
+                className="form-input w-full px-4 py-3 rounded-lg"
+                isClearable
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
             <select

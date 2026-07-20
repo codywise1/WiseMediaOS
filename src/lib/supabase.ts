@@ -273,6 +273,8 @@ export interface Invoice {
   description: string;
   status: 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';
   due_date: string;
+  issued_at?: string | null;
+  paid_at?: string | null;
   due_at?: string; // Some parts of the app use due_at
   locked_from_send?: boolean;
   activation_source?: string | null;

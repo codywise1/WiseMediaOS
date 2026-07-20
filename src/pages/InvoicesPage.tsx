@@ -13,6 +13,8 @@ interface Invoice {
   amount: number;
   status: string;
   due_date: string;
+  issued_at?: string | null;
+  paid_at?: string | null;
   created_at: string;
   admin_id: string | null;
   client_id: string | null;
@@ -23,7 +25,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ amount: '', due_date: '', status: 'pending' });
+  const [formData, setFormData] = useState({ amount: '', due_date: '', issued_date: '', status: 'pending' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -75,13 +77,14 @@ export default function InvoicesPage() {
       const { error } = await supabase.from('invoices').insert({
         amount: parseFloat(formData.amount),
         due_date: formData.due_date,
+        issued_at: formData.issued_date || null,
         status: formData.status,
         admin_id: profile.id,
       });
 
       if (!error) {
         setShowModal(false);
-        setFormData({ amount: '', due_date: '', status: 'pending' });
+        setFormData({ amount: '', due_date: '', issued_date: '', status: 'pending' });
         fetchInvoices();
       }
     } catch (error) {
@@ -175,9 +178,19 @@ export default function InvoicesPage() {
                     </div>
                     <div>
                       <h3 className="text-white font-bold text-lg number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>${invoice.amount.toFixed(2)}</h3>
-                      <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                        Due: {formatAppDate(invoice.due_date)}
-                      </p>
+                      <div className="flex flex-col gap-1 mt-1">
+                        <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                          <span className="text-gray-500">Issued:</span> {invoice.issued_at ? formatAppDate(invoice.issued_at) : 'Not issued yet'}
+                        </p>
+                        <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                          <span className="text-gray-500">Due:</span> {formatAppDate(invoice.due_date)}
+                        </p>
+                        {invoice.status === 'paid' && invoice.paid_at && (
+                          <p className="text-green-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                            <span className="text-green-500/70">Paid:</span> {formatAppDate(invoice.paid_at)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -215,6 +228,20 @@ export default function InvoicesPage() {
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>\$</span>
                       <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }} placeholder="0.00" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Date Issued</label>
+                    <DatePicker
+                      selected={formData.issued_date ? new Date(formData.issued_date + 'T00:00:00') : null}
+                      onChange={(date: Date | null) => {
+                        const iso = date ? formatToISODate(date) : '';
+                        setFormData({ ...formData, issued_date: iso });
+                      }}
+                      dateFormat="MMM. dd, yyyy"
+                      placeholderText="Dec. 10, 2025"
+                      isClearable
+                      className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none font-['Montserrat'] text-base"
+                    />
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Due Date</label>

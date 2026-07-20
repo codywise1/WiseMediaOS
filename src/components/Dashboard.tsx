@@ -233,7 +233,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           const previousMonthRevenue = previousMonthInvoices.reduce((sum, inv) => sum + inv.amount, 0);
 
           setDashboardData({
-            projects: projects.length,
+            projects: projects.filter(p => p.status === 'in_progress' || p.status === 'in_review').length,
             invoices: invoices.length,
             appointments: meetings.length,
             supportTickets: 0,
@@ -263,7 +263,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0);
 
           setDashboardData({
-            projects: projects.length,
+            projects: projects.filter(p => p.status === 'in_progress' || p.status === 'in_review').length,
             invoices: invoices.length,
             appointments: appointments.length,
             supportTickets: 0,

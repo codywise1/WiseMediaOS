@@ -209,6 +209,16 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           <div className="bg-slate-800/30 rounded-xl p-4">
             <div className="flex items-center space-x-2 mb-2">
               <CalendarIcon className="h-4 w-4 text-[#3aa3eb]" />
+              <span className="text-xs text-gray-400">Date Issued</span>
+            </div>
+            <p className="text-lg font-medium text-white">
+              {invoice.issued_at ? formatAppDate(invoice.issued_at) : 'Not issued yet'}
+            </p>
+          </div>
+
+          <div className="bg-slate-800/30 rounded-xl p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <CalendarIcon className="h-4 w-4 text-[#3aa3eb]" />
               <span className="text-xs text-gray-400">Due Date</span>
             </div>
             <p className="text-lg font-medium text-white">
@@ -223,7 +233,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             </div>
             {invoice.status === 'paid' ? (
               <p className="text-lg font-medium text-green-400">
-                {formatAppDate(invoice.updated_at || invoice.created_at)}
+                {invoice.paid_at ? formatAppDate(invoice.paid_at) : formatAppDate(invoice.updated_at || invoice.created_at)}
               </p>
             ) : (
               <p className={`text-lg font-bold ${daysUntilDue < 0 ? 'text-red-400' :
@@ -320,12 +330,12 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Created</p>
-                  <p className="text-white">{formatAppDate(invoice.created_at)}</p>
+                  <p className="text-xs text-gray-400 mb-1">Date Issued</p>
+                  <p className="text-white">{invoice.issued_at ? formatAppDate(invoice.issued_at) : 'Not issued yet'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Last Updated</p>
-                  <p className="text-white">{formatAppDate(invoice.updated_at)}</p>
+                  <p className="text-xs text-gray-400 mb-1">Created</p>
+                  <p className="text-white">{formatAppDate(invoice.created_at)}</p>
                 </div>
               </div>
             </div>
