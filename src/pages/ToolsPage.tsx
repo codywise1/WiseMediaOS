@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import GlassCard from '../components/GlassCard';
-import { Palette, FileImage, Layout, Type, FileText, Copy, Check } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Palette, FileImage, LayoutGrid as Layout, Type, FileText, Copy, Check } from 'lucide-react';
 
 export default function ToolsPage() {
   const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -92,9 +93,7 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Creator Tools
-      </h1>
+      <PageHeader title="Creator Tools" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tools.map((tool) => (

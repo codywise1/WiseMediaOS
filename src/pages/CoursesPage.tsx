@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { Play, Clock, Plus, X } from 'lucide-react';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -103,29 +104,20 @@ export default function CoursesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header Section */}
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-4xl font-bold gradient-text text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Education
-            </h1>
-            <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Premium courses, playbooks, and internal knowledge to scale your creative business.
-            </p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              <Plus size={18} />
-              Create Course
-            </button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title="Education"
+        subtitle="Premium courses, playbooks, and internal knowledge to scale your creative business."
+        action={isAdmin ? (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <Plus size={18} />
+            Create Course
+          </button>
+        ) : undefined}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {courses.map((course, i) => (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
-import { Star, Package, Zap, Users, Shield, FileText, Layout, Grid } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
@@ -155,20 +156,13 @@ export default function MarketplacePage() {
 
   return (
     <div className="space-y-8">
-      {/* Header Section */}
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-4xl font-bold gradient-text text-[40px]" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Marketplace
-            </h1>
-            <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Premium tools, templates, and resources to accelerate your growth.
-            </p>
-          </div>
-        </div>
+      <PageHeader
+        title="Marketplace"
+        subtitle="Premium tools, templates, and resources to accelerate your growth."
+      />
 
-        <div className="flex flex-wrap gap-2 mt-6">
+      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <button
               key={cat.id}

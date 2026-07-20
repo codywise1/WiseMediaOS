@@ -1,18 +1,8 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { formatAppDate } from '../lib/dateFormat';
-import {
-  Users,
-  ShoppingBag,
-  MessageSquare,
-  BookOpen,
-  Shield,
-  Trash2,
-  Edit,
-  Plus,
-  X,
-  Save,
-} from 'lucide-react';
+import { Users, ShoppingBag, MessageSquare, BookOpen, Shield, Trash2, CreditCard as Edit, Plus, X, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -134,27 +124,23 @@ export default function AdminBackendPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Creator Club Backend
-          </h1>
-          <p className="text-gray-400 mt-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-            Manage users, products, channels, and courses
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setEditingItem({});
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg"
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-        >
-          <Plus size={20} />
-          Add New
-        </button>
-      </div>
+      <PageHeader
+        title="Creator Club Backend"
+        subtitle="Manage users, products, channels, and courses"
+        action={
+          <button
+            onClick={() => {
+              setEditingItem({});
+              setShowModal(true);
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <Plus size={20} />
+            Add New
+          </button>
+        }
+      />
 
       <div className="flex gap-2 overflow-x-auto pb-2">
         {tabs.map((tab) => {

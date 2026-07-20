@@ -1,5 +1,6 @@
 import React from 'react';
 import { DocumentTextIcon, CreditCardIcon, TruckIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import PageHeader from '../components/PageHeader';
 
 const orders = [
   { id: 'ORD-1024', client: 'Acme Corp', total: '$4,200', status: 'Processing', date: '2025-05-04', method: 'Stripe' },
@@ -18,23 +19,16 @@ const statusStyles: Record<string, string> = {
 export default function Orders() {
   return (
     <div className="p-6 space-y-6">
-      <div className="glass-card rounded-2xl p-6 border border-white/10">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-[#8AB5EB] font-medium">Sales</p>
-            <h1 className="text-2xl font-bold text-white mt-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-              Orders & Payments
-            </h1>
-            <p className="text-gray-400 mt-2 max-w-2xl">
-              Track order status, confirm payments, and review the payment method used by each client.
-            </p>
-          </div>
+      <PageHeader
+        title="Orders & Payments"
+        subtitle="Track order status, confirm payments, and review the payment method used by each client."
+        action={
           <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">
             <CheckBadgeIcon className="h-5 w-5 text-emerald-300" />
             <span className="text-sm">Secure payments</span>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="glass-card rounded-2xl p-4 border border-white/10">

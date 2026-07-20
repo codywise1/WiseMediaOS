@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
@@ -1251,6 +1252,7 @@ export default function CommunityPage() {
 
   return (
     <div className="h-full overflow-hidden flex flex-col gap-6 chat-no-hover">
+      <PageHeader title="Messages" subtitle="Chat with your community and clients" />
 
       {/* Chat Content */}
       <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-6">

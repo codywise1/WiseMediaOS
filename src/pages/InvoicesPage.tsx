@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
+import PageHeader from '../components/PageHeader';
 import { formatAppDate, formatToISODate } from '../lib/dateFormat';
 import { FileText, Plus, X, DollarSign, Calendar, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -107,15 +108,15 @@ export default function InvoicesPage() {
   return (
     <>
       <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-white font-bold text-[40px]" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Invoices
-          </h1>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40">
-            <Plus size={20} />
-            New Invoice
-          </button>
-        </div>
+        <PageHeader
+          title="Invoices"
+          action={
+            <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40">
+              <Plus size={20} />
+              New Invoice
+            </button>
+          }
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <GlassCard className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
