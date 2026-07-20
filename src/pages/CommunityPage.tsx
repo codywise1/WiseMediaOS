@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import PageHeader from '../components/PageHeader';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus, Lock, Unlock, Archive, ArchiveRestore } from 'lucide-react';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus, Lock, Unlock, Archive, ArchiveRestore, Mail } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDateTime } from '../lib/dateFormat';
 import { renderMessageBody } from '../lib/messageEmbeds';
+import EmailInbox from '../components/EmailInbox';
 
 interface Channel {
   id: string;
@@ -105,7 +106,7 @@ export default function CommunityPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [view, setView] = useState<'channels' | 'private'>('channels');
+  const [view, setView] = useState<'channels' | 'private' | 'email'>('channels');
   const [clients, setClients] = useState<Client[]>([]);
   const [privateConversations, setPrivateConversations] = useState<PrivateConversation[]>([]);
   const [selectedUser, setSelectedUser] = useState<PrivateConversation | null>(null);
@@ -1304,10 +1305,31 @@ export default function CommunityPage() {
                 <MessageSquare className="inline mr-2" size={16} />
                 Direct
               </button>
+              <button
+                onClick={() => setView('email')}
+                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'email'
+                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                  }`}
+                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+              >
+                <Mail className="inline mr-2" size={16} />
+                Email
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
-              {view === 'channels' ? (
+              {view === 'email' ? (
+                <div className="py-8 text-center">
+                  <Mail size={28} className="text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    info@wisemedia.io
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    Select the Email tab to view your inbox
+                  </p>
+                </div>
+              ) : view === 'channels' ? (
                 <>
                   {isAdmin && (
                     <button
@@ -1494,6 +1516,11 @@ export default function CommunityPage() {
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
+          {view === 'email' ? (
+            <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-2 sm:p-3">
+              <EmailInbox />
+            </GlassCard>
+          ) : (
           <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-5">
             <div className="pb-4 border-b border-white/10">
               {view === 'channels' && selectedChannel ? (
@@ -1979,6 +2006,7 @@ export default function CommunityPage() {
               </div>
             )}
           </GlassCard>
+          )}
         </div>
       </div>
 

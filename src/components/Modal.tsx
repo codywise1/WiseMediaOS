@@ -9,9 +9,10 @@ interface ModalProps {
   maxWidth?: string;
   sheetOnMobile?: boolean;
   footer?: React.ReactNode;
+  hideHeader?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl', sheetOnMobile = true, footer }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl', sheetOnMobile = true, footer, hideHeader = false }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const startY = useRef<number | null>(null);
 
@@ -64,7 +65,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
             onTouchEnd={onTouchEnd}
           >
             <div className="ios-grabber" />
-            {(title || true) && (
+            {!hideHeader && (
               <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-white/10">
                 <h3 className="text-lg font-bold text-white title-font">{title || ''}</h3>
                 <button onClick={onClose} className="ios-close-btn" aria-label="Close">
@@ -72,7 +73,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
                 </button>
               </div>
             )}
-            <div className="px-5 py-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className={hideHeader ? '' : 'px-5 py-5 custom-scrollbar'} style={hideHeader ? undefined : { maxHeight: '80vh', overflowY: 'auto' }}>
               {children}
             </div>
             {footer && <div className="px-5 py-4 border-t border-white/10">{footer}</div>}
@@ -81,13 +82,15 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
           <div
             className={`relative w-full ${maxWidth} ios-modal-panel z-10 my-8 animate-in ios-modal-enter`}
           >
-            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
-              <h3 className="text-xl font-bold text-white title-font">{title || ''}</h3>
-              <button onClick={onClose} className="ios-close-btn" aria-label="Close">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            {!hideHeader && (
+              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
+                <h3 className="text-xl font-bold text-white title-font">{title || ''}</h3>
+                <button onClick={onClose} className="ios-close-btn" aria-label="Close">
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+            <div className={hideHeader ? '' : 'p-6 custom-scrollbar'} style={hideHeader ? undefined : { maxHeight: '80vh', overflowY: 'auto' }}>
               {children}
             </div>
             {footer && <div className="px-6 py-4 border-t border-white/10">{footer}</div>}
