@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
+import { renderMessageBody } from '../lib/messageEmbeds';
 
 type FeedTag = 'General' | 'Design' | 'Dev' | 'Branding' | 'Wins' | 'Questions';
 type Visibility = 'all' | 'pro';
@@ -796,9 +797,9 @@ export default function CommunityFeedPage() {
                     </h2>
                   )}
 
-                  <p className="text-gray-200 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-                    {postBody}
-                  </p>
+                  <div className="text-gray-200 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    {renderMessageBody(postBody, { maxEmbedWidth: 'max-w-md' })}
+                  </div>
 
                   {attachments.length > 0 && (
                     <div className="space-y-3">
@@ -959,9 +960,9 @@ export default function CommunityFeedPage() {
                                     {formatAppDateTime(comment.created_at)}
                                   </span>
                                 </div>
-                                <p className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                  {comment.body}
-                                </p>
+                                <div className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                  {renderMessageBody(comment.body, { maxEmbedWidth: 'max-w-sm' })}
+                                </div>
                               </div>
 
                               {(isAdmin || comment.user_id === profile?.id) && (

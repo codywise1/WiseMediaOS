@@ -8,6 +8,7 @@ import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, C
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDateTime } from '../lib/dateFormat';
+import { renderMessageBody } from '../lib/messageEmbeds';
 
 interface Channel {
   id: string;
@@ -1643,9 +1644,9 @@ export default function CommunityPage() {
                             ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
                             : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
                             }`}>
-                            <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                              {msg.message}
-                            </p>
+                            <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              {renderMessageBody(msg.message)}
+                            </div>
                             {renderMessageAttachments(msg.attachments)}
                           </div>
                         )}
@@ -1788,9 +1789,9 @@ export default function CommunityPage() {
                               ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
                               : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
                               }`}>
-                              <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                                {msg.message}
-                              </p>
+                              <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                {renderMessageBody(msg.message)}
+                              </div>
                               {renderMessageAttachments(msg.attachments)}
                             </div>
                           )}

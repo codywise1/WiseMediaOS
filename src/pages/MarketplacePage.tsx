@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import GlassCard from '../components/GlassCard';
+import { useState, useEffect, useRef } from 'react';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, CreditCard as Edit2, Trash2, EyeOff, Eye } from 'lucide-react';
+import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, CreditCard as Edit2, Trash2, EyeOff, Eye, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,6 +35,8 @@ export default function MarketplacePage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -53,6 +54,16 @@ export default function MarketplacePage() {
     fetchProducts();
     if (profile) setIsAdmin(profile.role === 'admin');
   }, [profile]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   async function fetchProducts() {
     try {
@@ -86,6 +97,7 @@ export default function MarketplacePage() {
 
   async function openEditModal(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
+    setMenuOpenId(null);
     setEditingProduct(product);
     setForm({
       title: product.title,
@@ -165,6 +177,7 @@ export default function MarketplacePage() {
 
   async function toggleFeatured(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
+    setMenuOpenId(null);
     if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
     try {
       const { error } = await supabase!.from('marketplace_products')
@@ -176,6 +189,7 @@ export default function MarketplacePage() {
 
   async function toggleHide(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
+    setMenuOpenId(null);
     if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
     try {
       const { error } = await supabase!.from('marketplace_products')
@@ -202,7 +216,7 @@ export default function MarketplacePage() {
   };
 
   const categories = [
-    { id: 'all', label: 'All Products' },
+    { id: 'all', label: 'All' },
     { id: 'templates', label: 'Templates' },
     { id: 'toolkits', label: 'Toolkits' },
     { id: 'graphics', label: 'Graphics' },
@@ -215,15 +229,14 @@ export default function MarketplacePage() {
     : products.filter(p => p.category === selectedCategory && (!p.is_hidden || isAdmin));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Marketplace"
         subtitle="Premium tools, templates, and resources to accelerate your growth."
         action={isAdmin ? (
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            className="btn-wise"
           >
             <Plus size={18} />
             Add Product
@@ -231,46 +244,41 @@ export default function MarketplacePage() {
         ) : undefined}
       />
 
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${selectedCategory === cat.id
-                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white shadow-[0_0_15px_rgba(58,163,235,0.2)]'
-                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
-                }`}
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+      {/* iOS-style segmented filter */}
+      <div className="ios-segmented w-full overflow-x-auto">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`ios-segmented-btn flex-1 ${selectedCategory === cat.id ? 'active' : ''}`}
+          >
+            {cat.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="ios-card rounded-3xl overflow-hidden border border-white/10">
-              <div className="animate-pulse space-y-3 p-4">
-                <div className="aspect-[4/3] bg-white/5 rounded-2xl" />
-                <div className="h-4 bg-white/5 rounded-full w-3/4" />
-                <div className="h-3 bg-white/5 rounded-full w-1/2" />
-                <div className="flex justify-between pt-2">
-                  <div className="h-6 bg-white/5 rounded-full w-16" />
-                  <div className="h-8 bg-white/5 rounded-xl w-20" />
+            <div key={i} className="ios-card rounded-2xl overflow-hidden border border-white/10">
+              <div className="animate-pulse">
+                <div className="aspect-[4/3] bg-white/5" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-white/5 rounded-full w-3/4" />
+                  <div className="h-3 bg-white/5 rounded-full w-1/2" />
+                  <div className="flex justify-between pt-2">
+                    <div className="h-6 bg-white/5 rounded-full w-16" />
+                    <div className="h-8 bg-white/5 rounded-xl w-20" />
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
+        <div className="ios-card rounded-2xl p-12 text-center border border-white/10">
           <Package className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-          <p className="text-gray-400 text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
-            No products found in this category.
-          </p>
+          <p className="text-gray-400 font-body">No products found in this category.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -280,7 +288,7 @@ export default function MarketplacePage() {
               <div
                 key={product.id}
                 onClick={() => handleProductClick(product.id)}
-                className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20 active:scale-[0.99]"
+                className="ios-card group relative rounded-2xl border border-white/10 overflow-hidden cursor-pointer active:scale-[0.99]"
               >
                 {/* Flush cover image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
@@ -319,85 +327,95 @@ export default function MarketplacePage() {
                 </div>
 
                 {/* Padded content section */}
-                <div className="p-5 space-y-3">
+                <div className="p-4 space-y-2.5">
                   {/* Category + rating row */}
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/5 border border-white/10 text-gray-300 capitalize" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/5 border border-white/10 text-gray-300 capitalize font-body">
                       <CategoryIcon size={12} className="text-[#3AA3EB]" />
                       {product.category}
                     </span>
                     <div className="flex items-center gap-1">
                       <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                      <span className="text-white text-sm font-bold" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                      <span className="text-white text-sm font-bold font-body">
                         {product.rating.toFixed(1)}
                       </span>
-                      <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <span className="text-gray-500 text-xs font-body">
                         ({product.reviews_count})
                       </span>
                     </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2 font-body">
                     {product.title}
                   </h3>
 
                   {/* Platform */}
                   {product.platform && (
-                    <p className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <p className="text-gray-400 text-xs font-body">
                       Built for {product.platform}
                     </p>
                   )}
 
                   {/* Price + action */}
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
                     <div className="flex items-baseline gap-2">
                       {product.discount_enabled && product.old_price && (
-                        <span className="text-gray-500 line-through text-sm" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
+                        <span className="text-gray-500 line-through text-sm font-body">
                           ${product.old_price.toFixed(2)}
                         </span>
                       )}
-                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
-                        {product.price === 0 ? 'Free' : `${product.price.toFixed(2)}`}
+                      <span className="text-2xl font-black text-white tracking-tight font-body">
+                        {product.price === 0 ? 'Free' : `$${product.price.toFixed(2)}`}
                       </span>
                     </div>
-                    <button className="px-4 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20">
+                    <span className="px-4 py-2 bg-[#3AA3EB] text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20">
                       View
-                    </button>
+                    </span>
                   </div>
                 </div>
 
-                {/* Admin controls */}
+                {/* Admin overflow menu */}
                 {isAdmin && !product.id.startsWith('mock-') && (
-                  <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                    <button
-                      onClick={(e) => toggleFeatured(product, e)}
-                      className={`p-2 rounded-full backdrop-blur-md transition-colors ${product.is_featured ? 'text-yellow-400 bg-yellow-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
-                      title={product.is_featured ? 'Unfeature' : 'Feature'}
-                    >
-                      <Star size={14} />
-                    </button>
-                    <button
-                      onClick={(e) => toggleHide(product, e)}
-                      className={`p-2 rounded-full backdrop-blur-md transition-colors ${product.is_hidden ? 'text-red-400 bg-red-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
-                      title={product.is_hidden ? 'Unhide' : 'Hide'}
-                    >
-                      {product.is_hidden ? <Eye size={14} /> : <EyeOff size={14} />}
-                    </button>
-                    <button
-                      onClick={(e) => openEditModal(product, e)}
-                      className="p-2 rounded-full backdrop-blur-md text-gray-400 bg-black/60 hover:text-white transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(product); }}
-                      className="p-2 rounded-full backdrop-blur-md text-gray-400 bg-black/60 hover:text-red-400 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="absolute top-3 right-3" ref={menuOpenId === product.id ? menuRef : null}>
+                    {menuOpenId === product.id ? (
+                      <div className="ios-card rounded-xl border border-white/15 overflow-hidden py-1 min-w-[160px] shadow-2xl">
+                        <button
+                          onClick={(e) => toggleFeatured(product, e)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
+                        >
+                          <Star size={13} className={product.is_featured ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
+                          {product.is_featured ? 'Unfeature' : 'Feature'}
+                        </button>
+                        <button
+                          onClick={(e) => toggleHide(product, e)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
+                        >
+                          {product.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                          {product.is_hidden ? 'Unhide' : 'Hide'}
+                        </button>
+                        <button
+                          onClick={(e) => openEditModal(product, e)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
+                        >
+                          <Edit2 size={13} /> Edit
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setDeleteTarget(product); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-red-400 hover:bg-red-500/10 font-body"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(product.id); }}
+                        className="p-2 rounded-full bg-black/50 backdrop-blur-md text-gray-300 hover:text-white hover:bg-black/70 transition-colors"
+                        title="More"
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -410,41 +428,41 @@ export default function MarketplacePage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <GlassCard className="relative w-full max-w-lg bg-slate-900 border-white/10 p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
-              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <div className="relative w-full max-w-lg bg-[#1c1c1e] border border-white/10 rounded-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1c1c1e] z-10">
+              <h2 className="text-white font-bold text-lg font-display uppercase tracking-wider">
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white">
-                <X size={24} />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors">
+                <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Title</label>
+            <form onSubmit={handleSaveProduct} className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Title</label>
                 <input required type="text" value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                   placeholder="Product title" />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Price ($)</label>
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Price ($)</label>
                   <input required type="number" step="0.01" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                     placeholder="49.99" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Old Price ($)</label>
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Old Price ($)</label>
                   <input type="number" step="0.01" value={form.old_price} onChange={e => setForm(prev => ({ ...prev, old_price: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                     placeholder="99.99" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Category</label>
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Category</label>
                   <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all">
+                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] outline-none transition-all font-body">
                     <option value="templates">Templates</option>
                     <option value="toolkits">Toolkits</option>
                     <option value="graphics">Graphics</option>
@@ -452,23 +470,23 @@ export default function MarketplacePage() {
                     <option value="docs">Documents</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Platform</label>
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Platform</label>
                   <input type="text" value={form.platform} onChange={e => setForm(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                     placeholder="Notion, Figma, etc." />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Cover Image URL</label>
+              <div className="space-y-1.5">
+                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Cover Image URL</label>
                 <input type="url" value={form.cover_image_url} onChange={e => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                   placeholder="https://..." />
               </div>
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Description</label>
+              <div className="space-y-1.5">
+                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Description</label>
                 <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all h-24"
+                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all h-24 resize-none font-body"
                   placeholder="What is this product?" />
               </div>
               <DownloadUploader
@@ -477,29 +495,29 @@ export default function MarketplacePage() {
                 label="Downloadable Files"
                 hint="Upload files buyers can download after purchase, or paste an external URL (e.g. another creator's product on Gumroad)."
               />
-              <div className="space-y-2">
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Affiliate / External Buy Link (optional)</label>
+              <div className="space-y-1.5">
+                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Affiliate / External Buy Link (optional)</label>
                 <input type="url" value={form.affiliate_link} onChange={e => setForm(prev => ({ ...prev, affiliate_link: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
                   placeholder="https://partner.com/buy" />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.discount_enabled} onChange={e => setForm(prev => ({ ...prev, discount_enabled: e.target.checked }))}
                   className="w-4 h-4 rounded accent-[#3AA3EB]" />
-                <span className="text-sm text-gray-300">Enable discount (old price shown with strikethrough)</span>
+                <span className="text-sm text-gray-300 font-body">Enable discount (old price shown with strikethrough)</span>
               </label>
-              <div className="pt-4 flex gap-3">
+              <div className="pt-3 flex gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs">
+                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-medium transition-all font-body">
                   Cancel
                 </button>
                 <button type="submit" disabled={isSaving}
-                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#3AA3EB]/20 uppercase tracking-widest text-xs disabled:opacity-50">
+                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all shadow-lg shadow-[#3AA3EB]/20 disabled:opacity-50 font-body">
                   {isSaving ? 'Saving...' : editingProduct ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
-          </GlassCard>
+          </div>
         </div>
       )}
 
