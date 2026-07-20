@@ -14,6 +14,14 @@ import {
   RefreshCw,
   Globe,
   ExternalLink,
+  Smartphone,
+  Monitor,
+  Tablet,
+  MapPin,
+  Link2,
+  FileText,
+  ArrowRightLeft,
+  Zap,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -27,14 +35,30 @@ interface GAData {
     pageviewsPct: number;
     sessions: number;
     sessionsPct: number;
+    bounceRate: number;
+    bounceRatePct: number;
+    pagesPerSession: number;
+    pagesPerSessionPct: number;
+    newUsers: number;
+    newUsersPct: number;
+    engagedSessions: number;
+    engagementRate: number;
+    eventsPerSession: number;
   };
-  chart: { date: string; users: number }[];
-  topPages: { path: string; title: string; pageviews: number }[];
+  chart: { date: string; users: number; sessions: number; pageviews: number }[];
+  topPages: { path: string; title: string; pageviews: number; avgTime: number }[];
+  trafficSources: { medium: string; source: string; sessions: number; users: number }[];
+  devices: { device: string; sessions: number; users: number }[];
+  countries: { country: string; sessions: number; users: number }[];
+  referrers: { source: string; sessions: number }[];
+  newVsReturning: { type: string; users: number; sessions: number }[];
+  landingPages: { path: string; sessions: number; pageviews: number; avgTime: number; bounceRate: number }[];
   searchConsole: {
     impressions: number;
     clicks: number;
     ctr: number;
     position: number;
+    topQueries: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
   } | null;
 }
 
@@ -87,14 +111,28 @@ export default function AnalyticsPage() {
     return new Date(`${y}-${m}-${d}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.round(seconds % 60);
+    return `${m}m ${s}s`;
+  };
+
   const maxUsers = gaData?.chart?.length ? Math.max(...gaData.chart.map(p => p.users), 1) : 1;
 
-  // Detect a "service disabled" style error to offer an activation link
   const activationUrl = (() => {
     if (!error) return null;
     const m = error.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/[^\s"]+/);
     return m ? m[0] : null;
   })();
+
+  const deviceIcon = (device: string) => {
+    const d = device.toLowerCase();
+    if (d.includes('mobile')) return <Smartphone className="h-4 w-4" />;
+    if (d.includes('tablet')) return <Tablet className="h-4 w-4" />;
+    return <Monitor className="h-4 w-4" />;
+  };
+
+  const totalSessions = gaData?.devices?.reduce((sum, d) => sum + d.sessions, 0) || 1;
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -203,6 +241,39 @@ export default function AnalyticsPage() {
               />
             </div>
 
+            {/* Extended overview cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+              <MetricCard
+                label="Bounce Rate"
+                value={`${gaData.overview.bounceRate}%`}
+                pct={gaData.overview.bounceRatePct}
+                icon={<ArrowRightLeft className="h-5 w-5" />}
+                accent="yellow"
+                invertPct
+              />
+              <MetricCard
+                label="Pages / Session"
+                value={String(gaData.overview.pagesPerSession)}
+                pct={gaData.overview.pagesPerSessionPct}
+                icon={<FileText className="h-5 w-5" />}
+                accent="cyan"
+              />
+              <MetricCard
+                label="New Users"
+                value={formatNumber(gaData.overview.newUsers)}
+                pct={gaData.overview.newUsersPct}
+                icon={<Users className="h-5 w-5" />}
+                accent="blue"
+              />
+              <MetricCard
+                label="Engagement Rate"
+                value={`${gaData.overview.engagementRate}%`}
+                icon={<Zap className="h-5 w-5" />}
+                accent="green"
+                hidePct
+              />
+            </div>
+
             {/* Search Console stats */}
             {gaData.searchConsole && (
               <>
@@ -240,6 +311,49 @@ export default function AnalyticsPage() {
                     hidePct
                   />
                 </div>
+
+                {/* Top search queries */}
+                {gaData.searchConsole.topQueries?.length > 0 && (
+                  <GlassCard className="p-4 sm:p-5">
+                    <div className="mb-4">
+                      <h3 className="text-base font-bold text-white font-display">Top Search Queries</h3>
+                      <p className="text-xs text-gray-500 font-body mt-0.5">Queries driving traffic from Google Search</p>
+                    </div>
+                    <div className="space-y-2">
+                      {gaData.searchConsole.topQueries.map((q, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="flex items-center justify-center h-6 w-6 rounded-md bg-[#3aa3eb]/15 text-[#3aa3eb] text-xs font-bold font-display shrink-0">
+                              {i + 1}
+                            </span>
+                            <p className="text-sm font-medium text-white truncate font-body">{q.query}</p>
+                          </div>
+                          <div className="flex items-center gap-4 sm:gap-6 shrink-0 ml-3">
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 font-body">Clicks</p>
+                              <p className="text-sm font-bold text-white font-display">{formatNumber(q.clicks)}</p>
+                            </div>
+                            <div className="text-right hidden sm:block">
+                              <p className="text-xs text-gray-500 font-body">Impr.</p>
+                              <p className="text-sm font-bold text-white font-display">{formatNumber(q.impressions)}</p>
+                            </div>
+                            <div className="text-right hidden sm:block">
+                              <p className="text-xs text-gray-500 font-body">CTR</p>
+                              <p className="text-sm font-bold text-white font-display">{q.ctr}%</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 font-body">Pos.</p>
+                              <p className="text-sm font-bold text-white font-display">{q.position}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </GlassCard>
+                )}
               </>
             )}
 
@@ -308,7 +422,10 @@ export default function AnalyticsPage() {
                             <p className="text-xs text-gray-500 truncate font-body">{page.path}</p>
                           </div>
                         </div>
-                        <span className="text-sm font-bold text-white shrink-0 ml-3 font-display">{formatNumber(page.pageviews)}</span>
+                        <div className="text-right shrink-0 ml-3">
+                          <p className="text-sm font-bold text-white font-display">{formatNumber(page.pageviews)}</p>
+                          <p className="text-[10px] text-gray-500 font-body">{formatDuration(page.avgTime)}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -317,6 +434,211 @@ export default function AnalyticsPage() {
                     <Eye className="h-8 w-8 text-gray-600 mb-2" />
                     <p className="text-sm text-gray-500 font-body">No page data yet</p>
                   </div>
+                )}
+              </GlassCard>
+            </div>
+
+            {/* Traffic Sources + Devices */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Traffic Sources */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">Traffic Sources</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">Where your visitors come from</p>
+                </div>
+                {gaData.trafficSources.length > 0 ? (
+                  <div className="space-y-2">
+                    {gaData.trafficSources.map((src, i) => {
+                      const maxSessions = Math.max(...gaData.trafficSources.map(s => s.sessions), 1);
+                      const barPct = (src.sessions / maxSessions) * 100;
+                      return (
+                        <div key={i} className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs font-bold text-[#3aa3eb] font-display uppercase">{src.medium}</span>
+                              <span className="text-sm text-gray-400 truncate font-body">· {src.source}</span>
+                            </div>
+                            <span className="text-sm font-bold text-white font-display shrink-0 ml-2">{formatNumber(src.sessions)}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-[#3aa3eb] to-[#5bc0f0] transition-all duration-500"
+                              style={{ width: `${barPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No traffic source data</p>
+                )}
+              </GlassCard>
+
+              {/* Devices */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">Devices</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">How visitors access your site</p>
+                </div>
+                {gaData.devices.length > 0 ? (
+                  <div className="space-y-3">
+                    {gaData.devices.map((dev, i) => {
+                      const pct = Math.round((dev.sessions / totalSessions) * 100);
+                      return (
+                        <div key={i} className="flex items-center gap-4">
+                          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-[#3aa3eb]/15 text-[#3aa3eb] shrink-0">
+                            {deviceIcon(dev.device)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-white capitalize font-body">{dev.device}</span>
+                              <span className="text-xs text-gray-400 font-body">{pct}%</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-[#3aa3eb] to-[#5bc0f0] transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-sm font-bold text-white font-display shrink-0">{formatNumber(dev.sessions)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No device data</p>
+                )}
+              </GlassCard>
+            </div>
+
+            {/* Countries + New vs Returning */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Countries */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">Top Countries</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">Geographic distribution of sessions</p>
+                </div>
+                {gaData.countries.length > 0 ? (
+                  <div className="space-y-2">
+                    {gaData.countries.map((c, i) => {
+                      const maxSessions = Math.max(...gaData.countries.map(co => co.sessions), 1);
+                      const barPct = (c.sessions / maxSessions) * 100;
+                      return (
+                        <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                          <MapPin className="h-4 w-4 text-[#3aa3eb] shrink-0" />
+                          <span className="text-sm font-medium text-white truncate font-body flex-1">{c.country}</span>
+                          <span className="text-sm font-bold text-white font-display shrink-0">{formatNumber(c.sessions)}</span>
+                          <div className="w-16 h-1.5 rounded-full bg-white/5 overflow-hidden hidden sm:block">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-[#3aa3eb] to-[#5bc0f0] transition-all duration-500"
+                              style={{ width: `${barPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No country data</p>
+                )}
+              </GlassCard>
+
+              {/* New vs Returning */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">New vs Returning</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">Visitor loyalty breakdown</p>
+                </div>
+                {gaData.newVsReturning.length > 0 ? (
+                  <div className="space-y-4">
+                    {gaData.newVsReturning.map((nr, i) => {
+                      const totalUsers = gaData.newVsReturning.reduce((sum, n) => sum + n.users, 0) || 1;
+                      const pct = Math.round((nr.users / totalUsers) * 100);
+                      const isNew = nr.type.toLowerCase().includes('new');
+                      return (
+                        <div key={i}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-white capitalize font-body">{nr.type}</span>
+                            <span className="text-sm font-bold text-white font-display">{formatNumber(nr.users)} ({pct}%)</span>
+                          </div>
+                          <div className="h-3 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                isNew
+                                  ? 'bg-gradient-to-r from-[#3aa3eb] to-[#5bc0f0]'
+                                  : 'bg-gradient-to-r from-green-500 to-emerald-400'
+                              }`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 font-body mt-1">{formatNumber(nr.sessions)} sessions</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No data</p>
+                )}
+              </GlassCard>
+            </div>
+
+            {/* Referrers + Landing Pages */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Referrers */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">Top Referrers</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">Sites linking to you</p>
+                </div>
+                {gaData.referrers.length > 0 ? (
+                  <div className="space-y-2">
+                    {gaData.referrers.map((ref, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Link2 className="h-4 w-4 text-[#3aa3eb] shrink-0" />
+                          <p className="text-sm font-medium text-white truncate font-body">{ref.source}</p>
+                        </div>
+                        <span className="text-sm font-bold text-white font-display shrink-0 ml-3">{formatNumber(ref.sessions)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No referrer data</p>
+                )}
+              </GlassCard>
+
+              {/* Landing Pages */}
+              <GlassCard className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-white font-display">Top Landing Pages</h3>
+                  <p className="text-xs text-gray-500 font-body mt-0.5">Entry points to your site</p>
+                </div>
+                {gaData.landingPages.length > 0 ? (
+                  <div className="space-y-2">
+                    {gaData.landingPages.map((lp, i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium text-white truncate font-body">{lp.path}</p>
+                          <span className="text-sm font-bold text-white font-display shrink-0 ml-3">{formatNumber(lp.sessions)}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 font-body">
+                          <span>{formatDuration(lp.avgTime)} avg</span>
+                          <span>{lp.bounceRate}% bounce</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-body py-6 text-center">No landing page data</p>
                 )}
               </GlassCard>
             </div>
@@ -381,6 +703,7 @@ function MetricCard({
   icon,
   accent,
   hidePct,
+  invertPct,
 }: {
   label: string;
   value: string;
@@ -388,8 +711,10 @@ function MetricCard({
   icon: React.ReactNode;
   accent: keyof typeof accentMap;
   hidePct?: boolean;
+  invertPct?: boolean;
 }) {
   const a = accentMap[accent];
+  const isGood = invertPct ? (pct ?? 0) <= 0 : (pct ?? 0) >= 0;
   return (
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
@@ -398,12 +723,12 @@ function MetricCard({
           <p className="text-xl sm:text-2xl font-bold text-white font-display truncate">{value}</p>
           {!hidePct && pct !== undefined && (
             <div className="flex items-center gap-1 mt-2">
-              {pct >= 0 ? (
+              {isGood ? (
                 <TrendingUp className="text-green-400" size={14} />
               ) : (
                 <TrendingDown className="text-red-400" size={14} />
               )}
-              <span className={`text-xs sm:text-sm font-medium ${pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`text-xs sm:text-sm font-medium ${isGood ? 'text-green-400' : 'text-red-400'}`}>
                 {pct >= 0 ? '+' : ''}{pct}%
               </span>
               <span className="text-[10px] text-gray-600 font-body ml-0.5">vs prev. 28d</span>
