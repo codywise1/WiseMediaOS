@@ -147,7 +147,8 @@ export const generateProposalPDF = async (proposal: any) => {
 };
 
 /**
- * Generates a professional PDF for an invoice and triggers a direct download.
+ * Generates a professional, print-grade PDF for an invoice and triggers a direct download.
+ * Clean light-background document with refined typography, line-item table, and footer.
  */
 export const generateInvoicePDF = async (invoice: any) => {
   const container = document.createElement('div');
@@ -162,52 +163,114 @@ export const generateInvoicePDF = async (invoice: any) => {
   const clientIdentifier = (invoice.client || 'Client').replace(/[^a-z0-9]/gi, '_');
   const filename = `INV-${invoice.id.slice(0, 8).toUpperCase()}-${clientIdentifier}.pdf`;
 
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+  const statusLabel = (invoice.status || 'pending').charAt(0).toUpperCase() + (invoice.status || 'pending').slice(1);
+  const statusColor =
+    invoice.status === 'paid' ? '#059669' :
+    invoice.status === 'overdue' ? '#dc2626' :
+    invoice.status === 'draft' ? '#6b7280' : '#d97706';
+
+  const amount = (invoice.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const taxRate = invoice.tax_rate ?? 0;
+  const taxAmount = taxRate ? (invoice.amount * taxRate) / 100 : 0;
+  const total = (invoice.amount || 0) + taxAmount;
+
   container.innerHTML = `
-    <div style="background: #020617; color: #f8fafc; padding: 60px; font-family: 'Montserrat', sans-serif; width: 800px; border-radius: 0;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px;">
+    <div style="background: #ffffff; color: #0f172a; padding: 72px 64px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif; width: 800px; box-sizing: border-box;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 32px; border-bottom: 1px solid #e2e8f0;">
         <div>
-          <div style="font-family: 'Integral CF', sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">WISE MEDIA</div>
-          <div style="font-size: 12px; font-weight: 700; color: #3aa3eb; text-transform: uppercase; letter-spacing: 2px;">Operating System</div>
-        </div>
-        <div style="font-family: 'Integral CF', sans-serif; font-size: 14px; font-weight: 700; color: #3aa3eb; background: rgba(58, 163, 235, 0.1); padding: 10px 20px; border-radius: 14px; border: 1px solid rgba(58, 163, 235, 0.2);">
-          INV-${invoice.id.slice(0, 8).toUpperCase()}
-        </div>
-      </div>
-      <h1 style="font-family: 'Integral CF', sans-serif; font-size: 48px; font-weight: 700; color: #ffffff; margin-bottom: 40px; letter-spacing: -2px;">INVOICE</h1>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-bottom: 60px;">
-        <div>
-          <h3 style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Bill To</h3>
-          <p style="font-size: 18px; font-weight: 600; color: #ffffff;">${invoice.client}</p>
+          <div style="font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">Wise Media</div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;">Operating System</div>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 12px; line-height: 1.5;">
+            info@wisemedia.io<br/>
+            wisemedia.io
+          </div>
         </div>
         <div style="text-align: right;">
-          <h3 style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Status</h3>
-          <span style="display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; ${invoice.status === 'paid' ? 'background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);' :
-      invoice.status === 'overdue' ? 'background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);' :
-        'background: rgba(58, 163, 235, 0.2); color: #3aa3eb; border: 1px solid rgba(58, 163, 235, 0.3);'
-    }">${invoice.status}</span>
+          <div style="font-size: 32px; font-weight: 800; color: #0f172a; letter-spacing: -1px; line-height: 1;">Invoice</div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 8px; font-variant-numeric: tabular-nums; letter-spacing: 0.3px;">
+            No. INV-${invoice.id.slice(0, 8).toUpperCase()}
+          </div>
+          <div style="display: inline-block; margin-top: 12px; padding: 5px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: ${statusColor}; background: ${statusColor}14; border: 1px solid ${statusColor}33;">
+            ${statusLabel}
+          </div>
         </div>
       </div>
-      <div style="background: rgba(58, 163, 235, 0.1); border-radius: 24px; padding: 32px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border: 1px solid rgba(58, 163, 235, 0.2);">
-        <span style="font-size: 14px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Total Amount Due</span>
-        <span style="font-family: 'Integral CF', sans-serif; font-size: 42px; color: #3aa3eb;">$${invoice.amount.toLocaleString()}</span>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
-        <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05);">
-          <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Issue Date</div>
-          <div style="font-size: 14px; font-weight: 600; color: #ffffff;">${new Date(createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+
+      <!-- Bill To + Dates -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; padding: 36px 0;">
+        <div>
+          <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">Bill To</div>
+          <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${invoice.client || 'Client'}</div>
         </div>
-        <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05);">
-          <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Due Date</div>
-          <div style="font-size: 14px; font-weight: 600; color: #ffffff;">${new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        <div>
+          <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">Issue Date</div>
+          <div style="font-size: 14px; font-weight: 600; color: #334155;">${fmt(createdDate)}</div>
+        </div>
+        <div>
+          <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">Due Date</div>
+          <div style="font-size: 14px; font-weight: 600; color: #334155;">${fmt(dueDate)}</div>
         </div>
       </div>
-      <div style="background: rgba(255, 255, 255, 0.03); border-radius: 24px; padding: 32px; margin-bottom: 40px; border: 1px solid rgba(255, 255, 255, 0.05);">
-        <h3 style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Services Description</h3>
-        <p style="font-size: 16px; line-height: 1.6; color: #cbd5e1;">${invoice.description}</p>
+
+      <!-- Line items table -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+        <thead>
+          <tr style="border-bottom: 1px solid #e2e8f0;">
+            <th style="text-align: left; padding: 12px 0; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Description</th>
+            <th style="text-align: right; padding: 12px 0; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; width: 140px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 20px 0; font-size: 14px; color: #334155; line-height: 1.5;">
+              ${invoice.description || 'Professional services'}
+            </td>
+            <td style="padding: 20px 0; font-size: 14px; color: #0f172a; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums;">
+              ${amount}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 48px;">
+        <div style="width: 280px;">
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px; color: #64748b;">
+            <span>Subtotal</span>
+            <span style="font-variant-numeric: tabular-nums; color: #334155; font-weight: 600;">${amount}</span>
+          </div>
+          ${taxRate ? `
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px; color: #64748b; border-top: 1px solid #f1f5f9;">
+            <span>Tax (${taxRate}%)</span>
+            <span style="font-variant-numeric: tabular-nums; color: #334155; font-weight: 600;">${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>` : ''}
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0 8px; border-top: 2px solid #0f172a; margin-top: 8px;">
+            <span style="font-size: 11px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 1px;">Total Due</span>
+            <span style="font-size: 24px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: -0.5px;">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        </div>
       </div>
-      <div style="margin-top: 60px; text-align: center; padding-top: 40px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: #64748b; font-size: 12px;">
-        Thank you for choosing Wise Media. We appreciate your business.<br>
-        <span style="display: inline-block; margin-top: 12px;">Questions? info@wisemedia.io · wisemedia.io</span>
+
+      <!-- Payment note -->
+      <div style="background: #f8fafc; border-radius: 16px; padding: 20px 24px; margin-bottom: 48px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Payment</div>
+        <div style="font-size: 13px; color: #475569; line-height: 1.6;">
+          Please remit payment by the due date. For questions about this invoice, contact info@wisemedia.io.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding-top: 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 10px; color: #94a3b8; letter-spacing: 0.3px;">
+          Wise Media · Operating System
+        </div>
+        <div style="font-size: 10px; color: #94a3b8; letter-spacing: 0.3px;">
+          Thank you for your business
+        </div>
       </div>
     </div>
   `;
@@ -215,23 +278,53 @@ export const generateInvoicePDF = async (invoice: any) => {
   try {
     const canvas = await html2canvas(container, {
       scale: 2,
-      backgroundColor: '#020617',
+      backgroundColor: '#ffffff',
       logging: false,
-      useCORS: true
+      useCORS: true,
     });
 
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 12;
+    const innerWidth = pdfWidth - margin * 2;
+    const ratio = innerWidth / imgProps.width;
+    const renderedHeight = imgProps.height * ratio;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    let heightLeft = renderedHeight;
+    let position = margin;
+
+    const drawMasks = () => {
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pdfWidth, margin, 'F');
+      pdf.rect(0, pdfHeight - margin, pdfWidth, margin, 'F');
+      pdf.rect(0, 0, margin, pdfHeight, 'F');
+      pdf.rect(pdfWidth - margin, 0, margin, pdfHeight, 'F');
+    };
+
+    pdf.addImage(imgData, 'PNG', margin, position, innerWidth, renderedHeight);
+    drawMasks();
+    heightLeft -= (pdfHeight - margin * 2);
+
+    while (heightLeft > 0) {
+      position -= (pdfHeight - margin * 2);
+      pdf.addPage();
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+      pdf.addImage(imgData, 'PNG', margin, position, innerWidth, renderedHeight);
+      drawMasks();
+      heightLeft -= (pdfHeight - margin * 2);
+    }
+
     pdf.save(filename);
   } catch (error) {
     console.error('Error generating Invoice PDF:', error);
   } finally {
-    document.body.removeChild(container);
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
   }
 };
 /**
