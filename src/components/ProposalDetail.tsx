@@ -376,6 +376,20 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Terms & Conditions</h2>
         </div>
         <div className="text-sm text-gray-300 leading-relaxed markdown-content" dangerouslySetInnerHTML={{ __html: parseMarkdown(termsAndConditionsTemplate) }} />
+        <div className="mt-6 pt-6 border-t border-white/[0.06] flex flex-wrap items-center gap-4 text-xs text-gray-500">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5">
+            <ShieldCheck size={13} className="text-[#3aa3eb]" />
+            Governed by the laws of Alberta, Canada
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5">
+            <FileText size={13} className="text-[#3aa3eb]" />
+            Includes the Scope of Work above
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5">
+            <Pen size={13} className="text-[#3aa3eb]" />
+            E-signature binding under Alberta law
+          </span>
+        </div>
       </div>
 
       {/* Sign section */}
