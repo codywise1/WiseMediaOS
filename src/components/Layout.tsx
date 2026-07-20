@@ -1,29 +1,26 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  HomeIcon,
-  FolderIcon,
-  DocumentIcon,
-  CalendarIcon,
-  ClipboardDocumentListIcon,
-  UserCircleIcon,
-  ArrowRightOnRectangleIcon,
-  PencilIcon,
-  XMarkIcon,
-  DocumentTextIcon,
-  LifebuoyIcon,
-  EllipsisHorizontalIcon,
-  ChatBubbleOvalLeftIcon,
-  ChatBubbleLeftRightIcon,
-  BookOpenIcon,
-  DocumentDuplicateIcon,
-  Cog6ToothIcon,
-  Squares2X2Icon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChartBarSquareIcon,
-  RssIcon
-} from '@heroicons/react/24/outline'
+  Home,
+  Folder,
+  FileText,
+  Calendar,
+  ClipboardList,
+  UserCircle,
+  LogOut,
+  Pencil,
+  X,
+  MoreHorizontal,
+  MessageCircle,
+  MessagesSquare,
+  BookOpen,
+  Copy,
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
+  Rss
+} from 'lucide-react'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
 import { UserRole } from '../lib/supabase'
@@ -81,95 +78,95 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
     {
       label: 'Agency',
       items: [
-        { name: 'Dashboard', href: '/', icon: HomeIcon },
-        { name: 'Clients', href: '/clients', icon: UserCircleIcon },
-        { name: 'Projects', href: '/projects', icon: FolderIcon },
-        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-        { name: 'Meetings', href: '/meetings', icon: CalendarIcon },
-        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
-        { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
+        { name: 'Dashboard', href: '/', icon: Home },
+        { name: 'Clients', href: '/clients', icon: UserCircle },
+        { name: 'Projects', href: '/projects', icon: Folder },
+        { name: 'Notes', href: '/notes', icon: FileText },
+        { name: 'Meetings', href: '/meetings', icon: Calendar },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardList },
+        { name: 'Invoices', href: '/invoices', icon: FileText }
       ]
     },
     {
       label: 'Insights',
       items: [
-        { name: 'Analytics', href: '/analytics', icon: ChartBarSquareIcon }
+        { name: 'Analytics', href: '/analytics', icon: BarChart3 }
       ]
     },
     {
       label: 'Community',
       items: [
-        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Studio', href: '/community/hub', icon: RssIcon },
-        { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
+        { name: 'Community', href: '/community', icon: MessageCircle },
+        { name: 'Messages', href: '/community/messages', icon: MessagesSquare },
+        { name: 'Content Studio', href: '/community/hub', icon: Rss },
+        { name: 'Education', href: '/community/courses', icon: BookOpen },
+        { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
     }
   ],
   staff: [
-    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: HomeIcon }] },
+    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: Home }] },
     {
       label: 'Work',
       items: [
-        { name: 'Clients', href: '/clients', icon: UserCircleIcon },
-        { name: 'Projects', href: '/projects', icon: FolderIcon },
-        { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-        { name: 'Meetings', href: '/meetings', icon: CalendarIcon },
-        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon },
-        { name: 'Invoices', href: '/invoices', icon: DocumentIcon }
+        { name: 'Clients', href: '/clients', icon: UserCircle },
+        { name: 'Projects', href: '/projects', icon: Folder },
+        { name: 'Notes', href: '/notes', icon: FileText },
+        { name: 'Meetings', href: '/meetings', icon: Calendar },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardList },
+        { name: 'Invoices', href: '/invoices', icon: FileText }
       ]
     },
     {
       label: 'Community',
       items: [
-        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Chat', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Studio', href: '/community/hub', icon: RssIcon },
-        { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
+        { name: 'Community', href: '/community', icon: MessageCircle },
+        { name: 'Chat', href: '/community/messages', icon: MessagesSquare },
+        { name: 'Content Studio', href: '/community/hub', icon: Rss },
+        { name: 'Education (Courses)', href: '/community/courses', icon: BookOpen },
+        { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
     }
   ],
   client: [
-    { label: 'Overview', items: [{ name: 'Home', href: '/', icon: HomeIcon }] },
+    { label: 'Overview', items: [{ name: 'Home', href: '/', icon: Home }] },
     {
       label: 'Work',
       items: [
-        { name: 'Projects', href: '/projects', icon: FolderIcon },
-        { name: 'Notes', href: '/client/notes', icon: DocumentTextIcon },
-        { name: 'Proposals', href: '/proposals', icon: ClipboardDocumentListIcon }
+        { name: 'Projects', href: '/projects', icon: Folder },
+        { name: 'Notes', href: '/client/notes', icon: FileText },
+        { name: 'Proposals', href: '/proposals', icon: ClipboardList }
       ]
     },
-    { label: 'Billing', items: [{ name: 'Invoices', href: '/invoices', icon: DocumentIcon }] },
+    { label: 'Billing', items: [{ name: 'Invoices', href: '/invoices', icon: FileText }] },
     {
       label: 'Community',
       items: [
-        { name: 'Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon }
+        { name: 'Messages', href: '/community/messages', icon: MessagesSquare }
       ]
     },
-    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpenIcon }] }
+    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpen }] }
   ],
   member: [
-    { label: 'Overview', items: [{ name: 'Creator Home', href: '/creator', icon: HomeIcon }] },
+    { label: 'Overview', items: [{ name: 'Creator Home', href: '/creator', icon: Home }] },
     {
       label: 'Community',
       items: [
-        { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Direct Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Studio', href: '/community/hub', icon: RssIcon }
+        { name: 'Community', href: '/community', icon: MessageCircle },
+        { name: 'Direct Messages', href: '/community/messages', icon: MessagesSquare },
+        { name: 'Content Studio', href: '/community/hub', icon: Rss }
       ]
     },
     {
       label: 'Learning',
       items: [
-        { name: 'Courses', href: '/community/courses', icon: BookOpenIcon },
-        { name: 'Resources', href: '/community/courses', icon: Squares2X2Icon }
+        { name: 'Courses', href: '/community/courses', icon: BookOpen },
+        { name: 'Resources', href: '/community/courses', icon: LayoutGrid }
       ]
     },
     {
       label: 'Marketplace',
-      items: [{ name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }]
+      items: [{ name: 'Marketplace', href: '/community/marketplace', icon: Copy }]
     }
   ]
 }
@@ -268,9 +265,9 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   }`}
               >
                 {isSidebarCollapsed ? (
-                  <ChevronRightIcon className="h-5 w-5" />
+                  <ChevronRight className="h-5 w-5" />
                 ) : (
-                  <ChevronLeftIcon className="h-5 w-5" />
+                  <ChevronLeft className="h-5 w-5" />
                 )}
               </button>
             </div>
@@ -317,7 +314,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                         Profile
                       </span>
-                      <PencilIcon className="h-4 w-4 text-white/40 group-hover:text-[#59a1e5] transition-colors" />
+                      <Pencil className="h-4 w-4 text-white/40 group-hover:text-[#59a1e5] transition-colors" />
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="relative flex-shrink-0">
@@ -348,7 +345,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   className="w-full logout-card border border-white/20 transition-all duration-300 rounded-2xl hover:border-white/40 hover:bg-white/10 group"
                 >
                   <div className="flex items-center justify-center space-x-3 p-4">
-                    <ArrowRightOnRectangleIcon className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                    <LogOut className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
                     <span className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
                       Sign Out
                     </span>
@@ -379,7 +376,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   onClick={closeMobileMenu}
                   className="p-2 text-gray-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
                 >
-                  <XMarkIcon className="h-6 w-6" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
@@ -437,7 +434,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 text-gray-400 active:scale-95 min-w-[60px]"
               >
-                <EllipsisHorizontalIcon className="h-6 w-6" />
+                <MoreHorizontal className="h-6 w-6" />
                 <span className="text-[10px] font-medium">More</span>
               </button>
             </div>

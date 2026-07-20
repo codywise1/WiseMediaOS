@@ -303,7 +303,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const isAdmin = currentUser?.role === 'admin';
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
         <p className="text-sm text-gray-500 font-medium mb-1">

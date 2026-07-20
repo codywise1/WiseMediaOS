@@ -7,6 +7,7 @@ import ClientDetail from './components/ClientDetail';
 import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
 import Notes from './components/Notes';
+import AppleNotes from './components/AppleNotes';
 import NoteDetail from './components/NoteDetail';
 import Invoices from './components/Invoices';
 import InvoiceDetail from './components/InvoiceDetail';
@@ -511,7 +512,7 @@ function App() {
           />
           <Route path="/projects" element={<Projects currentUser={currentUser} />} />
           <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
-          <Route path="/notes" element={<Notes currentUser={currentUser} />} />
+          <Route path="/notes" element={<AppleNotes currentUser={currentUser} />} />
           <Route path="/notes/:id" element={<NoteDetail currentUser={currentUser} />} />
 
           {/* Client Portal Routes */}
