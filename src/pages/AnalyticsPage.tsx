@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
             {/* Visitors chart + Top pages */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
               {/* Chart */}
-              <GlassCard className="lg:col-span-3">
+              <GlassCard className="lg:col-span-3 p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-base font-bold text-white font-display">Unique Visitors</h3>
@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
               </GlassCard>
 
               {/* Top pages */}
-              <GlassCard className="lg:col-span-2">
+              <GlassCard className="lg:col-span-2 p-4 sm:p-5">
                 <div className="mb-4">
                   <h3 className="text-base font-bold text-white font-display">Top Content</h3>
                   <p className="text-xs text-gray-500 font-body mt-0.5">Most viewed pages</p>
@@ -391,7 +391,7 @@ function MetricCard({
 }) {
   const a = accentMap[accent];
   return (
-    <GlassCard>
+    <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-gray-400 mb-1.5 text-xs sm:text-sm font-body truncate">{label}</p>
@@ -433,7 +433,7 @@ function BusinessMetric({
 }) {
   const a = accentMap[accent];
   return (
-    <GlassCard>
+    <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-gray-400 mb-1.5 text-xs sm:text-sm font-body truncate">{label}</p>
