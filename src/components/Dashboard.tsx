@@ -343,10 +343,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
       {/* Revenue Chart — iOS style */}
       {isAdmin && (
-        <div className="glass-card rounded-3xl p-5 sm:p-6">
-          <div className="flex items-start justify-between mb-5 gap-3 flex-wrap">
+        <div className="glass-card rounded-3xl p-5 sm:p-7">
+          <div className="flex items-start justify-between mb-6 gap-3 flex-wrap">
             <div>
-              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Revenue</h2>
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Monthly Revenue</h2>
               <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{formatCurrency(totalChart)}</p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {timeframe === '7d' && 'Last 7 days'}
@@ -355,14 +355,14 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 {timeframe === 'year' && `${new Date().getFullYear()} YTD`}
               </p>
             </div>
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/5 border border-white/[0.08]">
               {(['7d', '30d', 'quarter', 'year'] as Timeframe[]).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     timeframe === tf
-                      ? 'bg-[#3aa3eb] text-white shadow-lg shadow-[#3aa3eb]/20'
+                      ? 'bg-[#3aa3eb] text-white shadow-lg shadow-[#3aa3eb]/25'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -371,32 +371,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               ))}
             </div>
           </div>
-
-          <div className="h-48 sm:h-56 flex items-end justify-between gap-1 sm:gap-1.5">
-            {chartData.map((point, i) => {
-              const heightPct = Math.max((point.value / maxChart) * 100, point.value > 0 ? 4 : 1.5);
-              return (
-                <div key={i} className="flex-1 min-w-0 group relative" style={{ height: '100%' }}>
-                  <div
-                    className="absolute bottom-0 left-0 right-0 rounded-t-lg transition-all duration-500 ease-out bg-gradient-to-t from-[#3aa3eb]/70 to-[#5bc0f0] group-hover:from-[#5bc0f0] group-hover:to-[#7dd3f5]"
-                    style={{ height: `${heightPct}%` }}
-                  />
-                  <div className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0f172a] border border-[#3aa3eb]/30 rounded-md px-2 py-1 text-[10px] text-white whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                    <span className="text-gray-400">{point.label}: </span>
-                    <span className="font-semibold">{formatCurrency(point.value)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex justify-between mt-3 text-[10px] text-gray-500 overflow-hidden">
-            {chartData.map((p, i) => (
-              <span key={i} className="flex-1 text-center truncate">
-                {(timeframe === '7d' || timeframe === '30d') && i % Math.ceil(chartData.length / 6) === 0 ? p.label : ''}
-                {(timeframe === 'quarter' || timeframe === 'year') && p.label}
-              </span>
-            ))}
-          </div>
+          <RevenueLineChart data={chartData} />
         </div>
       )}
 
@@ -524,6 +499,205 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     </div>
   );
 }
+
+// ─── iOS-style SVG line chart ──────────────────────────────────────────────
+const CHART_H = 160;
+const Y_LABEL_W = 40;
+const X_LABEL_H = 28;
+const DOT_R = 4;
+const GRID_LINES = 4;
+
+function niceMax(v: number) {
+  if (v === 0) return 1000;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  return Math.ceil(v / mag) * mag;
+}
+
+function fmtYLabel(v: number) {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return `${v}`;
+}
+
+function RevenueLineChart({ data }: { data: ChartPoint[] }) {
+  const [hovered, setHovered] = React.useState<number | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [width, setWidth] = React.useState(600);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      setWidth(entries[0].contentRect.width);
+    });
+    ro.observe(el);
+    setWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  const maxVal = niceMax(Math.max(...data.map((p) => p.value), 0));
+  const plotW = width - Y_LABEL_W;
+  const n = data.length;
+
+  // x center of each point — evenly spaced across plotW with half-step margins
+  const xOf = (i: number) => Y_LABEL_W + (plotW / n) * (i + 0.5);
+  // y coordinate (SVG top-down)
+  const yOf = (v: number) => CHART_H - (v / maxVal) * CHART_H;
+
+  // Build smooth SVG path using cubic bezier
+  const linePath = data.map((p, i) => {
+    const x = xOf(i);
+    const y = yOf(p.value);
+    if (i === 0) return `M${x},${y}`;
+    const px = xOf(i - 1);
+    const py = yOf(data[i - 1].value);
+    const cpx = (px + x) / 2;
+    return `C${cpx},${py} ${cpx},${y} ${x},${y}`;
+  }).join(' ');
+
+  // Area fill — close path to bottom
+  const firstX = xOf(0);
+  const lastX = xOf(n - 1);
+  const areaPath = linePath + ` L${lastX},${CHART_H} L${firstX},${CHART_H} Z`;
+
+  // Decide which x-labels to show (avoid overlap for dense series)
+  const maxLabels = Math.min(n, Math.floor(plotW / 48));
+  const step = n <= maxLabels ? 1 : Math.ceil(n / maxLabels);
+  const showLabel = (i: number) => i % step === 0 || i === n - 1;
+
+  const totalH = CHART_H + X_LABEL_H;
+  const gradId = 'chartFill';
+  const clipId = 'chartClip';
+
+  return (
+    <div ref={containerRef} className="w-full select-none">
+      <svg
+        width={width}
+        height={totalH}
+        style={{ overflow: 'visible', display: 'block' }}
+        onMouseLeave={() => setHovered(null)}
+      >
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id={clipId}>
+            <rect x={Y_LABEL_W} y={0} width={plotW} height={CHART_H} />
+          </clipPath>
+        </defs>
+
+        {/* Horizontal grid lines + y labels */}
+        {Array.from({ length: GRID_LINES + 1 }).map((_, gi) => {
+          const frac = gi / GRID_LINES;
+          const y = CHART_H - frac * CHART_H;
+          const val = frac * maxVal;
+          return (
+            <g key={gi}>
+              <line
+                x1={Y_LABEL_W} y1={y} x2={width} y2={y}
+                stroke="rgba(255,255,255,0.06)" strokeWidth={1}
+              />
+              <text
+                x={Y_LABEL_W - 6} y={y}
+                textAnchor="end" dominantBaseline="middle"
+                fill="rgba(255,255,255,0.3)" fontSize={10}
+              >
+                {fmtYLabel(val)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area fill */}
+        <path d={areaPath} fill={`url(#${gradId})`} clipPath={`url(#${clipId})`} />
+
+        {/* Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#3aa3eb"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          clipPath={`url(#${clipId})`}
+        />
+
+        {/* Hover vertical rule */}
+        {hovered !== null && (
+          <line
+            x1={xOf(hovered)} y1={0} x2={xOf(hovered)} y2={CHART_H}
+            stroke="rgba(255,255,255,0.15)" strokeWidth={1} strokeDasharray="4 3"
+          />
+        )}
+
+        {/* Dots */}
+        {data.map((p, i) => {
+          const x = xOf(i);
+          const y = yOf(p.value);
+          const isHov = hovered === i;
+          return (
+            <g key={i}>
+              {/* invisible hit area */}
+              <rect
+                x={xOf(i) - plotW / n / 2} y={0}
+                width={plotW / n} height={CHART_H}
+                fill="transparent"
+                onMouseEnter={() => setHovered(i)}
+              />
+              <circle
+                cx={x} cy={y} r={isHov ? DOT_R + 2 : DOT_R}
+                fill={isHov ? '#3aa3eb' : '#1a2a3a'}
+                stroke="#3aa3eb"
+                strokeWidth={isHov ? 2.5 : 2}
+                style={{ transition: 'r 0.15s, fill 0.15s' }}
+              />
+              {/* Tooltip */}
+              {isHov && (() => {
+                const tipW = 110;
+                const tipH = 36;
+                const tipX = Math.min(Math.max(x - tipW / 2, Y_LABEL_W), width - tipW);
+                const tipY = y - tipH - 10;
+                return (
+                  <g>
+                    <rect x={tipX} y={tipY} width={tipW} height={tipH} rx={6}
+                      fill="#0d1724" stroke="rgba(58,163,235,0.3)" strokeWidth={1} />
+                    <text x={tipX + tipW / 2} y={tipY + 13}
+                      textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={10}>
+                      {p.label}
+                    </text>
+                    <text x={tipX + tipW / 2} y={tipY + 27}
+                      textAnchor="middle" fill="#fff" fontSize={12} fontWeight="600">
+                      {formatCurrency(p.value)}
+                    </text>
+                  </g>
+                );
+              })()}
+            </g>
+          );
+        })}
+
+        {/* X-axis labels — centered under each point */}
+        {data.map((p, i) => {
+          if (!showLabel(i)) return null;
+          return (
+            <text
+              key={i}
+              x={xOf(i)}
+              y={CHART_H + 18}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.35)"
+              fontSize={10}
+            >
+              {p.label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function SnapshotCard({
   icon, iconBg, value, label, pill,
