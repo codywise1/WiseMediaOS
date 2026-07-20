@@ -21,7 +21,8 @@ import {
   Squares2X2Icon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChartBarSquareIcon
+  ChartBarSquareIcon,
+  RssIcon
 } from '@heroicons/react/24/outline'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
@@ -100,6 +101,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
+        { name: 'Content Hub', href: '/community/hub', icon: RssIcon },
         { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
@@ -123,6 +125,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Chat', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
+        { name: 'Content Hub', href: '/community/hub', icon: RssIcon },
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
@@ -153,7 +156,8 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Community',
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
-        { name: 'Direct Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon }
+        { name: 'Direct Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
+        { name: 'Content Hub', href: '/community/hub', icon: RssIcon }
       ]
     },
     {

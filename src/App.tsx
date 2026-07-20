@@ -18,6 +18,8 @@ import Login from './components/Login';
 import { authService, isSupabaseAvailable, clientService, supabase, UserRole } from './lib/supabase';
 import CommunityPage from './pages/CommunityPage';
 import CommunityFeedPage from './pages/CommunityFeedPage';
+import ContentHubPage from './pages/ContentHubPage';
+import ContentHubDetail from './pages/ContentHubDetail';
 import CoursesPage from './pages/CoursesPage';
 import EducationDetails from './pages/EducationDetails';
 import ProfilePage from './pages/ProfilePage';
@@ -573,6 +575,22 @@ function App() {
             path="/community/marketplace/:id"
             element={
               <MarketplaceDetails />
+            }
+          />
+          <Route
+            path="/community/hub"
+            element={
+              <CommunityGuard>
+                <ContentHubPage />
+              </CommunityGuard>
+            }
+          />
+          <Route
+            path="/community/hub/:id"
+            element={
+              <CommunityGuard>
+                <ContentHubDetail />
+              </CommunityGuard>
             }
           />
           {/* <Route
