@@ -37,6 +37,8 @@ interface Product {
   platform: string | null;
   is_featured: boolean;
   discount_enabled: boolean;
+  affiliate_link?: string | null;
+  files?: { id: string; name: string; url: string; type: 'upload' | 'url'; size?: number }[];
 }
 
 interface Review {
@@ -309,12 +311,37 @@ export default function MarketplaceDetails() {
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   {hasPurchased ? (
-                    <button className="flex-1 btn-header-glass py-5 px-8 bg-green-500/10 border-green-500/30">
-                      <span className="btn-text-glow flex items-center justify-center gap-3 text-green-400">
-                        <Download size={22} />
-                        Download Product
+                    product.files && product.files.length > 0 ? (
+                      <div className="flex-1 space-y-2">
+                        {product.files.map((file, i) => (
+                          <a key={i} href={file.url} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-3 px-5 py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all group">
+                            <Download size={20} className="text-emerald-400" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-semibold text-sm truncate">{file.name}</p>
+                              <p className="text-gray-500 text-xs">{file.type === 'url' ? 'External download' : 'Download file'}</p>
+                            </div>
+                            <ArrowRight size={16} className="text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <button className="flex-1 btn-header-glass py-5 px-8 bg-green-500/10 border-green-500/30">
+                        <span className="btn-text-glow flex items-center justify-center gap-3 text-green-400">
+                          <Download size={22} />
+                          Download Product
+                        </span>
+                      </button>
+                    )
+                  ) : product.affiliate_link ? (
+                    <a href={product.affiliate_link} target="_blank" rel="noopener noreferrer nofollow"
+                      className="flex-1 btn-header-glass py-5 px-8">
+                      <span className="btn-text-glow flex items-center justify-center gap-3">
+                        <ShoppingCart size={22} />
+                        Get This Product
+                        <ArrowRight size={20} />
                       </span>
-                    </button>
+                    </a>
                   ) : (
                     <button
                       onClick={handlePurchase}

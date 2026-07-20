@@ -260,7 +260,7 @@ export default function ContentHubPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Content Hub"
+        title="Content Studio"
         subtitle="All of Cody Wise & Wise Media's content — blog, X/Twitter, Instagram, YouTube, LinkedIn, and Facebook — in one native feed."
         action={isAdmin ? (
           <div className="flex items-center gap-2 w-full sm:w-auto">

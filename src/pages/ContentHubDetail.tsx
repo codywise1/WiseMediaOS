@@ -252,7 +252,7 @@ export default function ContentHubDetail() {
         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
         style={{ fontFamily: 'Montserrat, sans-serif' }}
       >
-        <ArrowLeft size={18} /> Back to Content Hub
+        <ArrowLeft size={18} /> Back to Content Studio
       </button>
 
       <div className="ios-card rounded-3xl border border-white/10 overflow-hidden">

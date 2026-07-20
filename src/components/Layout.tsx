@@ -101,7 +101,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Hub', href: '/community/hub', icon: RssIcon },
+        { name: 'Content Studio', href: '/community/hub', icon: RssIcon },
         { name: 'Education', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
@@ -125,7 +125,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Chat', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Hub', href: '/community/hub', icon: RssIcon },
+        { name: 'Content Studio', href: '/community/hub', icon: RssIcon },
         { name: 'Education (Courses)', href: '/community/courses', icon: BookOpenIcon },
         { name: 'Marketplace', href: '/community/marketplace', icon: DocumentDuplicateIcon }
       ]
@@ -157,7 +157,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       items: [
         { name: 'Community', href: '/community', icon: ChatBubbleOvalLeftIcon },
         { name: 'Direct Messages', href: '/community/messages', icon: ChatBubbleLeftRightIcon },
-        { name: 'Content Hub', href: '/community/hub', icon: RssIcon }
+        { name: 'Content Studio', href: '/community/hub', icon: RssIcon }
       ]
     },
     {

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, Edit2, Trash2, EyeOff, Eye } from 'lucide-react';
+import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, CreditCard as Edit2, Trash2, EyeOff, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import DownloadUploader, { DownloadFile } from '../components/DownloadUploader';
 
 interface Product {
   id: string;
@@ -43,8 +44,10 @@ export default function MarketplacePage() {
     category: 'templates',
     cover_image_url: '',
     platform: '',
-    discount_enabled: false
+    discount_enabled: false,
+    affiliate_link: ''
   });
+  const [downloadFiles, setDownloadFiles] = useState<DownloadFile[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -76,11 +79,12 @@ export default function MarketplacePage() {
 
   function openCreateModal() {
     setEditingProduct(null);
-    setForm({ title: '', description: '', price: '', old_price: '', category: 'templates', cover_image_url: '', platform: '', discount_enabled: false });
+    setForm({ title: '', description: '', price: '', old_price: '', category: 'templates', cover_image_url: '', platform: '', discount_enabled: false, affiliate_link: '' });
+    setDownloadFiles([]);
     setIsModalOpen(true);
   }
 
-  function openEditModal(product: Product, e: React.MouseEvent) {
+  async function openEditModal(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
     setEditingProduct(product);
     setForm({
@@ -91,8 +95,13 @@ export default function MarketplacePage() {
       category: product.category,
       cover_image_url: product.cover_image_url || '',
       platform: product.platform || '',
-      discount_enabled: product.discount_enabled
+      discount_enabled: product.discount_enabled,
+      affiliate_link: (product as any).affiliate_link || ''
     });
+    const rawFiles = (product as any).files || [];
+    setDownloadFiles(Array.isArray(rawFiles) ? rawFiles.map((f: any) => ({
+      id: f.id || `file-${Math.random()}`, name: f.name || 'Download', url: f.url || '', size: f.size, type: f.type || 'upload', file_type: f.file_type
+    })) : []);
     setIsModalOpen(true);
   }
 
@@ -110,6 +119,8 @@ export default function MarketplacePage() {
         cover_image_url: form.cover_image_url || null,
         platform: form.platform || null,
         discount_enabled: form.discount_enabled,
+        affiliate_link: form.affiliate_link || null,
+        files: downloadFiles,
         updated_at: new Date().toISOString()
       };
       if (editingProduct && !editingProduct.id.startsWith('mock-')) {
@@ -459,6 +470,18 @@ export default function MarketplacePage() {
                 <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all h-24"
                   placeholder="What is this product?" />
+              </div>
+              <DownloadUploader
+                value={downloadFiles}
+                onChange={setDownloadFiles}
+                label="Downloadable Files"
+                hint="Upload files buyers can download after purchase, or paste an external URL (e.g. another creator's product on Gumroad)."
+              />
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Affiliate / External Buy Link (optional)</label>
+                <input type="url" value={form.affiliate_link} onChange={e => setForm(prev => ({ ...prev, affiliate_link: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  placeholder="https://partner.com/buy" />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.discount_enabled} onChange={e => setForm(prev => ({ ...prev, discount_enabled: e.target.checked }))}

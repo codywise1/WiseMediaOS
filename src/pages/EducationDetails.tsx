@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import {
-  Play, Clock, BarChart3, CheckCircle2, Lock, Download,
-  MessageSquare, Edit, Trash2, Award, ArrowRight, Plus, X,
-  BookOpen, FileText, TrendingUp, Users, Settings, Save,
-  ChevronRight, Sparkles, Video, Link2, UploadCloud,
-} from 'lucide-react';
+import { Play, Clock, BarChart3, CheckCircle2, Lock, Download, MessageSquare, CreditCard as Edit, Trash2, Award, ArrowRight, Plus, X, BookOpen, FileText, TrendingUp, Users, Settings, Save, ChevronRight, Sparkles, Video, Link2, UploadCloud } from 'lucide-react';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import DownloadUploader, { DownloadFile } from '../components/DownloadUploader';
 
 interface Course {
   id: string;
@@ -62,6 +58,9 @@ export default function EducationDetails() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSavingCourse, setIsSavingCourse] = useState(false);
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+  const [resourceFiles, setResourceFiles] = useState<DownloadFile[]>([]);
+  const [isSavingResources, setIsSavingResources] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -183,6 +182,52 @@ export default function EducationDetails() {
       if (error) throw error;
       fetchCourseData();
     } catch (error) { console.error('Error deleting lesson:', error); alert('Failed to delete lesson'); }
+  }
+
+  async function handleSaveResources() {
+    if (!isSupabaseAvailable()) return;
+    setIsSavingResources(true);
+    try {
+      const existingIds = new Set(resources.map(r => r.id));
+      const toDelete = resources.filter(r => !resourceFiles.some(f => f.id === r.id));
+      for (const r of toDelete) {
+        await supabase!.from('course_resources').delete().eq('id', r.id);
+      }
+      for (const file of resourceFiles) {
+        const existing = resources.find(r => r.id === file.id);
+        if (existing) {
+          await supabase!.from('course_resources').update({
+            title: file.name, url: file.url, resource_type: file.type === 'url' ? 'link' : 'file',
+          }).eq('id', existing.id);
+        } else {
+          await supabase!.from('course_resources').insert({
+            course_id: courseId, title: file.name, url: file.url,
+            resource_type: file.type === 'url' ? 'link' : 'file',
+          });
+        }
+      }
+      setIsResourceModalOpen(false);
+      fetchCourseData();
+    } catch (e) { console.error('Error saving resources:', e); alert('Failed to save resources'); }
+    finally { setIsSavingResources(false); }
+  }
+
+  function openResourceModal() {
+    setResourceFiles(resources.map(r => ({
+      id: r.id, name: r.title, url: r.url,
+      type: (r.resource_type === 'link' ? 'url' : 'upload') as 'upload' | 'url',
+    })));
+    setIsResourceModalOpen(true);
+  }
+
+  async function handleDeleteResource(resourceId: string) {
+    if (!window.confirm('Delete this resource?')) return;
+    if (!isSupabaseAvailable()) return;
+    try {
+      const { error } = await supabase!.from('course_resources').delete().eq('id', resourceId);
+      if (error) throw error;
+      fetchCourseData();
+    } catch (e) { console.error('Error deleting resource:', e); alert('Failed to delete resource'); }
   }
 
   const tabs: { id: TabId; label: string; icon: typeof BookOpen }[] = [
@@ -428,33 +473,49 @@ export default function EducationDetails() {
 
       {/* Resources */}
       {activeTab === 'resources' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {resources.length === 0 ? (
-            <div className="col-span-full ios-card rounded-3xl p-12 text-center border border-white/10">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
-                <Download size={24} className="text-gray-600" />
-              </div>
-              <p className="text-white font-semibold text-sm mb-1">No resources yet</p>
-              <p className="text-gray-500 text-xs">Resources will appear here when added.</p>
-            </div>
-          ) : (
-            resources.map((resource) => (
-              <a key={resource.id} href={resource.url} target="_blank" rel="noopener noreferrer" className="ios-card rounded-2xl p-5 border border-white/10 transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/20 group">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#3AA3EB]/15 flex items-center justify-center flex-shrink-0">
-                    <Download size={16} className="text-[#3AA3EB]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold text-sm truncate mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{resource.title}</p>
-                    <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">{resource.resource_type}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 text-[#3AA3EB] text-xs font-semibold">
-                  Download <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </a>
-            ))
+        <div className="space-y-4">
+          {adminMode && isAdmin && (
+            <button onClick={openResourceModal}
+              className="w-full py-4 border border-dashed border-white/15 rounded-2xl text-gray-400 hover:text-white hover:border-[#3AA3EB]/40 hover:bg-[#3AA3EB]/5 transition-all font-medium text-sm flex items-center justify-center gap-2">
+              <Plus size={16} /> Manage Resources
+            </button>
           )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {resources.length === 0 ? (
+              <div className="col-span-full ios-card rounded-3xl p-12 text-center border border-white/10">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                  <Download size={24} className="text-gray-600" />
+                </div>
+                <p className="text-white font-semibold text-sm mb-1">No resources yet</p>
+                <p className="text-gray-500 text-xs">Resources will appear here when added.</p>
+              </div>
+            ) : (
+              resources.map((resource) => (
+                <div key={resource.id} className="ios-card rounded-2xl p-5 border border-white/10 transition-all duration-300 hover:border-white/20 hover:shadow-2xl hover:shadow-black/20 group relative">
+                  {adminMode && isAdmin && (
+                    <button onClick={() => handleDeleteResource(resource.id)}
+                      className="absolute top-3 right-3 p-2 hover:bg-rose-500/15 rounded-xl transition-colors text-gray-400 hover:text-rose-400 opacity-0 group-hover:opacity-100">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                  <a href={resource.url} target="_blank" rel="noopener noreferrer" className="block">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#3AA3EB]/15 flex items-center justify-center flex-shrink-0">
+                        {resource.resource_type === 'link' ? <Link2 size={16} className="text-[#3AA3EB]" /> : <Download size={16} className="text-[#3AA3EB]" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-sm truncate mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{resource.title}</p>
+                        <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">{resource.resource_type}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[#3AA3EB] text-xs font-semibold">
+                      Download <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </a>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
@@ -613,6 +674,42 @@ export default function EducationDetails() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Resource Modal */}
+      {isResourceModalOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsResourceModalOpen(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-white/10 sticky top-0 bg-[#1c1c1e]/95 backdrop-blur-xl z-10">
+                  <h3 className="text-white font-bold text-lg font-display">Manage Resources</h3>
+                  <button onClick={() => setIsResourceModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-6 space-y-5">
+                  <DownloadUploader
+                    value={resourceFiles}
+                    onChange={setResourceFiles}
+                    bucket="files"
+                    folder={`courses/${courseId}`}
+                    label="Course Downloads"
+                    hint="Drag files here to upload, or paste an external URL to a resource (e.g. a PDF on another site)."
+                  />
+                  <div className="flex gap-3 pt-2 border-t border-white/10">
+                    <button type="button" onClick={() => setIsResourceModalOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
+                    <button type="button" onClick={handleSaveResources} disabled={isSavingResources} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                      {isSavingResources ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
+                      {isSavingResources ? 'Saving...' : 'Save Resources'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
