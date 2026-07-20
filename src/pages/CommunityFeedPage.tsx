@@ -570,7 +570,6 @@ export default function CommunityFeedPage() {
       <PageHeader
         title="Creator Club"
         subtitle="Announcements, wins, questions, and creator-to-creator support."
-        icon={<MessageCircle className="h-5 w-5" />}
         action={isAdmin ? (
           <button
             onClick={() => setComposerOpen(true)}

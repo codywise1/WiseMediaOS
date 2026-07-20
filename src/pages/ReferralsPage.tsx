@@ -10,7 +10,6 @@ export default function ReferralsPage() {
       <PageHeader
         title="Referrals"
         subtitle="Earn rewards by inviting creators to the platform."
-        icon={<TrendingUp className="h-5 w-5" />}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

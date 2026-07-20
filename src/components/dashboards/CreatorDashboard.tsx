@@ -97,7 +97,6 @@ export default function CreatorDashboard() {
       <PageHeader
         title="Creator Hub"
         subtitle={`${greeting} — here's your creative journey at a glance.`}
-        icon={<LayoutDashboard className="h-5 w-5" />}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">

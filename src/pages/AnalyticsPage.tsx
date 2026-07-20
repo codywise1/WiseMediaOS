@@ -101,7 +101,6 @@ export default function AnalyticsPage() {
       <PageHeader
         title="Analytics"
         subtitle="Track revenue, client growth, and Google site metrics."
-        icon={<BarChart3 className="h-5 w-5" />}
         action={
           <button
             onClick={fetchGA}

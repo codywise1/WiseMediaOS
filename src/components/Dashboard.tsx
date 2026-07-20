@@ -507,7 +507,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-              Welcome back, <span className="gradient-text">{currentUser?.name?.split(' ')[0]}!</span>
+              {(() => {
+                const hr = new Date().getHours();
+                if (hr < 12) return 'Good Morning,';
+                if (hr < 18) return 'Good Afternoon,';
+                return 'Good Evening,';
+              })()} <span className="gradient-text">Mr. Wise</span>
             </h1>
             <p className="text-gray-300">Your command center for projects, clients, and activity.</p>
           </div>

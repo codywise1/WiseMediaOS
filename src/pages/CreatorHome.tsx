@@ -34,7 +34,6 @@ export default function CreatorHome() {
       <PageHeader
         title="Creator Club"
         subtitle={`${greeting} — jump into your courses, resources, and community.`}
-        icon={<SparklesIcon className="h-5 w-5" />}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">

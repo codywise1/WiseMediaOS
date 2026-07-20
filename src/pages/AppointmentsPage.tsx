@@ -143,7 +143,6 @@ export default function AppointmentsPage() {
         <PageHeader
           title="Appointments"
           subtitle="Schedule and manage client meetings and calls."
-          icon={<Calendar className="h-5 w-5" />}
           action={
             <button onClick={openNewModal} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full sm:w-auto justify-center">
               <Plus size={20} />

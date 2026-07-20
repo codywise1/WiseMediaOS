@@ -73,7 +73,6 @@ export default function AdminDashboard() {
       <PageHeader
         title="Dashboard"
         subtitle={`${greeting} — here's your business overview.`}
-        icon={<LayoutDashboard className="h-5 w-5" />}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">

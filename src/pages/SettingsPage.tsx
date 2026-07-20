@@ -16,7 +16,6 @@ export default function SettingsPage() {
         <PageHeader
           title="Settings"
           subtitle="Manage notifications, security, and preferences."
-          icon={<Lock className="h-5 w-5" />}
         />
 
         <div className="space-y-8">
