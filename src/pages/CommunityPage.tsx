@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import PageHeader from '../components/PageHeader';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus } from 'lucide-react';
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus, Lock, Unlock, Archive, ArchiveRestore } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
@@ -14,6 +14,8 @@ interface Channel {
   name: string;
   description: string;
   type: string;
+  is_locked?: boolean;
+  is_archived?: boolean;
 }
 
 interface Message {
@@ -472,6 +474,26 @@ export default function CommunityPage() {
   async function handleDeleteChannel(id: string) {
     if (!isAdmin || !id) return;
     if (!confirm('Are you sure you want to delete this channel? This will remove all messages in it.')) return;
+
+  async function toggleChannelLock(channel: Channel) {
+    if (!isAdmin || !channel.id || !isSupabaseAvailable()) return;
+    try {
+      const { error } = await supabase!.from('chat_channels').update({ is_locked: !channel.is_locked }).eq('id', channel.id);
+      if (error) throw error;
+      setChannels(prev => prev.map(c => c.id === channel.id ? { ...c, is_locked: !c.is_locked } : c));
+      if (selectedChannel?.id === channel.id) setSelectedChannel({ ...channel, is_locked: !channel.is_locked });
+    } catch (e) { console.error('Error toggling lock:', e); }
+  }
+
+  async function toggleChannelArchive(channel: Channel) {
+    if (!isAdmin || !channel.id || !isSupabaseAvailable()) return;
+    try {
+      const { error } = await supabase!.from('chat_channels').update({ is_archived: !channel.is_archived }).eq('id', channel.id);
+      if (error) throw error;
+      setChannels(prev => prev.map(c => c.id === channel.id ? { ...c, is_archived: !c.is_archived } : c));
+      if (selectedChannel?.id === channel.id) setSelectedChannel({ ...channel, is_archived: !channel.is_archived });
+    } catch (e) { console.error('Error toggling archive:', e); }
+  }
 
     try {
       if (!isSupabaseAvailable()) {
@@ -1489,6 +1511,20 @@ export default function CommunityPage() {
                   {isAdmin && (
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => toggleChannelLock(selectedChannel)}
+                        className={`p-2 rounded-lg transition-all ${selectedChannel.is_locked ? 'text-yellow-400 hover:bg-yellow-400/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                        title={selectedChannel.is_locked ? 'Unlock Channel' : 'Lock Channel'}
+                      >
+                        {selectedChannel.is_locked ? <Unlock size={20} /> : <Lock size={20} />}
+                      </button>
+                      <button
+                        onClick={() => toggleChannelArchive(selectedChannel)}
+                        className={`p-2 rounded-lg transition-all ${selectedChannel.is_archived ? 'text-blue-400 hover:bg-blue-400/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                        title={selectedChannel.is_archived ? 'Restore Channel' : 'Archive Channel'}
+                      >
+                        {selectedChannel.is_archived ? <ArchiveRestore size={20} /> : <Archive size={20} />}
+                      </button>
+                      <button
                         onClick={() => {
                           setEditingChannel(selectedChannel);
                           setNewChannelName(selectedChannel.name);
@@ -1630,22 +1666,24 @@ export default function CommunityPage() {
                             </div>
                           </div>
 
-                          {isAdmin && msg.user_id === profile?.id && !editingMessageId && (
+                          {isAdmin && !editingMessageId && (
                             <div className="opacity-0 group-hover/msg-content:opacity-100 flex gap-1 ml-2 transition-opacity">
-                              <button
-                                onClick={() => {
-                                  setEditingMessageId(msg.id);
-                                  setEditingMessageText(msg.message);
-                                }}
-                                className="p-1 text-gray-500 hover:text-white rounded"
-                                title="Edit"
-                              >
-                                <Edit2 size={14} />
-                              </button>
+                              {msg.user_id === profile?.id && (
+                                <button
+                                  onClick={() => {
+                                    setEditingMessageId(msg.id);
+                                    setEditingMessageText(msg.message);
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-white rounded"
+                                  title="Edit"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleDeleteMessage(msg.id)}
                                 className="p-1 text-gray-500 hover:text-red-400 rounded"
-                                title="Delete"
+                                title={msg.user_id === profile?.id ? "Delete" : "Delete (admin)"}
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -1768,22 +1806,24 @@ export default function CommunityPage() {
                               })}
                             </div>
 
-                            {isAdmin && isMyMessage && !editingMessageId && (
+                            {isAdmin && !editingMessageId && (
                               <div className={`absolute top-0 ${isMyMessage ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 group-hover/msg-content:opacity-100 flex gap-1 transition-opacity`}>
-                                <button
-                                  onClick={() => {
-                                    setEditingMessageId(msg.id);
-                                    setEditingMessageText(msg.message);
-                                  }}
-                                  className="p-1 text-gray-500 hover:text-white rounded"
-                                  title="Edit"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
+                                {isMyMessage && (
+                                  <button
+                                    onClick={() => {
+                                      setEditingMessageId(msg.id);
+                                      setEditingMessageText(msg.message);
+                                    }}
+                                    className="p-1 text-gray-500 hover:text-white rounded"
+                                    title="Edit"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeletePrivateMessage(msg.id)}
                                   className="p-1 text-gray-500 hover:text-red-400 rounded"
-                                  title="Delete"
+                                  title={isMyMessage ? "Delete" : "Delete (admin)"}
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -1851,6 +1891,12 @@ export default function CommunityPage() {
                   </div>
                 )}
 
+                {view === 'channels' && selectedChannel?.is_locked && !isAdmin ? (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <Lock size={16} />
+                    This channel is locked. Only admins can post.
+                  </div>
+                ) : (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1916,6 +1962,7 @@ export default function CommunityPage() {
                     </button>
                   </div>
                 </form>
+                )}
               </div>
             )}
           </GlassCard>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
-import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, Edit2, Trash2, EyeOff, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
@@ -17,112 +19,159 @@ interface Product {
   is_featured: boolean;
   discount_enabled: boolean;
   platform: string | null;
+  is_hidden?: boolean;
+  status?: string;
+  description?: string | null;
 }
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    price: '',
+    old_price: '',
+    category: 'templates',
+    cover_image_url: '',
+    platform: '',
+    discount_enabled: false
+  });
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+    if (profile) setIsAdmin(profile.role === 'admin');
+  }, [profile]);
 
   async function fetchProducts() {
     try {
       const dbProducts = supabase ? (await supabase
         .from('marketplace_products')
-        .select('id, title, price, old_price, category, rating, reviews_count, cover_image_url, is_featured, discount_enabled, platform')
+        .select('id, title, description, price, old_price, category, rating, reviews_count, cover_image_url, is_featured, discount_enabled, platform, is_hidden, status')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })).data || [] : [];
       const mockProducts: Product[] = [
-        {
-          id: 'mock-1',
-          title: 'Premium Agency Notion OS',
-          price: 49.99,
-          old_price: 99.99,
-          category: 'templates',
-          rating: 5.0,
-          reviews_count: 128,
-          cover_image_url: '/src/media/marketplace_notion.png',
-          is_featured: true,
-          discount_enabled: true,
-          platform: 'Notion'
-        },
-        {
-          id: 'mock-2',
-          title: 'Creator Contract Bundle',
-          price: 149.00,
-          old_price: 299.00,
-          category: 'docs',
-          rating: 4.9,
-          reviews_count: 85,
-          cover_image_url: '/src/media/marketplace_legal.png',
-          is_featured: true,
-          discount_enabled: true,
-          platform: 'PDF/Word'
-        },
-        {
-          id: 'mock-3',
-          title: 'Vibrant Social Assets',
-          price: 29.00,
-          old_price: null,
-          category: 'graphics',
-          rating: 4.8,
-          reviews_count: 56,
-          cover_image_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=800',
-          is_featured: false,
-          discount_enabled: false,
-          platform: 'Canva/Figma'
-        },
-        {
-          id: 'mock-4',
-          title: 'Scaling Playbook 2024',
-          price: 79.00,
-          old_price: 120.00,
-          category: 'courses',
-          rating: 5.0,
-          reviews_count: 210,
-          cover_image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800',
-          is_featured: false,
-          discount_enabled: true,
-          platform: 'Digital Access'
-        },
-        {
-          id: 'mock-5',
-          title: 'Client CRM Toolkit',
-          price: 39.00,
-          old_price: null,
-          category: 'toolkits',
-          rating: 4.7,
-          reviews_count: 42,
-          cover_image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800',
-          is_featured: false,
-          discount_enabled: false,
-          platform: 'Airtable'
-        },
-        {
-          id: 'mock-6',
-          title: 'Pitch Deck Master Template',
-          price: 59.00,
-          old_price: 89.00,
-          category: 'templates',
-          rating: 4.9,
-          reviews_count: 73,
-          cover_image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800',
-          is_featured: false,
-          discount_enabled: true,
-          platform: 'PowerPoint/Keynote'
-        }
+        { id: 'mock-1', title: 'Premium Agency Notion OS', price: 49.99, old_price: 99.99, category: 'templates', rating: 5.0, reviews_count: 128, cover_image_url: '/src/media/marketplace_notion.png', is_featured: true, discount_enabled: true, platform: 'Notion' },
+        { id: 'mock-2', title: 'Creator Contract Bundle', price: 149.00, old_price: 299.00, category: 'docs', rating: 4.9, reviews_count: 85, cover_image_url: '/src/media/marketplace_legal.png', is_featured: true, discount_enabled: true, platform: 'PDF/Word' },
+        { id: 'mock-3', title: 'Vibrant Social Assets', price: 29.00, old_price: null, category: 'graphics', rating: 4.8, reviews_count: 56, cover_image_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: false, platform: 'Canva/Figma' },
+        { id: 'mock-4', title: 'Scaling Playbook 2024', price: 79.00, old_price: 120.00, category: 'courses', rating: 5.0, reviews_count: 210, cover_image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: true, platform: 'Digital Access' },
+        { id: 'mock-5', title: 'Client CRM Toolkit', price: 39.00, old_price: null, category: 'toolkits', rating: 4.7, reviews_count: 42, cover_image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: false, platform: 'Airtable' },
+        { id: 'mock-6', title: 'Pitch Deck Master Template', price: 59.00, old_price: 89.00, category: 'templates', rating: 4.9, reviews_count: 73, cover_image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: true, platform: 'PowerPoint/Keynote' }
       ];
-
       setProducts([...mockProducts, ...dbProducts]);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  function openCreateModal() {
+    setEditingProduct(null);
+    setForm({ title: '', description: '', price: '', old_price: '', category: 'templates', cover_image_url: '', platform: '', discount_enabled: false });
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(product: Product, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingProduct(product);
+    setForm({
+      title: product.title,
+      description: product.description || '',
+      price: String(product.price),
+      old_price: product.old_price ? String(product.old_price) : '',
+      category: product.category,
+      cover_image_url: product.cover_image_url || '',
+      platform: product.platform || '',
+      discount_enabled: product.discount_enabled
+    });
+    setIsModalOpen(true);
+  }
+
+  async function handleSaveProduct(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isSupabaseAvailable()) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        title: form.title,
+        description: form.description,
+        price: parseFloat(form.price) || 0,
+        old_price: form.old_price ? parseFloat(form.old_price) : null,
+        category: form.category,
+        cover_image_url: form.cover_image_url || null,
+        platform: form.platform || null,
+        discount_enabled: form.discount_enabled,
+        updated_at: new Date().toISOString()
+      };
+      if (editingProduct && !editingProduct.id.startsWith('mock-')) {
+        const { error } = await supabase!.from('marketplace_products').update(payload).eq('id', editingProduct.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase!.from('marketplace_products').insert([{
+          ...payload,
+          creator_id: profile?.id,
+          rating: 0,
+          reviews_count: 0,
+          purchases_count: 0
+        }]);
+        if (error) throw error;
+      }
+      setIsModalOpen(false);
+      fetchProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Failed to save product');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteProduct() {
+    if (!deleteTarget || !isSupabaseAvailable() || deleteTarget.id.startsWith('mock-')) {
+      setDeleteTarget(null);
+      return;
+    }
+    try {
+      const { error } = await supabase!.from('marketplace_products').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setProducts(prev => prev.filter(p => p.id !== deleteTarget.id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product');
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
+  async function toggleFeatured(product: Product, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
+    try {
+      const { error } = await supabase!.from('marketplace_products')
+        .update({ is_featured: !product.is_featured, updated_at: new Date().toISOString() }).eq('id', product.id);
+      if (error) throw error;
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_featured: !p.is_featured } : p));
+    } catch (err) { console.error(err); }
+  }
+
+  async function toggleHide(product: Product, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
+    try {
+      const { error } = await supabase!.from('marketplace_products')
+        .update({ is_hidden: !product.is_hidden, updated_at: new Date().toISOString() }).eq('id', product.id);
+      if (error) throw error;
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_hidden: !p.is_hidden } : p));
+    } catch (err) { console.error(err); }
   }
 
   function handleProductClick(productId: string) {
@@ -151,14 +200,24 @@ export default function MarketplacePage() {
   ];
 
   const filteredProducts = selectedCategory === 'all'
-    ? products
-    : products.filter(p => p.category === selectedCategory);
+    ? products.filter(p => !p.is_hidden || isAdmin)
+    : products.filter(p => p.category === selectedCategory && (!p.is_hidden || isAdmin));
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Marketplace"
         subtitle="Premium tools, templates, and resources to accelerate your growth."
+        action={isAdmin ? (
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <Plus size={18} />
+            Add Product
+          </button>
+        ) : undefined}
       />
 
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
@@ -204,12 +263,17 @@ export default function MarketplacePage() {
             return (
               <GlassCard
                 key={product.id}
-                className="hover:scale-105 transition-transform cursor-pointer relative"
+                className="hover:scale-105 transition-transform cursor-pointer relative group"
                 onClick={() => handleProductClick(product.id)}
               >
                 {product.is_featured && (
                   <div className="absolute top-4 right-4 px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold z-10">
                     FEATURED
+                  </div>
+                )}
+                {product.is_hidden && isAdmin && (
+                  <div className="absolute top-4 right-4 px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold z-10">
+                    HIDDEN
                   </div>
                 )}
                 {product.discount_enabled && product.old_price && (
@@ -220,11 +284,7 @@ export default function MarketplacePage() {
                 <div className="space-y-3">
                   <div className="h-40 bg-gradient-to-br from-[#3AA3EB]/20 to-purple-500/20 rounded-lg flex items-center justify-center overflow-hidden">
                     {product.cover_image_url ? (
-                      <img
-                        src={product.cover_image_url}
-                        alt={product.title}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
                     ) : (
                       <CategoryIcon className="text-[#3AA3EB]" size={48} />
                     )}
@@ -244,10 +304,7 @@ export default function MarketplacePage() {
                         </span>
                       </div>
                     </div>
-                    <h3
-                      className="text-white font-bold text-lg mb-3 line-clamp-2"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
-                    >
+                    <h3 className="text-white font-bold text-lg mb-3 line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                       {product.title}
                     </h3>
                     {product.platform && (
@@ -272,10 +329,139 @@ export default function MarketplacePage() {
                     </div>
                   </div>
                 </div>
+
+                {isAdmin && !product.id.startsWith('mock-') && (
+                  <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <button
+                      onClick={(e) => toggleFeatured(product, e)}
+                      className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${product.is_featured ? 'text-yellow-400 bg-yellow-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
+                      title={product.is_featured ? 'Unfeature' : 'Feature'}
+                    >
+                      <Star size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => toggleHide(product, e)}
+                      className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${product.is_hidden ? 'text-red-400 bg-red-400/20' : 'text-gray-400 bg-black/60 hover:text-white'}`}
+                      title={product.is_hidden ? 'Unhide' : 'Hide'}
+                    >
+                      {product.is_hidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
+                    <button
+                      onClick={(e) => openEditModal(product, e)}
+                      className="p-1.5 rounded-lg backdrop-blur-md text-gray-400 bg-black/60 hover:text-white transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(product); }}
+                      className="p-1.5 rounded-lg backdrop-blur-md text-gray-400 bg-black/60 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </GlassCard>
             );
           })}
         </div>
+      )}
+
+      {/* Create/Edit Product Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <GlassCard className="relative w-full max-w-lg bg-slate-900 border-white/10 p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
+              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                {editingProduct ? 'Edit Product' : 'Add New Product'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Title</label>
+                <input required type="text" value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  placeholder="Product title" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Price ($)</label>
+                  <input required type="number" step="0.01" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    placeholder="49.99" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Old Price ($)</label>
+                  <input type="number" step="0.01" value={form.old_price} onChange={e => setForm(prev => ({ ...prev, old_price: e.target.value }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    placeholder="99.99" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Category</label>
+                  <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all">
+                    <option value="templates">Templates</option>
+                    <option value="toolkits">Toolkits</option>
+                    <option value="graphics">Graphics</option>
+                    <option value="courses">Courses</option>
+                    <option value="docs">Documents</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Platform</label>
+                  <input type="text" value={form.platform} onChange={e => setForm(prev => ({ ...prev, platform: e.target.value }))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                    placeholder="Notion, Figma, etc." />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Cover Image URL</label>
+                <input type="url" value={form.cover_image_url} onChange={e => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all"
+                  placeholder="https://..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Description</label>
+                <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#3AA3EB] outline-none transition-all h-24"
+                  placeholder="What is this product?" />
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={form.discount_enabled} onChange={e => setForm(prev => ({ ...prev, discount_enabled: e.target.checked }))}
+                  className="w-4 h-4 rounded accent-[#3AA3EB]" />
+                <span className="text-sm text-gray-300">Enable discount (old price shown with strikethrough)</span>
+              </label>
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSaving}
+                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#3AA3EB]/20 uppercase tracking-widest text-xs disabled:opacity-50">
+                  {isSaving ? 'Saving...' : editingProduct ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </GlassCard>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteProduct}
+          title="Delete Product"
+          message={`Delete "${deleteTarget.title}"? This cannot be undone.`}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

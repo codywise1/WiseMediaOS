@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, CreditCard as Edit2, Plus } from 'lucide-react';
+import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, CreditCard as Edit2, Plus, Pin, Star, EyeOff, Eye } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
@@ -28,6 +28,10 @@ interface CommunityPost {
   visibility: Visibility;
   attachments: any[];
   created_at: string;
+  is_pinned?: boolean;
+  is_featured?: boolean;
+  is_hidden?: boolean;
+  status?: string;
   profiles?: PostAuthor;
 }
 
@@ -149,6 +153,7 @@ export default function CommunityFeedPage() {
   }, [profile?.role, profile?.subscription_type]);
 
   const canViewPost = (post: CommunityPost) => {
+    if (post.is_hidden && !isAdmin) return false;
     if (post.visibility === 'all') return true;
     return isPro;
   };
@@ -178,7 +183,8 @@ export default function CommunityFeedPage() {
     try {
       const { data, error } = await supabase!
         .from('community_posts')
-        .select('id,user_id,title,body,content,tags,visibility,attachments,created_at, profiles(full_name, email, avatar_url, role)')
+        .select('id,user_id,title,body,content,tags,visibility,attachments,created_at,is_pinned,is_featured,is_hidden,status, profiles(full_name, email, avatar_url, role)')
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -426,6 +432,20 @@ export default function CommunityFeedPage() {
   function confirmDeleteComment(postId: string, commentId: string) {
     setItemToDelete({ type: 'comment', id: commentId, postId });
     setIsDeleteModalOpen(true);
+  }
+
+  async function togglePostFlag(postId: string, flag: 'is_pinned' | 'is_featured' | 'is_hidden', currentValue: boolean) {
+    if (!isSupabaseAvailable() || !isAdmin) return;
+    try {
+      const updates: Record<string, unknown> = { [flag]: !currentValue, updated_at: new Date().toISOString() };
+      if (flag === 'is_pinned') updates.pinned_at = !currentValue ? new Date().toISOString() : null;
+      const { error } = await supabase!.from('community_posts').update(updates).eq('id', postId);
+      if (error) throw error;
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, [flag]: !currentValue } : p));
+    } catch (e) {
+      console.error('Error updating post:', e);
+      alert('Failed to update post.');
+    }
   }
 
   async function createPost() {
@@ -680,6 +700,21 @@ export default function CommunityFeedPage() {
                         <span className="text-xs text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                           {formatAppDateTime(post.created_at)}
                         </span>
+                        {post.is_pinned && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#3AA3EB]/20 text-[#3AA3EB] border border-[#3AA3EB]/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            PINNED
+                          </span>
+                        )}
+                        {post.is_featured && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            FEATURED
+                          </span>
+                        )}
+                        {post.is_hidden && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            HIDDEN
+                          </span>
+                        )}
                         {post.visibility === 'pro' && (
                           <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                             PRO
@@ -707,6 +742,31 @@ export default function CommunityFeedPage() {
 
                     {(isAdmin || post.user_id === profile?.id) && (
                       <div className="flex gap-1">
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => togglePostFlag(post.id, 'is_pinned', !!post.is_pinned)}
+                              className={`p-2 rounded-lg transition-colors ${post.is_pinned ? 'text-[#3AA3EB] bg-[#3AA3EB]/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                              title={post.is_pinned ? 'Unpin Post' : 'Pin Post'}
+                            >
+                              <Pin size={18} />
+                            </button>
+                            <button
+                              onClick={() => togglePostFlag(post.id, 'is_featured', !!post.is_featured)}
+                              className={`p-2 rounded-lg transition-colors ${post.is_featured ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                              title={post.is_featured ? 'Unfeature Post' : 'Feature Post'}
+                            >
+                              <Star size={18} />
+                            </button>
+                            <button
+                              onClick={() => togglePostFlag(post.id, 'is_hidden', !!post.is_hidden)}
+                              className={`p-2 rounded-lg transition-colors ${post.is_hidden ? 'text-red-400 bg-red-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                              title={post.is_hidden ? 'Unhide Post' : 'Hide Post'}
+                            >
+                              {post.is_hidden ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             setEditingPost(post);

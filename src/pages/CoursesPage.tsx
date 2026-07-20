@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
-import { Play, Clock, Plus, X } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { Play, Clock, Plus, X, CreditCard as Edit2, Trash2, Star, EyeOff, Eye } from 'lucide-react';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +16,8 @@ interface Course {
   lessons_count?: number;
   duration?: string;
   progress?: number;
+  is_featured?: boolean;
+  status?: string;
 }
 
 export default function CoursesPage() {
@@ -24,6 +27,8 @@ export default function CoursesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -66,39 +71,116 @@ export default function CoursesPage() {
       setCourses(mapped);
     } catch (error) {
       console.error('Error fetching courses:', error);
-    } finally {
-      // Done
     }
   }
 
-  async function handleCreateCourse(e: React.FormEvent) {
+  function openCreateModal() {
+    setEditingCourse(null);
+    setForm({ title: '', description: '', category: 'Growth', thumbnail_url: '' });
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(course: Course) {
+    setEditingCourse(course);
+    setForm({
+      title: course.title,
+      description: course.description || '',
+      category: course.category || 'Growth',
+      thumbnail_url: course.thumbnail_url || ''
+    });
+    setIsModalOpen(true);
+  }
+
+  async function handleSaveCourse(e: React.FormEvent) {
     e.preventDefault();
     if (!isSupabaseAvailable()) return;
     setIsSaving(true);
 
     try {
-      const { data, error } = await supabase!
-        .from('courses')
-        .insert([{
-          title: form.title,
-          description: form.description,
-          category: form.category,
-          thumbnail_url: form.thumbnail_url || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800',
-          creator_id: profile?.id
-        }])
-        .select()
-        .single();
+      if (editingCourse) {
+        const { error } = await supabase!
+          .from('courses')
+          .update({
+            title: form.title,
+            description: form.description,
+            category: form.category,
+            thumbnail_url: form.thumbnail_url || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingCourse.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase!
+          .from('courses')
+          .insert([{
+            title: form.title,
+            description: form.description,
+            category: form.category,
+            thumbnail_url: form.thumbnail_url || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800',
+            creator_id: profile?.id
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setIsModalOpen(false);
+        fetchCourses();
+        navigate(`/community/courses/${data.id}`);
+        return;
+      }
 
       setIsModalOpen(false);
       fetchCourses();
-      navigate(`/community/courses/${data.id}`);
     } catch (error) {
-      console.error('Error creating course:', error);
-      alert('Failed to create course');
+      console.error('Error saving course:', error);
+      alert('Failed to save course');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteCourse() {
+    if (!deleteTarget || !isSupabaseAvailable()) return;
+    try {
+      const { error } = await supabase!.from('courses').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setCourses(prev => prev.filter(c => c.id !== deleteTarget.id));
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      alert('Failed to delete course');
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
+  async function toggleFeatured(course: Course) {
+    if (!isSupabaseAvailable() || !isAdmin) return;
+    try {
+      const { error } = await supabase!
+        .from('courses')
+        .update({ is_featured: !course.is_featured, updated_at: new Date().toISOString() })
+        .eq('id', course.id);
+      if (error) throw error;
+      setCourses(prev => prev.map(c => c.id === course.id ? { ...c, is_featured: !c.is_featured } : c));
+    } catch (e) {
+      console.error('Error toggling featured:', e);
+    }
+  }
+
+  async function togglePublish(course: Course) {
+    if (!isSupabaseAvailable() || !isAdmin) return;
+    const newStatus = course.status === 'published' ? 'draft' : 'published';
+    try {
+      const { error } = await supabase!
+        .from('courses')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', course.id);
+      if (error) throw error;
+      setCourses(prev => prev.map(c => c.id === course.id ? { ...c, status: newStatus } : c));
+    } catch (e) {
+      console.error('Error toggling publish:', e);
     }
   }
 
@@ -109,7 +191,7 @@ export default function CoursesPage() {
         subtitle="Premium courses, playbooks, and internal knowledge to scale your creative business."
         action={isAdmin ? (
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openCreateModal}
             className="flex items-center gap-2 px-6 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
@@ -132,6 +214,16 @@ export default function CoursesPage() {
                 <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider">
                   {course.category}
                 </div>
+                {course.is_featured && (
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500/80 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-1">
+                    <Star size={10} /> Featured
+                  </div>
+                )}
+                {isAdmin && course.status === 'draft' && (
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-gray-700/80 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-1">
+                    <EyeOff size={10} /> Draft
+                  </div>
+                )}
               </div>
 
               <div className="flex items-start gap-3">
@@ -152,6 +244,38 @@ export default function CoursesPage() {
                     )}
                   </div>
                 </div>
+                {isAdmin && (
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => toggleFeatured(course)}
+                      className={`p-1.5 rounded-lg transition-colors ${course.is_featured ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                      title={course.is_featured ? 'Unfeature' : 'Feature'}
+                    >
+                      <Star size={16} />
+                    </button>
+                    <button
+                      onClick={() => togglePublish(course)}
+                      className={`p-1.5 rounded-lg transition-colors ${course.status === 'draft' ? 'text-gray-500 hover:text-white hover:bg-white/10' : 'text-green-400 bg-green-400/10'}`}
+                      title={course.status === 'draft' ? 'Publish' : 'Unpublish'}
+                    >
+                      {course.status === 'draft' ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </button>
+                    <button
+                      onClick={() => openEditModal(course)}
+                      className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(course)}
+                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -179,21 +303,21 @@ export default function CoursesPage() {
         ))}
       </div>
 
-      {/* Create Course Modal */}
+      {/* Create/Edit Course Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <GlassCard className="relative w-full max-w-lg bg-slate-900 border-white/10 p-0 overflow-hidden">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif' }}>
-                Create New Course
+                {editingCourse ? 'Edit Course' : 'Create New Course'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white">
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCourse} className="p-6 space-y-4">
+            <form onSubmit={handleSaveCourse} className="p-6 space-y-4">
               <div className="space-y-2">
                 <label className="text-gray-400 text-xs font-bold uppercase tracking-widest">Course Title</label>
                 <input
@@ -256,12 +380,23 @@ export default function CoursesPage() {
                   disabled={isSaving}
                   className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#3AA3EB]/20 uppercase tracking-widest text-xs disabled:opacity-50"
                 >
-                  {isSaving ? 'Creating...' : 'Create Course'}
+                  {isSaving ? 'Saving...' : editingCourse ? 'Update Course' : 'Create Course'}
                 </button>
               </div>
             </form>
           </GlassCard>
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteCourse}
+          title="Delete Course"
+          message={`Are you sure you want to delete "${deleteTarget.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+        />
       )}
     </div>
   );
