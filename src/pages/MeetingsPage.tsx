@@ -20,7 +20,8 @@ import {
     Meeting,
     Client,
     Project,
-    MeetingStatus
+    MeetingStatus,
+    authService,
 } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
@@ -59,9 +60,11 @@ export default function MeetingsPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [meetingsData] = await Promise.all([
+            await authService.ensureValidSession();
+            const results = await Promise.allSettled([
                 meetingService.getAll(),
             ]);
+            const meetingsData = results[0].status === 'fulfilled' ? results[0].value : [];
             setMeetings(meetingsData);
         } catch (error) {
             console.error('Error loading meetings data:', error);

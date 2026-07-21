@@ -22,6 +22,7 @@ import {
   Client,
   Project,
   UserRole,
+  authService,
 } from '../lib/supabase';
 import ConfirmDialog from './ConfirmDialog';
 import { formatAppDate } from '../lib/dateFormat';
@@ -77,11 +78,15 @@ export default function Notes({ currentUser }: NotesProps) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [notesData, clientsData, projectsData] = await Promise.all([
+      await authService.ensureValidSession();
+      const results = await Promise.allSettled([
         noteService.getAll(),
         clientService.getAll(),
         projectService.getAll()
       ]);
+      const notesData = results[0].status === 'fulfilled' ? results[0].value : [];
+      const clientsData = results[1].status === 'fulfilled' ? results[1].value : [];
+      const projectsData = results[2].status === 'fulfilled' ? results[2].value : [];
       setNotes(notesData);
       setClients(clientsData);
       setProjects(projectsData);

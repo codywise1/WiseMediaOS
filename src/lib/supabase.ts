@@ -191,7 +191,7 @@ export const authService = {
     return session.user;
   },
 
-  onAuthStateChange(callback: (user: any) => void) {
+  onAuthStateChange(callback: (user: any, event?: string) => void) {
     if (!isSupabaseAvailable()) {
       return { data: { subscription: null } };
     }
@@ -205,6 +205,23 @@ export const authService = {
       }
       callback(session?.user || null, event);
     });
+  },
+
+  async ensureValidSession(): Promise<boolean> {
+    if (!isSupabaseAvailable()) return false;
+
+    const sb = getSupabaseClient();
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return false;
+
+    const expiresAtMs = session.expires_at ? session.expires_at * 1000 : 0;
+    if (expiresAtMs && expiresAtMs < Date.now() + 60_000) {
+      const { data: { session: refreshed }, error } = await sb.auth.refreshSession();
+      if (error || !refreshed) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 

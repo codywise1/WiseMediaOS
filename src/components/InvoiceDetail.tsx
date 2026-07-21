@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase, clientService, invoiceService, Client, Invoice, UserRole } from '../lib/supabase';
+import { supabase, clientService, invoiceService, Client, Invoice, UserRole, authService } from '../lib/supabase';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -52,10 +52,13 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const loadInvoiceData = async () => {
     try {
       setLoading(true);
-      const [invoicesData, clientsData] = await Promise.all([
+      await authService.ensureValidSession();
+      const results = await Promise.allSettled([
         invoiceService.getAll(),
         clientService.getAll()
       ]);
+      const invoicesData = results[0].status === 'fulfilled' ? results[0].value : [];
+      const clientsData = results[1].status === 'fulfilled' ? results[1].value : [];
 
       const foundInvoice = invoicesData.find(inv => inv.id === id);
       if (foundInvoice) {

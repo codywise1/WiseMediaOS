@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { clientService, projectService, invoiceService, Client as ClientType, Project, isSupabaseAvailable, supabase, UserRole } from '../lib/supabase';
+import { clientService, projectService, invoiceService, Client as ClientType, Project, isSupabaseAvailable, supabase, UserRole, authService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   ArrowLeftIcon,
@@ -171,13 +171,17 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
   const loadClientData = async () => {
     try {
       setLoading(true);
-      const [foundClient, projectsData, invoicesData] = await Promise.all([
+      await authService.ensureValidSession();
+      const results = await Promise.allSettled([
         clientService.getById(id!),
         projectService.getByClientId(id!),
         invoiceService && typeof (invoiceService as any).getByClientId === 'function'
           ? (invoiceService as any).getByClientId(id!)
           : Promise.resolve([])
       ]);
+      const foundClient = results[0].status === 'fulfilled' ? results[0].value : null;
+      const projectsData = results[1].status === 'fulfilled' ? results[1].value : [];
+      const invoicesData = results[2].status === 'fulfilled' ? results[2].value : [];
 
       if (foundClient) {
         setClient(foundClient);

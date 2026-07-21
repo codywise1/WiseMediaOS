@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BookOpen, TrendingUp, Award, Target, Sparkles, DollarSign, Users, Lightbulb, LayoutDashboard } from 'lucide-react';
 import GlassCard from '../GlassCard';
 import PageHeader from '../PageHeader';
-import { supabase } from '../../lib/supabase';
+import { supabase, authService } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigation } from '../../contexts/NavigationContext';
 
@@ -65,12 +65,17 @@ export default function CreatorDashboard() {
   async function fetchStats() {
     if (!profile?.id || !supabase) return;
 
-    const [enrollmentsRes, coursesRes, marketplaceRes, referralsRes] = await Promise.all([
+    await authService.ensureValidSession();
+    const results = await Promise.allSettled([
       supabase.from('course_enrollments').select('progress, courses(title)').eq('user_id', profile.id).limit(3),
       supabase.from('courses').select('id, title, thumbnail_url').order('created_at', { ascending: false }).limit(4),
       supabase.from('marketplace_items').select('downloads').eq('creator_id', profile.id),
       supabase.from('referrals').select('id').eq('referrer_id', profile.id).eq('status', 'completed'),
     ]);
+    const enrollmentsRes = results[0].status === 'fulfilled' ? results[0].value : { data: null, error: null };
+    const coursesRes = results[1].status === 'fulfilled' ? results[1].value : { data: null, error: null };
+    const marketplaceRes = results[2].status === 'fulfilled' ? results[2].value : { data: null, error: null };
+    const referralsRes = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: null };
 
     const courseProgress = enrollmentsRes.data?.map((e: any) => ({
       title: e.courses?.title || 'Untitled Course',

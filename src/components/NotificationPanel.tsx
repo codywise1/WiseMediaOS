@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bell, UserPlus, FileText, MessageSquare, Clock3, X } from 'lucide-react';
 import GlassCard from './GlassCard';
-import { projectService, invoiceService, meetingService } from '../lib/supabase';
+import { projectService, invoiceService, meetingService, authService } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 
 interface Notification {
@@ -176,11 +176,15 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
 
     const loadNotifications = async () => {
       try {
-        const [projects, invoices, appointments] = await Promise.all([
+        await authService.ensureValidSession();
+        const results = await Promise.allSettled([
           projectService.getAll().catch(() => []),
           invoiceService.getAll().catch(() => []),
           meetingService.getAll().catch(() => []),
         ]);
+        const projects = results[0].status === 'fulfilled' ? results[0].value : [];
+        const invoices = results[1].status === 'fulfilled' ? results[1].value : [];
+        const appointments = results[2].status === 'fulfilled' ? results[2].value : [];
 
         if (cancelled) return;
 

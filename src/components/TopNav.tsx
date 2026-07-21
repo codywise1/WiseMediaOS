@@ -3,7 +3,7 @@ import { Bell, Search, ChevronDown, Settings, LogOut, LayoutGrid, Menu, X, LifeB
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationPanel from './NotificationPanel';
-import { clientService, projectService, invoiceService, proposalService, noteService } from '../lib/supabase';
+import { clientService, projectService, invoiceService, proposalService, noteService, authService } from '../lib/supabase';
 
 interface TopNavProps {
   currentUser?: {
@@ -68,13 +68,19 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
 
     const loadSearchData = async () => {
       try {
-        const [clients, projects, invoices, proposals, notes] = await Promise.all([
+        await authService.ensureValidSession();
+        const results = await Promise.allSettled([
           clientService.getAll().catch(() => []),
           projectService.getAll().catch(() => []),
           invoiceService.getAll().catch(() => []),
           proposalService.getAll().catch(() => []),
           noteService.getAll().catch(() => []),
         ]);
+        const clients = results[0].status === 'fulfilled' ? results[0].value : [];
+        const projects = results[1].status === 'fulfilled' ? results[1].value : [];
+        const invoices = results[2].status === 'fulfilled' ? results[2].value : [];
+        const proposals = results[3].status === 'fulfilled' ? results[3].value : [];
+        const notes = results[4].status === 'fulfilled' ? results[4].value : [];
 
         if (cancelled) return;
 

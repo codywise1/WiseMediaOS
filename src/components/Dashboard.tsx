@@ -7,6 +7,7 @@ import {
   meetingService,
   appointmentService,
   clientService,
+  authService,
   UserRole
 } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
@@ -260,14 +261,32 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
     }, 6000);
     try {
       if (isFirstLoad) setLoading(true);
+
+      // Ensure the JWT is valid before running any queries. On page refresh
+      // the cached access token may be expired — RLS calls like is_admin()
+      // read auth.jwt() and silently return zero rows with a stale token.
+      await authService.ensureValidSession();
+
       try {
         if (currentUser?.role === 'admin') {
-          const [projects, invoices, meetings, clients] = await Promise.all([
+          const results = await Promise.allSettled([
             projectService.getAll(),
             invoiceService.getAll(),
             meetingService.getAll(),
             clientService.getAll(),
           ]);
+
+          const projects = results[0].status === 'fulfilled' ? results[0].value : [];
+          const invoices = results[1].status === 'fulfilled' ? results[1].value : [];
+          const meetings = results[2].status === 'fulfilled' ? results[2].value : [];
+          const clients = results[3].status === 'fulfilled' ? results[3].value : [];
+
+          results.forEach((r, i) => {
+            if (r.status === 'rejected') {
+              console.error(`Dashboard query ${i} failed:`, r.reason);
+            }
+          });
+
           setAllInvoices(invoices);
           const now = new Date();
           const upcomingAppointments = meetings.filter((m: any) => new Date(m.meeting_date || m.created_at) >= now).length;
@@ -305,11 +324,22 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
         } else if (currentUser?.id) {
           const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
           const effectiveClientId = clientRecord?.id || currentUser.id;
-          const [projects, invoices, appointments] = await Promise.all([
+          const results = await Promise.allSettled([
             projectService.getByClientId(effectiveClientId),
             invoiceService.getByClientId(effectiveClientId),
             appointmentService.getByClientId(effectiveClientId),
           ]);
+
+          const projects = results[0].status === 'fulfilled' ? results[0].value : [];
+          const invoices = results[1].status === 'fulfilled' ? results[1].value : [];
+          const appointments = results[2].status === 'fulfilled' ? results[2].value : [];
+
+          results.forEach((r, i) => {
+            if (r.status === 'rejected') {
+              console.error(`Dashboard client query ${i} failed:`, r.reason);
+            }
+          });
+
           setAllInvoices(invoices);
           const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').reduce((s: number, i: any) => s + i.amount, 0);
           setStats((s) => ({

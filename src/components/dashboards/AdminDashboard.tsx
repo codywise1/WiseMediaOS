@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DollarSign, Users, BookOpen, ShoppingBag, TrendingUp, AlertCircle, Calendar, Lightbulb, LayoutDashboard } from 'lucide-react';
 import GlassCard from '../GlassCard';
 import PageHeader from '../PageHeader';
-import { supabase } from '../../lib/supabase';
+import { supabase, authService } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface Stats {
@@ -41,13 +41,19 @@ export default function AdminDashboard() {
   useEffect(() => { fetchStats(); }, []);
 
   async function fetchStats() {
-    const [profilesRes, coursesRes, marketplaceRes, appointmentsRes, invoicesRes] = await Promise.all([
+    await authService.ensureValidSession();
+    const results = await Promise.allSettled([
       supabase.from('profiles').select('role'),
       supabase.from('courses').select('title, enrollment_count').order('enrollment_count', { ascending: false }).limit(1),
       supabase.from('marketplace_items').select('title, downloads').order('downloads', { ascending: false }).limit(1),
       supabase.from('appointments').select('id').eq('status', 'scheduled').gte('scheduled_at', new Date().toISOString()),
       supabase.from('invoices').select('amount').eq('status', 'pending'),
     ]);
+    const profilesRes = results[0].status === 'fulfilled' ? results[0].value : { data: null, error: null };
+    const coursesRes = results[1].status === 'fulfilled' ? results[1].value : { data: null, error: null };
+    const marketplaceRes = results[2].status === 'fulfilled' ? results[2].value : { data: null, error: null };
+    const appointmentsRes = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: null };
+    const invoicesRes = results[4].status === 'fulfilled' ? results[4].value : { data: null, error: null };
 
     const subscriptions = {
       free: profilesRes.data?.filter(p => p.role === 'free').length || 0,
