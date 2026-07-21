@@ -288,6 +288,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   client?: Client;
+  invoice_projects?: Array<{ invoice_id: string; invoice?: { id: string; title?: string; amount: number; status: string; public_id?: string } }>;
 }
 
 export interface Invoice {
@@ -983,7 +984,8 @@ export const projectService = {
       .from('projects')
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        invoice_projects(invoice_id, invoice:invoices(id, title, amount, status, public_id))
       `)
       .order('created_at', { ascending: false });
 
@@ -1007,7 +1009,8 @@ export const projectService = {
       .from('projects')
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        invoice_projects(invoice_id, invoice:invoices(id, title, amount, status, public_id))
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
@@ -1041,7 +1044,8 @@ export const projectService = {
       .insert([project])
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        invoice_projects(invoice_id, invoice:invoices(id, title, amount, status, public_id))
       `)
       .single();
 
@@ -1078,7 +1082,8 @@ export const projectService = {
       .eq('id', id)
       .select(`
         *,
-        client:clients(*)
+        client:clients(*),
+        invoice_projects(invoice_id, invoice:invoices(id, title, amount, status, public_id))
       `)
       .single();
 

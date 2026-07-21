@@ -116,6 +116,19 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
     setIsEditModalOpen(true);
   };
 
+  const syncProjectInvoices = async (projectId: string, invoiceIds: string[]) => {
+    const { error: delError } = await supabase
+      .from('invoice_projects')
+      .delete()
+      .eq('project_id', projectId);
+    if (delError) throw delError;
+    if (invoiceIds.length > 0) {
+      const rows = invoiceIds.map(invId => ({ invoice_id: invId, project_id: projectId }));
+      const { error: insError } = await supabase.from('invoice_projects').insert(rows);
+      if (insError) throw insError;
+    }
+  };
+
   const handleSaveProject = async (projectData: any) => {
     try {
       const apiData = {
@@ -141,13 +154,9 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       };
 
       await projectService.update(id!, apiData);
-      // Sync the selected invoice to the join table
-      if (projectData.invoice_link) {
-        await supabase.from('invoice_projects').upsert(
-          { invoice_id: projectData.invoice_link, project_id: id! },
-          { onConflict: 'invoice_id,project_id' }
-        );
-      }
+      // Sync many-to-many invoice links via the join table
+      const projectInvoiceIds: string[] = projectData.invoice_ids || [];
+      await syncProjectInvoices(id!, projectInvoiceIds);
       await loadProject();
       setIsEditModalOpen(false);
     } catch (error) {
@@ -551,6 +560,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
           priority: project.priority,
           billing_type: project.billing_type,
           invoice_link: project.invoice_link,
+          invoice_projects: project.invoice_projects,
           owner: project.owner,
           assigned_members: project.assigned_members,
           deliverables: project.deliverables,

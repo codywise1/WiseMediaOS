@@ -4,6 +4,7 @@ import { clientService, invoiceService, Client, UserRole } from '../lib/supabase
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Link as LinkIcon } from 'lucide-react';
 
 interface User {
   email: string;
@@ -24,6 +25,7 @@ interface ProjectModalProps {
 export default function ProjectModal({ isOpen, onClose, onSave, project, mode, currentUser }: ProjectModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [linkedInvoiceIds, setLinkedInvoiceIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     client_id: '',
@@ -76,6 +78,10 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
 
   useEffect(() => {
     if (project && mode === 'edit') {
+      const existingIds = Array.isArray(project.invoice_projects)
+        ? project.invoice_projects.map((ip: any) => ip.invoice_id)
+        : (project.invoice_link ? [project.invoice_link] : []);
+      setLinkedInvoiceIds(existingIds);
       setFormData({
         name: project.name || '',
         client_id: project.client_id || '',
@@ -96,6 +102,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
         team: project.team || 1,
       });
     } else {
+      setLinkedInvoiceIds([]);
       setFormData({
         name: '',
         client_id: '',
@@ -125,8 +132,9 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
 
     const projectData = {
       ...formData,
+      invoice_ids: linkedInvoiceIds,
       client: selectedClient?.name || formData.client_name,
-      budget: `$${parseInt(formData.budget || '0').toLocaleString()}`,
+      budget: `${parseInt(formData.budget || '0').toLocaleString()}`,
       ...(mode === 'edit' && project ? { id: project.id } : {})
     };
     onSave(projectData);
@@ -327,20 +335,44 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-2">Linked Invoice</label>
-              <select
-                name="invoice_link"
-                value={formData.invoice_link}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              >
-                <option value="">No linked invoice</option>
-                {clientInvoices.map((inv) => (
-                  <option key={inv.id} value={inv.id}>
-                    {inv.public_id || `INV-${inv.id.slice(0, 6).toUpperCase()}`} · ${(Number(inv.amount) || 0).toLocaleString()}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2 mb-2">
+                <LinkIcon className="h-3.5 w-3.5 text-gray-500" />
+                <label className="block text-sm font-medium text-gray-300 mb-0">
+                  Linked Invoices
+                  {linkedInvoiceIds.length > 0 && <span className="text-[#3aa3eb] ml-1">· {linkedInvoiceIds.length} selected</span>}
+                </label>
+              </div>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar rounded-xl border border-white/10 bg-slate-900/40 p-2">
+                {clientInvoices.length === 0 ? (
+                  <p className="text-sm text-gray-600 px-3 py-2">
+                    {formData.client_id ? 'No invoices for this client yet.' : 'Select a client first.'}
+                  </p>
+                ) : (
+                  clientInvoices.map((inv) => {
+                    const checked = linkedInvoiceIds.includes(inv.id);
+                    return (
+                      <label
+                        key={inv.id}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${checked ? 'bg-[#3aa3eb]/10 border border-[#3aa3eb]/30' : 'hover:bg-white/5 border border-transparent'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setLinkedInvoiceIds(prev =>
+                              prev.includes(inv.id) ? prev.filter(id => id !== inv.id) : [...prev, inv.id]
+                            )
+                          }
+                          className="h-4 w-4 rounded border-white/20 bg-white/5 text-[#3aa3eb] focus:ring-[#3aa3eb]/40"
+                        />
+                        <span className={`text-sm font-medium ${checked ? 'text-white' : 'text-gray-300'}`}>
+                          {inv.public_id || `INV-${inv.id.slice(0, 6).toUpperCase()}`} · ${(Number(inv.amount) || 0).toLocaleString()} · {inv.status}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         </div>
