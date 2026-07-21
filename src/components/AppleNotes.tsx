@@ -405,24 +405,24 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
               {saveState === 'saving' && <div className="w-3 h-3 rounded-full border border-white/20 border-t-[#3aa3eb] animate-spin sm:hidden" />}
               <button
                 onClick={handleTogglePin}
-                className={`p-1.5 rounded-lg transition-colors ${pinned ? 'text-[#3aa3eb] bg-[#3aa3eb]/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+                className={`p-2 rounded-lg transition-colors ${pinned ? 'text-[#3aa3eb] bg-[#3aa3eb]/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
                 title="Pin"
               >
-                <Pin size={15} fill={pinned ? 'currentColor' : 'none'} />
+                <Pin size={16} fill={pinned ? 'currentColor' : 'none'} />
               </button>
               <button
                 onClick={handleToggleShare}
-                className={`p-1.5 rounded-lg transition-colors ${isShared ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+                className={`p-2 rounded-lg transition-colors ${isShared ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
                 title="Share with client"
               >
-                {isShared ? <Share2 size={15} /> : <Lock size={15} />}
+                {isShared ? <Share2 size={16} /> : <Lock size={16} />}
               </button>
               <button
                 onClick={handleDelete}
-                className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-red-400 transition-colors"
+                className="p-2 rounded-lg text-gray-500 hover:bg-white/5 hover:text-red-400 transition-colors"
                 title="Delete"
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
               </button>
             </div>
           </div>
@@ -446,7 +446,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
               {tags.map((tag) => (
                 <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-[#3aa3eb]/10 rounded-md text-xs text-[#3aa3eb]">
                   #{tag}
-                  <button onClick={() => removeTag(tag)} className="hover:text-white"><X size={11} /></button>
+                  <button onClick={() => removeTag(tag)} className="p-0.5 hover:text-white"><X size={12} /></button>
                 </span>
               ))}
               {showTagInput ? (
@@ -459,14 +459,14 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
                   }}
                   onBlur={() => { addTag(); setShowTagInput(false); }}
                   placeholder="tag"
-                  className="bg-transparent text-xs text-white placeholder:text-gray-700 focus:outline-none w-20 border-b border-white/10"
+                  className="bg-transparent text-base text-white placeholder:text-gray-700 focus:outline-none w-24 border-b border-white/10"
                 />
               ) : (
                 <button
                   onClick={() => setShowTagInput(true)}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-gray-600 hover:text-[#3aa3eb] hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs text-gray-600 hover:text-[#3aa3eb] hover:bg-white/5 transition-colors"
                 >
-                  <Tag size={11} /> Add tag
+                  <Tag size={12} /> Add tag
                 </button>
               )}
             </div>
@@ -475,7 +475,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Start writing..."
-              className="w-full flex-1 bg-transparent text-[15px] text-gray-200 placeholder:text-gray-700 focus:outline-none resize-none leading-relaxed min-h-0 overflow-y-auto custom-scrollbar"
+              className="w-full flex-1 bg-transparent text-base text-gray-200 placeholder:text-gray-700 focus:outline-none resize-none leading-relaxed min-h-0 overflow-y-auto custom-scrollbar"
               style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             />
           </div>

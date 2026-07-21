@@ -678,18 +678,18 @@ export default function Projects({ currentUser }: ProjectsProps) {
                           {project.project_type || 'General'}
                         </span>
                         {/* Action hints - shown on hover */}
-                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center space-x-1 sm:space-x-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
-                            className="text-gray-500 hover:text-blue-400 p-1"
+                            className="text-gray-400 hover:text-blue-400 p-2 rounded-lg hover:bg-white/5 transition-colors"
                           >
-                            <PencilIcon className="h-3.5 w-3.5" />
+                            <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
-                            className="text-gray-500 hover:text-red-400 p-1"
+                            className="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-colors"
                           >
-                            <TrashIcon className="h-3.5 w-3.5" />
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </div>

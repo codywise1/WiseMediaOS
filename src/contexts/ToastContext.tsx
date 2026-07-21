@@ -98,7 +98,7 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onC
         flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border
         transition-all duration-300 ease-in-out transform translate-x-0
         ${bgColors[toast.type]}
-        min-w-[300px] max-w-md
+        min-w-0 max-w-md w-[calc(100vw-2rem)]
       `}
       role="alert"
     >

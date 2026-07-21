@@ -73,7 +73,7 @@ export default function UploadFileModal({ isOpen, onClose, onUpload, clients, pr
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
+      <div className="glass-card rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Upload File</h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-white">

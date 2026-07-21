@@ -417,7 +417,7 @@ export default function ContentHubAdminModal({ isOpen, onClose, onSaved, editing
                         type="url"
                         value={form.cover_image_url}
                         onChange={e => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                        className="flex-1 px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all text-sm font-body"
+                        className="flex-1 px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all text-base font-body"
                         placeholder="or paste image URL"
                       />
                     </div>
@@ -440,7 +440,7 @@ export default function ContentHubAdminModal({ isOpen, onClose, onSaved, editing
                       value={tagInput}
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
-                      className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all text-sm font-body"
+                      className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all text-base font-body"
                       placeholder="Add tag and press Enter"
                     />
                     <button type="button" onClick={addTag} className="p-3 bg-white/10 hover:bg-white/15 rounded-2xl text-white transition-colors">

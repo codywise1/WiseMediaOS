@@ -98,7 +98,7 @@ export const proposalService = {
       .select(`
         *,
         client:clients(*),
-        invoice:invoices(*),
+        invoice:invoices!invoices_proposal_id_fkey(*),
         items:proposal_items(*),
         billing_plan:billing_plans(*),
         proposal_invoices(invoice_id, invoice:invoices(id, title, amount, status, public_id)),
@@ -145,7 +145,7 @@ export const proposalService = {
       .select(`
         *,
         client:clients(*),
-        invoice:invoices(*),
+        invoice:invoices!invoices_proposal_id_fkey(*),
         items:proposal_items(*),
         billing_plan:billing_plans(*),
         proposal_invoices(invoice_id, invoice:invoices(id, title, amount, status, public_id)),
@@ -191,7 +191,7 @@ export const proposalService = {
       .select(`
         *,
         client:clients(*),
-        invoice:invoices(*),
+        invoice:invoices!invoices_proposal_id_fkey(*),
         items:proposal_items(*),
         billing_plan:billing_plans(*),
         events:proposal_events(*),
@@ -575,7 +575,7 @@ export const proposalService = {
         // Fetch and return the updated proposal
         const { data: updatedProposal } = await sb
           .from('proposals')
-          .select('*, client:clients(*), invoice:invoices(*), items:proposal_items(*), billing_plan:billing_plans(*)')
+          .select('*, client:clients(*), invoice:invoices!invoices_proposal_id_fkey(*), items:proposal_items(*), billing_plan:billing_plans(*)')
           .eq('id', proposalId)
           .single();
 

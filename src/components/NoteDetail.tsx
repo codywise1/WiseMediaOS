@@ -378,7 +378,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                     {/* Editor Area */}
                     <div className="glass-card rounded-[32px] border border-white/10 transition-all duration-300 shadow-2xl relative overflow-hidden">
-                        <div className="relative max-w-[760px] mx-auto min-h-[800px] px-4 py-6 sm:px-6 sm:py-8">
+                        <div className="relative max-w-[760px] mx-auto min-h-[400px] sm:min-h-[800px] px-4 py-6 sm:px-6 sm:py-8">
                             <NoteEditor
                                 content={blocks}
                                 onChange={setBlocks}

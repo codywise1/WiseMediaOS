@@ -81,7 +81,7 @@ export default function Login({ onLogin }: LoginProps) {
       {/* Background overlay for readability */}
       <div className="fixed inset-0 bg-black/20 -z-10 pointer-events-none" />
 
-      <div className="glass-card rounded-2xl p-8 w-full max-w-sm relative z-10 border border-white/5 bg-black/60 backdrop-blur-2xl">
+      <div className="glass-card rounded-2xl p-6 sm:p-8 w-full max-w-sm relative z-10 border border-white/5 bg-black/60 backdrop-blur-2xl">
         {/* Logo */}
         <div className="text-center mb-10">
           <img

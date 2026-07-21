@@ -133,7 +133,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           due_date, due_at, issued_at, created_at, paid_at, updated_at,
           client:clients(name, email),
           invoice_projects(project_id, project:projects(id, name)),
-          proposal:proposals(id, title)
+          proposal:proposals!invoices_proposal_id_fkey(id, title)
         `)
         .order('created_at', { ascending: false });
 
