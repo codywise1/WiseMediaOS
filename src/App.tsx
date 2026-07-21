@@ -289,66 +289,71 @@ function App() {
     let subscription: any = null;
     if (isSupabaseAvailable()) {
       let recoveringNullUser = false;
-      const { data: { subscription: sub } } = authService.onAuthStateChange(async (user, event) => {
-        if (user) {
-          // Only update if user changed (avoid re-renders when switching tabs)
-          if (currentUserIdRef.current !== user.id) {
-            updateCurrentUserFromAuth(user);
-          }
-          // Always ensure authenticated state is set
-          setIsAuthenticated(true);
-          // TOKEN_REFRESHED means a new JWT was issued. Bump authEpoch so
-          // components that depend on a valid token (Dashboard, lists) can
-          // re-fetch with the fresh token — their first load may have run
-          // against an expired JWT and silently gotten empty results from RLS.
-          if (event === 'TOKEN_REFRESHED') {
-            setAuthEpoch(e => e + 1);
-          }
-        } else {
-          // A null user can fire as a side-effect of a multi-tab refresh-token
-          // race (the other tab consumed the shared refresh token, so this tab
-          // got a 401 and Supabase emitted SIGNED_OUT). Before wiping — which
-          // makes all data disappear — try to recover the session from storage
-          // / forced refresh. Only wipe if recovery genuinely fails.
-          if (currentUserIdRef.current && !recoveringNullUser) {
-            recoveringNullUser = true;
-            try {
-              let recovered = false;
-              for (let i = 0; i < 4 && !recovered; i++) {
-                await new Promise(r => setTimeout(r, 500 * (i + 1)));
-                const { data: { session } } = await supabase!.auth.getSession();
-                if (session?.user) {
-                  if (currentUserIdRef.current !== session.user.id) {
-                    updateCurrentUserFromAuth(session.user);
-                  }
-                  setIsAuthenticated(true);
-                  recovered = true;
-                } else {
-                  const { data: refreshed } = await supabase!.auth.refreshSession();
-                  if (refreshed.session?.user) {
-                    if (currentUserIdRef.current !== refreshed.session.user.id) {
-                      updateCurrentUserFromAuth(refreshed.session.user);
+      const { data: { subscription: sub } } = authService.onAuthStateChange((user, event) => {
+        // The onAuthStateChange callback runs synchronously during event
+        // processing. Using `await` directly inside it on another Supabase
+        // method creates a deadlock. Wrap ALL async work in an IIFE.
+        (async () => {
+          if (user) {
+            // Only update if user changed (avoid re-renders when switching tabs)
+            if (currentUserIdRef.current !== user.id) {
+              updateCurrentUserFromAuth(user);
+            }
+            // Always ensure authenticated state is set
+            setIsAuthenticated(true);
+            // TOKEN_REFRESHED means a new JWT was issued. Bump authEpoch so
+            // components that depend on a valid token (Dashboard, lists) can
+            // re-fetch with the fresh token — their first load may have run
+            // against an expired JWT and silently gotten empty results from RLS.
+            if (event === 'TOKEN_REFRESHED') {
+              setAuthEpoch(e => e + 1);
+            }
+          } else {
+            // A null user can fire as a side-effect of a multi-tab refresh-token
+            // race (the other tab consumed the shared refresh token, so this tab
+            // got a 401 and Supabase emitted SIGNED_OUT). Before wiping — which
+            // makes all data disappear — try to recover the session from storage
+            // / forced refresh. Only wipe if recovery genuinely fails.
+            if (currentUserIdRef.current && !recoveringNullUser) {
+              recoveringNullUser = true;
+              try {
+                let recovered = false;
+                for (let i = 0; i < 4 && !recovered; i++) {
+                  await new Promise(r => setTimeout(r, 500 * (i + 1)));
+                  const { data: { session } } = await supabase!.auth.getSession();
+                  if (session?.user) {
+                    if (currentUserIdRef.current !== session.user.id) {
+                      updateCurrentUserFromAuth(session.user);
                     }
                     setIsAuthenticated(true);
                     recovered = true;
+                  } else {
+                    const { data: refreshed } = await supabase!.auth.refreshSession();
+                    if (refreshed.session?.user) {
+                      if (currentUserIdRef.current !== refreshed.session.user.id) {
+                        updateCurrentUserFromAuth(refreshed.session.user);
+                      }
+                      setIsAuthenticated(true);
+                      recovered = true;
+                    }
                   }
                 }
+                if (recovered) {
+                  setLoading(false);
+                  recoveringNullUser = false;
+                  return;
+                }
+              } catch {
+                // fall through to wipe
               }
-              if (recovered) {
-                setLoading(false);
-                recoveringNullUser = false;
-                return;
-              }
-            } catch {
-              // fall through to wipe
+              recoveringNullUser = false;
             }
-            recoveringNullUser = false;
+            setCurrentUser(null);
+            setIsAuthenticated(false);
+            currentUserIdRef.current = null;
           }
-          setCurrentUser(null);
-          setIsAuthenticated(false);
-          currentUserIdRef.current = null;
-        }
-        setLoading(false);
+          setLoading(false);
+        })();
       });
       subscription = sub;
     } else {

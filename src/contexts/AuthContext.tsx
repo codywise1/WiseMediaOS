@@ -143,12 +143,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // another tab updates the shared session in localStorage. We do NOT need
     // a separate window 'storage' listener — that only races with the
     // built-in handler and causes the multi-tab token glitch.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+    // The onAuthStateChange callback runs synchronously during event
+    // processing. Using `await` directly inside it on another Supabase
+    // method (like auth.getSession) creates a deadlock. Wrap ALL async
+    // work in an IIFE so the callback returns immediately.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
+        if (!mounted) return;
 
-      // TOKEN_REFRESHED: this tab or another tab rotated the token.
-      // Update user in place; never wipe profile/data on refresh.
-      if (event === 'TOKEN_REFRESHED') {
+        // TOKEN_REFRESHED: this tab or another tab rotated the token.
+        // Update user in place; never wipe profile/data on refresh.
+        if (event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            setUser(prev => (prev?.id === session.user.id ? prev : session.user));
+            const currentProfile = profileRef.current;
+            if (!currentProfile || currentProfile.id !== session.user.id) {
+              setLoading(true);
+              await loadProfile(session.user.id, mounted);
+            }
+          }
+          return;
+        }
+
+        // INITIAL_SESSION fires on tab load and cross-tab storage sync.
+        if (event === 'INITIAL_SESSION') {
+          if (session?.user) {
+            setUser(prev => (prev?.id === session.user.id ? prev : session.user));
+            const currentProfile = profileRef.current;
+            if (!currentProfile || currentProfile.id !== session.user.id) {
+              setLoading(true);
+              await loadProfile(session.user.id, mounted);
+            } else {
+              setLoading(false);
+            }
+          }
+          return;
+        }
+
+        // SIGNED_OUT can fire as a side-effect of a failed token refresh in a
+        // multi-tab setup (the other tab consumed the refresh token). Before
+        // wiping, try to recover the session from storage / forced refresh.
+        if (event === 'SIGNED_OUT') {
+          if (profileRef.current && !recoveringRef.current) {
+            const recovered = await recoverSession(mounted);
+            if (recovered) return; // Session recovered — don't wipe.
+          }
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        if (event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED') {
+          if (session?.user) {
+            setUser(prev => (prev?.id === session.user.id ? prev : session.user));
+          }
+          return;
+        }
+
         if (session?.user) {
           setUser(prev => (prev?.id === session.user.id ? prev : session.user));
           const currentProfile = profileRef.current;
@@ -156,64 +208,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             await loadProfile(session.user.id, mounted);
           }
-        }
-        return;
-      }
-
-      // INITIAL_SESSION fires on tab load and cross-tab storage sync.
-      if (event === 'INITIAL_SESSION') {
-        if (session?.user) {
-          setUser(prev => (prev?.id === session.user.id ? prev : session.user));
-          const currentProfile = profileRef.current;
-          if (!currentProfile || currentProfile.id !== session.user.id) {
-            setLoading(true);
-            await loadProfile(session.user.id, mounted);
-          } else {
-            setLoading(false);
+        } else {
+          // No session in this event — try recovery before wiping, since
+          // another tab may have just refreshed and this event is stale.
+          if (profileRef.current && !recoveringRef.current) {
+            const recovered = await recoverSession(mounted);
+            if (recovered) return;
           }
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
         }
-        return;
-      }
-
-      // SIGNED_OUT can fire as a side-effect of a failed token refresh in a
-      // multi-tab setup (the other tab consumed the refresh token). Before
-      // wiping, try to recover the session from storage / forced refresh.
-      if (event === 'SIGNED_OUT') {
-        if (profileRef.current && !recoveringRef.current) {
-          const recovered = await recoverSession(mounted);
-          if (recovered) return; // Session recovered — don't wipe.
-        }
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
-      if (event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED') {
-        if (session?.user) {
-          setUser(prev => (prev?.id === session.user.id ? prev : session.user));
-        }
-        return;
-      }
-
-      if (session?.user) {
-        setUser(prev => (prev?.id === session.user.id ? prev : session.user));
-        const currentProfile = profileRef.current;
-        if (!currentProfile || currentProfile.id !== session.user.id) {
-          setLoading(true);
-          await loadProfile(session.user.id, mounted);
-        }
-      } else {
-        // No session in this event — try recovery before wiping, since
-        // another tab may have just refreshed and this event is stale.
-        if (profileRef.current && !recoveringRef.current) {
-          const recovered = await recoverSession(mounted);
-          if (recovered) return;
-        }
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-      }
+      })();
     });
 
     return () => {

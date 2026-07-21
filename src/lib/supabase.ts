@@ -198,11 +198,6 @@ export const authService = {
 
     const sb = getSupabaseClient();
     return sb.auth.onAuthStateChange((event, session) => {
-      // INITIAL_SESSION fires on page load and is handled by checkAuthState
-      // — skip it here to avoid a redundant update that can race.
-      if (event === 'INITIAL_SESSION') {
-        return;
-      }
       callback(session?.user || null, event);
     });
   },

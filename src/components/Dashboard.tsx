@@ -263,9 +263,23 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       if (isFirstLoad) setLoading(true);
 
       // Ensure the JWT is valid before running any queries. On page refresh
-      // the cached access token may be expired — RLS calls like is_admin()
-      // read auth.jwt() and silently return zero rows with a stale token.
-      await authService.ensureValidSession();
+      // the cached access token may be expired or the session may not yet be
+      // restored from storage. If ensureValidSession returns false, retry a
+      // few times before giving up — RLS will silently return zero rows if
+      // we run queries without a valid session.
+      let sessionReady = false;
+      for (let i = 0; i < 5 && !sessionReady; i++) {
+        sessionReady = await authService.ensureValidSession();
+        if (!sessionReady) {
+          await new Promise(r => setTimeout(r, 300 * (i + 1)));
+        }
+      }
+      if (!sessionReady) {
+        console.warn('Dashboard: no valid session after retries, skipping data load');
+        if (isFirstLoad) { setLoading(false); hasLoadedRef.current = true; }
+        clearTimeout(safetyTimeout);
+        return;
+      }
 
       try {
         if (currentUser?.role === 'admin') {
