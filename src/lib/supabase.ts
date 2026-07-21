@@ -1092,7 +1092,7 @@ export const invoiceService = {
       .select(`
         *,
         client:clients(*),
-        project:projects(id, name)
+        invoice_projects(project_id, project:projects(id, name))
       `)
       .order('created_at', { ascending: false });
 
@@ -1111,7 +1111,7 @@ export const invoiceService = {
       .select(`
         *,
         client:clients(*),
-        project:projects(id, name)
+        invoice_projects(project_id, project:projects(id, name))
       `)
       .order('created_at', { ascending: false });
 
@@ -1130,7 +1130,7 @@ export const invoiceService = {
       .select(`
         *,
         client:clients(*),
-        project:projects(id, name)
+        invoice_projects(project_id, project:projects(id, name))
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
@@ -1151,7 +1151,7 @@ export const invoiceService = {
       .select(`
         *,
         client:clients(*),
-        project:projects(id, name)
+        invoice_projects(project_id, project:projects(id, name))
       `)
       .single();
 
@@ -1168,7 +1168,7 @@ export const invoiceService = {
       .select(`
         *,
         client:clients(*),
-        project:projects(id, name)
+        invoice_projects(project_id, project:projects(id, name))
       `)
       .single();
 

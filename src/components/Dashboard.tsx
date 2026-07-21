@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   projectService,
   invoiceService,
@@ -23,6 +24,13 @@ import {
   Sparkles,
   Calendar,
   ChevronRight,
+  Globe,
+  Instagram,
+  Youtube,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Send,
 } from 'lucide-react';
 
 interface User {
@@ -37,6 +45,33 @@ interface DashboardProps {
 }
 
 type Timeframe = '7d' | '30d' | 'quarter' | 'year';
+
+const QUICK_LINKS = [
+  { label: 'My Website', url: 'https://wisemedia.io', icon: Globe, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
+  { label: 'Instagram', url: 'https://instagram.com/wisemedia', icon: Instagram, color: 'text-pink-400', bg: 'bg-pink-500/15' },
+  { label: 'YouTube', url: 'https://youtube.com/@wisemedia', icon: Youtube, color: 'text-red-400', bg: 'bg-red-500/15' },
+  { label: 'Twitter / X', url: 'https://twitter.com/wisemedia', icon: Twitter, color: 'text-white', bg: 'bg-white/10' },
+  { label: 'LinkedIn', url: 'https://linkedin.com/company/wisemedia', icon: Linkedin, color: 'text-blue-400', bg: 'bg-blue-500/15' },
+  { label: 'Facebook', url: 'https://facebook.com/wisemedia', icon: Facebook, color: 'text-blue-300', bg: 'bg-blue-600/15' },
+  { label: 'Telegram', url: 'https://t.me/wisemedia', icon: Send, color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 260, damping: 24 },
+  },
+};
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -54,10 +89,6 @@ function getLastName(fullName?: string | null) {
 function startOfQuarter(d: Date) {
   const q = Math.floor(d.getMonth() / 3);
   return new Date(d.getFullYear(), q * 3, 1);
-}
-
-function startOfYear(d: Date) {
-  return new Date(d.getFullYear(), 0, 1);
 }
 
 function isSameMonth(a: Date, b: Date) {
@@ -318,7 +349,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white/10 border-t-[#3aa3eb]" />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+          className="h-10 w-10 border-2 border-white/10 border-t-[#3aa3eb] rounded-full"
+        />
       </div>
     );
   }
@@ -327,27 +362,55 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const quarterLabel = `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`;
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 sm:space-y-8"
+    >
       {/* Header */}
-      <div>
+      <motion.div variants={itemVariants}>
         <p className="text-sm text-gray-500 font-medium mb-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
           {getGreeting()}, Mr. {getLastName(currentUser?.name)}
         </h1>
-        <p className="text-gray-400 mt-1.5 text-sm sm:text-base">
+        <p className="text-gray-400 mt-2 text-sm sm:text-base">
           {isAdmin ? "Here's your business at a glance." : "Here's your project overview."}
         </p>
-      </div>
+      </motion.div>
+
+      {/* Quick Links — socials + website */}
+      <motion.div variants={itemVariants}>
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Quick Links</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {QUICK_LINKS.map((link) => (
+            <motion.a
+              key={link.label}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="glass-card rounded-2xl p-3 sm:p-4 flex flex-col items-center gap-2 group"
+            >
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center ${link.bg} group-hover:scale-110 transition-transform`}>
+                <link.icon className={link.color} size={20} />
+              </div>
+              <span className="text-[10px] sm:text-xs text-gray-400 font-medium text-center leading-tight">{link.label}</span>
+            </motion.a>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Revenue Chart — iOS style */}
       {isAdmin && (
-        <div className="glass-card rounded-3xl p-5 sm:p-7">
+        <motion.div variants={itemVariants} className="glass-card rounded-3xl p-5 sm:p-7">
           <div className="flex items-start justify-between mb-6 gap-3 flex-wrap">
             <div>
               <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Monthly Revenue</h2>
-              <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{formatCurrency(totalChart)}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight tabular-nums">{formatCurrency(totalChart)}</p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {timeframe === '7d' && 'Last 7 days'}
                 {timeframe === '30d' && 'Last 30 days'}
@@ -355,29 +418,39 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                 {timeframe === 'year' && `${new Date().getFullYear()} YTD`}
               </p>
             </div>
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/5 border border-white/[0.08]">
+            <div
+              className="flex items-center gap-0.5 p-0.5 rounded-full"
+              style={{ background: 'rgba(120, 120, 128, 0.16)' }}
+            >
               {(['7d', '30d', 'quarter', 'year'] as Timeframe[]).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    timeframe === tf
-                      ? 'bg-[#3aa3eb] text-white shadow-lg shadow-[#3aa3eb]/25'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className="relative px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{ color: timeframe === tf ? '#fff' : 'rgba(255,255,255,0.4)' }}
                 >
-                  {tf === '7d' ? '1W' : tf === '30d' ? '1M' : tf === 'quarter' ? '1Q' : '1Y'}
+                  {timeframe === tf && (
+                    <motion.div
+                      layoutId="timeframePill"
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: 'linear-gradient(180deg, #3aa3eb 0%, #2d8fd4 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.3), 0 0 12px rgba(58,163,235,0.25)' }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {tf === '7d' ? '1W' : tf === '30d' ? '1M' : tf === 'quarter' ? '1Q' : '1Y'}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
           <RevenueLineChart data={chartData} />
-        </div>
+        </motion.div>
       )}
 
       {/* This Quarter Snapshot */}
       {isAdmin && (
-        <div>
+        <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">{quarterLabel}</h2>
             <button onClick={() => navigate('/invoices')} className="text-xs text-[#3aa3eb] hover:text-[#59a1e5] font-medium flex items-center gap-1">
@@ -405,12 +478,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               label={`Invoices paid · ${formatCurrency(stats.invoicesPaidThisMonth)}`}
             />
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* This Year Snapshot */}
       {isAdmin && (
-        <div>
+        <motion.div variants={itemVariants}>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">{new Date().getFullYear()} YTD</h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <SnapshotCard
@@ -432,11 +505,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               label="Total invoices"
             />
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Overview Stats */}
-      <div>
+      <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Overview</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatTile icon={Briefcase} label="Active Projects" value={stats.activeProjects.toString()} sub={`${stats.completedProjects} completed`} color="blue" onClick={() => navigate('/projects')} />
@@ -448,10 +521,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             <StatTile icon={FileText} label="Total Invoices" value={stats.totalInvoices.toString()} sub={`${stats.completedProjects} done`} color="neutral" onClick={() => navigate('/invoices')} />
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
-      <div>
+      <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Quick Actions</h2>
         <div className="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
           <QuickActionRow icon={Plus} label="New Project" sub="Start a new client project" onClick={() => navigate('/projects')} />
@@ -459,34 +532,43 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <QuickActionRow icon={Calendar} label="Schedule Meeting" sub="Book a call with a client" onClick={() => navigate('/meetings')} />
           {isAdmin && <QuickActionRow icon={Sparkles} label="New Proposal" sub="Draft a proposal for a prospect" onClick={() => navigate('/proposals')} />}
         </div>
-      </div>
+      </motion.div>
 
       {/* Recent Activity */}
-      <div>
+      <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Recent Activity</h2>
         <div className="glass-card rounded-2xl overflow-hidden">
           {recentActivities.length > 0 ? (
             <div className="divide-y divide-white/5">
-              {recentActivities.map((activity) => (
-                <button key={activity.id} onClick={() => navigate(activity.route)} className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    activity.status === 'completed' || activity.status === 'success' ? 'bg-emerald-500/15' :
-                    activity.status === 'pending' ? 'bg-amber-500/15' :
-                    activity.status === 'error' ? 'bg-red-500/15' : 'bg-white/5'
-                  }`}>
-                    <activity.icon className={
-                      activity.status === 'completed' || activity.status === 'success' ? 'text-emerald-400' :
-                      activity.status === 'pending' ? 'text-amber-400' :
-                      activity.status === 'error' ? 'text-red-400' : 'text-gray-400'
-                    } size={17} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium truncate">{activity.title}</p>
-                    {activity.subtitle && <p className="text-xs text-gray-500 truncate">{activity.subtitle}</p>}
-                  </div>
-                  <span className="text-xs text-gray-600 shrink-0">{activity.time}</span>
-                </button>
-              ))}
+              <AnimatePresence>
+                {recentActivities.map((activity, i) => (
+                  <motion.button
+                    key={activity.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.05 }}
+                    onClick={() => navigate(activity.route)}
+                    className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      activity.status === 'completed' || activity.status === 'success' ? 'bg-emerald-500/15' :
+                      activity.status === 'pending' ? 'bg-amber-500/15' :
+                      activity.status === 'error' ? 'bg-red-500/15' : 'bg-white/5'
+                    }`}>
+                      <activity.icon className={
+                        activity.status === 'completed' || activity.status === 'success' ? 'text-emerald-400' :
+                        activity.status === 'pending' ? 'text-amber-400' :
+                        activity.status === 'error' ? 'text-red-400' : 'text-gray-400'
+                      } size={17} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{activity.title}</p>
+                      {activity.subtitle && <p className="text-xs text-gray-500 truncate">{activity.subtitle}</p>}
+                    </div>
+                    <span className="text-xs text-gray-600 shrink-0">{activity.time}</span>
+                  </motion.button>
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="py-12 text-center">
@@ -495,8 +577,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -539,12 +621,9 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
   const plotW = width - Y_LABEL_W;
   const n = data.length;
 
-  // x center of each point — evenly spaced across plotW with half-step margins
   const xOf = (i: number) => Y_LABEL_W + (plotW / n) * (i + 0.5);
-  // y coordinate (SVG top-down)
   const yOf = (v: number) => CHART_H - (v / maxVal) * CHART_H;
 
-  // Build smooth SVG path using cubic bezier
   const linePath = data.map((p, i) => {
     const x = xOf(i);
     const y = yOf(p.value);
@@ -555,12 +634,10 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
     return `C${cpx},${py} ${cpx},${y} ${x},${y}`;
   }).join(' ');
 
-  // Area fill — close path to bottom
   const firstX = xOf(0);
   const lastX = xOf(n - 1);
   const areaPath = linePath + ` L${lastX},${CHART_H} L${firstX},${CHART_H} Z`;
 
-  // Decide which x-labels to show (avoid overlap for dense series)
   const maxLabels = Math.min(n, Math.floor(plotW / 48));
   const step = n <= maxLabels ? 1 : Math.ceil(n / maxLabels);
   const showLabel = (i: number) => i % step === 0 || i === n - 1;
@@ -587,7 +664,6 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
           </clipPath>
         </defs>
 
-        {/* Horizontal grid lines + y labels */}
         {Array.from({ length: GRID_LINES + 1 }).map((_, gi) => {
           const frac = gi / GRID_LINES;
           const y = CHART_H - frac * CHART_H;
@@ -609,21 +685,28 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
           );
         })}
 
-        {/* Area fill */}
-        <path d={areaPath} fill={`url(#${gradId})`} clipPath={`url(#${clipId})`} />
+        <motion.path
+          d={areaPath}
+          fill={`url(#${gradId})`}
+          clipPath={`url(#${clipId})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        />
 
-        {/* Line */}
-        <path
+        <motion.path
           d={linePath}
           fill="none"
           stroke="#3aa3eb"
-          strokeWidth={2}
+          strokeWidth={2.5}
           strokeLinejoin="round"
           strokeLinecap="round"
           clipPath={`url(#${clipId})`}
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.2, ease: 'easeInOut' }}
         />
 
-        {/* Hover vertical rule */}
         {hovered !== null && (
           <line
             x1={xOf(hovered)} y1={0} x2={xOf(hovered)} y2={CHART_H}
@@ -631,14 +714,12 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
           />
         )}
 
-        {/* Dots */}
         {data.map((p, i) => {
           const x = xOf(i);
           const y = yOf(p.value);
           const isHov = hovered === i;
           return (
             <g key={i}>
-              {/* invisible hit area */}
               <rect
                 x={xOf(i) - plotW / n / 2} y={0}
                 width={plotW / n} height={CHART_H}
@@ -652,7 +733,6 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
                 strokeWidth={isHov ? 2.5 : 2}
                 style={{ transition: 'r 0.15s, fill 0.15s' }}
               />
-              {/* Tooltip */}
               {isHov && (() => {
                 const tipW = 110;
                 const tipH = 36;
@@ -660,8 +740,10 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
                 const tipY = y - tipH - 10;
                 return (
                   <g>
-                    <rect x={tipX} y={tipY} width={tipW} height={tipH} rx={6}
-                      fill="#0d1724" stroke="rgba(58,163,235,0.3)" strokeWidth={1} />
+                    <rect x={tipX} y={tipY} width={tipW} height={tipH} rx={10}
+                      fill="rgba(28,28,30,0.9)" stroke="rgba(58,163,235,0.3)" strokeWidth={1}
+                      style={{ backdropFilter: 'blur(20px)' }}
+                    />
                     <text x={tipX + tipW / 2} y={tipY + 13}
                       textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={10}>
                       {p.label}
@@ -677,7 +759,6 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
           );
         })}
 
-        {/* X-axis labels — centered under each point */}
         {data.map((p, i) => {
           if (!showLabel(i)) return null;
           return (
@@ -697,7 +778,6 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 function SnapshotCard({
   icon, iconBg, value, label, pill,
@@ -709,7 +789,11 @@ function SnapshotCard({
   pill?: { value: number; positive: boolean };
 }) {
   return (
-    <div className="glass-card rounded-2xl p-5 flex flex-col h-full">
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="glass-card rounded-2xl p-5 flex flex-col h-full"
+    >
       <div className="flex items-center justify-between mb-3 h-9">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>{icon}</div>
         {pill && (
@@ -721,9 +805,9 @@ function SnapshotCard({
           </span>
         )}
       </div>
-      <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{value}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight tabular-nums">{value}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -740,12 +824,18 @@ function StatTile({
     emerald: 'bg-emerald-500/15 text-emerald-400',
   };
   return (
-    <button onClick={onClick} className="glass-card rounded-2xl p-4 sm:p-5 text-left hover:scale-[1.02] active:scale-[0.99] transition-transform">
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.03, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      className="glass-card rounded-2xl p-4 sm:p-5 text-left"
+    >
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${colorMap[color]}`}><Icon size={18} /></div>
-      <p className="text-2xl font-bold text-white tracking-tight">{value}</p>
+      <p className="text-2xl font-bold text-white tracking-tight tabular-nums">{value}</p>
       <p className="text-xs text-gray-400 mt-0.5">{label}</p>
       <p className="text-[11px] text-gray-600 mt-0.5">{sub}</p>
-    </button>
+    </motion.button>
   );
 }
 
@@ -755,7 +845,12 @@ function QuickActionRow({
   icon: any; label: string; sub: string; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left group">
+    <motion.button
+      onClick={onClick}
+      whileHover={{ x: 4 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left group"
+    >
       <div className="w-9 h-9 rounded-xl bg-[#3aa3eb]/15 flex items-center justify-center shrink-0 group-hover:bg-[#3aa3eb]/25 transition-colors">
         <Icon className="text-[#3aa3eb]" size={18} />
       </div>
@@ -764,6 +859,6 @@ function QuickActionRow({
         <p className="text-xs text-gray-500">{sub}</p>
       </div>
       <ArrowUpRight className="text-gray-600 group-hover:text-[#3aa3eb] transition-colors" size={16} />
-    </button>
+    </motion.button>
   );
 }

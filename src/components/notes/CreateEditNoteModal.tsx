@@ -268,7 +268,7 @@ export default function CreateEditNoteModal({
                             placeholder="Untitled"
                             autoFocus
                             className="w-full bg-transparent text-white placeholder:text-gray-700 focus:outline-none text-3xl sm:text-4xl font-bold tracking-tight mb-1"
-                            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                            style={{ fontFamily: 'Bebas Neue, sans-serif' }}
                             required
                         />
                         <div className="flex items-center gap-3 mb-6 text-xs text-gray-600">

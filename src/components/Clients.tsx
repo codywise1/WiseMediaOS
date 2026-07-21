@@ -450,7 +450,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-white font-medium truncate">Total Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{clients.length}</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{clients.length}</p>
             </div>
           </div>
         </div>
@@ -468,7 +468,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-white font-medium truncate">Active Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{activeClients}</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{activeClients}</p>
             </div>
           </div>
         </div>
@@ -486,7 +486,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-white font-medium truncate">VIP Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{clients.filter(c => c.status === 'vip').length}</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{clients.filter(c => c.status === 'vip').length}</p>
             </div>
           </div>
         </div>
@@ -504,7 +504,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-white font-medium truncate">Prospects</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{prospects}</p>
+              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{prospects}</p>
             </div>
           </div>
         </div>
@@ -535,7 +535,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 <div className="mb-6 sm:mb-8 relative z-10">
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                       {client.company || client.name}
                     </h3>
                     <p className="text-gray-300 text-sm font-semibold mb-3 truncate">

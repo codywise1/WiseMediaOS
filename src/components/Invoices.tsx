@@ -228,7 +228,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr}. ${d.getDate()}`, value: dayRevenue, x: spacing * (i + 1) };
+          return { label: `${monthAbbr}. ${d.getDate()}`, value: dayRevenue, x: spacing * i };
         });
       }
       case 'week': {
@@ -247,7 +247,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr}. ${weekStart.getDate()}`, value: weekRevenue, x: spacing * (i + 1) };
+          return { label: `${monthAbbr}. ${weekStart.getDate()}`, value: weekRevenue, x: spacing * i };
         });
       }
       case 'month': {
@@ -263,7 +263,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`, value: monthRevenue, x: spacing * (i + 1) };
+          return { label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`, value: monthRevenue, x: spacing * i };
         });
       }
       case 'quarter': {
@@ -283,7 +283,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (quarterCount + 1);
-          return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue, x: spacing * (i + 1) };
+          return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue, x: spacing * i };
         });
       }
       case 'year': {
@@ -299,7 +299,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           const spacing = 800 / (yearCount + 1);
-          return { label: String(targetYear), value: yearRevenue, x: spacing * (i + 1) };
+          return { label: String(targetYear), value: yearRevenue, x: spacing * i };
         });
       }
       default:
@@ -560,7 +560,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/[0.04] via-transparent to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
               <div>
-                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
+                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
                 <p className="text-xs text-gray-400 mt-1 font-medium">
                   Total: <span className="text-white font-bold tabular-nums">${chartData.reduce((s, d) => s + d.value, 0).toLocaleString()}</span>
                 </p>
@@ -581,7 +581,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         : 'text-gray-400 hover:text-white'
                     }`}
                     style={{
-                      fontFamily: 'Space Grotesk, Montserrat, sans-serif',
+                      fontFamily: 'Bebas Neue, Montserrat, sans-serif',
                       background: chartPeriod === period
                         ? 'linear-gradient(180deg, #3aa3eb 0%, #2d8fd4 100%)'
                         : 'transparent',
@@ -711,7 +711,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <span className="text-[10px] font-bold text-[#3aa3eb] uppercase tracking-widest">
                       {chartData[hoveredMonthIndex].label}
                     </span>
-                    <span className="text-lg font-bold text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
+                    <span className="text-lg font-bold text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
                       ${chartData[hoveredMonthIndex].value.toLocaleString()}
                     </span>
                   </div>
@@ -754,7 +754,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               WebkitBackdropFilter: 'blur(40px) saturate(180%)',
             }}
           >
-            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
+            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
             <div className="space-y-3">
               {[
                 { label: 'Last 7 Days', value: revenue7d, icon: ArrowRight, accent: 'text-[#3aa3eb]' },
@@ -766,14 +766,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="w-1 h-10 rounded-full bg-gradient-to-b from-[#3aa3eb] to-[#3aa3eb]/30" />
                     <span className="text-sm text-gray-300 font-medium">{item.label}</span>
                   </div>
-                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
+                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Collected</span>
-                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>${totalPaid.toLocaleString()}</span>
+                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>${totalPaid.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -795,7 +795,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-white font-medium mb-1 truncate">{stat.label}</p>
-                <p className="text-lg sm:text-2xl font-bold text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{stat.value}</p>
+                <p className="text-lg sm:text-2xl font-bold text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{stat.value}</p>
               </div>
             </div>
           ))}
@@ -915,7 +915,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <div className={`w-1 h-8 rounded-full ${style.dot}`} />
-                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
+                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
                           {invoice.number}
                         </span>
                       </div>
@@ -939,7 +939,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           </p>
                         )}
                       </div>
-                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
+                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </div>

@@ -189,7 +189,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div>
               <h1
                 className="text-2xl md:text-4xl font-bold text-white mb-2"
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                style={{ fontFamily: 'Bebas Neue, sans-serif' }}
               >
                 Invoice for {displayClientName}
               </h1>
@@ -290,7 +290,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
             <div className="glass-card rounded-2xl p-6">
               <h2
                 className="text-xl font-bold text-white mb-6 flex items-center"
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                style={{ fontFamily: 'Bebas Neue, sans-serif' }}
               >
                 <UserIcon className="h-6 w-6 mr-2 text-[#3aa3eb]" />
                 Client Information
@@ -342,7 +342,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           <div className="glass-card rounded-2xl p-6">
             <h2
               className="text-xl font-bold text-white mb-6 flex items-center"
-              style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+              style={{ fontFamily: 'Bebas Neue, sans-serif' }}
             >
               <DocumentTextIcon className="h-6 w-6 mr-2 text-[#3aa3eb]" />
               Invoice Details
@@ -389,7 +389,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         <div className="space-y-6">
           {isAdmin && (
             <div className="glass-card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Actions</h2>
+              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>Actions</h2>
               <div className="space-y-3">
                 <button
                   onClick={handleDownloadPDF}
@@ -417,7 +417,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           )}
 
           <div className="glass-card rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Summary</h2>
+            <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>Summary</h2>
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Subtotal</span>

@@ -331,7 +331,7 @@ export default function CoursesPage() {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <GlassCard className="relative w-full max-w-lg bg-slate-900 border-white/10 p-0 overflow-hidden">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <h2 className="text-white font-bold text-xl uppercase tracking-wider" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                 {editingCourse ? 'Edit Course' : 'Create New Course'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white">

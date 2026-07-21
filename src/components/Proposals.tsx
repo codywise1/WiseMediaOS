@@ -316,7 +316,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                 </div>
                 <div>
                   <p className="text-sm text-white font-medium mb-1">{card.label}</p>
-                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                     {card.value}
                   </p>
                 </div>
@@ -331,7 +331,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
         {visibleProposals.length === 0 ? (
           <div className="glass-card rounded-3xl p-12 text-center border border-white/10">
             <ClipboardList className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>No proposals found</h3>
+            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>No proposals found</h3>
             <p className="text-gray-500">
               {isAgency
                 ? "You haven't created any proposals yet."
@@ -372,14 +372,14 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                         <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
                         {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                       </span>
-                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
+                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
                         ${((proposal.value || 0) / 100).toLocaleString()}
                       </span>
                     </div>
 
                     {/* Title */}
                     <div>
-                      <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
+                      <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
                         {cleanTitle(proposal.title)}
                       </h3>
                       <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>

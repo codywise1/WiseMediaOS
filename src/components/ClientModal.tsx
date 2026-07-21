@@ -10,402 +10,220 @@ interface ClientModalProps {
   mode: 'create' | 'edit';
 }
 
+const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
+const inputCls = 'form-input w-full px-4 py-3 rounded-xl text-sm';
+
+const serviceOptions = [
+  'Website', 'Landing Page', 'Web App', 'SEO', 'Brand Identity', 'Video Editing', 'Graphic Design',
+];
+
+const categoryOptions = [
+  'Automotive', 'Coaching & Consulting', 'Construction & Trades', 'Creator / Influencer',
+  'Crypto & Web3', 'Digital Goods', 'E-Commerce', 'Education & Courses', 'Finance',
+  'Food & Nightlife', 'Health & Fitness', 'Hospitality', 'Law', 'Marketing Agency',
+  'Non-Profit / Community', 'Personal Care', 'Professional Services', 'Real Estate',
+  'SAAS & Technology', 'Short Term Rentals', 'Travel Agency',
+];
+
 export default function ClientModal({ isOpen, onClose, onSave, client, mode }: ClientModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const serviceOptions = [
-    'Website',
-    'Landing Page',
-    'Web App',
-    'SEO',
-    'Brand Identity',
-    'Video Editing',
-    'Graphic Design'
-  ];
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    category: '' as '' | 'Personal Care' | 'Real Estate' | 'Art' | 'Web3' | 'Hospitality' | 'Travel Agency' | 'E-Commerce' | 'Law' | 'Investing' | 'Finance' | 'Forex',
-    location: '',
-    services_requested: [] as string[],
-    source: '' as '' | 'Referral' | 'Instagram' | 'X' | 'Repeat' | 'Other',
-    status: 'prospect' as 'prospect' | 'active' | 'vip' | 'inactive' | 'archived',
-    linkedin: '',
-    twitter: '',
-    instagram: '',
-    facebook: '',
-    tiktok: '',
-    youtube: '',
+    name: '', email: '', phone: '', company: '', category: '' as string,
+    location: '', services_requested: [] as string[],
+    source: '' as string, status: 'prospect' as string,
+    linkedin: '', twitter: '', instagram: '', facebook: '', tiktok: '', youtube: '',
   });
 
   useEffect(() => {
     if (client) {
-      // Always hydrate the form from the provided client when editing
       setFormData({
-        name: client.name,
-        email: client.email,
-        phone: client.phone || '',
-        company: client.company || '',
-        category: client.category || '',
+        name: client.name, email: client.email, phone: client.phone || '',
+        company: client.company || '', category: client.category || '',
         location: client.location || '',
         services_requested: client.services_requested || [],
-        source: client.source || '',
-        status: client.status,
-        linkedin: client.linkedin || '',
-        twitter: client.twitter || '',
-        instagram: client.instagram || '',
-        facebook: client.facebook || '',
-        tiktok: client.tiktok || '',
-        youtube: client.youtube || '',
+        source: client.source || '', status: client.status,
+        linkedin: client.linkedin || '', twitter: client.twitter || '',
+        instagram: client.instagram || '', facebook: client.facebook || '',
+        tiktok: client.tiktok || '', youtube: client.youtube || '',
       });
     } else if (mode === 'create') {
-      // Only reset to empty defaults when creating a new client
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        category: '',
-        location: '',
-        services_requested: [],
-        source: '',
-        status: 'prospect',
-        linkedin: '',
-        twitter: '',
-        instagram: '',
-        facebook: '',
-        tiktok: '',
-        youtube: '',
+        name: '', email: '', phone: '', company: '', category: '',
+        location: '', services_requested: [], source: '', status: 'prospect',
+        linkedin: '', twitter: '', instagram: '', facebook: '', tiktok: '', youtube: '',
       });
     }
   }, [client, mode, isOpen]);
 
+  useEffect(() => { if (!isOpen) setIsSubmitting(false); }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSubmitting) return;
-
-    if (!formData.name.trim() || !formData.email.trim()) {
-      alert('Name and email are required fields.');
-      return;
-    }
-
+    if (!formData.name.trim() || !formData.email.trim()) { alert('Name and email are required.'); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-
+    if (!emailRegex.test(formData.email)) { alert('Please enter a valid email address.'); return; }
     setIsSubmitting(true);
-
-    const clientData = {
+    onSave({
       ...(mode === 'edit' && client ? client : {}),
       ...formData,
-      name: formData.name.trim(),
-      email: formData.email.trim().toLowerCase(),
-      phone: formData.phone.trim() || null,
-      company: formData.company.trim() || null,
-      category: formData.category || null,
-      location: formData.location.trim() || null,
+      name: formData.name.trim(), email: formData.email.trim().toLowerCase(),
+      phone: formData.phone.trim() || null, company: formData.company.trim() || null,
+      category: formData.category || null, location: formData.location.trim() || null,
       services_requested: formData.services_requested.length > 0 ? formData.services_requested : null,
-      linkedin: formData.linkedin.trim() || null,
-      twitter: formData.twitter.trim() || null,
-      instagram: formData.instagram.trim() || null,
-      facebook: formData.facebook.trim() || null,
-      tiktok: formData.tiktok.trim() || null,
-      youtube: formData.youtube.trim() || null,
-    } as Client;
-
-    onSave(clientData);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-    }, 1000);
+      linkedin: formData.linkedin.trim() || null, twitter: formData.twitter.trim() || null,
+      instagram: formData.instagram.trim() || null, facebook: formData.facebook.trim() || null,
+      tiktok: formData.tiktok.trim() || null, youtube: formData.youtube.trim() || null,
+    } as Client);
+    setTimeout(() => setIsSubmitting(false), 1000);
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      setIsSubmitting(false);
-    }
-  }, [isOpen]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={mode === 'create' ? 'Add New Client' : 'Edit Client'}
-        maxWidth="max-w-3xl"
-      >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Name <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="Satoshi Nakamoto"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="satoshi@wisemedia.io"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Company</label>
-              <input
-                type="text"
-                name="company"
-                value={formData.company}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="Company Name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-              >
-                <option value="">Select category...</option>
-                <option value="Automotive">Automotive</option>
-                <option value="Coaching & Consulting">Coaching & Consulting</option>
-                <option value="Construction & Trades">Construction & Trades</option>
-                <option value="Creator / Influencer">Creator / Influencer</option>
-                <option value="Crypto & Web3">Crypto & Web3</option>
-                <option value="Digital Goods">Digital Goods</option>
-                <option value="E-Commerce">E-Commerce</option>
-                <option value="Education & Courses">Education & Courses</option>
-                <option value="Finance">Finance</option>
-                <option value="Food & Nightlife">Food & Nightlife</option>
-                <option value="Health & Fitness">Health & Fitness</option>
-                <option value="Hospitality">Hospitality</option>
-                <option value="Law">Law</option>
-                <option value="Marketing Agency">Marketing Agency</option>
-                <option value="Non-Profit / Community">Non-Profit / Community</option>
-                <option value="Personal Care">Personal Care</option>
-                <option value="Professional Services">Professional Services</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="SAAS & Technology">SAAS & Technology</option>
-                <option value="Short Term Rentals">Short Term Rentals</option>
-                <option value="Travel Agency">Travel Agency</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="Calgary, Miami, etc."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
-          </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'create' ? 'Add New Client' : 'Edit Client'}
+      maxWidth="max-w-3xl"
+      footer={
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+          <button
+            type="submit"
+            form="client-form"
+            disabled={isSubmitting}
+            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Saving...' : mode === 'create' ? 'Add Client' : 'Save Changes'}
+          </button>
+        </div>
+      }
+    >
+      <form id="client-form" onSubmit={handleSubmit} className="space-y-5">
+        {/* Name + Email */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Services Requested</label>
-            <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              {serviceOptions.map(service => (
-                <label key={service} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.services_requested.includes(service)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData(prev => ({
-                          ...prev,
-                          services_requested: [...prev.services_requested, service]
-                        }));
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                          services_requested: prev.services_requested.filter(s => s !== service)
-                        }));
-                      }
-                    }}
-                    className="rounded border-gray-600 text-[#3aa3eb] focus:ring-[#3aa3eb]"
-                  />
-                  <span className="text-xs text-gray-300">{service}</span>
-                </label>
-              ))}
-            </div>
+            <label className={labelCls}>Name <span className="text-red-400">*</span></label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange}
+              className={inputCls} placeholder="Satoshi Nakamoto" required />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Client State</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg text-white"
-              >
-                <option value="prospect">Prospect</option>
-                <option value="active">Active</option>
-                <option value="vip">VIP</option>
-                <option value="inactive">Inactive</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
-              <select
-                name="source"
-                value={formData.source}
-                onChange={handleChange}
-                className="form-input w-full px-4 py-3 rounded-lg text-white"
-              >
-                <option value="">Select source...</option>
-                <option value="Referral">Referral</option>
-                <option value="Instagram">Instagram</option>
-                <option value="X">X</option>
-                <option value="Repeat">Repeat</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">Social Media</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">LinkedIn</label>
-                <input
-                  type="text"
-                  name="linkedin"
-                  value={formData.linkedin}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="linkedin.com/in/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Twitter / X</label>
-                <input
-                  type="text"
-                  name="twitter"
-                  value={formData.twitter}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="@username or twitter.com/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Instagram</label>
-                <input
-                  type="text"
-                  name="instagram"
-                  value={formData.instagram}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="@username or instagram.com/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Facebook</label>
-                <input
-                  type="text"
-                  name="facebook"
-                  value={formData.facebook}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="facebook.com/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">TikTok</label>
-                <input
-                  type="text"
-                  name="tiktok"
-                  value={formData.tiktok}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="@username or tiktok.com/@username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Youtube</label>
-                <input
-                  type="text"
-                  name="youtube"
-                  value={formData.youtube}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                  placeholder="@username or youtube.com/@username"
-                />
-              </div>
-            </div>
+            <label className={labelCls}>Email <span className="text-red-400">*</span></label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange}
+              className={inputCls} placeholder="satoshi@wisemedia.io" required />
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-secondary shrink-glow-button"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn-primary shrink-glow-button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? (mode === 'create' ? 'Adding...' : 'Updating...')
-                : (mode === 'create' ? 'Add Client' : 'Update Client')
-              }
-            </button>
+        {/* Company + Category */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Company</label>
+            <input type="text" name="company" value={formData.company} onChange={handleChange}
+              className={inputCls} placeholder="Company name" />
           </div>
-        </form>
-      </Modal>
-    </>
+          <div>
+            <label className={labelCls}>Category</label>
+            <select name="category" value={formData.category} onChange={handleChange} className={inputCls}>
+              <option value="">Select category</option>
+              {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Location + Phone */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Location</label>
+            <input type="text" name="location" value={formData.location} onChange={handleChange}
+              className={inputCls} placeholder="Calgary, Miami, etc." />
+          </div>
+          <div>
+            <label className={labelCls}>Phone</label>
+            <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
+              className={inputCls} placeholder="+1 (555) 123-4567" />
+          </div>
+        </div>
+
+        {/* Services */}
+        <div>
+          <label className={labelCls}>Services Requested</label>
+          <div className="flex flex-wrap gap-2">
+            {serviceOptions.map(service => {
+              const active = formData.services_requested.includes(service);
+              return (
+                <button
+                  key={service} type="button"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      services_requested: active
+                        ? prev.services_requested.filter(s => s !== service)
+                        : [...prev.services_requested, service],
+                    }));
+                  }}
+                  className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
+                    active
+                      ? 'bg-[#3aa3eb]/20 border border-[#3aa3eb]/50 text-[#3aa3eb]'
+                      : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
+                  }`}
+                >
+                  {service}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* State + Source */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Client State</label>
+            <select name="status" value={formData.status} onChange={handleChange} className={inputCls}>
+              <option value="prospect">Prospect</option>
+              <option value="active">Active</option>
+              <option value="vip">VIP</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Source</label>
+            <select name="source" value={formData.source} onChange={handleChange} className={inputCls}>
+              <option value="">Select source</option>
+              <option value="Referral">Referral</option>
+              <option value="Instagram">Instagram</option>
+              <option value="X">X</option>
+              <option value="Repeat">Repeat</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Social Media */}
+        <div>
+          <h3 className="text-sm font-semibold text-white mb-3 mt-2">Social Media</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { name: 'linkedin', label: 'LinkedIn', ph: 'linkedin.com/in/username' },
+              { name: 'twitter', label: 'Twitter / X', ph: '@username' },
+              { name: 'instagram', label: 'Instagram', ph: '@username' },
+              { name: 'facebook', label: 'Facebook', ph: 'facebook.com/username' },
+              { name: 'tiktok', label: 'TikTok', ph: '@username' },
+              { name: 'youtube', label: 'YouTube', ph: '@username' },
+            ].map(s => (
+              <div key={s.name}>
+                <label className={labelCls}>{s.label}</label>
+                <input type="text" name={s.name} value={(formData as any)[s.name]} onChange={handleChange}
+                  className={inputCls} placeholder={s.ph} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </form>
+    </Modal>
   );
 }

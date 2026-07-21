@@ -365,7 +365,7 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700">
             <div>
-              <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                 {editProposalId ? 'Edit Proposal' : 'New Proposal'}
               </h2>
               <p className="text-sm text-gray-400 mt-1">

@@ -465,7 +465,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
                 className="w-full bg-transparent text-3xl sm:text-4xl font-bold text-white placeholder:text-gray-700 focus:outline-none mb-1"
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+                style={{ fontFamily: 'Bebas Neue, sans-serif' }}
               />
               <div className="flex items-center gap-3 mb-6 text-xs text-gray-600">
                 <span>{formatAppDate(selectedNote?.updated_at || new Date())}</span>

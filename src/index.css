@@ -197,9 +197,9 @@ body {
   box-shadow: 0 0 20px rgba(58, 163, 235, 0.2);
 }
 
-.title-font { font-family: 'Space Grotesk', 'Montserrat', sans-serif; font-weight: 700; }
+.title-font { font-family: 'Bebas Neue', 'Space Grotesk', 'Montserrat', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
 
-.font-display { font-family: 'Space Grotesk', 'Montserrat', sans-serif; }
+.font-display { font-family: 'Bebas Neue', 'Space Grotesk', 'Montserrat', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
 .font-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif; }
 
 .neon-glow { box-shadow: none; transition: transform 0.3s var(--spring), box-shadow 0.3s var(--ios-ease); }
@@ -223,7 +223,7 @@ body {
 
 .btn-primary {
   background: rgba(58, 163, 235, 0.15);
-  border-radius: 14px;
+  border-radius: 50px;
   border: 1px solid rgba(58, 163, 235, 0.6);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.25s var(--spring);
@@ -247,7 +247,7 @@ body {
 
 .btn-wise {
   background: #3aa3eb;
-  border-radius: 14px;
+  border-radius: 50px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.25s var(--spring);
@@ -274,7 +274,7 @@ body {
 .btn-secondary {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: var(--ios-blur);
-  border-radius: 14px;
+  border-radius: 50px;
   border: 0.5px solid rgba(255, 255, 255, 0.18);
   transition: all 0.25s var(--spring);
   color: #ffffff;
@@ -296,7 +296,7 @@ body {
 .btn-action {
   background: rgba(58, 163, 235, 0.2);
   backdrop-filter: var(--ios-blur);
-  border-radius: 14px;
+  border-radius: 50px;
   border: 1px solid rgba(58, 163, 235, 0.3);
   box-shadow: 0 10px 15px -3px rgba(58, 163, 235, 0.1), 0 4px 6px -2px rgba(58, 163, 235, 0.05);
   transition: transform 0.25s var(--spring), background-color 0.2s var(--ios-ease);
@@ -318,7 +318,7 @@ body {
 .btn-header-glass {
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: var(--ios-blur);
-  border-radius: 14px;
+  border-radius: 50px;
   border: 0.5px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   transition: transform 0.25s var(--spring), background-color 0.2s var(--ios-ease);
