@@ -204,7 +204,7 @@ export default function InvoicesPage() {
         <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-white font-bold text-base" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <h2 className="text-white font-bold text-base" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                 Revenue
               </h2>
               <p className="text-gray-500 text-xs mt-0.5">Last 6 months · paid invoices</p>
@@ -220,7 +220,7 @@ export default function InvoicesPage() {
         {/* Invoices list */}
         <div>
           <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-white font-bold text-base" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <h2 className="text-white font-bold text-base" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
               All Invoices
             </h2>
             <span className="text-gray-500 text-xs">{invoices.length} total</span>
@@ -229,14 +229,14 @@ export default function InvoicesPage() {
           {loading ? (
             <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
               <div className="inline-block w-6 h-6 border-2 border-white/20 border-t-[#3AA3EB] rounded-full animate-spin" />
-              <p className="text-gray-500 text-sm mt-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>Loading invoices...</p>
+              <p className="text-gray-500 text-sm mt-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Loading invoices...</p>
             </div>
           ) : invoices.length === 0 ? (
             <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
               <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
                 <FileText size={24} className="text-gray-600" />
               </div>
-              <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>No invoices yet</p>
+              <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>No invoices yet</p>
               <p className="text-gray-500 text-xs">Create your first invoice to start tracking payments.</p>
             </div>
           ) : (
@@ -268,7 +268,7 @@ export default function InvoicesPage() {
                       {/* Middle: content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2.5 mb-1">
-                          <p className="text-white font-semibold text-[15px] truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          <p className="text-white font-semibold text-[15px] truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             {invoice.description || 'Invoice'}
                           </p>
                           <StatusPill status={invoice.status} />

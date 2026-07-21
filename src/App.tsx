@@ -90,7 +90,7 @@ function AdminGuard({ children }: { children: React.ReactElement }) {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
           <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Admin Only</h2>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             You need administrator privileges to access this area.
           </p>
         </div>
@@ -116,7 +116,7 @@ function StaffOrAdminGuard({ children }: { children: React.ReactElement }) {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
           <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Staff Only</h2>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             You don't have access to the client list.
           </p>
         </div>
@@ -139,7 +139,7 @@ function ProOnlyGuard({ children }: { children: React.ReactElement }) {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10 space-y-4">
           <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Pro Creators only</h2>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             This content is exclusive to Pro Creators. Upgrade to unlock it.
           </p>
           <a
@@ -173,7 +173,7 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass-card p-8 rounded-2xl max-w-md text-center border border-white/10">
           <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Access Restricted</h2>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             Creator Club is available to Creators and Admins. Please sign in with a Creator account.
           </p>
         </div>

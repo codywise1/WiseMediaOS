@@ -158,7 +158,7 @@ export default function LessonPage() {
       return (
         <div className="aspect-video w-full bg-black/40 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-gray-500">
           <Play size={32} className="mb-3 opacity-40" />
-          <p className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>No video available</p>
+          <p className="text-sm font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>No video available</p>
           <p className="text-xs text-gray-600 mt-1">Check back soon for the video.</p>
         </div>
       );
@@ -232,7 +232,7 @@ export default function LessonPage() {
           </button>
           <div className="flex items-center gap-2">
             {isCompleted && <CheckCircle2 className="text-emerald-400" size={16} />}
-            <span className="text-gray-300 text-sm font-medium truncate max-w-[200px]" style={{ fontFamily: 'Montserrat, sans-serif' }}>{course?.title}</span>
+            <span className="text-gray-300 text-sm font-medium truncate max-w-[200px]" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{course?.title}</span>
           </div>
         </div>
 
@@ -248,7 +248,7 @@ export default function LessonPage() {
             <span className="text-gray-600">·</span>
             <span className="text-gray-500 text-xs flex items-center gap-1"><Clock size={11} /> {currentLesson?.duration_minutes || 0} min</span>
           </div>
-          <h1 className="text-white font-bold text-2xl sm:text-3xl mb-3 leading-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <h1 className="text-white font-bold text-2xl sm:text-3xl mb-3 leading-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             {currentLesson?.title}
           </h1>
           {currentLesson?.description && (
@@ -280,7 +280,7 @@ export default function LessonPage() {
           <div className="ios-card rounded-3xl p-6 border border-white/10">
             <div className="flex items-center gap-2 mb-4">
               <FileText size={16} className="text-[#3AA3EB]" />
-              <h2 className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Transcript</h2>
+              <h2 className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Transcript</h2>
             </div>
             <p className="text-gray-400 leading-relaxed text-sm">
               {(currentLesson as any)?.transcript || 'Transcript coming soon.'}
@@ -290,7 +290,7 @@ export default function LessonPage() {
           <div className="ios-card rounded-3xl p-6 border border-white/10">
             <div className="flex items-center gap-2 mb-4">
               <Download size={16} className="text-[#3AA3EB]" />
-              <h2 className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Resources</h2>
+              <h2 className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Resources</h2>
             </div>
             {resources.length === 0 ? (
               <p className="text-gray-500 text-sm">No resources for this lesson.</p>
@@ -301,7 +301,7 @@ export default function LessonPage() {
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-[#3AA3EB]/15 rounded-lg"><Download className="text-[#3AA3EB]" size={14} /></div>
                       <div>
-                        <div className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>{r.title}</div>
+                        <div className="text-white font-medium text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{r.title}</div>
                         <div className="text-[10px] text-gray-500 uppercase tracking-wider">{r.resource_type}</div>
                       </div>
                     </div>
@@ -317,7 +317,7 @@ export default function LessonPage() {
         <div className="ios-card rounded-3xl p-6 border border-white/10">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare size={16} className="text-[#3AA3EB]" />
-            <h2 className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Comments</h2>
+            <h2 className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Comments</h2>
           </div>
           <p className="text-gray-500 text-sm">Comments coming soon.</p>
         </div>
@@ -337,7 +337,7 @@ export default function LessonPage() {
       <div className="lg:col-span-4 hidden lg:block">
         <div className="sticky top-24">
           <div className="ios-card rounded-3xl p-6 border border-white/10">
-            <h3 className="text-white font-bold text-sm mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Course Outline</h3>
+            <h3 className="text-white font-bold text-sm mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Course Outline</h3>
             <p className="text-gray-500 text-xs mb-5">{course?.title}</p>
             <div className="space-y-1.5">
               {lessons.map((l, idx) => {
@@ -360,7 +360,7 @@ export default function LessonPage() {
                        <span className="text-gray-400 text-xs font-semibold tabular-nums">{idx + 1}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-300'}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>{l.title}</div>
+                      <div className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-300'}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{l.title}</div>
                       <div className="text-[11px] text-gray-500 flex items-center gap-1">
                         <Clock size={10} /> {l.duration_minutes} min
                       </div>
@@ -380,7 +380,7 @@ export default function LessonPage() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOutlineOpen(false)} />
           <div className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] p-4 overflow-y-auto bg-[#1c1c1e] border-l border-white/10">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Outline</h3>
+              <h3 className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Outline</h3>
               <button onClick={() => setOutlineOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400">
                 <X size={16} />
               </button>
@@ -407,7 +407,7 @@ export default function LessonPage() {
                        <span className="text-gray-400 text-xs font-semibold tabular-nums">{idx + 1}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-300'}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>{l.title}</div>
+                      <div className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-300'}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{l.title}</div>
                       <div className="text-[11px] text-gray-500 flex items-center gap-1">
                         <Clock size={10} /> {l.duration_minutes} min
                       </div>

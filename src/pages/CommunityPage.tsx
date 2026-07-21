@@ -1289,7 +1289,7 @@ export default function CommunityPage() {
                   ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                   : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                   }`}
-                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
               >
                 <Hash className="inline mr-2" size={16} />
                 Channels
@@ -1300,7 +1300,7 @@ export default function CommunityPage() {
                   ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                   : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                   }`}
-                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
               >
                 <MessageSquare className="inline mr-2" size={16} />
                 Direct
@@ -1311,7 +1311,7 @@ export default function CommunityPage() {
                   ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                   : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                   }`}
-                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
               >
                 <Mail className="inline mr-2" size={16} />
                 Email
@@ -1322,10 +1322,10 @@ export default function CommunityPage() {
               {view === 'email' ? (
                 <div className="py-8 text-center">
                   <Mail size={28} className="text-gray-600 mx-auto mb-2" />
-                  <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     info@wisemedia.io
                   </p>
-                  <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     Select the Email tab to view your inbox
                   </p>
                 </div>
@@ -1335,7 +1335,7 @@ export default function CommunityPage() {
                     <button
                       onClick={() => setIsCreateChannelModalOpen(true)}
                       className="w-full flex items-center justify-center gap-2 p-2 mb-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-gray-400 hover:text-white transition-all text-sm font-medium"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     >
                       <Plus size={16} />
                       Create Channel
@@ -1352,12 +1352,12 @@ export default function CommunityPage() {
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <Hash size={16} className={selectedChannel?.id === channel.id ? 'text-[#59a1e5]' : 'text-gray-400'} />
-                        <span className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                        <span className="text-white font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}>
                           {channel.name}
                         </span>
                       </div>
                       {channel.description && (
-                        <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <p className="text-gray-400 text-xs ml-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {channel.description}
                         </p>
                       )}
@@ -1372,7 +1372,7 @@ export default function CommunityPage() {
                       onClick={() => setShowDirectMessages(!showDirectMessages)}
                       className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
                     >
-                      <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         Direct Messages
                       </span>
                       {showDirectMessages ? (
@@ -1407,10 +1407,10 @@ export default function CommunityPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    <span className="text-white font-medium text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                       {getConversationName(user)}
                                     </span>
-                                    <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    <span className={`text-xs font-bold ${getRoleBadgeColor(user.role)}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                       {user.role.toUpperCase()}
                                     </span>
                                   </div>
@@ -1420,11 +1420,11 @@ export default function CommunityPage() {
                           ))
                         ) : (
                           <div className="p-4 text-center">
-                            <p className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            <p className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                               No conversations yet
                             </p>
                             {canViewClients && (
-                              <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                 Start a chat from Clients below
                               </p>
                             )}
@@ -1441,7 +1441,7 @@ export default function CommunityPage() {
                         onClick={() => setShowClients(!showClients)}
                         className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-all group"
                       >
-                        <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           Clients ({clients.length})
                         </span>
                         {showClients ? (
@@ -1490,14 +1490,14 @@ export default function CommunityPage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-0.5">
-                                      <span className="text-white font-medium text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                      <span className="text-white font-medium text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                         {client.name}
                                       </span>
                                       {client.status === 'active' && (
                                         <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                       )}
                                     </div>
-                                    <p className="text-gray-400 text-xs truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                    <p className="text-gray-400 text-xs truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                       {client.company || client.email}
                                     </p>
                                   </div>
@@ -1526,12 +1526,12 @@ export default function CommunityPage() {
               {view === 'channels' && selectedChannel ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="gradient-text font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl flex items-center gap-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                       <Hash size={24} className="text-[#59a1e5]" />
                       {selectedChannel.name}
                     </h2>
                     {selectedChannel.description && (
-                      <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <p className="text-gray-400 text-sm mt-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         {selectedChannel.description}
                       </p>
                     )}
@@ -1588,16 +1588,16 @@ export default function CommunityPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                       {getConversationName(selectedUser)}
                     </h2>
-                    <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {selectedUser.role.toUpperCase()}
                     </p>
                   </div>
                 </div>
               ) : (
-                <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                   Select a {view === 'channels' ? 'channel' : 'conversation'}
                 </h2>
               )}
@@ -1606,7 +1606,7 @@ export default function CommunityPage() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-6 pb-4 px-2 space-y-4 custom-scrollbar">
               {view === 'channels' && selectedChannel && messages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-gray-500 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     No messages yet. Be the first to say hi.
                   </p>
                 </div>
@@ -1631,10 +1631,10 @@ export default function CommunityPage() {
                   <div className={`flex-1 max-w-[75%] ${isMyMessage ? 'flex flex-col items-end' : ''}`}>
                     {!isMyMessage && (
                       <div className="flex items-baseline gap-2 mb-1 px-1">
-                        <span className="text-white text-sm font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <span className="text-white text-sm font-semibold" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {msg.profiles?.full_name || 'User'}
                         </span>
-                        <span className={`text-[10px] font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <span className={`text-[10px] font-bold ${getRoleBadgeColor(msg.profiles?.role || 'free')}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {msg.profiles?.role?.toUpperCase() || 'FREE'}
                         </span>
                       </div>
@@ -1671,7 +1671,7 @@ export default function CommunityPage() {
                             ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
                             : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
                             }`}>
-                            <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                               {renderMessageBody(msg.message)}
                             </div>
                             {renderMessageAttachments(msg.attachments)}
@@ -1750,7 +1750,7 @@ export default function CommunityPage() {
                         </div>
                       </div>
                     </div>
-                    <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {formatAppDateTime(msg.created_at)}
                     </span>
                   </div>
@@ -1760,7 +1760,7 @@ export default function CommunityPage() {
 
               {view === 'private' && selectedUser && privateMessages.length === 0 && (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-gray-500 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     No messages yet. Send the first message.
                   </p>
                 </div>
@@ -1816,7 +1816,7 @@ export default function CommunityPage() {
                               ? 'bg-[#59a1e5] text-white rounded-br-lg shadow-lg shadow-[#59a1e5]/20'
                               : 'bg-white/[0.08] text-gray-100 rounded-bl-lg border border-white/5'
                               }`}>
-                              <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                 {renderMessageBody(msg.message)}
                               </div>
                               {renderMessageAttachments(msg.attachments)}
@@ -1895,7 +1895,7 @@ export default function CommunityPage() {
                           </div>
                         </div>
                       </div>
-                      <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <span className={`text-[10px] text-gray-500 mt-1 px-1 ${isMyMessage ? 'text-right' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         {formatAppDateTime(msg.created_at)}
                       </span>
                     </div>
@@ -1932,7 +1932,7 @@ export default function CommunityPage() {
                 )}
 
                 {view === 'channels' && selectedChannel?.is_locked && !isAdmin ? (
-                  <div className="flex items-center gap-2 px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     <Lock size={16} />
                     This channel is locked. Only admins can post.
                   </div>
@@ -1952,7 +1952,7 @@ export default function CommunityPage() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
-                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                         disabled={sending}
                       />
                     </div>
@@ -1976,7 +1976,7 @@ export default function CommunityPage() {
                       type="submit"
                       disabled={sending || (!newMessage.trim() && composerAttachments.length === 0)}
                       className="px-6 py-3 bg-[#59a1e5] hover:bg-[#4a90d5] disabled:bg-[#59a1e5]/50 text-white rounded-2xl transition-all font-medium shadow-[0_0_15px_rgba(89,161,229,0.3)] hover:shadow-[0_0_25px_rgba(89,161,229,0.5)] flex items-center gap-2"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     >
                       <Send size={20} />
                       Send
@@ -1990,7 +1990,7 @@ export default function CommunityPage() {
                       onChange={(e) => setComposerAttachmentUrl(e.target.value)}
                       placeholder="Paste Link/Video URL..."
                       className="flex-1 px-3 py-2 bg-black/20 border border-white/5 rounded-xl text-xs text-gray-400 focus:border-[#59a1e5] focus:outline-none transition-all"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     />
                     <button
                       type="button"
@@ -2024,7 +2024,7 @@ export default function CommunityPage() {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Channel Name</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Channel Name</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">#</span>
               <input
@@ -2033,21 +2033,21 @@ export default function CommunityPage() {
                 onChange={(e) => setNewChannelName(e.target.value)}
                 placeholder="announcements"
                 className="w-full pl-8 pr-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               />
             </div>
             <p className="text-[10px] text-gray-500">Names must be lowercase, without spaces or special characters.</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Description</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Description</label>
             <textarea
               value={newChannelDescription}
               onChange={(e) => setNewChannelDescription(e.target.value)}
               placeholder="What's this channel about?"
               rows={3}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             />
           </div>
 
@@ -2061,7 +2061,7 @@ export default function CommunityPage() {
                 setNewChannelDescription('');
               }}
               className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               Cancel
             </button>
@@ -2069,7 +2069,7 @@ export default function CommunityPage() {
               onClick={isEditChannelModalOpen ? handleUpdateChannel : handleCreateChannel}
               disabled={creatingChannel || !newChannelName.trim()}
               className="px-6 py-2 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-all font-bold text-sm shadow-[0_4px_15_rgba(58,163,235,0.3)] hover:shadow-[0_6px_20px_rgba(58,163,235,0.4)]"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               {creatingChannel ? (isEditChannelModalOpen ? 'Updating...' : 'Creating...') : (isEditChannelModalOpen ? 'Update Channel' : 'Create Channel')}
             </button>

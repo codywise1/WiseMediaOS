@@ -343,7 +343,7 @@ export default function ContentHubPage() {
       ) : filteredItems.length === 0 ? (
         <div className="ios-card rounded-3xl p-12 text-center border border-white/10">
           <Rss className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
             No content synced yet. {isAdmin ? 'Click "Sync Sources" to pull latest content.' : 'Check back soon.'}
           </p>
         </div>
@@ -439,23 +439,23 @@ export default function ContentHubPage() {
                         {item.author_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
                     ) : null}
-                    <span className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <span className="text-gray-400 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {item.author_name || SOURCE_CONFIG[item.source].label}
                     </span>
                     <span className="text-gray-600 text-xs">·</span>
-                    <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <span className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {formatAppDateTime(item.published_at)}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     {item.title}
                   </h3>
 
                   {/* Excerpt */}
                   {item.description && (
-                    <p className="text-gray-400 text-sm line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <p className="text-gray-400 text-sm line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {item.description}
                     </p>
                   )}

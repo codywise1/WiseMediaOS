@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Pin, Tag, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Search, Pin, Tag, CreditCard as Edit2, Trash2, Save, X } from 'lucide-react';
 import GlassCard from '../GlassCard';
 import { supabase } from '../../lib/supabase';
 import { formatAppDate } from '../../lib/dateFormat';
@@ -182,14 +182,14 @@ export default function NotesModule() {
           <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Notes
           </h1>
-          <p className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+          <p className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
             Private admin-only notes and documentation
           </p>
         </div>
         <button
           onClick={handleNewNote}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg shadow-blue-500/30"
-          style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
         >
           <Plus size={20} />
           New Note
@@ -205,7 +205,7 @@ export default function NotesModule() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notes by title, content, or tags..."
             className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
           />
         </div>
       </GlassCard>
@@ -221,12 +221,12 @@ export default function NotesModule() {
                 onClick={() => !isEditing && setSelectedNote(note)}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-white font-medium text-lg" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <h3 className="text-white font-medium text-lg" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     {note.title}
                   </h3>
                   {note.is_pinned && <Pin className="text-blue-400" size={16} />}
                 </div>
-                <p className="text-gray-400 mb-2 line-clamp-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <p className="text-gray-400 mb-2 line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   {note.content || 'No content'}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -243,7 +243,7 @@ export default function NotesModule() {
             ))
           ) : (
             <GlassCard className="p-6 text-center">
-              <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+              <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                 {searchQuery ? 'No notes found' : 'No notes yet. Create your first note!'}
               </p>
             </GlassCard>
@@ -282,7 +282,7 @@ export default function NotesModule() {
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   placeholder="Note title"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-xl font-bold placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                 />
 
                 <div className="flex items-center gap-4">
@@ -292,7 +292,7 @@ export default function NotesModule() {
                     onChange={(e) => setEditForm({ ...editForm, notebook: e.target.value })}
                     placeholder="Notebook"
                     className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                   />
                   <label className="flex items-center gap-2 text-white cursor-pointer">
                     <input
@@ -315,7 +315,7 @@ export default function NotesModule() {
                       onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
                       placeholder="Add tags..."
                       className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                     />
                     <button
                       onClick={handleAddTag}
@@ -345,7 +345,7 @@ export default function NotesModule() {
                   placeholder="Start writing..."
                   rows={12}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                 />
               </div>
             ) : selectedNote ? (
@@ -355,7 +355,7 @@ export default function NotesModule() {
                     <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                       {selectedNote.title}
                     </h2>
-                    <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       Last updated: {formatAppDate(selectedNote.updated_at)}
                     </p>
                   </div>
@@ -393,7 +393,7 @@ export default function NotesModule() {
                 </div>
 
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-gray-300 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
+                  <p className="text-gray-300 whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
                     {selectedNote.content || 'No content'}
                   </p>
                 </div>
@@ -401,7 +401,7 @@ export default function NotesModule() {
             ) : (
               <div className="flex items-center justify-center h-96">
                 <div className="text-center">
-                  <p className="text-gray-400 text-lg mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <p className="text-gray-400 text-lg mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Select a note to view or create a new one
                   </p>
                 </div>

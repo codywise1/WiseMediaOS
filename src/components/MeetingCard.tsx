@@ -106,7 +106,7 @@ export default function MeetingCard({
                     </div>
 
                     {/* Client and Project Info */}
-                    <p className="text-gray-400 mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px', lineHeight: '1.6' }}>
+                    <p className="text-gray-400 mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px', lineHeight: '1.6' }}>
                         {meeting.client?.name || 'No Client'}
                         {meeting.project && (
                             <span className="block text-gray-500 mt-1">Project: {meeting.project.name}</span>
@@ -133,7 +133,7 @@ export default function MeetingCard({
                                         backgroundColor: style.bg,
                                         border: `1px solid ${style.border}`,
                                         color: style.text,
-                                        fontFamily: 'Montserrat, sans-serif',
+                                        fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif',
                                         fontSize: '14px'
                                     }}
                                 >
@@ -159,7 +159,7 @@ export default function MeetingCard({
                     {/* Date and Actions Section - Below separator */}
                     <div className="flex items-center justify-between border-t border-white/5 pt-5">
                         {/* Date and Duration */}
-                        <div className="flex items-center gap-2 text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <div className="flex items-center gap-2 text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             <span className={meeting.status === 'live' ? 'text-red-400 font-bold' : ''}>
                                 {relativeTime}
                             </span>

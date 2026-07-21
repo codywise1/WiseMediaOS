@@ -121,7 +121,7 @@ export default function AdminBackendPage() {
           <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             Access Denied
           </h2>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             You need administrator privileges to access this page.
           </p>
         </GlassCard>
@@ -131,7 +131,7 @@ export default function AdminBackendPage() {
 
   const inputClass = "w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none";
   const labelClass = "block text-gray-300 mb-2";
-  const fontBody = { fontFamily: 'Montserrat, sans-serif', fontSize: '16px' };
+  const fontBody = { fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' };
 
   return (
     <div className="space-y-6">
@@ -145,7 +145,7 @@ export default function AdminBackendPage() {
               setShowModal(true);
             }}
             className="flex items-center gap-2 px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
           >
             <Plus size={20} />
             Add New
@@ -164,7 +164,7 @@ export default function AdminBackendPage() {
                 ? 'bg-[#3AA3EB] text-white shadow-lg'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
                 }`}
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
             >
               <Icon size={20} />
               {tab.label}
@@ -176,7 +176,7 @@ export default function AdminBackendPage() {
       <GlassCard>
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Loading...</p>
+            <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Loading...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

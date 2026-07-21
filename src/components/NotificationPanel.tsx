@@ -281,13 +281,13 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-white font-semibold mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <h4 className="text-white font-semibold mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       {notification.title}
                     </h4>
-                    <p className="text-gray-400 text-sm mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <p className="text-gray-400 text-sm mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {notification.message}
                     </p>
-                    <div className="flex items-center gap-1 text-xs text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <div className="flex items-center gap-1 text-xs text-gray-500" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       <Clock3 size={12} />
                       <span>{notification.time}</span>
                     </div>
@@ -302,7 +302,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Notif
 
           {notifications.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+              <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                 No notifications yet
               </p>
             </div>

@@ -129,11 +129,11 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <GlassCard>
-              <p className="text-gray-400 text-center py-8" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Loading projects...</p>
+              <p className="text-gray-400 text-center py-8" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Loading projects...</p>
             </GlassCard>
           ) : projects.length === 0 ? (
             <GlassCard>
-              <p className="text-gray-400 text-center py-8" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>No projects yet. Click "New Project" to create one.</p>
+              <p className="text-gray-400 text-center py-8" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>No projects yet. Click "New Project" to create one.</p>
             </GlassCard>
           ) : (
             projects.map((project) => (
@@ -151,8 +151,8 @@ export default function ProjectsPage() {
                         <Edit size={16} />
                       </button>
                     </div>
-                    <p className="text-gray-400 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{project.description || 'No description'}</p>
-                    <span className={`px-3 py-1 rounded-full text-sm inline-block ${getStatusColor(project.status)}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                    <p className="text-gray-400 mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>{project.description || 'No description'}</p>
+                    <span className={`px-3 py-1 rounded-full text-sm inline-block ${getStatusColor(project.status)}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}>
                       {project.status.replace('_', ' ').charAt(0).toUpperCase() + project.status.replace('_', ' ').slice(1)}
                     </span>
                   </div>
@@ -179,16 +179,16 @@ export default function ProjectsPage() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Title</label>
-                    <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} placeholder="Enter project title" />
+                    <label className="block text-gray-300 mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Title</label>
+                    <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }} placeholder="Enter project title" />
                   </div>
                   <div>
-                    <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Description</label>
-                    <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none h-32" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} placeholder="Enter project description" />
+                    <label className="block text-gray-300 mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Description</label>
+                    <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none h-32" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }} placeholder="Enter project description" />
                   </div>
                   <div>
-                    <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Status</label>
-                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <label className="block text-gray-300 mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Status</label>
+                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       <option value="not_started">Not Started</option>
                       <option value="in_progress">In Progress</option>
                       <option value="in_review">In Review</option>
@@ -196,10 +196,10 @@ export default function ProjectsPage() {
                     </select>
                   </div>
                   <div className="flex gap-3 pt-4">
-                    <button onClick={handleSave} disabled={saving || !formData.title.trim()} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white rounded-lg transition-colors font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <button onClick={handleSave} disabled={saving || !formData.title.trim()} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white rounded-lg transition-colors font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       {saving ? 'Saving...' : editingProject ? 'Update Project' : 'Create Project'}
                     </button>
-                    <button onClick={() => setShowModal(false)} className="px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Cancel</button>
+                    <button onClick={() => setShowModal(false)} className="px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Cancel</button>
                   </div>
                 </div>
               </GlassCard>

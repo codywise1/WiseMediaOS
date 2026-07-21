@@ -250,7 +250,7 @@ export default function ContentHubDetail() {
       <button
         onClick={() => navigate('/community/hub')}
         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
+        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
       >
         <ArrowLeft size={18} /> Back to Content Studio
       </button>
@@ -290,12 +290,12 @@ export default function ContentHubDetail() {
           </div>
 
           {/* Title */}
-          <h1 className="text-white font-bold text-2xl lg:text-3xl leading-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <h1 className="text-white font-bold text-2xl lg:text-3xl leading-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             {item.title}
           </h1>
 
           {/* Author + date + stats */}
-          <div className="flex items-center gap-4 flex-wrap text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <div className="flex items-center gap-4 flex-wrap text-gray-400 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             <div className="flex items-center gap-2">
               {item.author_avatar ? (
                 <img src={item.author_avatar} alt={item.author_name || ''} className="w-8 h-8 rounded-full object-cover" />
@@ -325,7 +325,7 @@ export default function ContentHubDetail() {
           {/* Body */}
           {item.body && (
             <div className="prose prose-invert max-w-none">
-              <p className="text-gray-200 whitespace-pre-wrap leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+              <p className="text-gray-200 whitespace-pre-wrap leading-relaxed" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                 {item.body}
               </p>
             </div>
@@ -365,7 +365,7 @@ export default function ContentHubDetail() {
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-sm text-[#3AA3EB] hover:text-[#2a92da] transition-colors"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               <ExternalLink size={14} /> View original on {cfg.label}
             </a>
@@ -431,13 +431,13 @@ export default function ContentHubDetail() {
 
       {/* Comments section */}
       <div className="ios-card rounded-3xl border border-white/10 p-6 lg:p-8">
-        <h2 className="text-white font-bold text-lg mb-5" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+        <h2 className="text-white font-bold text-lg mb-5" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
           Discussion ({comments.length})
         </h2>
 
         <div className="space-y-4 mb-6">
           {comments.length === 0 ? (
-            <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <p className="text-gray-500 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
               No discussion yet. Start the conversation.
             </p>
           ) : (
@@ -454,10 +454,10 @@ export default function ContentHubDetail() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-white font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>{name}</span>
-                      <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>{formatAppDateTime(comment.created_at)}</span>
+                      <span className="text-white font-semibold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{name}</span>
+                      <span className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{formatAppDateTime(comment.created_at)}</span>
                     </div>
-                    <p className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>{comment.body}</p>
+                    <p className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{comment.body}</p>
                   </div>
                   {(comment.user_id === profile?.id || (profile?.role || '').toLowerCase() === 'admin') && (
                     <button onClick={() => deleteComment(comment.id)} className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-start">
@@ -480,19 +480,19 @@ export default function ContentHubDetail() {
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
               placeholder="Join the discussion..."
               className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
             />
             <button
               onClick={submitComment}
               disabled={posting || !commentDraft.trim()}
               className="px-5 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-2xl transition-all font-medium flex items-center gap-2"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               <Send size={18} />
             </button>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-500 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             Sign in to join the discussion.
           </p>
         )}

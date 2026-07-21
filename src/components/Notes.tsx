@@ -296,7 +296,7 @@ export default function Notes({ currentUser }: NotesProps) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-white font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{stat.count}</p>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{stat.count}</p>
                 </div>
               </div>
             </div>
@@ -349,7 +349,7 @@ export default function Notes({ currentUser }: NotesProps) {
       ) : filteredNotes.length === 0 ? (
         <div className="glass-card rounded-3xl p-20 text-center border border-white/10">
           <DocumentTextIcon className="h-16 w-16 text-gray-700 mx-auto mb-6" />
-          <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>No notes found</h3>
+          <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>No notes found</h3>
           <p className="text-gray-400 mb-8 max-w-md mx-auto">We couldn't find any notes matching your filters. Try adjusting your search or create a new note.</p>
           <button
             onClick={resetFilters}
@@ -411,7 +411,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         <div className="flex-1">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0 pr-8">
-              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#3aa3eb] transition-colors line-clamp-2" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#3aa3eb] transition-colors line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                 {note.title}
               </h3>
               <p className="text-xs font-bold text-[#3aa3eb]/80 uppercase tracking-widest truncate mb-3">
@@ -460,7 +460,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
             )}
           </div>
 
-          <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-4 overflow-hidden" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-4 overflow-hidden" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             {note.plainText || 'No preview available...'}
           </p>
         </div>
@@ -491,12 +491,12 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         >
           <BookmarkIcon className={`h-4 w-4 ${note.pinned ? 'fill-yellow-400' : ''}`} />
         </button>
-        <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+        <h3 className="text-base font-bold text-white group-hover:text-[#3aa3eb] transition-colors truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
           {note.title}
         </h3>
       </div>
 
-      <div className="text-sm text-gray-300 font-semibold truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      <div className="text-sm text-gray-300 font-semibold truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
         {note.client?.name || 'Wise Media'}
       </div>
 
@@ -513,7 +513,7 @@ function NoteItem({ note, viewMode, onEdit, onDelete, onTogglePin, onToggleShare
         </span>
       </div>
 
-      <div className="text-xs text-gray-400 font-bold text-left uppercase tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      <div className="text-xs text-gray-400 font-bold text-left uppercase tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
         {formatAppDate(note.updated_at)}
       </div>
 

@@ -637,7 +637,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                  <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                     {column.title}
                   </h3>
                 </div>
@@ -665,7 +665,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                   >
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1.5 min-w-0">
-                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {project.name}
                         </h4>
                         <p className="text-gray-400 text-xs font-medium truncate">
@@ -720,7 +720,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     <div className={`mb-4 p-3 rounded-full border-2 border-dashed ${dragOverColumn === column.id ? 'border-green-400 bg-green-400/20' : 'border-slate-700'}`}>
                       <ArrowDownIcon className={`h-8 w-8 ${dragOverColumn === column.id ? 'text-green-400 animate-bounce' : 'text-slate-600'}`} />
                     </div>
-                    <p className={`text-base font-bold tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                    <p className={`text-base font-bold tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                       No Project Here
                     </p>
                     <p className="text-gray-500 text-xs text-center max-w-[150px]">

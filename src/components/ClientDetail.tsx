@@ -298,7 +298,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
         <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between relative z-10">
           <div className="space-y-6">
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold gradient-text mb-2" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+              <h1 className="text-3xl sm:text-4xl font-bold gradient-text mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                 {client.company || client.name}
               </h1>
               <div className="flex items-center gap-4 min-w-0">
@@ -351,7 +351,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Information */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
             Contact Information
           </h3>
           <div className="space-y-4">
@@ -380,7 +380,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Social Links */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
             Social Links
           </h3>
           <div className="space-y-4 max-h-[176px] overflow-y-auto pr-1 custom-scrollbar">
@@ -509,7 +509,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Details Metrics */}
         <div className="glass-card bg-[#0d1117] rounded-3xl p-6 border border-white/5">
-          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight mb-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
             Details
           </h3>
           <div className="space-y-4">
@@ -555,7 +555,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
         {/* Projects Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+            <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
               Projects ({projects.length})
             </h3>
           </div>
@@ -568,14 +568,14 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-2">
-                    <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       {project.name}
                     </h4>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
                       {project.project_type || 'Website'}
                     </span>
                   </div>
-                  <span className="text-white font-bold text-sm tabular-nums" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <span className="text-white font-bold text-sm tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     ${(project.budget || 0).toLocaleString()}
                   </span>
                 </div>
@@ -603,7 +603,7 @@ export default function ClientDetail({ currentUser }: ClientDetailProps) {
 
         {/* Invoices Section */}
         <div className="space-y-6">
-          <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
             Invoices
           </h3>
           <div className="space-y-3">

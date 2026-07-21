@@ -84,14 +84,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Lock className="text-green-400" size={32} />
                 </div>
-                <p className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <p className="text-white font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   Password changed successfully!
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <label className="block text-gray-300 mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     New Password
                   </label>
                   <input
@@ -105,7 +105,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <label className="block text-gray-300 mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Confirm Password
                   </label>
                   <input
@@ -119,7 +119,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}>
                     {error}
                   </div>
                 )}
@@ -129,7 +129,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                     type="submit"
                     disabled={loading}
                     className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white rounded-lg transition-colors font-medium"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                   >
                     {loading ? 'Changing...' : 'Change Password'}
                   </button>
@@ -137,7 +137,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                     type="button"
                     onClick={onClose}
                     className="px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                   >
                     Cancel
                   </button>

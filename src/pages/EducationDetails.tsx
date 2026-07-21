@@ -4,6 +4,10 @@ import { Play, Clock, BarChart3, CheckCircle2, Lock, Download, MessageSquare, Cr
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import DownloadUploader, { DownloadFile } from '../components/DownloadUploader';
+import Modal from '../components/Modal';
+
+const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
+const inputCls = 'form-input w-full px-4 py-3 rounded-xl text-sm';
 
 interface Course {
   id: string;
@@ -276,7 +280,7 @@ export default function EducationDetails() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex-1">
-            <h1 className="text-white text-3xl sm:text-4xl font-bold leading-tight mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <h1 className="text-white text-3xl sm:text-4xl font-bold leading-tight mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
               {course?.title || 'Education Course'}
             </h1>
             <p className="text-gray-400 text-sm leading-relaxed line-clamp-2">
@@ -375,11 +379,11 @@ export default function EducationDetails() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
-            <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>About This Course</h2>
+            <h2 className="text-white font-bold text-lg mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>About This Course</h2>
             <p className="text-gray-300 leading-relaxed text-sm mb-6">
               {course?.description || 'Master the fundamentals of digital marketing and grow your online presence. This comprehensive course covers everything from social media strategy to content creation and analytics.'}
             </p>
-            <h3 className="text-white font-bold text-sm mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>What You'll Learn</h3>
+            <h3 className="text-white font-bold text-sm mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>What You'll Learn</h3>
             <div className="space-y-2.5">
               {['Build a comprehensive marketing strategy', 'Create engaging content that converts', 'Master social media algorithms', 'Track and analyze your performance'].map((item, i) => (
                 <div key={i} className="flex items-start gap-2.5">
@@ -433,7 +437,7 @@ export default function EducationDetails() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-gray-500 text-[11px] font-semibold tabular-nums">{String(index + 1).padStart(2, '0')}</span>
-                      <p className="text-white font-semibold text-sm truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{lesson.title}</p>
+                      <p className="text-white font-semibold text-sm truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{lesson.title}</p>
                       {!lesson.is_published && (
                         <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[9px] font-bold uppercase">Draft</span>
                       )}
@@ -504,7 +508,7 @@ export default function EducationDetails() {
                         {resource.resource_type === 'link' ? <Link2 size={16} className="text-[#3AA3EB]" /> : <Download size={16} className="text-[#3AA3EB]" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-semibold text-sm truncate mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>{resource.title}</p>
+                        <p className="text-white font-semibold text-sm truncate mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{resource.title}</p>
                         <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">{resource.resource_type}</span>
                       </div>
                     </div>
@@ -525,7 +529,7 @@ export default function EducationDetails() {
           {isEnrolled ? (
             <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your Progress</h2>
+                <h2 className="text-white font-bold text-lg" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Your Progress</h2>
                 {progress === 100 && (
                   <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl transition-all text-xs font-semibold">
                     <Award size={15} /> Claim Certificate
@@ -574,7 +578,7 @@ export default function EducationDetails() {
         <div className="ios-card rounded-3xl p-6 sm:p-8 border border-white/10">
           <div className="flex items-center gap-2.5 mb-6">
             <MessageSquare size={18} className="text-[#3AA3EB]" />
-            <h2 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>Discussions</h2>
+            <h2 className="text-white font-bold text-lg" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Discussions</h2>
           </div>
           <div className="mb-6">
             <textarea className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none h-28 resize-none text-sm" placeholder="Share your thoughts or ask a question..." />
@@ -597,182 +601,135 @@ export default function EducationDetails() {
         </div>
       )}
 
-      {/* Lesson Modal */}
-      {isLessonModalOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsLessonModalOpen(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl">
-              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-white/10 sticky top-0 bg-[#1c1c1e]/95 backdrop-blur-xl">
-                  <h3 className="text-white font-bold text-lg font-display">{editingLesson ? 'Edit Lesson' : 'New Lesson'}</h3>
-                  <button onClick={() => setIsLessonModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
-                    <X size={18} />
-                  </button>
-                </div>
-                <form onSubmit={handleSaveLesson} className="p-6 space-y-5">
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Title</label>
-                    <input required type="text" value={lessonForm.title}
-                      onChange={e => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all"
-                      placeholder="e.g. Introduction to Scaling" />
-                  </div>
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Description</label>
-                    <textarea value={lessonForm.description}
-                      onChange={e => setLessonForm(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all h-24 resize-none"
-                      placeholder="What is this lesson about?" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Duration (min)</label>
-                      <input type="number" value={lessonForm.duration_minutes}
-                        onChange={e => setLessonForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 0 }))}
-                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Order</label>
-                      <input type="number" value={lessonForm.order_index}
-                        onChange={e => setLessonForm(prev => ({ ...prev, order_index: parseInt(e.target.value) || 1 }))}
-                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
-                    </div>
-                  </div>
-                  <div className="border-t border-white/10 pt-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'link' }))}
-                        className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'link' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
-                        <Link2 size={15} /> Video Link
-                      </button>
-                      <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'upload' }))}
-                        className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'upload' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
-                        <UploadCloud size={15} /> Upload
-                      </button>
-                    </div>
-                    {lessonForm.video_type === 'link' ? (
-                      <input type="url" value={lessonForm.video_url}
-                        onChange={e => setLessonForm(prev => ({ ...prev, video_url: e.target.value }))}
-                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all"
-                        placeholder="https://www.youtube.com/watch?v=..." />
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <input type="file" accept="video/*" className="hidden" id="video-upload"
-                          onChange={e => { const file = e.target.files?.[0]; if (file) handleUploadVideo(file); }} />
-                        <label htmlFor="video-upload" className={`px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl cursor-pointer transition-all text-sm font-medium ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                          {isUploading ? 'Uploading...' : 'Choose File'}
-                        </label>
-                        {lessonForm.video_url && !isUploading && <span className="text-emerald-400 text-xs font-medium">Video uploaded</span>}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <button type="button" onClick={() => setIsLessonModalOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
-                    <button type="submit" disabled={isSaving} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                      {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-                      {isSaving ? 'Saving...' : 'Save Lesson'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+      {/* Lesson Modal — base Modal */}
+      <Modal isOpen={isLessonModalOpen} onClose={() => setIsLessonModalOpen(false)} title={editingLesson ? 'Edit Lesson' : 'New Lesson'} maxWidth="max-w-2xl"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setIsLessonModalOpen(false)} className="btn-secondary">Cancel</button>
+            <button type="submit" form="lesson-form" disabled={isSaving} className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+              {isSaving ? 'Saving...' : 'Save Lesson'}
+            </button>
+          </div>
+        }>
+        <form id="lesson-form" onSubmit={handleSaveLesson} className="space-y-5">
+          <div>
+            <label className={labelCls}>Title</label>
+            <input required type="text" value={lessonForm.title}
+              onChange={e => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
+              className={inputCls} placeholder="e.g. Introduction to Scaling" />
+          </div>
+          <div>
+            <label className={labelCls}>Description</label>
+            <textarea value={lessonForm.description}
+              onChange={e => setLessonForm(prev => ({ ...prev, description: e.target.value }))}
+              className={`${inputCls} h-24 resize-none`} placeholder="What is this lesson about?" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Duration (min)</label>
+              <input type="number" value={lessonForm.duration_minutes}
+                onChange={e => setLessonForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 0 }))}
+                className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Order</label>
+              <input type="number" value={lessonForm.order_index}
+                onChange={e => setLessonForm(prev => ({ ...prev, order_index: parseInt(e.target.value) || 1 }))}
+                className={inputCls} />
             </div>
           </div>
-        </>
-      )}
+          <div className="border-t border-white/10 pt-5">
+            <div className="flex items-center gap-3 mb-4">
+              <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'link' }))}
+                className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'link' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                <Link2 size={15} /> Video Link
+              </button>
+              <button type="button" onClick={() => setLessonForm(prev => ({ ...prev, video_type: 'upload' }))}
+                className={`flex-1 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${lessonForm.video_type === 'upload' ? 'bg-[#3AA3EB]/15 border-[#3AA3EB]/40 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+                <UploadCloud size={15} /> Upload
+              </button>
+            </div>
+            {lessonForm.video_type === 'link' ? (
+              <input type="url" value={lessonForm.video_url}
+                onChange={e => setLessonForm(prev => ({ ...prev, video_url: e.target.value }))}
+                className={inputCls} placeholder="https://www.youtube.com/watch?v=..." />
+            ) : (
+              <div className="flex items-center gap-3">
+                <input type="file" accept="video/*" className="hidden" id="video-upload"
+                  onChange={e => { const file = e.target.files?.[0]; if (file) handleUploadVideo(file); }} />
+                <label htmlFor="video-upload" className={`px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl cursor-pointer transition-all text-sm font-medium ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isUploading ? 'Uploading...' : 'Choose File'}
+                </label>
+                {lessonForm.video_url && !isUploading && <span className="text-emerald-400 text-xs font-medium">Video uploaded</span>}
+              </div>
+            )}
+          </div>
+        </form>
+      </Modal>
 
-      {/* Resource Modal */}
-      {isResourceModalOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsResourceModalOpen(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-white/10 sticky top-0 bg-[#1c1c1e]/95 backdrop-blur-xl z-10">
-                  <h3 className="text-white font-bold text-lg font-display">Manage Resources</h3>
-                  <button onClick={() => setIsResourceModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className="p-6 space-y-5">
-                  <DownloadUploader
-                    value={resourceFiles}
-                    onChange={setResourceFiles}
-                    bucket="files"
-                    folder={`courses/${courseId}`}
-                    label="Course Downloads"
-                    hint="Drag files here to upload, or paste an external URL to a resource (e.g. a PDF on another site)."
-                  />
-                  <div className="flex gap-3 pt-2 border-t border-white/10">
-                    <button type="button" onClick={() => setIsResourceModalOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
-                    <button type="button" onClick={handleSaveResources} disabled={isSavingResources} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                      {isSavingResources ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-                      {isSavingResources ? 'Saving...' : 'Save Resources'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Resource Modal — base Modal */}
+      <Modal isOpen={isResourceModalOpen} onClose={() => setIsResourceModalOpen(false)} title="Manage Resources" maxWidth="max-w-2xl"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setIsResourceModalOpen(false)} className="btn-secondary">Cancel</button>
+            <button type="button" onClick={handleSaveResources} disabled={isSavingResources} className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+              {isSavingResources ? 'Saving...' : 'Save Resources'}
+            </button>
           </div>
-        </>
-      )}
+        }>
+        <DownloadUploader
+          value={resourceFiles}
+          onChange={setResourceFiles}
+          bucket="files"
+          folder={`courses/${courseId}`}
+          label="Course Downloads"
+          hint="Drag files here to upload, or paste an external URL to a resource (e.g. a PDF on another site)."
+        />
+      </Modal>
 
-      {/* Course Edit Modal */}
-      {isCourseEditOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setIsCourseEditOpen(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-lg">
-              <div className="ios-card rounded-3xl border border-white/10 overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
-                  <h3 className="text-white font-bold text-lg font-display">Edit Course</h3>
-                  <button onClick={() => setIsCourseEditOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
-                    <X size={18} />
-                  </button>
-                </div>
-                <form onSubmit={handleSaveCourse} className="p-6 space-y-5">
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Title</label>
-                    <input type="text" value={courseForm.title}
-                      onChange={e => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Description</label>
-                    <textarea value={courseForm.description}
-                      onChange={e => setCourseForm(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all h-28 resize-none" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Level</label>
-                      <select value={courseForm.level}
-                        onChange={e => setCourseForm(prev => ({ ...prev, level: e.target.value }))}
-                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:outline-none transition-all">
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-gray-400 text-xs uppercase tracking-wider font-semibold mb-2">Category</label>
-                      <input type="text" value={courseForm.category}
-                        onChange={e => setCourseForm(prev => ({ ...prev, category: e.target.value }))}
-                        className="w-full px-4 py-3.5 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 focus:outline-none transition-all" />
-                    </div>
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <button type="button" onClick={() => setIsCourseEditOpen(false)} className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-2xl font-medium transition-all text-sm">Cancel</button>
-                    <button type="submit" disabled={isSavingCourse} className="flex-1 py-3.5 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                      {isSavingCourse ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-                      Save Course
-                    </button>
-                  </div>
-                </form>
-              </div>
+      {/* Course Edit Modal — base Modal */}
+      <Modal isOpen={isCourseEditOpen} onClose={() => setIsCourseEditOpen(false)} title="Edit Course" maxWidth="max-w-lg"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setIsCourseEditOpen(false)} className="btn-secondary">Cancel</button>
+            <button type="submit" form="course-edit-form" disabled={isSavingCourse} className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+              {isSavingCourse ? 'Saving...' : 'Save Course'}
+            </button>
+          </div>
+        }>
+        <form id="course-edit-form" onSubmit={handleSaveCourse} className="space-y-5">
+          <div>
+            <label className={labelCls}>Title</label>
+            <input type="text" value={courseForm.title}
+              onChange={e => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
+              className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Description</label>
+            <textarea value={courseForm.description}
+              onChange={e => setCourseForm(prev => ({ ...prev, description: e.target.value }))}
+              className={`${inputCls} h-28 resize-none`} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Level</label>
+              <select value={courseForm.level}
+                onChange={e => setCourseForm(prev => ({ ...prev, level: e.target.value }))}
+                className={inputCls}>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Category</label>
+              <input type="text" value={courseForm.category}
+                onChange={e => setCourseForm(prev => ({ ...prev, category: e.target.value }))}
+                className={inputCls} />
             </div>
           </div>
-        </>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 }

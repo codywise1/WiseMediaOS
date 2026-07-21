@@ -108,7 +108,7 @@ export default function Modal({
                 </div>
                 {!hideHeader && (
                   <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-white/[0.06]">
-                    <h3 className="text-lg font-semibold text-white" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif', letterSpacing: '0.02em' }}>{title || ''}</h3>
+                    <h3 className="text-lg font-semibold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif', letterSpacing: '0.02em' }}>{title || ''}</h3>
                     <button
                       onClick={onClose}
                       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
@@ -141,7 +141,7 @@ export default function Modal({
               >
                 {!hideHeader && (
                   <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.06]">
-                    <h3 className="text-xl font-semibold text-white" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif', letterSpacing: '0.02em' }}>{title || ''}</h3>
+                    <h3 className="text-xl font-semibold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif', letterSpacing: '0.02em' }}>{title || ''}</h3>
                     <button
                       onClick={onClose}
                       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"

@@ -577,7 +577,7 @@ export default function CommunityFeedPage() {
           <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
             Creator Club Feed
           </h1>
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             Community Feed requires Supabase to be configured (database + RLS).
           </p>
         </div>
@@ -610,7 +610,7 @@ export default function CommunityFeedPage() {
                 ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                 : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                 }`}
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               All
             </button>
@@ -622,7 +622,7 @@ export default function CommunityFeedPage() {
                   ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                   : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                   }`}
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               >
                 {tag}
               </button>
@@ -636,7 +636,7 @@ export default function CommunityFeedPage() {
                 ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                 : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                 }`}
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               All Posts
             </button>
@@ -646,7 +646,7 @@ export default function CommunityFeedPage() {
                 ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                 : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                 }`}
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               disabled={!isPro}
             >
               Pro Only
@@ -657,13 +657,13 @@ export default function CommunityFeedPage() {
 
       {loading ? (
         <div className="glass-card p-6 rounded-2xl border border-white/10">
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             Loading feed...
           </p>
         </div>
       ) : visiblePosts.length === 0 ? (
         <div className="glass-card p-6 rounded-2xl border border-white/10">
-          <p className="text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
             No posts yet. Be the first to post.
           </p>
         </div>
@@ -695,29 +695,29 @@ export default function CommunityFeedPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-white font-bold truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <p className="text-white font-bold truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {authorName}
                         </p>
-                        <span className="text-xs text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <span className="text-xs text-gray-500" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {formatAppDateTime(post.created_at)}
                         </span>
                         {post.is_pinned && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#3AA3EB]/20 text-[#3AA3EB] border border-[#3AA3EB]/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#3AA3EB]/20 text-[#3AA3EB] border border-[#3AA3EB]/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             PINNED
                           </span>
                         )}
                         {post.is_featured && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             FEATURED
                           </span>
                         )}
                         {post.is_hidden && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             HIDDEN
                           </span>
                         )}
                         {post.visibility === 'pro' && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             PRO
                           </span>
                         )}
@@ -732,7 +732,7 @@ export default function CommunityFeedPage() {
                               backgroundColor: 'rgba(59, 163, 234, 0.33)',
                               border: '1px solid rgba(59, 163, 234, 1)',
                               color: '#ffffff',
-                              fontFamily: 'Montserrat, sans-serif'
+                              fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif'
                             }}
                           >
                             {tag}
@@ -797,7 +797,7 @@ export default function CommunityFeedPage() {
                     </h2>
                   )}
 
-                  <div className="text-gray-200 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <div className="text-gray-200 whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     {renderMessageBody(postBody, { maxEmbedWidth: 'max-w-md' })}
                   </div>
 
@@ -864,7 +864,7 @@ export default function CommunityFeedPage() {
                             target="_blank"
                             rel="noreferrer"
                             className="block px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[#3AA3EB] transition-colors"
-                            style={{ fontFamily: 'Montserrat, sans-serif' }}
+                            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                           >
                             {url}
                           </a>
@@ -926,7 +926,7 @@ export default function CommunityFeedPage() {
                     <button
                       onClick={() => toggleComments(post.id)}
                       className="px-3 py-2 rounded-lg transition-all border flex items-center gap-2 bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     >
                       <MessageCircle size={18} />
                       {comments}
@@ -953,14 +953,14 @@ export default function CommunityFeedPage() {
                               )}
                               <div className="flex-1">
                                 <div className="flex items-baseline gap-2 flex-wrap">
-                                  <span className="text-white font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                  <span className="text-white font-semibold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                     {name}
                                   </span>
-                                  <span className="text-gray-500 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                  <span className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                     {formatAppDateTime(comment.created_at)}
                                   </span>
                                 </div>
-                                <div className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                <div className="text-gray-200 text-sm mt-1 whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                                   {renderMessageBody(comment.body, { maxEmbedWidth: 'max-w-sm' })}
                                 </div>
                               </div>
@@ -986,13 +986,13 @@ export default function CommunityFeedPage() {
                           onChange={(e) => setCommentDrafts(prev => ({ ...prev, [post.id]: e.target.value }))}
                           placeholder="Write a comment..."
                           className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-                          style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}
+                          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
                         />
                         <button
                           onClick={() => submitComment(post.id)}
                           disabled={!profile?.id || postingComment[post.id] || !(commentDrafts[post.id] || '').trim()}
                           className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
-                          style={{ fontFamily: 'Montserrat, sans-serif' }}
+                          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                         >
                           Post
                         </button>
@@ -1014,31 +1014,31 @@ export default function CommunityFeedPage() {
       >
         <div className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Title</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Title</label>
             <input
               type="text"
               value={composerTitle}
               onChange={(e) => setComposerTitle(e.target.value)}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               placeholder="Optional"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Body</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Body</label>
             <textarea
               value={composerBody}
               onChange={(e) => setComposerBody(e.target.value)}
               rows={6}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               placeholder="Share an update, ask a question, or drop a win..."
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Tags</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Tags</label>
             <div className="flex flex-wrap gap-2">
               {TAGS.map(tag => {
                 const active = composerTags.includes(tag);
@@ -1055,7 +1055,7 @@ export default function CommunityFeedPage() {
                       ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
                       : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                       }`}
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                   >
                     {tag}
                   </button>
@@ -1065,12 +1065,12 @@ export default function CommunityFeedPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Visibility</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Visibility</label>
             <select
               value={composerVisibility}
               onChange={(e) => setComposerVisibility(e.target.value as Visibility)}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               {visibilityOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>
@@ -1082,13 +1082,13 @@ export default function CommunityFeedPage() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Attachments</label>
+              <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Attachments</label>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="text-sm text-[#3AA3EB] hover:text-[#2a92da] flex items-center gap-1.5 transition-colors"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               >
                 <Upload size={14} />
                 {uploading ? 'Uploading...' : 'Upload File'}
@@ -1107,14 +1107,14 @@ export default function CommunityFeedPage() {
                 value={composerAttachmentUrl}
                 onChange={(e) => setComposerAttachmentUrl(e.target.value)}
                 className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                 placeholder="Paste Image/Video URL"
               />
               <button
                 type="button"
                 onClick={addAttachment}
                 className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors font-medium"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                 disabled={!composerAttachmentUrl.trim()}
               >
                 <Paperclip size={18} />
@@ -1124,7 +1124,7 @@ export default function CommunityFeedPage() {
               <div className="space-y-2">
                 {composerAttachments.map((att, idx) => (
                   <div key={`${att.url}-${idx}`} className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg">
-                    <span className="text-sm text-gray-300 truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{att.url}</span>
+                    <span className="text-sm text-gray-300 truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{att.url}</span>
                     <button
                       type="button"
                       onClick={() => setComposerAttachments(prev => prev.filter((_, i) => i !== idx))}
@@ -1143,7 +1143,7 @@ export default function CommunityFeedPage() {
               type="button"
               onClick={() => setComposerOpen(false)}
               className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors font-medium"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               Cancel
             </button>
@@ -1152,7 +1152,7 @@ export default function CommunityFeedPage() {
               onClick={createPost}
               disabled={creating || !composerBody.trim()}
               className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               {creating ? 'Posting...' : 'Post'}
             </button>
@@ -1173,25 +1173,25 @@ export default function CommunityFeedPage() {
       >
         <div className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Title</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Title</label>
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               placeholder="Optional"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif' }}>Body</label>
+            <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Body</label>
             <textarea
               value={editBody}
               onChange={(e) => setEditBody(e.target.value)}
               rows={6}
               className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
               placeholder="What's on your mind?"
             />
           </div>
@@ -1206,7 +1206,7 @@ export default function CommunityFeedPage() {
                 setEditBody('');
               }}
               className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors font-medium"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               Cancel
             </button>
@@ -1215,7 +1215,7 @@ export default function CommunityFeedPage() {
               onClick={handleUpdatePost}
               disabled={updating || !editBody.trim()}
               className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             >
               {updating ? 'Saving...' : 'Save Changes'}
             </button>

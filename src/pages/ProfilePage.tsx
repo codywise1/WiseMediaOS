@@ -149,7 +149,7 @@ export default function ProfilePage() {
       {showToast && (
         <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
           <GlassCard className="p-4 bg-green-500/20 border-green-500/50">
-            <p className="text-white font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>Profile updated successfully!</p>
+            <p className="text-white font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Profile updated successfully!</p>
           </GlassCard>
         </div>
       )}
@@ -160,7 +160,7 @@ export default function ProfilePage() {
           <button
             onClick={() => setIsEditing(true)}
             className="absolute top-4 right-4 px-5 py-2.5 bg-white/20 backdrop-blur-xl hover:bg-white/30 text-white rounded-lg transition-all font-medium border border-white/30 shrink-glow-button"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
           >
             Edit Profile
           </button>
@@ -195,14 +195,14 @@ export default function ProfilePage() {
                   <h2 className="text-white font-bold text-2xl mb-1" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>
                     {profile?.full_name || 'User'}
                   </h2>
-                  <p className="text-gray-400 mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>{profile?.email}</p>
+                  <p className="text-gray-400 mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{profile?.email}</p>
                   <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold border ${getRoleBadgeColor()}`} style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                     {profile?.role}
                   </span>
                 </div>
 
                 {profile?.bio && !isEditing && (
-                  <p className="text-gray-300 text-sm leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-gray-300 text-sm leading-relaxed" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     {profile.bio}
                   </p>
                 )}
@@ -212,23 +212,23 @@ export default function ProfilePage() {
                     {profile?.location && (
                       <div className="flex items-center gap-3 text-gray-300">
                         <MapPin size={18} className="text-gray-500" />
-                        <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>{profile.location}</span>
+                        <span className="text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{profile.location}</span>
                       </div>
                     )}
                     {profile?.website && (
                       <a href={profile.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[#3AA3EB] hover:text-[#2a92da] transition-colors">
                         <LinkIcon size={18} />
-                        <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Website</span>
+                        <span className="text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Website</span>
                       </a>
                     )}
                     {profile?.twitter && (
                       <a href={`https://twitter.com/${profile.twitter}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[#3AA3EB] hover:text-[#2a92da] transition-colors">
-                        <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>@{profile.twitter}</span>
+                        <span className="text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>@{profile.twitter}</span>
                       </a>
                     )}
                     {profile?.instagram && (
                       <a href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[#3AA3EB] hover:text-[#2a92da] transition-colors">
-                        <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>@{profile.instagram}</span>
+                        <span className="text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>@{profile.instagram}</span>
                       </a>
                     )}
                   </div>
@@ -237,15 +237,15 @@ export default function ProfilePage() {
                 <div className="w-full grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
                   <div className="text-center">
                     <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.totalPurchases}</div>
-                    <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Purchases</div>
+                    <div className="text-gray-400 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Purchases</div>
                   </div>
                   <div className="text-center">
                     <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.totalReviews}</div>
-                    <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Reviews</div>
+                    <div className="text-gray-400 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Reviews</div>
                   </div>
                   <div className="text-center">
                     <div className="text-white font-bold text-2xl number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{stats.memberDays}</div>
-                    <div className="text-gray-400 text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>Days</div>
+                    <div className="text-gray-400 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Days</div>
                   </div>
                 </div>
               </div>
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         Full Name
                       </label>
                       <input
@@ -270,11 +270,11 @@ export default function ProfilePage() {
                         onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                         placeholder="Enter your full name"
-                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         Location
                       </label>
                       <input
@@ -283,13 +283,13 @@ export default function ProfilePage() {
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                         placeholder="City, Country"
-                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       Bio
                     </label>
                     <textarea
@@ -298,12 +298,12 @@ export default function ProfilePage() {
                       rows={4}
                       className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all resize-none"
                       placeholder="Tell us about yourself..."
-                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       Avatar URL
                     </label>
                     <input
@@ -312,12 +312,12 @@ export default function ProfilePage() {
                       onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
                       className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                       placeholder="https://example.com/avatar.jpg"
-                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                       Website
                     </label>
                     <input
@@ -326,13 +326,13 @@ export default function ProfilePage() {
                       onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                       className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                       placeholder="https://yourwebsite.com"
-                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         Twitter Username
                       </label>
                       <input
@@ -341,11 +341,11 @@ export default function ProfilePage() {
                         onChange={(e) => setFormData({ ...formData, twitter: e.target.value.replace('@', '') })}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                         placeholder="username"
-                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      <label className="block text-gray-300 font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                         Instagram Username
                       </label>
                       <input
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                         onChange={(e) => setFormData({ ...formData, instagram: e.target.value.replace('@', '') })}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none transition-all"
                         placeholder="username"
-                        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                       />
                     </div>
                   </div>
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                       onClick={handleSave}
                       disabled={saving}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium shadow-lg shrink-glow-button"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     >
                       <Save size={20} />
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -373,7 +373,7 @@ export default function ProfilePage() {
                       onClick={handleCancel}
                       disabled={saving}
                       className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors shrink-glow-button"
-                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                     >
                       <X size={20} />
                       Cancel
@@ -392,38 +392,38 @@ export default function ProfilePage() {
                       <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                         Achievements
                       </h3>
-                      <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Your milestones and badges</p>
+                      <p className="text-gray-400 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Your milestones and badges</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {stats.memberDays >= 7 && (
                       <div className="p-4 bg-white/5 rounded-lg text-center border border-white/10">
                         <div className="text-2xl mb-2">🎯</div>
-                        <div className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Week One</div>
+                        <div className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Week One</div>
                       </div>
                     )}
                     {stats.totalPurchases > 0 && (
                       <div className="p-4 bg-white/5 rounded-lg text-center border border-white/10">
                         <div className="text-2xl mb-2">🛍️</div>
-                        <div className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>First Purchase</div>
+                        <div className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>First Purchase</div>
                       </div>
                     )}
                     {stats.totalReviews > 0 && (
                       <div className="p-4 bg-white/5 rounded-lg text-center border border-white/10">
                         <div className="text-2xl mb-2">⭐</div>
-                        <div className="text-white font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Reviewer</div>
+                        <div className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Reviewer</div>
                       </div>
                     )}
                     {profile?.role === 'elite' && (
                       <div className="p-4 bg-yellow-500/10 rounded-lg text-center border border-yellow-500/30">
                         <div className="text-2xl mb-2">👑</div>
-                        <div className="text-yellow-400 font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Elite Member</div>
+                        <div className="text-yellow-400 font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Elite Member</div>
                       </div>
                     )}
                     {profile?.role === 'admin' && (
                       <div className="p-4 bg-red-500/10 rounded-lg text-center border border-red-500/30">
                         <div className="text-2xl mb-2">🔥</div>
-                        <div className="text-red-400 font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Admin</div>
+                        <div className="text-red-400 font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Admin</div>
                       </div>
                     )}
                   </div>
@@ -438,29 +438,29 @@ export default function ProfilePage() {
                       <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Montserrat, system-ui, sans-serif', textTransform: 'uppercase' }}>
                         Account Details
                       </h3>
-                      <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>Member information</p>
+                      <p className="text-gray-400 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Member information</p>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3 text-gray-300">
                       <Mail size={20} className="text-gray-400 mt-1" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Email</p>
-                        <p className="font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>{profile?.email}</p>
+                        <p className="text-sm text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Email</p>
+                        <p className="font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{profile?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 text-gray-300">
                       <Briefcase size={20} className="text-gray-400 mt-1" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Role</p>
-                        <p className="font-medium capitalize" style={{ fontFamily: 'Montserrat, sans-serif' }}>{profile?.role}</p>
+                        <p className="text-sm text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Role</p>
+                        <p className="font-medium capitalize" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{profile?.role}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 text-gray-300">
                       <Calendar size={20} className="text-gray-400 mt-1" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-400" style={{ fontFamily: 'Montserrat, sans-serif' }}>Member Since</p>
-                        <p className="font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        <p className="text-sm text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Member Since</p>
+                        <p className="font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {profile?.created_at ? formatAppDate(profile.created_at) : 'N/A'}
                         </p>
                       </div>

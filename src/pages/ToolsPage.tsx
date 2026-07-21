@@ -103,8 +103,8 @@ export default function ToolsPage() {
                 <tool.icon className="text-[#3AA3EB]" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>{tool.title}</h3>
-                <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>{tool.description}</p>
+                <h3 className="text-white font-bold mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>{tool.title}</h3>
+                <p className="text-gray-400 text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{tool.description}</p>
               </div>
             </div>
           </GlassCard>
@@ -119,7 +119,7 @@ export default function ToolsPage() {
           </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Base Color</label>
+              <label className="block text-gray-300 mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Base Color</label>
               <div className="flex gap-4">
                 <input type="color" value={baseColor} onChange={(e) => setBaseColor(e.target.value)} className="w-20 h-20 bg-black/30 border border-white/10 rounded-lg cursor-pointer" />
                 <input type="text" value={baseColor} onChange={(e) => setBaseColor(e.target.value)} className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }} />
@@ -131,7 +131,7 @@ export default function ToolsPage() {
 
             {generatedPalette.length > 0 && (
               <div>
-                <h3 className="text-white font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Generated Palette</h3>
+                <h3 className="text-white font-bold mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Generated Palette</h3>
                 <div className="grid grid-cols-5 gap-4">
                   {generatedPalette.map((color, i) => (
                     <div key={i} className="group relative">
@@ -159,8 +159,8 @@ export default function ToolsPage() {
           </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Input Text</label>
-              <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none h-32" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }} placeholder="Enter your text here..." />
+              <label className="block text-gray-300 mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Input Text</label>
+              <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none h-32" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }} placeholder="Enter your text here..." />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
@@ -179,13 +179,13 @@ export default function ToolsPage() {
             {transformedText && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Output</label>
+                  <label className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Output</label>
                   <button onClick={() => copyToClipboard(transformedText)} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm">
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                <div className="px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <div className="px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   {transformedText}
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function ToolsPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="block text-gray-300 mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Number of Paragraphs: <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{loremLength}</span></label>
+                <label className="block text-gray-300 mb-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Number of Paragraphs: <span className="number" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{loremLength}</span></label>
                 <input type="range" min="1" max="10" value={loremLength} onChange={(e) => setLoremLength(parseInt(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
               </div>
               <button onClick={generateLorem} className="px-8 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-lg transition-colors font-medium shadow-lg shadow-[#3AA3EB]/20">
@@ -213,13 +213,13 @@ export default function ToolsPage() {
             {loremText && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Generated Text</label>
+                  <label className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Generated Text</label>
                   <button onClick={() => copyToClipboard(loremText)} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm">
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                <div className="px-4 py-4 bg-black/30 border border-white/10 rounded-lg text-gray-300 max-h-96 overflow-y-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
+                <div className="px-4 py-4 bg-black/30 border border-white/10 rounded-lg text-gray-300 max-h-96 overflow-y-auto" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px', lineHeight: '1.8' }}>
                   {loremText.split('\n\n').map((para, i) => (
                     <p key={i} className="mb-4 last:mb-0">{para}</p>
                   ))}

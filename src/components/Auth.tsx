@@ -81,7 +81,7 @@ export default function Auth() {
                 setSuccess('');
               }}
               className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors mb-6 text-sm"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
             >
               <ArrowLeft size={16} />
               Back to sign in
@@ -91,7 +91,7 @@ export default function Auth() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {isSignUp && !isForgotPassword && (
               <div>
-                <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   Full Name
                 </label>
                 <input
@@ -106,7 +106,7 @@ export default function Auth() {
             )}
 
             <div>
-              <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+              <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                 Email
               </label>
               <input
@@ -121,7 +121,7 @@ export default function Auth() {
 
             {!isForgotPassword && (
               <div>
-                <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <label className="block text-white text-sm font-medium mb-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   Password
                 </label>
                 <input
@@ -152,7 +152,7 @@ export default function Auth() {
               type="submit"
               disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
             >
               <LogIn size={20} />
               {loading ? 'Please wait...' : isForgotPassword ? 'Send Reset Email' : isSignUp ? 'Create Account' : 'Sign In'}
@@ -165,7 +165,7 @@ export default function Auth() {
                 <button
                   onClick={() => setIsSignUp(!isSignUp)}
                   className="text-blue-400 hover:text-blue-300 transition-colors text-sm block w-full"
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                 >
                   {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                 </button>
@@ -177,7 +177,7 @@ export default function Auth() {
                       setSuccess('');
                     }}
                     className="text-gray-400 hover:text-gray-300 transition-colors text-sm"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                   >
                     Forgot password?
                   </button>

@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
@@ -96,7 +97,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid'>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
-  const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
   const [generatingPDFId, setGeneratingPDFId] = useState<string | null>(null);
@@ -211,7 +211,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     year: 'YEARLY REVENUE',
   };
 
-  const getChartData = () => {
+  const getChartData = (): { label: string; value: number }[] => {
     const basePointsCount = isMobile ? 4 : 8;
     switch (chartPeriod) {
       case 'day': {
@@ -226,9 +226,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               return inv.status === 'paid' && invDate >= dayStart && invDate < dayEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
-          const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr}. ${d.getDate()}`, value: dayRevenue, x: spacing * i };
+          return { label: `${monthAbbr} ${d.getDate()}`, value: dayRevenue };
         });
       }
       case 'week': {
@@ -245,9 +244,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               return inv.status === 'paid' && invDate >= weekStart && invDate < weekEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
-          const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr}. ${weekStart.getDate()}`, value: weekRevenue, x: spacing * i };
+          return { label: `${monthAbbr} ${weekStart.getDate()}`, value: weekRevenue };
         });
       }
       case 'month': {
@@ -261,9 +259,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 invDate.getFullYear() === d.getFullYear();
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
-          const spacing = 800 / (basePointsCount + 1);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
-          return { label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`, value: monthRevenue, x: spacing * i };
+          return { label: `${monthAbbr} '${String(d.getFullYear()).slice(-2)}`, value: monthRevenue };
         });
       }
       case 'quarter': {
@@ -282,8 +279,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               return inv.status === 'paid' && invDate >= quarterStart && invDate < quarterEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
-          const spacing = 800 / (quarterCount + 1);
-          return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue, x: spacing * i };
+          return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue };
         });
       }
       case 'year': {
@@ -298,8 +294,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               return inv.status === 'paid' && invDate >= yearStart && invDate < yearEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
-          const spacing = 800 / (yearCount + 1);
-          return { label: String(targetYear), value: yearRevenue, x: spacing * i };
+          return { label: String(targetYear), value: yearRevenue };
         });
       }
       default:
@@ -308,36 +303,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   };
 
   const chartData = getChartData();
-  const chartPointsCount = chartData.length;
-  const maxVal = Math.max(...chartData.map(d => d.value), 1000);
-  const chartPoints = chartData.map(d => ({
-    x: d.x,
-    y: 216 - (d.value / maxVal) * 176,
-  }));
-
-  // Smooth Catmull-Rom spline path generation
-  const buildSmoothPath = (pts: { x: number; y: number }[], closeArea: boolean) => {
-    if (pts.length < 2) return '';
-    let path = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i === 0 ? 0 : i - 1];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[i + 2 < pts.length ? i + 2 : pts.length - 1];
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-    }
-    if (closeArea) {
-      path += ` L ${pts[pts.length - 1].x} 232 L ${pts[0].x} 232 Z`;
-    }
-    return path;
-  };
-
-  const areaPath = buildSmoothPath(chartPoints, true);
-  const linePath = buildSmoothPath(chartPoints, false);
+  const chartTotal = chartData.reduce((s, d) => s + d.value, 0);
+  const chartMaxVal = Math.max(...chartData.map(d => d.value), 1);
+  const chartAvg = chartData.length > 0 ? chartTotal / chartData.length : 0;
 
   const handleNewInvoice = () => {
     setSelectedInvoice(undefined);
@@ -560,7 +528,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/[0.04] via-transparent to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
               <div>
-                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
+                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
                 <p className="text-xs text-gray-400 mt-1 font-medium">
                   Total: <span className="text-white font-bold tabular-nums">${chartData.reduce((s, d) => s + d.value, 0).toLocaleString()}</span>
                 </p>
@@ -581,7 +549,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         : 'text-gray-400 hover:text-white'
                     }`}
                     style={{
-                      fontFamily: 'Bebas Neue, Montserrat, sans-serif',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif',
                       background: chartPeriod === period
                         ? 'linear-gradient(180deg, #3aa3eb 0%, #2d8fd4 100%)'
                         : 'transparent',
@@ -596,154 +564,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </div>
             </div>
 
-            <div className="h-64 sm:h-80 w-full relative group/chart pl-10 sm:pl-12">
-              <svg viewBox="0 0 800 280" className="w-full h-full" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="iosChartFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.28" />
-                    <stop offset="50%" stopColor="#3aa3eb" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="iosChartLine" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#3aa3eb" />
-                    <stop offset="50%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#3aa3eb" />
-                  </linearGradient>
-                  <filter id="iosGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-                {[0, 1, 2, 3, 4].map(i => (
-                  <line
-                    key={i}
-                    x1="40"
-                    y1={i * 52 + 20}
-                    x2="800"
-                    y2={i * 52 + 20}
-                    stroke="rgba(255,255,255,0.04)"
-                    strokeWidth="1"
-                  />
-                ))}
-                <path d={areaPath} fill="url(#iosChartFill)" />
-                <path
-                  d={linePath}
-                  fill="none"
-                  stroke="url(#iosChartLine)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#iosGlow)"
-                />
-                {chartData.map((d, i) => {
-                  const hitboxWidth = 800 / chartPointsCount;
-                  return (
-                    <rect
-                      key={`hitbox-${i}`}
-                      x={d.x - hitboxWidth / 2}
-                      y="0"
-                      width={hitboxWidth}
-                      height="280"
-                      fill="transparent"
-                      className="cursor-pointer"
-                      onMouseEnter={() => setHoveredMonthIndex(i)}
-                      onMouseLeave={() => setHoveredMonthIndex(null)}
-                    />
-                  );
-                })}
-                {chartPoints.map((p, i) => (
-                  <g key={i}>
-                    {hoveredMonthIndex === i && (
-                      <line
-                        x1={p.x}
-                        y1={p.y}
-                        x2={p.x}
-                        y2="264"
-                        stroke="rgba(58,163,235,0.25)"
-                        strokeWidth="1.5"
-                        strokeDasharray="4 4"
-                      />
-                    )}
-                    <circle
-                      cx={p.x}
-                      cy={p.y}
-                      r={hoveredMonthIndex === i ? '7' : '4.5'}
-                      fill={hoveredMonthIndex === i ? '#ffffff' : '#3aa3eb'}
-                      stroke="#0a0a0b"
-                      strokeWidth={hoveredMonthIndex === i ? '3' : '2'}
-                      className="transition-all duration-200"
-                    />
-                    {hoveredMonthIndex === i && (
-                      <circle
-                        cx={p.x}
-                        cy={p.y}
-                        r="12"
-                        fill="rgba(58,163,235,0.15)"
-                        className="animate-pulse"
-                      />
-                    )}
-                  </g>
-                ))}
-              </svg>
-
-              {hoveredMonthIndex !== null && (
-                <div
-                  className="absolute z-50 pointer-events-none transition-all duration-200 ease-out"
-                  style={{
-                    left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
-                    top: `${(chartPoints[hoveredMonthIndex].y / 280) * 100}%`,
-                    marginTop: '-56px',
-                    transform: 'translateX(-50%)',
-                  }}
-                >
-                  <div
-                    className="rounded-2xl px-4 py-2.5 shadow-2xl flex flex-col items-center gap-0.5 min-w-[130px]"
-                    style={{
-                      background: 'rgba(28, 28, 30, 0.85)',
-                      backdropFilter: 'blur(20px) saturate(180%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                      border: '1px solid rgba(58, 163, 235, 0.25)',
-                    }}
-                  >
-                    <span className="text-[10px] font-bold text-[#3aa3eb] uppercase tracking-widest">
-                      {chartData[hoveredMonthIndex].label}
-                    </span>
-                    <span className="text-lg font-bold text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
-                      ${chartData[hoveredMonthIndex].value.toLocaleString()}
-                    </span>
-                  </div>
-                  <div
-                    className="w-2.5 h-2.5 rotate-45 mx-auto -mt-1.5"
-                    style={{
-                      background: 'rgba(28, 28, 30, 0.85)',
-                      borderRight: '1px solid rgba(58, 163, 235, 0.25)',
-                      borderBottom: '1px solid rgba(58, 163, 235, 0.25)',
-                    }}
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-between text-[10px] font-semibold mt-3 px-1">
-                {chartData.map((d, i) => (
-                  <span
-                    key={i}
-                    className={`transition-colors duration-200 ${hoveredMonthIndex === i ? 'text-white' : 'text-gray-500'}`}
-                  >
-                    {d.label}
-                  </span>
-                ))}
-              </div>
-
-              <div className="absolute left-0 top-0 h-[calc(100%-24px)] flex flex-col justify-between text-[10px] text-gray-600 font-semibold pr-2 tabular-nums">
-                <span>${Math.round(maxVal / 1000)}k</span>
-                <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
-                <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
-                <span>$0</span>
-              </div>
-            </div>
+            <SaaSGrowthChart data={chartData} total={chartTotal} avg={chartAvg} maxVal={chartMaxVal} />
           </div>
 
           {/* Revenue Snapshot */}
@@ -754,7 +575,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               WebkitBackdropFilter: 'blur(40px) saturate(180%)',
             }}
           >
-            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
+            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>REVENUE SNAPSHOT</h2>
             <div className="space-y-3">
               {[
                 { label: 'Last 7 Days', value: revenue7d, icon: ArrowRight, accent: 'text-[#3aa3eb]' },
@@ -766,14 +587,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="w-1 h-10 rounded-full bg-gradient-to-b from-[#3aa3eb] to-[#3aa3eb]/30" />
                     <span className="text-sm text-gray-300 font-medium">{item.label}</span>
                   </div>
-                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
+                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>${item.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Collected</span>
-                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>${totalPaid.toLocaleString()}</span>
+                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>${totalPaid.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -795,7 +616,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-white font-medium mb-1 truncate">{stat.label}</p>
-                <p className="text-lg sm:text-2xl font-bold text-white tabular-nums" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>{stat.value}</p>
+                <p className="text-lg sm:text-2xl font-bold text-white tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{stat.value}</p>
               </div>
             </div>
           ))}
@@ -915,7 +736,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <div className={`w-1 h-8 rounded-full ${style.dot}`} />
-                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
+                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                           {invoice.number}
                         </span>
                       </div>
@@ -939,7 +760,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           </p>
                         )}
                       </div>
-                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Bebas Neue, Montserrat, sans-serif' }}>
+                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </div>
@@ -1038,6 +859,182 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           onPaymentSuccess={handlePaymentSuccess}
         />
       )}
+    </div>
+  );
+}
+
+// ─── SaaS-style growth chart ───────────────────────────────────────────────
+function SaaSGrowthChart({
+  data, total, avg, maxVal,
+}: {
+  data: { label: string; value: number }[];
+  total: number;
+  avg: number;
+  maxVal: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(700);
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
+    ro.observe(el);
+    setWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  const PAD_L = 48;
+  const PAD_R = 12;
+  const PAD_T = 16;
+  const PAD_B = 32;
+  const H = 260;
+  const plotW = Math.max(width - PAD_L - PAD_R, 10);
+  const plotH = H - PAD_T - PAD_B;
+  const n = data.length;
+
+  const niceMax = (() => {
+    if (maxVal <= 0) return 1000;
+    const mag = Math.pow(10, Math.floor(Math.log10(maxVal)));
+    return Math.ceil(maxVal / mag) * mag;
+  })();
+
+  const xOf = (i: number) => PAD_L + (n <= 1 ? plotW / 2 : (plotW / (n - 1)) * i);
+  const yOf = (v: number) => PAD_T + plotH - (v / niceMax) * plotH;
+
+  const linePath = data.map((d, i) => {
+    const x = xOf(i), y = yOf(d.value);
+    if (i === 0) return `M${x},${y}`;
+    const px = xOf(i - 1), py = yOf(data[i - 1].value);
+    const cpx = (px + x) / 2;
+    return `C${cpx},${py} ${cpx},${y} ${x},${y}`;
+  }).join(' ');
+
+  const areaPath = linePath + ` L${xOf(n - 1)},${PAD_T + plotH} L${xOf(0)},${PAD_T + plotH} Z`;
+
+  const gridLines = 4;
+  const fmtY = (v: number) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+    return `${Math.round(v)}`;
+  };
+
+  const totalChange = data.length >= 2 ? (() => {
+    const first = data[0].value, last = data[data.length - 1].value;
+    if (first === 0) return last > 0 ? 100 : 0;
+    return Math.round(((last - first) / first) * 100);
+  })() : 0;
+
+  return (
+    <div>
+      {/* Summary row */}
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <p className="text-3xl font-bold text-white tabular-nums tracking-tight">
+            ${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Avg ${avg.toLocaleString(undefined, { maximumFractionDigits: 0 })}/period
+          </p>
+        </div>
+        {data.length >= 2 && (
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+            totalChange >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'
+          }`}>
+            <span>{totalChange >= 0 ? '↗' : '↘'}</span>
+            {Math.abs(totalChange)}% {totalChange >= 0 ? 'growth' : 'decline'}
+          </div>
+        )}
+      </div>
+
+      {/* Chart */}
+      <div ref={containerRef} className="w-full select-none">
+        <svg width={width} height={H} style={{ display: 'block', overflow: 'visible' }}
+          onMouseLeave={() => setHovered(null)}>
+          <defs>
+            <linearGradient id="saasArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid + Y labels */}
+          {Array.from({ length: gridLines + 1 }).map((_, gi) => {
+            const frac = gi / gridLines;
+            const y = PAD_T + plotH - frac * plotH;
+            const val = frac * niceMax;
+            return (
+              <g key={gi}>
+                <line x1={PAD_L} y1={y} x2={width - PAD_R} y2={y}
+                  stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
+                <text x={PAD_L - 8} y={y} textAnchor="end" dominantBaseline="middle"
+                  fill="rgba(255,255,255,0.3)" fontSize={11} className="tabular-nums">
+                  {fmtY(val)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Hover guideline */}
+          {hovered !== null && (
+            <line x1={xOf(hovered)} y1={PAD_T} x2={xOf(hovered)} y2={PAD_T + plotH}
+              stroke="rgba(255,255,255,0.12)" strokeWidth={1} strokeDasharray="4 4" />
+          )}
+
+          {/* Area fill */}
+          <motion.path d={areaPath} fill="url(#saasArea)"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} />
+
+          {/* Line */}
+          <motion.path d={linePath} fill="none" stroke="#3aa3eb" strokeWidth={2.5}
+            strokeLinecap="round" strokeLinejoin="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+            transition={{ duration: 1.2, ease: 'easeInOut' }} />
+
+          {/* Points + hitboxes */}
+          {data.map((d, i) => {
+            const x = xOf(i), y = yOf(d.value);
+            const isHov = hovered === i;
+            const colW = plotW / n;
+            return (
+              <g key={i}>
+                <rect x={x - colW / 2} y={PAD_T} width={colW} height={plotH}
+                  fill="transparent" onMouseEnter={() => setHovered(i)} />
+                <circle cx={x} cy={y} r={isHov ? 6 : 4}
+                  fill={isHov ? '#3aa3eb' : '#0f1a24'} stroke="#3aa3eb"
+                  strokeWidth={isHov ? 2.5 : 2}
+                  style={{ transition: 'r 0.15s, fill 0.15s' }} />
+                {isHov && (
+                  <g>
+                    <rect x={Math.min(Math.max(x - 60, PAD_L), width - PAD_R - 120)} y={y - 48}
+                      width={120} height={38} rx={10}
+                      fill="rgba(28,28,30,0.92)" stroke="rgba(58,163,235,0.3)" strokeWidth={1} />
+                    <text x={Math.min(Math.max(x - 60, PAD_L), width - PAD_R - 120) + 60}
+                      y={y - 33} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={10}>
+                      {d.label}
+                    </text>
+                    <text x={Math.min(Math.max(x - 60, PAD_L), width - PAD_R - 120) + 60}
+                      y={y - 18} textAnchor="middle" fill="#fff" fontSize={13} fontWeight={600}>
+                      ${d.value.toLocaleString()}
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+
+          {/* X labels */}
+          {data.map((d, i) => (
+            <text key={i} x={xOf(i)} y={H - 10} textAnchor="middle"
+              fill={hovered === i ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.35)'}
+              fontSize={11} fontWeight={hovered === i ? 600 : 400}
+              style={{ transition: 'fill 0.15s' }}>
+              {d.label}
+            </text>
+          ))}
+        </svg>
+      </div>
     </div>
   );
 }

@@ -362,10 +362,10 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
               className="flex items-center gap-2 lg:gap-3 pl-2 lg:pl-4 border-l border-white/10 hover:bg-white/10 rounded-lg transition-colors p-2"
             >
               <div className="text-right hidden sm:block">
-                <p className="font-medium text-white" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                <p className="font-medium text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                   {displayName}
                 </p>
-                <p className="text-gray-400 capitalize" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '14px' }}>
+                <p className="text-gray-400 capitalize" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}>
                   {role || 'guest'}
                 </p>
               </div>

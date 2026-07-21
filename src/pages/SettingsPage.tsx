@@ -30,15 +30,15 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-3">
                   <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Email Notifications</span>
+                    <span className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Email Notifications</span>
                     <input type="checkbox" className="w-5 h-5" checked={emailNotifications} onChange={(e) => setEmailNotifications(e.target.checked)} />
                   </label>
                   <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Push Notifications</span>
+                    <span className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Push Notifications</span>
                     <input type="checkbox" className="w-5 h-5" checked={pushNotifications} onChange={(e) => setPushNotifications(e.target.checked)} />
                   </label>
                   <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Weekly Newsletter</span>
+                    <span className="text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Weekly Newsletter</span>
                     <input type="checkbox" className="w-5 h-5" checked={newsletter} onChange={(e) => setNewsletter(e.target.checked)} />
                   </label>
                 </div>
@@ -56,13 +56,13 @@ export default function SettingsPage() {
                   Security
                 </h3>
                 <div className="space-y-3">
-                  <button onClick={() => setShowPasswordModal(true)} className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button onClick={() => setShowPasswordModal(true)} className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Change Password
                   </button>
-                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Two-Factor Authentication
                   </button>
-                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Connected Devices
                   </button>
                 </div>
@@ -81,16 +81,16 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-gray-300 mb-2 block" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Language</label>
-                    <select className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <label className="text-gray-300 mb-2 block" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Language</label>
+                    <select className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       <option>English</option>
                       <option>Spanish</option>
                       <option>French</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-gray-300 mb-2 block" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>Timezone</label>
-                    <select className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                    <label className="text-gray-300 mb-2 block" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>Timezone</label>
+                    <select className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                       <option>UTC-5 (Eastern)</option>
                       <option>UTC-6 (Central)</option>
                       <option>UTC-7 (Mountain)</option>
@@ -112,13 +112,13 @@ export default function SettingsPage() {
                   Billing
                 </h3>
                 <div className="space-y-3">
-                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Payment Methods
                   </button>
-                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Billing History
                   </button>
-                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '16px' }}>
+                  <button className="w-full text-left px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}>
                     Upgrade Plan
                   </button>
                 </div>

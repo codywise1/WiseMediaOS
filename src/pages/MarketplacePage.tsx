@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import PageHeader from '../components/PageHeader';
+import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, CreditCard as Edit2, Trash2, EyeOff, Eye, MoreHorizontal } from 'lucide-react';
+import { Star, Package, Zap, Users, Shield, FileText, LayoutGrid as Layout, Grid2x2 as Grid, Plus, X, CreditCard as Edit2, Trash2, EyeOff, Eye, MoreHorizontal, Search, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import DownloadUploader, { DownloadFile } from '../components/DownloadUploader';
@@ -22,7 +24,25 @@ interface Product {
   is_hidden?: boolean;
   status?: string;
   description?: string | null;
+  affiliate_link?: string | null;
+  files?: DownloadFile[];
 }
+
+const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
+const inputCls = 'form-input w-full px-4 py-3 rounded-xl text-sm';
+
+const CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'templates', label: 'Templates' },
+  { id: 'toolkits', label: 'Toolkits' },
+  { id: 'graphics', label: 'Graphics' },
+  { id: 'courses', label: 'Courses' },
+  { id: 'docs', label: 'Documents' },
+];
+
+const CATEGORY_ICONS: Record<string, any> = {
+  templates: Layout, toolkits: Package, graphics: Zap, courses: Users, docs: FileText, all: Grid,
+};
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
@@ -30,23 +50,19 @@ export default function MarketplacePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineTitle, setInlineTitle] = useState('');
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    price: '',
-    old_price: '',
-    category: 'templates',
-    cover_image_url: '',
-    platform: '',
-    discount_enabled: false,
-    affiliate_link: ''
+    title: '', description: '', price: '', old_price: '', category: 'templates',
+    cover_image_url: '', platform: '', discount_enabled: false, affiliate_link: '',
   });
   const [downloadFiles, setDownloadFiles] = useState<DownloadFile[]>([]);
 
@@ -57,9 +73,7 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpenId(null);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpenId(null);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -69,18 +83,10 @@ export default function MarketplacePage() {
     try {
       const dbProducts = supabase ? (await supabase
         .from('marketplace_products')
-        .select('id, title, description, price, old_price, category, rating, reviews_count, cover_image_url, is_featured, discount_enabled, platform, is_hidden, status')
+        .select('*')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })).data || [] : [];
-      const mockProducts: Product[] = [
-        { id: 'mock-1', title: 'Premium Agency Notion OS', price: 49.99, old_price: 99.99, category: 'templates', rating: 5.0, reviews_count: 128, cover_image_url: '/src/media/marketplace_notion.png', is_featured: true, discount_enabled: true, platform: 'Notion' },
-        { id: 'mock-2', title: 'Creator Contract Bundle', price: 149.00, old_price: 299.00, category: 'docs', rating: 4.9, reviews_count: 85, cover_image_url: '/src/media/marketplace_legal.png', is_featured: true, discount_enabled: true, platform: 'PDF/Word' },
-        { id: 'mock-3', title: 'Vibrant Social Assets', price: 29.00, old_price: null, category: 'graphics', rating: 4.8, reviews_count: 56, cover_image_url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: false, platform: 'Canva/Figma' },
-        { id: 'mock-4', title: 'Scaling Playbook 2024', price: 79.00, old_price: 120.00, category: 'courses', rating: 5.0, reviews_count: 210, cover_image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: true, platform: 'Digital Access' },
-        { id: 'mock-5', title: 'Client CRM Toolkit', price: 39.00, old_price: null, category: 'toolkits', rating: 4.7, reviews_count: 42, cover_image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: false, platform: 'Airtable' },
-        { id: 'mock-6', title: 'Pitch Deck Master Template', price: 59.00, old_price: 89.00, category: 'templates', rating: 4.9, reviews_count: 73, cover_image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800', is_featured: false, discount_enabled: true, platform: 'PowerPoint/Keynote' }
-      ];
-      setProducts([...mockProducts, ...dbProducts]);
+      setProducts(dbProducts as Product[]);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -95,8 +101,7 @@ export default function MarketplacePage() {
     setIsModalOpen(true);
   }
 
-  async function openEditModal(product: Product, e: React.MouseEvent) {
-    e.stopPropagation();
+  function openEditModal(product: Product) {
     setMenuOpenId(null);
     setEditingProduct(product);
     setForm({
@@ -108,11 +113,10 @@ export default function MarketplacePage() {
       cover_image_url: product.cover_image_url || '',
       platform: product.platform || '',
       discount_enabled: product.discount_enabled,
-      affiliate_link: (product as any).affiliate_link || ''
+      affiliate_link: product.affiliate_link || '',
     });
-    const rawFiles = (product as any).files || [];
-    setDownloadFiles(Array.isArray(rawFiles) ? rawFiles.map((f: any) => ({
-      id: f.id || `file-${Math.random()}`, name: f.name || 'Download', url: f.url || '', size: f.size, type: f.type || 'upload', file_type: f.file_type
+    setDownloadFiles(Array.isArray(product.files) ? product.files.map((f: any) => ({
+      id: f.id || `file-${Math.random()}`, name: f.name || 'Download', url: f.url || '', size: f.size, type: f.type || 'upload', file_type: f.file_type,
     })) : []);
     setIsModalOpen(true);
   }
@@ -123,28 +127,19 @@ export default function MarketplacePage() {
     setIsSaving(true);
     try {
       const payload = {
-        title: form.title,
-        description: form.description,
-        price: parseFloat(form.price) || 0,
-        old_price: form.old_price ? parseFloat(form.old_price) : null,
-        category: form.category,
-        cover_image_url: form.cover_image_url || null,
-        platform: form.platform || null,
-        discount_enabled: form.discount_enabled,
-        affiliate_link: form.affiliate_link || null,
-        files: downloadFiles,
-        updated_at: new Date().toISOString()
+        title: form.title, description: form.description,
+        price: parseFloat(form.price) || 0, old_price: form.old_price ? parseFloat(form.old_price) : null,
+        category: form.category, cover_image_url: form.cover_image_url || null,
+        platform: form.platform || null, discount_enabled: form.discount_enabled,
+        affiliate_link: form.affiliate_link || null, files: downloadFiles,
+        updated_at: new Date().toISOString(),
       };
-      if (editingProduct && !editingProduct.id.startsWith('mock-')) {
+      if (editingProduct) {
         const { error } = await supabase!.from('marketplace_products').update(payload).eq('id', editingProduct.id);
         if (error) throw error;
       } else {
         const { error } = await supabase!.from('marketplace_products').insert([{
-          ...payload,
-          creator_id: profile?.id,
-          rating: 0,
-          reviews_count: 0,
-          purchases_count: 0
+          ...payload, creator_id: profile?.id, rating: 0, reviews_count: 0, purchases_count: 0,
         }]);
         if (error) throw error;
       }
@@ -159,10 +154,7 @@ export default function MarketplacePage() {
   }
 
   async function handleDeleteProduct() {
-    if (!deleteTarget || !isSupabaseAvailable() || deleteTarget.id.startsWith('mock-')) {
-      setDeleteTarget(null);
-      return;
-    }
+    if (!deleteTarget || !isSupabaseAvailable()) { setDeleteTarget(null); return; }
     try {
       const { error } = await supabase!.from('marketplace_products').delete().eq('id', deleteTarget.id);
       if (error) throw error;
@@ -178,7 +170,7 @@ export default function MarketplacePage() {
   async function toggleFeatured(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
     setMenuOpenId(null);
-    if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
+    if (!isSupabaseAvailable() || !isAdmin) return;
     try {
       const { error } = await supabase!.from('marketplace_products')
         .update({ is_featured: !product.is_featured, updated_at: new Date().toISOString() }).eq('id', product.id);
@@ -190,7 +182,7 @@ export default function MarketplacePage() {
   async function toggleHide(product: Product, e: React.MouseEvent) {
     e.stopPropagation();
     setMenuOpenId(null);
-    if (!isSupabaseAvailable() || !isAdmin || product.id.startsWith('mock-')) return;
+    if (!isSupabaseAvailable() || !isAdmin) return;
     try {
       const { error } = await supabase!.from('marketplace_products')
         .update({ is_hidden: !product.is_hidden, updated_at: new Date().toISOString() }).eq('id', product.id);
@@ -199,34 +191,26 @@ export default function MarketplacePage() {
     } catch (err) { console.error(err); }
   }
 
-  function handleProductClick(productId: string) {
-    navigate(`/community/marketplace/${productId}`);
+  async function saveInlineTitle(product: Product) {
+    if (!isSupabaseAvailable() || !inlineTitle.trim()) { setInlineEditId(null); return; }
+    try {
+      const { error } = await supabase!.from('marketplace_products')
+        .update({ title: inlineTitle.trim(), updated_at: new Date().toISOString() }).eq('id', product.id);
+      if (error) throw error;
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, title: inlineTitle.trim() } : p));
+    } catch (err) { console.error(err); }
+    setInlineEditId(null);
   }
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'all': return Grid;
-      case 'templates': return Layout;
-      case 'toolkits': return Package;
-      case 'graphics': return Zap;
-      case 'courses': return Users;
-      case 'docs': return FileText;
-      default: return Shield;
+  const filteredProducts = useMemo(() => {
+    let result = selectedCategory === 'all' ? products : products.filter(p => p.category === selectedCategory);
+    if (!isAdmin) result = result.filter(p => !p.is_hidden);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => p.title.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.platform || '').toLowerCase().includes(q));
     }
-  };
-
-  const categories = [
-    { id: 'all', label: 'All' },
-    { id: 'templates', label: 'Templates' },
-    { id: 'toolkits', label: 'Toolkits' },
-    { id: 'graphics', label: 'Graphics' },
-    { id: 'courses', label: 'Courses' },
-    { id: 'docs', label: 'Documents' },
-  ];
-
-  const filteredProducts = selectedCategory === 'all'
-    ? products.filter(p => !p.is_hidden || isAdmin)
-    : products.filter(p => p.category === selectedCategory && (!p.is_hidden || isAdmin));
+    return result;
+  }, [products, selectedCategory, searchQuery, isAdmin]);
 
   return (
     <div className="space-y-6">
@@ -234,27 +218,37 @@ export default function MarketplacePage() {
         title="Marketplace"
         subtitle="Premium tools, templates, and resources to accelerate your growth."
         action={isAdmin ? (
-          <button
-            onClick={openCreateModal}
-            className="btn-wise"
-          >
-            <Plus size={18} />
-            Add Product
+          <button onClick={openCreateModal} className="btn-wise">
+            <Plus size={18} /> Add Product
           </button>
         ) : undefined}
       />
 
-      {/* iOS-style segmented filter */}
-      <div className="ios-segmented w-full overflow-x-auto">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`ios-segmented-btn flex-1 ${selectedCategory === cat.id ? 'active' : ''}`}
-          >
-            {cat.label}
-          </button>
-        ))}
+      {/* Search + Category filter */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search products..."
+            className="form-input w-full pl-11 pr-4 py-3 rounded-2xl text-sm"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10">
+              <X size={16} className="text-gray-400" />
+            </button>
+          )}
+        </div>
+        <div className="ios-segmented w-full overflow-x-auto">
+          {CATEGORIES.map((cat) => (
+            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+              className={`ios-segmented-btn flex-1 ${selectedCategory === cat.id ? 'active' : ''}`}>
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -278,248 +272,225 @@ export default function MarketplacePage() {
       ) : filteredProducts.length === 0 ? (
         <div className="ios-card rounded-2xl p-12 text-center border border-white/10">
           <Package className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-          <p className="text-gray-400 font-body">No products found in this category.</p>
+          <p className="text-gray-400 font-medium">{searchQuery ? 'No products match your search.' : 'No products found in this category.'}</p>
+          {searchQuery && <button onClick={() => setSearchQuery('')} className="text-[#3aa3eb] text-sm mt-2 font-medium">Clear search</button>}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredProducts.map((product) => {
-            const CategoryIcon = getCategoryIcon(product.category);
-            return (
-              <div
-                key={product.id}
-                onClick={() => handleProductClick(product.id)}
-                className="ios-card group relative rounded-2xl border border-white/10 overflow-hidden cursor-pointer active:scale-[0.99]"
-              >
-                {/* Flush cover image */}
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  {product.cover_image_url ? (
-                    <img
-                      src={product.cover_image_url}
-                      alt={product.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#3AA3EB]/20 to-blue-600/10 flex items-center justify-center">
-                      <CategoryIcon className="text-[#3AA3EB]" size={48} />
-                    </div>
-                  )}
-
-                  {/* Badge pills — top row */}
-                  <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap gap-1.5">
-                      {product.is_featured && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/20 backdrop-blur-md border border-yellow-500/40 text-yellow-300 uppercase tracking-wider">
-                          <Star size={10} className="fill-yellow-400 text-yellow-400" /> Featured
-                        </span>
-                      )}
-                      {product.discount_enabled && product.old_price && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/90 backdrop-blur-md text-white uppercase tracking-wider">
-                          {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% Off
-                        </span>
-                      )}
-                    </div>
-                    {product.is_hidden && isAdmin && (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 backdrop-blur-md border border-red-500/40 text-red-300 uppercase tracking-wider">
-                        Hidden
-                      </span>
+          <AnimatePresence>
+            {filteredProducts.map((product, idx) => {
+              const CategoryIcon = CATEGORY_ICONS[product.category] || Shield;
+              return (
+                <motion.div
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: idx * 0.04, type: 'spring', stiffness: 260, damping: 22 }}
+                  onClick={() => inlineEditId !== product.id && handleProductClick(product.id)}
+                  className="ios-card group relative rounded-2xl border border-white/10 overflow-hidden cursor-pointer active:scale-[0.99]"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    {product.cover_image_url ? (
+                      <img src={product.cover_image_url} alt={product.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#3AA3EB]/20 to-blue-600/10 flex items-center justify-center">
+                        <CategoryIcon className="text-[#3AA3EB]" size={48} />
+                      </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Padded content section */}
-                <div className="p-4 space-y-2.5">
-                  {/* Category + rating row */}
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/5 border border-white/10 text-gray-300 capitalize font-body">
-                      <CategoryIcon size={12} className="text-[#3AA3EB]" />
-                      {product.category}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                      <span className="text-white text-sm font-bold font-body">
-                        {product.rating.toFixed(1)}
-                      </span>
-                      <span className="text-gray-500 text-xs font-body">
-                        ({product.reviews_count})
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-white font-bold text-base leading-snug line-clamp-2 font-body">
-                    {product.title}
-                  </h3>
-
-                  {/* Platform */}
-                  {product.platform && (
-                    <p className="text-gray-400 text-xs font-body">
-                      Built for {product.platform}
-                    </p>
-                  )}
-
-                  {/* Price + action */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
-                    <div className="flex items-baseline gap-2">
-                      {product.discount_enabled && product.old_price && (
-                        <span className="text-gray-500 line-through text-sm font-body">
-                          ${product.old_price.toFixed(2)}
-                        </span>
+                    <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {product.is_featured && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/20 backdrop-blur-md border border-yellow-500/40 text-yellow-300 uppercase tracking-wider">
+                            <Star size={10} className="fill-yellow-400 text-yellow-400" /> Featured
+                          </span>
+                        )}
+                        {product.discount_enabled && product.old_price && (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/90 backdrop-blur-md text-white uppercase tracking-wider">
+                            {Math.round(((product.old_price - product.price) / product.old_price) * 100)}% Off
+                          </span>
+                        )}
+                      </div>
+                      {product.is_hidden && isAdmin && (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 backdrop-blur-md border border-red-500/40 text-red-300 uppercase tracking-wider">Hidden</span>
                       )}
-                      <span className="text-2xl font-black text-white tracking-tight font-body">
-                        {product.price === 0 ? 'Free' : `$${product.price.toFixed(2)}`}
-                      </span>
                     </div>
-                    <span className="px-4 py-2 bg-[#3AA3EB] text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20">
-                      View
-                    </span>
                   </div>
-                </div>
 
-                {/* Admin overflow menu */}
-                {isAdmin && !product.id.startsWith('mock-') && (
-                  <div className="absolute top-3 right-3" ref={menuOpenId === product.id ? menuRef : null}>
-                    {menuOpenId === product.id ? (
-                      <div className="ios-card rounded-xl border border-white/15 overflow-hidden py-1 min-w-[160px] shadow-2xl">
-                        <button
-                          onClick={(e) => toggleFeatured(product, e)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
-                        >
-                          <Star size={13} className={product.is_featured ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
-                          {product.is_featured ? 'Unfeature' : 'Feature'}
-                        </button>
-                        <button
-                          onClick={(e) => toggleHide(product, e)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
-                        >
-                          {product.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
-                          {product.is_hidden ? 'Unhide' : 'Hide'}
-                        </button>
-                        <button
-                          onClick={(e) => openEditModal(product, e)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10 font-body"
-                        >
-                          <Edit2 size={13} /> Edit
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setDeleteTarget(product); }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-red-400 hover:bg-red-500/10 font-body"
-                        >
-                          <Trash2 size={13} /> Delete
-                        </button>
+                  <div className="p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/5 border border-white/10 text-gray-300 capitalize">
+                        <CategoryIcon size={12} className="text-[#3AA3EB]" />
+                        {product.category}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Star className="text-yellow-400 fill-yellow-400" size={14} />
+                        <span className="text-white text-sm font-bold">{product.rating.toFixed(1)}</span>
+                        <span className="text-gray-500 text-xs">({product.reviews_count})</span>
+                      </div>
+                    </div>
+
+                    {/* Inline-editable title for admin */}
+                    {inlineEditId === product.id ? (
+                      <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={inlineTitle}
+                          onChange={(e) => setInlineTitle(e.target.value)}
+                          onBlur={() => saveInlineTitle(product)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') saveInlineTitle(product); if (e.key === 'Escape') setInlineEditId(null); }}
+                          className="form-input flex-1 px-3 py-2 rounded-lg text-sm font-bold text-white"
+                        />
                       </div>
                     ) : (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(product.id); }}
-                        className="p-2 rounded-full bg-black/50 backdrop-blur-md text-gray-300 hover:text-white hover:bg-black/70 transition-colors"
-                        title="More"
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <div className="flex items-start gap-1.5">
+                        <h3 className="text-white font-bold text-base leading-snug line-clamp-2 flex-1">{product.title}</h3>
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setInlineEditId(product.id); setInlineTitle(product.title); }}
+                            className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-white transition-colors shrink-0"
+                            title="Quick edit title"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        )}
+                      </div>
                     )}
+
+                    {product.platform && <p className="text-gray-400 text-xs">Built for {product.platform}</p>}
+
+                    <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
+                      <div className="flex items-baseline gap-2">
+                        {product.discount_enabled && product.old_price && (
+                          <span className="text-gray-500 line-through text-sm">${product.old_price.toFixed(2)}</span>
+                        )}
+                        <span className="text-2xl font-bold text-white tracking-tight">
+                          {product.price === 0 ? 'Free' : `$${product.price.toFixed(2)}`}
+                        </span>
+                      </div>
+                      <span className="px-4 py-2 bg-[#3AA3EB] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg shadow-[#3AA3EB]/20">
+                        View
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {/* Admin overflow menu */}
+                  {isAdmin && (
+                    <div className="absolute top-3 right-3" ref={menuOpenId === product.id ? menuRef : null}>
+                      {menuOpenId === product.id ? (
+                        <div className="ios-card rounded-xl border border-white/15 overflow-hidden py-1 min-w-[160px] shadow-2xl z-20">
+                          <button onClick={(e) => toggleFeatured(product, e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10">
+                            <Star size={13} className={product.is_featured ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
+                            {product.is_featured ? 'Unfeature' : 'Feature'}
+                          </button>
+                          <button onClick={(e) => toggleHide(product, e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10">
+                            {product.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                            {product.is_hidden ? 'Unhide' : 'Hide'}
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); openEditModal(product); }} className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10">
+                            <Edit2 size={13} /> Edit Details
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setDeleteTarget(product); }} className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-red-400 hover:bg-red-500/10">
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpenId(product.id); }}
+                          className="p-2 rounded-full bg-black/50 backdrop-blur-md text-gray-300 hover:text-white hover:bg-black/70 transition-colors"
+                          title="More">
+                          <MoreHorizontal size={16} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
 
-      {/* Create/Edit Product Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-lg bg-[#1c1c1e] border border-white/10 rounded-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1c1c1e] z-10">
-              <h2 className="text-white font-bold text-lg font-display uppercase tracking-wider">
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveProduct} className="p-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Title</label>
-                <input required type="text" value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                  placeholder="Product title" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Price ($)</label>
-                  <input required type="number" step="0.01" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                    placeholder="49.99" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Old Price ($)</label>
-                  <input type="number" step="0.01" value={form.old_price} onChange={e => setForm(prev => ({ ...prev, old_price: e.target.value }))}
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                    placeholder="99.99" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Category</label>
-                  <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] outline-none transition-all font-body">
-                    <option value="templates">Templates</option>
-                    <option value="toolkits">Toolkits</option>
-                    <option value="graphics">Graphics</option>
-                    <option value="courses">Courses</option>
-                    <option value="docs">Documents</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Platform</label>
-                  <input type="text" value={form.platform} onChange={e => setForm(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                    placeholder="Notion, Figma, etc." />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Cover Image URL</label>
-                <input type="url" value={form.cover_image_url} onChange={e => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                  placeholder="https://..." />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Description</label>
-                <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all h-24 resize-none font-body"
-                  placeholder="What is this product?" />
-              </div>
-              <DownloadUploader
-                value={downloadFiles}
-                onChange={setDownloadFiles}
-                label="Downloadable Files"
-                hint="Upload files buyers can download after purchase, or paste an external URL (e.g. another creator's product on Gumroad)."
-              />
-              <div className="space-y-1.5">
-                <label className="text-gray-400 text-xs font-semibold uppercase tracking-wider font-body">Affiliate / External Buy Link (optional)</label>
-                <input type="url" value={form.affiliate_link} onChange={e => setForm(prev => ({ ...prev, affiliate_link: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/30 outline-none transition-all font-body"
-                  placeholder="https://partner.com/buy" />
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={form.discount_enabled} onChange={e => setForm(prev => ({ ...prev, discount_enabled: e.target.checked }))}
-                  className="w-4 h-4 rounded accent-[#3AA3EB]" />
-                <span className="text-sm text-gray-300 font-body">Enable discount (old price shown with strikethrough)</span>
-              </label>
-              <div className="pt-3 flex gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-medium transition-all font-body">
-                  Cancel
-                </button>
-                <button type="submit" disabled={isSaving}
-                  className="flex-1 py-3 px-4 bg-[#3AA3EB] hover:bg-[#2a92da] text-white rounded-2xl font-semibold transition-all shadow-lg shadow-[#3AA3EB]/20 disabled:opacity-50 font-body">
-                  {isSaving ? 'Saving...' : editingProduct ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
+      {/* Create/Edit Product Modal — uses base Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingProduct ? 'Edit Product' : 'Add New Product'}
+        maxWidth="max-w-2xl"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancel</button>
+            <button type="submit" form="product-form" disabled={isSaving} className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+              {isSaving ? 'Saving...' : editingProduct ? 'Update Product' : 'Create Product'}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="product-form" onSubmit={handleSaveProduct} className="space-y-5">
+          <div>
+            <label className={labelCls}>Title</label>
+            <input required type="text" value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
+              className={inputCls} placeholder="Product title" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Price ($)</label>
+              <input required type="number" step="0.01" value={form.price} onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
+                className={inputCls} placeholder="49.99" />
+            </div>
+            <div>
+              <label className={labelCls}>Old Price ($)</label>
+              <input type="number" step="0.01" value={form.old_price} onChange={e => setForm(prev => ({ ...prev, old_price: e.target.value }))}
+                className={inputCls} placeholder="99.99" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Category</label>
+              <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))} className={inputCls}>
+                <option value="templates">Templates</option>
+                <option value="toolkits">Toolkits</option>
+                <option value="graphics">Graphics</option>
+                <option value="courses">Courses</option>
+                <option value="docs">Documents</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Platform</label>
+              <input type="text" value={form.platform} onChange={e => setForm(prev => ({ ...prev, platform: e.target.value }))}
+                className={inputCls} placeholder="Notion, Figma, etc." />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Cover Image URL</label>
+            <input type="url" value={form.cover_image_url} onChange={e => setForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
+              className={inputCls} placeholder="https://..." />
+          </div>
+          <div>
+            <label className={labelCls}>Description</label>
+            <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+              className={`${inputCls} h-24 resize-none`} placeholder="What is this product?" />
+          </div>
+          <DownloadUploader
+            value={downloadFiles}
+            onChange={setDownloadFiles}
+            label="Downloadable Files"
+            hint="Upload files buyers can download after purchase, or paste an external URL."
+          />
+          <div>
+            <label className={labelCls}>Affiliate / External Buy Link (optional)</label>
+            <input type="url" value={form.affiliate_link} onChange={e => setForm(prev => ({ ...prev, affiliate_link: e.target.value }))}
+              className={inputCls} placeholder="https://partner.com/buy" />
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.discount_enabled} onChange={e => setForm(prev => ({ ...prev, discount_enabled: e.target.checked }))}
+              className="w-4 h-4 rounded accent-[#3AA3EB]" />
+            <span className="text-sm text-gray-300">Enable discount (old price shown with strikethrough)</span>
+          </label>
+        </form>
+      </Modal>
 
       {deleteTarget && (
         <ConfirmDialog
@@ -533,4 +504,8 @@ export default function MarketplacePage() {
       )}
     </div>
   );
+
+  function handleProductClick(productId: string) {
+    navigate(`/community/marketplace/${productId}`);
+  }
 }

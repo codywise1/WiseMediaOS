@@ -326,7 +326,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 min-w-0 truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
               {project.name}
             </h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-gray-400 min-w-0">
@@ -379,7 +379,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Main Details Grid */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-8" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-8" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
           Project Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -470,7 +470,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
 
       {/* Description */}
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
           Description
         </h2>
         <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
@@ -491,7 +491,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       </div>
 
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+        <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
           Notes
         </h2>
         {notesToRender.length > 0 ? (
@@ -502,7 +502,7 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
                   <Link
                     to={`/notes/${note.id}`}
                     className="text-white font-bold min-w-0 truncate hover:text-[#3aa3eb] transition-colors"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
                   >
                     {note.title}
                   </Link>
