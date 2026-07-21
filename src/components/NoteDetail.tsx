@@ -334,7 +334,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                                     setNote({ ...note, title: newTitle });
                                 }}
                                 className="w-full bg-transparent border-none p-0 text-3xl sm:text-5xl font-black text-white focus:outline-none placeholder:text-gray-800"
-                                style={{ fontFamily: 'Integral CF, sans-serif' }}
+                                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
                                 placeholder="Note Title"
                             />
 
@@ -393,7 +393,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* Details Card */}
                     <div className="glass-card rounded-[24px] p-6 border border-white/10 shadow-xl overflow-hidden relative">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-[10px] font-black text-white tracking-wider" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>Contextual Data</h2>
+                            <h2 className="text-[10px] font-black text-white tracking-wider" style={{ fontFamily: 'Space Grotesk, sans-serif', textTransform: 'uppercase' }}>Contextual Data</h2>
                             {isSaving ? (
                                 <span className="flex items-center gap-1.5 text-[9px] font-black text-[#3aa3eb] tracking-wider animate-pulse" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                                     <div className="w-1 h-1 rounded-full bg-[#3aa3eb]" />
@@ -450,7 +450,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
 
                     {/* Linked Entities */}
                     <div className="glass-card rounded-2xl p-6 border border-white/10">
-                        <h2 className="text-[10px] font-black text-white tracking-widest mb-6" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>Linked Intelligence</h2>
+                        <h2 className="text-[10px] font-black text-white tracking-widest mb-6" style={{ fontFamily: 'Space Grotesk, sans-serif', textTransform: 'uppercase' }}>Linked Intelligence</h2>
                         <div className="space-y-2">
                             {note.projectId && (
                                 <LinkedItem
@@ -478,7 +478,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     {/* History / Audit Log */}
                     {showHistory && (
                         <div className="glass-card rounded-2xl p-6 border border-white/10 animate-in fade-in duration-300">
-                            <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6 flex items-center justify-between" style={{ fontFamily: 'Integral CF, sans-serif', textTransform: 'uppercase' }}>
+                            <h2 className="text-[10px] font-black text-gray-500 tracking-widest mb-6 flex items-center justify-between" style={{ fontFamily: 'Space Grotesk, sans-serif', textTransform: 'uppercase' }}>
                                 <span>Audit Trail</span>
                                 <ClockIcon className="h-4 w-4" />
                             </h2>
@@ -510,7 +510,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                         <div className="w-full max-w-lg glass-card rounded-3xl border border-white/10 p-6 space-y-6">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>Edit Note Details</h2>
+                                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Edit Note Details</h2>
                                 <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                                     <XMarkIcon className="h-5 w-5 text-gray-400" />
                                 </button>

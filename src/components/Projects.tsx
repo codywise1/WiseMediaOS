@@ -637,7 +637,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               <div className="flex-shrink-0 flex items-center justify-between mb-3 px-1 pb-2 border-b border-gray-800/50">
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                  <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                     {column.title}
                   </h3>
                 </div>
@@ -720,7 +720,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     <div className={`mb-4 p-3 rounded-full border-2 border-dashed ${dragOverColumn === column.id ? 'border-green-400 bg-green-400/20' : 'border-slate-700'}`}>
                       <ArrowDownIcon className={`h-8 w-8 ${dragOverColumn === column.id ? 'text-green-400 animate-bounce' : 'text-slate-600'}`} />
                     </div>
-                    <p className={`text-base font-bold tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <p className={`text-base font-bold tracking-widest mb-1 ${dragOverColumn === column.id ? 'text-green-400' : 'text-gray-400'}`} style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       No Project Here
                     </p>
                     <p className="text-gray-500 text-xs text-center max-w-[150px]">

@@ -333,7 +333,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         <p className="text-sm text-gray-500 font-medium mb-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           {getGreeting()}, Mr. {getLastName(currentUser?.name)}
         </h1>
         <p className="text-gray-400 mt-1.5 text-sm sm:text-base">

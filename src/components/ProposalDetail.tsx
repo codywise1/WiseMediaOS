@@ -224,7 +224,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
           <span className={`w-2 h-2 rounded-full ${statusMeta.dot}`} />
           <span className={`text-sm font-medium ${statusMeta.text}`}>{statusMeta.label}</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-3" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           {(proposal.title || '').replace(/^\s*(INV|PROP)-\d{3,}\s*[-:]?\s*/i, '').trim()}
         </h1>
         <p className="text-gray-400 text-base leading-relaxed mb-6">
@@ -263,7 +263,7 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
         </div>
         <div className="flex justify-between items-center pt-6 border-t border-white/[0.06]">
           <span className="text-gray-400">Total</span>
-          <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+          <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             {formatCurrency(proposal.value)}
           </span>
         </div>

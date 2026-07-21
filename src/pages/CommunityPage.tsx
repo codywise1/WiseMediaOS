@@ -1526,7 +1526,7 @@ export default function CommunityPage() {
               {view === 'channels' && selectedChannel ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="gradient-text font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       <Hash size={24} className="text-[#59a1e5]" />
                       {selectedChannel.name}
                     </h2>
@@ -1588,7 +1588,7 @@ export default function CommunityPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                    <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {getConversationName(selectedUser)}
                     </h2>
                     <p className={`text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -1597,7 +1597,7 @@ export default function CommunityPage() {
                   </div>
                 </div>
               ) : (
-                <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Integral CF, sans-serif' }}>
+                <h2 className="gradient-text font-bold text-xl" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   Select a {view === 'channels' ? 'channel' : 'conversation'}
                 </h2>
               )}

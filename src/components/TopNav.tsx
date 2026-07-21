@@ -192,7 +192,7 @@ export default function TopNav({ currentUser, onLogout, onOpenMobileMenu, isSide
           }}
         />
       )}
-      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/30 px-4 lg:px-8 flex items-center sticky top-0 z-50" style={{ backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' }}>
+      <nav className="h-20 border-b border-white/10 backdrop-blur-xl bg-black/30 px-4 lg:px-8 flex items-center sticky top-0 z-50 pt-safe" style={{ backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' }}>
         <div className="flex items-center gap-3 lg:gap-4">
           <button
             type="button"

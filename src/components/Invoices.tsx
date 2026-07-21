@@ -312,14 +312,32 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const maxVal = Math.max(...chartData.map(d => d.value), 1000);
   const chartPoints = chartData.map(d => ({
     x: d.x,
-    y: 180 - (d.value / maxVal) * 150,
+    y: 216 - (d.value / maxVal) * 176,
   }));
 
-  const areaPath = `M ${chartPoints[0]?.x ?? 0} 200 ` +
-    chartPoints.map(p => `L ${p.x} ${p.y}`).join(' ') +
-    ` L ${chartPoints[chartPoints.length - 1]?.x ?? 0} 200 Z`;
-  const linePath = `M ${chartPoints[0]?.x ?? 0} ${chartPoints[0]?.y ?? 0} ` +
-    chartPoints.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+  // Smooth Catmull-Rom spline path generation
+  const buildSmoothPath = (pts: { x: number; y: number }[], closeArea: boolean) => {
+    if (pts.length < 2) return '';
+    let path = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i === 0 ? 0 : i - 1];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2 < pts.length ? i + 2 : pts.length - 1];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+    if (closeArea) {
+      path += ` L ${pts[pts.length - 1].x} 232 L ${pts[0].x} 232 Z`;
+    }
+    return path;
+  };
+
+  const areaPath = buildSmoothPath(chartPoints, true);
+  const linePath = buildSmoothPath(chartPoints, false);
 
   const handleNewInvoice = () => {
     setSelectedInvoice(undefined);
@@ -532,25 +550,45 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       {isAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Chart */}
-          <div className="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/5 to-transparent opacity-50 pointer-events-none" />
+          <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 relative overflow-hidden group border border-white/[0.08]"
+            style={{
+              background: 'rgba(28, 28, 30, 0.6)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#3aa3eb]/[0.04] via-transparent to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
               <div>
-                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
+                <h2 className="text-lg font-bold text-white tracking-widest uppercase" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>{periodTitleMap[chartPeriod]}</h2>
                 <p className="text-xs text-gray-400 mt-1 font-medium">
                   Total: <span className="text-white font-bold tabular-nums">${chartData.reduce((s, d) => s + d.value, 0).toLocaleString()}</span>
                 </p>
               </div>
-              <div className="flex flex-wrap gap-1.5 p-1 bg-white/5 rounded-xl border border-white/10">
+              <div
+                className="flex gap-0.5 p-0.5 rounded-xl"
+                style={{
+                  background: 'rgba(120, 120, 128, 0.16)',
+                }}
+              >
                 {(['day', 'week', 'month', 'quarter', 'year'] as const).map(period => (
                   <button
                     key={period}
                     onClick={() => setChartPeriod(period)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartPeriod === period
-                      ? 'bg-[#3AA3EB] text-white shadow-[0_0_12px_rgba(58,163,235,0.4)]'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    className={`px-3 sm:px-4 py-1.5 rounded-[10px] text-xs font-semibold transition-all duration-200 ${
+                      chartPeriod === period
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    style={{
+                      fontFamily: 'Space Grotesk, Montserrat, sans-serif',
+                      background: chartPeriod === period
+                        ? 'linear-gradient(180deg, #3aa3eb 0%, #2d8fd4 100%)'
+                        : 'transparent',
+                      boxShadow: chartPeriod === period
+                        ? '0 1px 3px rgba(0,0,0,0.3), 0 0 12px rgba(58,163,235,0.25)'
+                        : 'none',
+                    }}
                   >
                     {period.charAt(0).toUpperCase() + period.slice(1)}
                   </button>
@@ -558,23 +596,48 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </div>
             </div>
 
-            <div className="h-72 w-full relative group/chart pl-10">
-              <svg viewBox="0 0 800 240" className="w-full h-full" preserveAspectRatio="none">
+            <div className="h-64 sm:h-80 w-full relative group/chart pl-10 sm:pl-12">
+              <svg viewBox="0 0 800 280" className="w-full h-full" preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.35" />
+                  <linearGradient id="iosChartFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3aa3eb" stopOpacity="0.28" />
+                    <stop offset="50%" stopColor="#3aa3eb" stopOpacity="0.12" />
                     <stop offset="100%" stopColor="#3aa3eb" stopOpacity="0" />
                   </linearGradient>
-                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                  <linearGradient id="iosChartLine" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#3aa3eb" />
-                    <stop offset="100%" stopColor="#60a5fa" />
+                    <stop offset="50%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#3aa3eb" />
                   </linearGradient>
+                  <filter id="iosGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
                 </defs>
                 {[0, 1, 2, 3, 4].map(i => (
-                  <line key={i} x1="0" y1={i * 48 + 16} x2="800" y2={i * 48 + 16} stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray={i === 4 ? '0' : '4 4'} />
+                  <line
+                    key={i}
+                    x1="40"
+                    y1={i * 52 + 20}
+                    x2="800"
+                    y2={i * 52 + 20}
+                    stroke="rgba(255,255,255,0.04)"
+                    strokeWidth="1"
+                  />
                 ))}
-                <path d={areaPath} fill="url(#chartGradient)" />
-                <path d={linePath} fill="none" stroke="url(#lineGradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_2px_8px_rgba(58,163,235,0.4)]" />
+                <path d={areaPath} fill="url(#iosChartFill)" />
+                <path
+                  d={linePath}
+                  fill="none"
+                  stroke="url(#iosChartLine)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#iosGlow)"
+                />
                 {chartData.map((d, i) => {
                   const hitboxWidth = 800 / chartPointsCount;
                   return (
@@ -583,7 +646,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       x={d.x - hitboxWidth / 2}
                       y="0"
                       width={hitboxWidth}
-                      height="240"
+                      height="280"
                       fill="transparent"
                       className="cursor-pointer"
                       onMouseEnter={() => setHoveredMonthIndex(i)}
@@ -594,44 +657,76 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 {chartPoints.map((p, i) => (
                   <g key={i}>
                     {hoveredMonthIndex === i && (
-                      <line x1={p.x} y1={p.y} x2={p.x} y2="224" stroke="rgba(58,163,235,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+                      <line
+                        x1={p.x}
+                        y1={p.y}
+                        x2={p.x}
+                        y2="264"
+                        stroke="rgba(58,163,235,0.25)"
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                      />
                     )}
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={hoveredMonthIndex === i ? '6' : '4'}
+                      r={hoveredMonthIndex === i ? '7' : '4.5'}
                       fill={hoveredMonthIndex === i ? '#ffffff' : '#3aa3eb'}
-                      stroke="#0f172a"
-                      strokeWidth={hoveredMonthIndex === i ? '2.5' : '2'}
+                      stroke="#0a0a0b"
+                      strokeWidth={hoveredMonthIndex === i ? '3' : '2'}
                       className="transition-all duration-200"
                     />
+                    {hoveredMonthIndex === i && (
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r="12"
+                        fill="rgba(58,163,235,0.15)"
+                        className="animate-pulse"
+                      />
+                    )}
                   </g>
                 ))}
               </svg>
 
               {hoveredMonthIndex !== null && (
                 <div
-                  className="absolute z-50 pointer-events-none transition-all duration-200"
+                  className="absolute z-50 pointer-events-none transition-all duration-200 ease-out"
                   style={{
                     left: `${(chartPoints[hoveredMonthIndex].x / 800) * 100}%`,
-                    top: `${(chartPoints[hoveredMonthIndex].y / 240) * 100}%`,
-                    marginTop: '-52px',
+                    top: `${(chartPoints[hoveredMonthIndex].y / 280) * 100}%`,
+                    marginTop: '-56px',
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <div className="bg-[#0f172a] border border-[#3aa3eb]/40 rounded-xl px-3.5 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex flex-col items-center gap-0.5 min-w-[120px]">
+                  <div
+                    className="rounded-2xl px-4 py-2.5 shadow-2xl flex flex-col items-center gap-0.5 min-w-[130px]"
+                    style={{
+                      background: 'rgba(28, 28, 30, 0.85)',
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                      border: '1px solid rgba(58, 163, 235, 0.25)',
+                    }}
+                  >
                     <span className="text-[10px] font-bold text-[#3aa3eb] uppercase tracking-widest">
                       {chartData[hoveredMonthIndex].label}
                     </span>
-                    <span className="text-base font-bold text-white tabular-nums">
+                    <span className="text-lg font-bold text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
                       ${chartData[hoveredMonthIndex].value.toLocaleString()}
                     </span>
                   </div>
-                  <div className="w-2 h-2 bg-[#0f172a] border-r border-b border-[#3aa3eb]/40 rotate-45 mx-auto -mt-1.5" />
+                  <div
+                    className="w-2.5 h-2.5 rotate-45 mx-auto -mt-1.5"
+                    style={{
+                      background: 'rgba(28, 28, 30, 0.85)',
+                      borderRight: '1px solid rgba(58, 163, 235, 0.25)',
+                      borderBottom: '1px solid rgba(58, 163, 235, 0.25)',
+                    }}
+                  />
                 </div>
               )}
 
-              <div className="flex justify-between text-[10px] font-bold uppercase mt-3">
+              <div className="flex justify-between text-[10px] font-semibold mt-3 px-1">
                 {chartData.map((d, i) => (
                   <span
                     key={i}
@@ -642,7 +737,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 ))}
               </div>
 
-              <div className="absolute left-0 top-0 h-[calc(100%-24px)] flex flex-col justify-between text-[10px] text-gray-500 font-bold pr-2">
+              <div className="absolute left-0 top-0 h-[calc(100%-24px)] flex flex-col justify-between text-[10px] text-gray-600 font-semibold pr-2 tabular-nums">
                 <span>${Math.round(maxVal / 1000)}k</span>
                 <span>${Math.round((maxVal * 0.66) / 1000)}k</span>
                 <span>${Math.round((maxVal * 0.33) / 1000)}k</span>
@@ -652,8 +747,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           </div>
 
           {/* Revenue Snapshot */}
-          <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-b from-white/5 to-transparent">
-            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
+          <div className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-white/[0.08]"
+            style={{
+              background: 'rgba(28, 28, 30, 0.6)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            }}
+          >
+            <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>REVENUE SNAPSHOT</h2>
             <div className="space-y-3">
               {[
                 { label: 'Last 7 Days', value: revenue7d, icon: ArrowRight, accent: 'text-[#3aa3eb]' },
@@ -665,14 +766,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="w-1 h-10 rounded-full bg-gradient-to-b from-[#3aa3eb] to-[#3aa3eb]/30" />
                     <span className="text-sm text-gray-300 font-medium">{item.label}</span>
                   </div>
-                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
+                  <span className="text-xl font-black text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>${item.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Collected</span>
-                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Integral CF, sans-serif' }}>${totalPaid.toLocaleString()}</span>
+                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>${totalPaid.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -681,20 +782,20 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
       {/* Mini Stats Cards */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[
             { label: 'Invoices Sent · 30d', value: invoices.length, icon: Eye, iconBg: 'bg-[#3aa3eb]/20' },
             { label: 'Total Cash Collected', value: `${totalPaid.toLocaleString()}`, icon: CheckCircle, iconBg: 'bg-green-500/20' },
             { label: 'Overdue Funds', value: `${totalOverdue.toLocaleString()}`, icon: AlertTriangle, iconBg: 'bg-red-500/20' },
             { label: 'Total Outstanding', value: `${totalOutstanding.toLocaleString()}`, icon: CreditCard, iconBg: 'bg-blue-500/20' },
           ].map((stat, idx) => (
-            <div key={idx} className="glass-card rounded-xl p-6 flex items-center gap-4 transition-all duration-300 hover-glow border border-white/10">
-              <div className={`p-3 rounded-lg ${stat.iconBg}`}>
-                <stat.icon className="h-6 w-6 text-white" />
+            <div key={idx} className="glass-card rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-300 hover-glow border border-white/10">
+              <div className={`p-2 sm:p-3 rounded-xl ${stat.iconBg} shrink-0`}>
+                <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <p className="text-sm text-white font-medium mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Integral CF, sans-serif' }}>{stat.value}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-white font-medium mb-1 truncate">{stat.label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-white tabular-nums" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{stat.value}</p>
               </div>
             </div>
           ))}
@@ -703,8 +804,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
       {/* Invoice Cards — iOS Style */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2">
+          <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 overflow-x-auto ios-scroll">
             {[
               { id: 'all', label: 'All', count: invoices.length },
               { id: 'unpaid', label: 'Unpaid', count: invoices.filter(i => i.status !== 'paid').length },
@@ -714,7 +815,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               <button
                 key={tab.id}
                 onClick={() => setFilterStatus(tab.id as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterStatus === tab.id
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${filterStatus === tab.id
                   ? 'bg-[#3aa3eb] text-white shadow-[0_0_15px_rgba(58,163,235,0.4)]'
                   : 'text-gray-400 hover:text-white'
                   }`}
@@ -723,23 +824,25 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               </button>
             ))}
           </div>
-          <button
-            onClick={exportCSV}
-            className="text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2 group transition-all"
-          >
-            Export CSV
-            <Download className="h-4 w-4 group-hover:translate-y-[1px] transition-transform" />
-          </button>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-4 py-2.5 rounded-lg bg-slate-800/50 border border-white/10 text-white text-sm font-medium focus:border-[#3aa3eb] focus:ring-2 focus:ring-[#3aa3eb]/20 transition-all"
-          >
-            <option value="date_desc">Newest first</option>
-            <option value="date_asc">Oldest first</option>
-            <option value="amount_desc">Amount: High → Low</option>
-            <option value="amount_asc">Amount: Low → High</option>
-          </select>
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            <button
+              onClick={exportCSV}
+              className="text-xs font-bold text-gray-400 hover:text-white flex items-center gap-2 group transition-all"
+            >
+              Export CSV
+              <Download className="h-4 w-4 group-hover:translate-y-[1px] transition-transform" />
+            </button>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-3 py-2 rounded-lg bg-slate-800/50 border border-white/10 text-white text-xs sm:text-sm font-medium focus:border-[#3aa3eb] focus:ring-2 focus:ring-[#3aa3eb]/20 transition-all"
+            >
+              <option value="date_desc">Newest first</option>
+              <option value="date_asc">Oldest first</option>
+              <option value="amount_desc">Amount: High → Low</option>
+              <option value="amount_asc">Amount: Low → High</option>
+            </select>
+          </div>
         </div>
 
         {filteredInvoices.length === 0 ? (
@@ -753,7 +856,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
             {filteredInvoices.map((invoice) => {
               const isPaid = invoice.status === 'paid';
               const isOverdue = isInvoiceOverdue(invoice);
@@ -812,7 +915,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <div className={`w-1 h-8 rounded-full ${style.dot}`} />
-                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
                           {invoice.number}
                         </span>
                       </div>
@@ -836,7 +939,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           </p>
                         )}
                       </div>
-                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Space Grotesk, Montserrat, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </div>

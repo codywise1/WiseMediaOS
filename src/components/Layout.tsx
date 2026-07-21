@@ -424,7 +424,7 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
           <div
             className={
               isFixedHeightRoute
-                ? 'h-[calc(100vh-80px)] overflow-hidden min-h-0 p-4 md:p-8 pb-8 md:pb-8'
+                ? 'h-[calc(100vh-80px-60px)] md:h-[calc(100vh-80px)] overflow-hidden min-h-0 p-4 md:p-8 pb-8 md:pb-8'
                 : 'min-h-screen p-4 md:p-8 pb-28 md:pb-8'
             }
           >

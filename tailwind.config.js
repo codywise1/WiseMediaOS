@@ -45,7 +45,7 @@ export default {
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Inter', 'Montserrat', 'sans-serif'],
         body: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Inter', 'sans-serif'],
-        display: ['"Integral CF"', 'Montserrat', 'sans-serif'],
+        display: ['"Space Grotesk"', 'Montserrat', 'sans-serif'],
       },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
