@@ -22,8 +22,13 @@ import {
   FileText,
   ArrowRightLeft,
   Zap,
+  DollarSign,
+  CheckCircle2,
+  Send,
+  Target,
+  Briefcase,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
 
 interface GAData {
   overview: {
@@ -646,47 +651,284 @@ export default function AnalyticsPage() {
         )}
       </section>
 
-      {/* Business Performance */}
-      <section>
-        <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#3aa3eb]/15 border border-[#3aa3eb]/25">
-            <BarChart3 className="h-4 w-4 text-[#3aa3eb]" />
-          </div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-widest font-display">Business Performance</h2>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-          <BusinessMetric
-            label="Revenue"
-            value="$45,231"
-            pct={12.5}
-            icon={<BarChart3 className="h-5 w-5" />}
-            accent="green"
-          />
-          <BusinessMetric
-            label="New Clients"
-            value="23"
-            pct={8.2}
-            icon={<Users className="h-5 w-5" />}
-            accent="blue"
-          />
-          <BusinessMetric
-            label="Active Projects"
-            value="12"
-            pct={-3.1}
-            icon={<BarChart3 className="h-5 w-5" />}
-            accent="cyan"
-          />
-          <BusinessMetric
-            label="Avg. Project Value"
-            value="$3,769"
-            pct={5.4}
-            icon={<BarChart3 className="h-5 w-5" />}
-            accent="yellow"
-          />
-        </div>
-      </section>
+      {/* Business Performance — live data */}
+      <BusinessPerformanceSection />
     </div>
   );
+}
+
+/** Fetch live business metrics from Supabase and render revenue, A/R, funnel, and growth. */
+function BusinessPerformanceSection() {
+  const [data, setData] = useState<BusinessData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (!isSupabaseAvailable() || !supabase) { setLoading(false); return; }
+      try {
+        const [invRes, clientRes, projRes, propRes] = await Promise.all([
+          supabase.from('invoices').select('id, amount, status, due_date, paid_at, created_at'),
+          supabase.from('clients').select('id, created_at'),
+          supabase.from('projects').select('id, status, created_at'),
+          supabase.from('proposals').select('id, status, value, created_at'),
+        ]);
+
+        if (invRes.error) throw invRes.error;
+        if (clientRes.error) throw clientRes.error;
+        if (projRes.error) throw projRes.error;
+        if (propRes.error) throw propRes.error;
+
+        const invoices = (invRes.data || []) as InvRow[];
+        const clients = (clientRes.data || []) as Row[];
+        const projects = (projRes.data || []) as ProjRow[];
+        const proposals = (propRes.data || []) as PropRow[];
+
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+        const lastYearEnd = new Date(now.getFullYear(), 0, 1);
+
+        // Revenue is recognized only when an invoice is paid (paid_at present).
+        const paidInv = invoices.filter(i => i.status === 'paid' && i.paid_at);
+        const revenueThisMonth = paidInv
+          .filter(i => new Date(i.paid_at!) >= monthStart)
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const revenueLastMonth = paidInv
+          .filter(i => { const d = new Date(i.paid_at!); return d >= lastMonthStart && d < monthStart; })
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const revenueThisQuarter = paidInv
+          .filter(i => new Date(i.paid_at!) >= quarterStart)
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const revenueThisYear = paidInv
+          .filter(i => new Date(i.paid_at!) >= yearStart)
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const revenueLastYear = paidInv
+          .filter(i => { const d = new Date(i.paid_at!); return d >= lastYearStart && d < lastYearEnd; })
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const revenueAllTime = paidInv.reduce((s, i) => s + (i.amount || 0), 0);
+
+        // Outstanding accounts receivable: unpaid, non-draft invoices by amount
+        const outstanding = invoices
+          .filter(i => i.status !== 'paid' && i.status !== 'draft')
+          .reduce((s, i) => s + (i.amount || 0), 0);
+        const overdue = invoices
+          .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.due_date && new Date(i.due_date) < now)
+          .reduce((s, i) => s + (i.amount || 0), 0);
+
+        // 6-month revenue trend (by paid_at month)
+        const trend: { label: string; value: number }[] = [];
+        for (let i = 5; i >= 0; i--) {
+          const s = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const e = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+          const val = paidInv
+            .filter(inv => { const d = new Date(inv.paid_at!); return d >= s && d < e; })
+            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+          trend.push({ label: s.toLocaleString('en-US', { month: 'short' }), value: val });
+        }
+
+        // Client growth
+        const clientsThisMonth = clients.filter(c => new Date(c.created_at) >= monthStart).length;
+        const clientsLastMonth = clients.filter(c => {
+          const d = new Date(c.created_at); return d >= lastMonthStart && d < monthStart;
+        }).length;
+        const totalClients = clients.length;
+
+        // Active projects
+        const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'in_progress' || p.status === 'in-progress').length;
+        const totalProjects = projects.length;
+
+        // Proposal conversion funnel
+        const totalProposals = proposals.length;
+        const sentProposals = proposals.filter(p => p.status === 'sent' || p.status === 'pending' || p.status === 'viewed').length;
+        const approvedProposals = proposals.filter(p => p.status === 'approved' || p.status === 'accepted' || p.status === 'won').length;
+        const rejectedProposals = proposals.filter(p => p.status === 'rejected' || p.status === 'declined' || p.status === 'lost').length;
+        const draftProposals = proposals.filter(p => p.status === 'draft').length;
+        const conversionRate = totalProposals > 0 ? (approvedProposals / totalProposals) * 100 : 0;
+        const proposalPipelineValue = proposals
+          .filter(p => p.status !== 'approved' && p.status !== 'accepted' && p.status !== 'won' && p.status !== 'rejected' && p.status !== 'declined' && p.status !== 'lost')
+          .reduce((s, p) => s + (p.value || 0), 0);
+
+        // Avg invoice value
+        const avgInvoice = paidInv.length > 0 ? revenueAllTime / paidInv.length : 0;
+
+        const pct = (cur: number, prev: number) => prev === 0 ? (cur > 0 ? 100 : 0) : ((cur - prev) / prev) * 100;
+
+        setData({
+          revenueThisMonth, revenueLastMonth, revenueThisQuarter, revenueThisYear, revenueLastYear,
+          revenueAllTime, outstanding, overdue, trend,
+          clientsThisMonth, clientsLastMonth, totalClients,
+          activeProjects, totalProjects,
+          totalProposals, sentProposals, approvedProposals, rejectedProposals, draftProposals,
+          conversionRate, proposalPipelineValue, avgInvoice,
+          revMoMPct: pct(revenueThisMonth, revenueLastMonth),
+          revYoYPct: pct(revenueThisYear, revenueLastYear),
+          clientMoMPct: pct(clientsThisMonth, clientsLastMonth),
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <section>
+        <SectionHeader icon={<BarChart3 className="h-4 w-4 text-[#3aa3eb]" />} title="Business Performance" />
+        <div className="glass-card rounded-2xl p-10 flex flex-col items-center justify-center gap-4">
+          <div className="animate-spin rounded-full h-9 w-9 border-2 border-[#3aa3eb]/30 border-t-[#3aa3eb]" />
+          <p className="text-sm text-gray-400 font-body">Loading business metrics…</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <section>
+        <SectionHeader icon={<BarChart3 className="h-4 w-4 text-[#3aa3eb]" />} title="Business Performance" />
+        <div className="glass-card rounded-2xl p-6 border border-red-500/25 bg-red-500/[0.04]">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-200 mb-1 font-display">Couldn't load business metrics</p>
+              <p className="text-xs text-red-300/70 font-body">{error || 'No data available.'}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const fmtMoney = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const maxTrend = Math.max(...data.trend.map(t => t.value), 1);
+
+  return (
+    <section className="space-y-6">
+      <SectionHeader icon={<BarChart3 className="h-4 w-4 text-[#3aa3eb]" />} title="Business Performance" subtitle="Live from your invoices, clients, projects & proposals" />
+
+      {/* Revenue KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <BusinessMetric label="Revenue (MTD)" value={fmtMoney(data.revenueThisMonth)} pct={data.revMoMPct} icon={<DollarSign className="h-5 w-5" />} accent="green" />
+        <BusinessMetric label="Revenue (YTD)" value={fmtMoney(data.revenueThisYear)} pct={data.revYoYPct} icon={<TrendingUp className="h-5 w-5" />} accent="blue" />
+        <BusinessMetric label="Outstanding A/R" value={fmtMoney(data.outstanding)} sublabel={`${fmtMoney(data.overdue)} overdue`} icon={<Clock className="h-5 w-5" />} accent="yellow" hidePct />
+        <BusinessMetric label="Avg. Invoice" value={fmtMoney(data.avgInvoice)} icon={<FileText className="h-5 w-5" />} accent="cyan" hidePct />
+      </div>
+
+      {/* Revenue trend + Proposal funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        {/* Revenue trend chart */}
+        <GlassCard className="lg:col-span-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-base font-bold text-white font-display">Revenue Trend</h3>
+              <p className="text-xs text-gray-500 font-body mt-0.5">Recognized on invoice paid date · last 6 months</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 font-body">6-mo total</p>
+              <p className="text-lg font-bold text-white font-display">{fmtMoney(data.trend.reduce((s, t) => s + t.value, 0))}</p>
+            </div>
+          </div>
+          <div className="flex items-end justify-between gap-2 sm:gap-3 h-44">
+            {data.trend.map((t, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                <div className="w-full flex-1 flex items-end">
+                  <div
+                    className="w-full rounded-t-lg bg-gradient-to-t from-[#2d8bc7] to-[#3aa3eb] transition-all duration-500 hover:from-[#3aa3eb] hover:to-[#5bc0f0] relative"
+                    style={{ height: `${Math.max((t.value / maxTrend) * 100, 2)}%` }}
+                  >
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white bg-slate-800 px-2 py-1 rounded-md whitespace-nowrap">
+                      {fmtMoney(t.value)}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[11px] text-gray-500 font-body">{t.label}</span>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+
+        {/* Proposal funnel */}
+        <GlassCard className="lg:col-span-2 p-4 sm:p-5">
+          <div className="mb-5">
+            <h3 className="text-base font-bold text-white font-display">Proposal Pipeline</h3>
+            <p className="text-xs text-gray-500 font-body mt-0.5">{fmtMoney(data.proposalPipelineValue)} in open proposals</p>
+          </div>
+          <div className="space-y-3">
+            <FunnelRow label="Drafts" value={data.draftProposals} total={data.totalProposals} color="bg-gray-500" icon={<FileText className="h-3.5 w-3.5" />} />
+            <FunnelRow label="Sent / Pending" value={data.sentProposals} total={data.totalProposals} color="bg-[#3aa3eb]" icon={<Send className="h-3.5 w-3.5" />} />
+            <FunnelRow label="Approved" value={data.approvedProposals} total={data.totalProposals} color="bg-green-500" icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
+            <FunnelRow label="Rejected" value={data.rejectedProposals} total={data.totalProposals} color="bg-red-500" icon={<Target className="h-3.5 w-3.5" />} />
+          </div>
+          <div className="mt-5 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400 font-body">Conversion rate</span>
+              <span className="text-lg font-bold text-green-400 font-display">{data.conversionRate.toFixed(1)}%</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-700" style={{ width: `${Math.min(data.conversionRate, 100)}%` }} />
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Growth metrics + breakdowns */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <BusinessMetric label="Total Clients" value={String(data.totalClients)} sublabel={`${data.clientsThisMonth} new this month`} pct={data.clientMoMPct} icon={<Users className="h-5 w-5" />} accent="blue" />
+        <BusinessMetric label="Active Projects" value={String(data.activeProjects)} sublabel={`${data.totalProjects} total`} icon={<Briefcase className="h-5 w-5" />} accent="cyan" hidePct />
+        <BusinessMetric label="Total Proposals" value={String(data.totalProposals)} sublabel={`${data.approvedProposals} approved`} icon={<FileText className="h-5 w-5" />} accent="yellow" hidePct />
+        <BusinessMetric label="Revenue (All Time)" value={fmtMoney(data.revenueAllTime)} sublabel={`${fmtMoney(data.revenueThisQuarter)} this quarter`} icon={<DollarSign className="h-5 w-5" />} accent="green" hidePct />
+      </div>
+    </section>
+  );
+}
+
+function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-4 px-1">
+      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#3aa3eb]/15 border border-[#3aa3eb]/25">
+        {icon}
+      </div>
+      <div>
+        <h2 className="text-sm font-bold text-white uppercase tracking-widest font-display">{title}</h2>
+        {subtitle && <p className="text-[11px] text-gray-500 font-body mt-0.5">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+function FunnelRow({ label, value, total, color, icon }: { label: string; value: number; total: number; color: string; icon: React.ReactNode }) {
+  const pctVal = total > 0 ? (value / total) * 100 : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="flex items-center gap-1.5 text-xs text-gray-400 font-body">{icon} {label}</span>
+        <span className="text-xs font-bold text-white font-display">{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+        <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${pctVal}%` }} />
+      </div>
+    </div>
+  );
+}
+
+interface InvRow { id: string; amount: number; status: string; due_date: string | null; paid_at: string | null; created_at: string; }
+interface Row { id: string; created_at: string; }
+interface ProjRow { id: string; status: string; created_at: string; }
+interface PropRow { id: string; status: string; value: number; created_at: string; }
+interface BusinessData {
+  revenueThisMonth: number; revenueLastMonth: number; revenueThisQuarter: number; revenueThisYear: number; revenueLastYear: number; revenueAllTime: number;
+  outstanding: number; overdue: number; trend: { label: string; value: number }[];
+  clientsThisMonth: number; clientsLastMonth: number; totalClients: number;
+  activeProjects: number; totalProjects: number;
+  totalProposals: number; sentProposals: number; approvedProposals: number; rejectedProposals: number; draftProposals: number;
+  conversionRate: number; proposalPipelineValue: number; avgInvoice: number;
+  revMoMPct: number; revYoYPct: number; clientMoMPct: number;
 }
 
 const accentMap = {
@@ -747,32 +989,43 @@ function BusinessMetric({
   label,
   value,
   pct,
+  sublabel,
+  hidePct,
   icon,
   accent,
 }: {
   label: string;
   value: string;
-  pct: number;
+  pct?: number;
+  sublabel?: string;
+  hidePct?: boolean;
   icon: React.ReactNode;
   accent: keyof typeof accentMap;
 }) {
   const a = accentMap[accent];
+  const showPct = !hidePct && typeof pct === 'number';
   return (
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-gray-400 mb-1.5 text-xs sm:text-sm font-body truncate">{label}</p>
           <p className="text-xl sm:text-2xl font-bold text-white font-display truncate">{value}</p>
-          <div className="flex items-center gap-1 mt-2">
-            {pct >= 0 ? (
-              <TrendingUp className="text-green-400" size={14} />
-            ) : (
-              <TrendingDown className="text-red-400" size={14} />
-            )}
-            <span className={`text-xs sm:text-sm font-medium ${pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {pct >= 0 ? '+' : ''}{pct}%
-            </span>
-          </div>
+          {sublabel && !showPct && (
+            <p className="text-[11px] text-gray-500 font-body mt-1.5 truncate">{sublabel}</p>
+          )}
+          {showPct && (
+            <div className="flex items-center gap-1 mt-2">
+              {pct! >= 0 ? (
+                <TrendingUp className="text-green-400" size={14} />
+              ) : (
+                <TrendingDown className="text-red-400" size={14} />
+              )}
+              <span className={`text-xs sm:text-sm font-medium ${pct! >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {pct! >= 0 ? '+' : ''}{pct!.toFixed(1)}%
+              </span>
+              {sublabel && <span className="text-[10px] text-gray-500 font-body ml-1 truncate">· {sublabel}</span>}
+            </div>
+          )}
         </div>
         <div className={`p-2.5 sm:p-3 rounded-xl shrink-0 ${a.bg} ring-1 ${a.ring}`}>
           <span className={a.text}>{icon}</span>

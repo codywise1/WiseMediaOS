@@ -361,44 +361,55 @@ export default function Proposals({ currentUser }: ProposalsProps) {
               return (
                 <div
                   key={proposal.id}
-                  className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
+                  className="ios-card group relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
                 >
+                  {/* Status accent strip */}
+                  <div
+                    className="h-1 w-full"
+                    style={{ backgroundColor: style.border }}
+                  />
+
                   <div className="p-5 space-y-4">
-                    {/* Top: Status pill + value */}
+                    {/* Header: client + status */}
                     <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-0.5">
+                          {proposal.client}
+                        </p>
+                        <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                          {cleanTitle(proposal.title)}
+                        </h3>
+                      </div>
                       <span
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0"
                         style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
                         {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                       </span>
-                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
-                        ${((proposal.value || 0) / 100).toLocaleString()}
-                      </span>
                     </div>
 
-                    {/* Title */}
-                    <div>
-                      <h3 className="text-base font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
-                        {cleanTitle(proposal.title)}
-                      </h3>
-                      <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>
+                    {/* Value + linked invoice */}
+                    <div className="flex items-end justify-between gap-3 pb-3 border-b border-white/5">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-0.5">Value</p>
+                        <p className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                          ${((proposal.value || 0) / 100).toLocaleString()}
+                        </p>
+                      </div>
+                      {proposal.invoice?.id && (
+                        <a
+                          href={`/invoices/${proposal.invoice.id}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-all"
+                        >
+                          <FileText className="h-3 w-3" />
+                          {proposal.invoice.public_id ? `INV ${proposal.invoice.public_id}` : 'Invoice'}
+                        </a>
+                      )}
                     </div>
-
-                    {/* Linked invoice badge */}
-                    {proposal.invoice?.id && (
-                      <a
-                        href={`/invoices/${proposal.invoice.id}`}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-all w-fit"
-                      >
-                        <FileText className="h-3 w-3" />
-                        Invoice {proposal.invoice.public_id ? proposal.invoice.public_id : 'linked'}
-                      </a>
-                    )}
 
                     {/* Service pills */}
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 min-h-[22px]">
                       {proposal.services && proposal.services.length > 0 ? (
                         proposal.services.slice(0, 3).map((service: string, sIdx: number) => (
                           <span key={sIdx} className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb]">
@@ -406,8 +417,8 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                           </span>
                         ))
                       ) : (
-                        <span className="px-2 py-0.5 bg-[#3aa3eb]/10 border border-[#3aa3eb]/30 rounded-full text-[10px] font-bold text-[#3aa3eb]">
-                          Website
+                        <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-medium text-gray-500">
+                          No services listed
                         </span>
                       )}
                       {proposal.services && proposal.services.length > 3 && (
@@ -417,13 +428,12 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       )}
                     </div>
 
-                    {/* Timeline pill */}
-                    <div>
+                    {/* Timeline */}
+                    <div className="flex items-center gap-1.5">
+                      <Clock className={`h-3.5 w-3.5 ${isApproved ? 'text-green-400' : isExpired ? 'text-red-400' : 'text-[#3aa3eb]'}`} />
                       <span
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all"
+                        className="text-[11px] font-medium"
                         style={{
-                          backgroundColor: isApproved ? 'rgba(34, 197, 94, 0.15)' : isExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 163, 234, 0.15)',
-                          borderColor: isApproved ? 'rgba(34, 197, 94, 0.4)' : isExpired ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 163, 234, 0.4)',
                           color: isApproved ? 'rgb(74, 222, 128)' : isExpired ? 'rgb(248, 113, 113)' : 'rgb(96, 165, 250)'
                         }}
                       >
@@ -431,7 +441,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       </span>
                     </div>
 
-                    {/* Bottom: Actions */}
+                    {/* Actions */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
                       <button
                         onClick={() => handleViewProposal(proposal.id)}

@@ -203,16 +203,26 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const currentQuarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
 
-  const paidDate = (inv: InvoiceView) => inv.paid_at || inv.updated_at || inv.created_at;
+  // Revenue is recognized on the date the invoice was actually paid.
+  // Unpaid invoices (even if status='paid' with no paid_at) are excluded.
+  const paidDate = (inv: InvoiceView): string | null =>
+    inv.status === 'paid' && inv.paid_at ? inv.paid_at : null;
+
+  const paidDateObj = (inv: InvoiceView): Date | null => {
+    const pd = paidDate(inv);
+    if (!pd) return null;
+    const d = new Date(pd);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
 
   const revenue7d = invoices
-    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= sevenDaysAgo)
+    .filter(inv => { const d = paidDateObj(inv); return d !== null && d >= sevenDaysAgo; })
     .reduce((sum, inv) => sum + inv.amount, 0);
   const revenue30d = invoices
-    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= thirtyDaysAgo)
+    .filter(inv => { const d = paidDateObj(inv); return d !== null && d >= thirtyDaysAgo; })
     .reduce((sum, inv) => sum + inv.amount, 0);
   const revenueQuarter = invoices
-    .filter(inv => inv.status === 'paid' && new Date(paidDate(inv)) >= currentQuarterStart)
+    .filter(inv => { const d = paidDateObj(inv); return d !== null && d >= currentQuarterStart; })
     .reduce((sum, inv) => sum + inv.amount, 0);
 
   const periodTitleMap: Record<typeof chartPeriod, string> = {
@@ -234,8 +244,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
           const dayRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(paidDate(inv));
-              return inv.status === 'paid' && invDate >= dayStart && invDate < dayEnd;
+              const invDate = paidDateObj(inv);
+              return invDate !== null && invDate >= dayStart && invDate < dayEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
@@ -252,8 +262,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           weekEnd.setDate(weekEnd.getDate() + 7);
           const weekRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(paidDate(inv));
-              return inv.status === 'paid' && invDate >= weekStart && invDate < weekEnd;
+              const invDate = paidDateObj(inv);
+              return invDate !== null && invDate >= weekStart && invDate < weekEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           const monthAbbr = weekStart.toLocaleDateString('en-US', { month: 'short' });
@@ -265,8 +275,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const d = new Date(now.getFullYear(), now.getMonth() - (basePointsCount - 1 - i), 1);
           const monthRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(paidDate(inv));
-              return inv.status === 'paid' &&
+              const invDate = paidDateObj(inv);
+              return invDate !== null &&
                 invDate.getMonth() === d.getMonth() &&
                 invDate.getFullYear() === d.getFullYear();
             })
@@ -287,8 +297,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const quarterEnd = new Date(targetYear, targetQuarter * 3 + 3, 1);
           const quarterRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(paidDate(inv));
-              return inv.status === 'paid' && invDate >= quarterStart && invDate < quarterEnd;
+              const invDate = paidDateObj(inv);
+              return invDate !== null && invDate >= quarterStart && invDate < quarterEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           return { label: `Q${targetQuarter + 1} '${String(targetYear).slice(-2)}`, value: quarterRevenue };
@@ -302,8 +312,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           const yearEnd = new Date(targetYear + 1, 0, 1);
           const yearRevenue = invoices
             .filter(inv => {
-              const invDate = new Date(paidDate(inv));
-              return inv.status === 'paid' && invDate >= yearStart && invDate < yearEnd;
+              const invDate = paidDateObj(inv);
+              return invDate !== null && invDate >= yearStart && invDate < yearEnd;
             })
             .reduce((sum, inv) => sum + inv.amount, 0);
           return { label: String(targetYear), value: yearRevenue };
@@ -466,12 +476,19 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       return inv.status === filterStatus;
     })
     .sort((a, b) => {
+      // Sort by the most relevant date: paid_at for paid invoices, else due_date, else created_at
+      const sortDate = (inv: InvoiceView) => {
+        const paid = paidDateObj(inv);
+        if (paid) return paid.getTime();
+        if (inv.due_date) { const d = new Date(inv.due_date); if (!Number.isNaN(d.getTime())) return d.getTime(); }
+        return new Date(inv.created_at).getTime();
+      };
       switch (sortBy) {
-        case 'date_asc': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'date_asc': return sortDate(a) - sortDate(b);
         case 'amount_desc': return b.amount - a.amount;
         case 'amount_asc': return a.amount - b.amount;
         case 'date_desc':
-        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        default: return sortDate(b) - sortDate(a);
       }
     });
 
@@ -714,7 +731,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               let dueDisplay = '';
               let dueColor = 'text-gray-400';
               if (isPaid) {
-                dueDisplay = `Paid on ${formatAppDate(invoice.paid_at || invoice.updated_at || invoice.created_at)}`;
+                dueDisplay = invoice.paid_at ? `Paid on ${formatAppDate(invoice.paid_at)}` : 'Paid';
                 dueColor = 'text-green-400';
               } else if (!dueDateStr) {
                 dueDisplay = isOverdue ? 'Overdue' : 'No due date';

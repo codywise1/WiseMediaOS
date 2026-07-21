@@ -1,7 +1,17 @@
 export function formatAppDate(input: string | number | Date | null | undefined): string {
   if (!input) return '';
 
-  const date = input instanceof Date ? input : new Date(input);
+  let date: Date;
+  if (input instanceof Date) {
+    date = input;
+  } else if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    // Date-only strings (YYYY-MM-DD) are parsed as UTC by JS. Split into
+    // local parts so the displayed day matches what's stored regardless of tz.
+    const [, y, m, d] = input.match(/^(\d{4})-(\d{2})-(\d{2})$/)!;
+    date = new Date(Number(y), Number(m) - 1, Number(d));
+  } else {
+    date = new Date(input);
+  }
   if (Number.isNaN(date.getTime())) return '';
 
   const month = date.toLocaleString('en-US', { month: 'short' }); // e.g. "Dec"
