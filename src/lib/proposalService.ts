@@ -26,6 +26,8 @@ export interface Proposal {
   invoice?: any;
   billing_plan?: BillingPlan;
   events?: ProposalEvent[];
+  proposal_invoices?: Array<{ invoice_id: string; invoice?: { id: string; title?: string; amount: number; status: string; public_id?: string } }>;
+  proposal_projects?: Array<{ project_id: string; project?: { id: string; name: string; status: string } }>;
 }
 
 export interface ProposalItem {
@@ -98,7 +100,9 @@ export const proposalService = {
         client:clients(*),
         invoice:invoices(*),
         items:proposal_items(*),
-        billing_plan:billing_plans(*)
+        billing_plan:billing_plans(*),
+        proposal_invoices(invoice_id, invoice:invoices(id, title, amount, status, public_id)),
+        proposal_projects(project_id, project:projects(id, name, status))
       `)
       .order('created_at', { ascending: false });
 
@@ -143,7 +147,9 @@ export const proposalService = {
         client:clients(*),
         invoice:invoices(*),
         items:proposal_items(*),
-        billing_plan:billing_plans(*)
+        billing_plan:billing_plans(*),
+        proposal_invoices(invoice_id, invoice:invoices(id, title, amount, status, public_id)),
+        proposal_projects(project_id, project:projects(id, name, status))
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
@@ -188,7 +194,9 @@ export const proposalService = {
         invoice:invoices(*),
         items:proposal_items(*),
         billing_plan:billing_plans(*),
-        events:proposal_events(*)
+        events:proposal_events(*),
+        proposal_invoices(invoice_id, invoice:invoices(id, title, amount, status, public_id)),
+        proposal_projects(project_id, project:projects(id, name, status))
       `)
       .eq('id', id)
       .single();
@@ -888,5 +896,35 @@ export const proposalService = {
       .eq('id', proposalId);
 
     if (error) throw error;
+  },
+
+  async syncProposalInvoices(proposalId: string, invoiceIds: string[]) {
+    if (!isSupabaseAvailable()) return;
+    const sb = supabase!;
+    const { error: delError } = await sb
+      .from('proposal_invoices')
+      .delete()
+      .eq('proposal_id', proposalId);
+    if (delError) throw delError;
+    if (invoiceIds.length > 0) {
+      const rows = invoiceIds.map(invoiceId => ({ proposal_id: proposalId, invoice_id: invoiceId }));
+      const { error: insError } = await sb.from('proposal_invoices').insert(rows);
+      if (insError) throw insError;
+    }
+  },
+
+  async syncProposalProjects(proposalId: string, projectIds: string[]) {
+    if (!isSupabaseAvailable()) return;
+    const sb = supabase!;
+    const { error: delError } = await sb
+      .from('proposal_projects')
+      .delete()
+      .eq('proposal_id', proposalId);
+    if (delError) throw delError;
+    if (projectIds.length > 0) {
+      const rows = projectIds.map(projectId => ({ proposal_id: proposalId, project_id: projectId }));
+      const { error: insError } = await sb.from('proposal_projects').insert(rows);
+      if (insError) throw insError;
+    }
   }
 };

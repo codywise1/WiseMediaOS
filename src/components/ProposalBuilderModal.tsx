@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { clientService, Client } from '../lib/supabase';
+import { Link as LinkIcon, FileText, FolderKanban } from 'lucide-react';
+import { clientService, invoiceService, projectService, Client } from '../lib/supabase';
 import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
 import { useToast } from '../contexts/ToastContext';
@@ -47,6 +48,10 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   const { success: toastSuccess, error: toastError } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [clients, setClients] = useState<Client[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [linkedInvoiceIds, setLinkedInvoiceIds] = useState<string[]>([]);
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [proposalId, setProposalId] = useState<string | null>(null);
 
@@ -65,10 +70,14 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   useEffect(() => {
     if (isOpen) {
       loadClients();
+      loadInvoices();
+      loadProjects();
       if (editProposalId) {
         setProposalId(editProposalId);
         loadExistingProposal(editProposalId);
       } else {
+        setLinkedInvoiceIds([]);
+        setLinkedProjectIds([]);
         // Reset form for NEW proposal
         setCurrentStep(1);
         setProposalId(null);
@@ -94,6 +103,8 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       if (proposal) {
         const items = await proposalService.getItems(id);
 
+        setLinkedInvoiceIds((proposal.proposal_invoices || []).map((ip: any) => ip.invoice_id));
+        setLinkedProjectIds((proposal.proposal_projects || []).map((pp: any) => pp.project_id));
         setFormData({
           client_id: proposal.client_id,
           title: proposal.title,
@@ -123,7 +134,6 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
   const loadClients = async () => {
     try {
       const data = await clientService.getAll();
-      // Sort clients alphabetically by company or name
       const sortedData = [...data].sort((a, b) => {
         const nameA = (a.company || a.name || '').toLowerCase();
         const nameB = (b.company || b.name || '').toLowerCase();
@@ -132,6 +142,24 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
       setClients(sortedData);
     } catch (error) {
       console.error('Error loading clients:', error);
+    }
+  };
+
+  const loadInvoices = async () => {
+    try {
+      const data = await invoiceService.getAll();
+      setInvoices(data);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const data = await projectService.getAll();
+      setProjects(data);
+    } catch (error) {
+      console.error('Error loading projects:', error);
     }
   };
 
@@ -195,9 +223,13 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
 
       if (editProposalId) {
         await proposalService.update(editProposalId, proposalData);
+        await proposalService.syncProposalInvoices(editProposalId, linkedInvoiceIds);
+        await proposalService.syncProposalProjects(editProposalId, linkedProjectIds);
         setProposalId(editProposalId);
       } else {
         const proposal = await proposalService.create(proposalData);
+        await proposalService.syncProposalInvoices(proposal.id, linkedInvoiceIds);
+        await proposalService.syncProposalProjects(proposal.id, linkedProjectIds);
         setProposalId(proposal.id);
         toastSuccess('Draft proposal created with linked invoice');
       }
@@ -356,6 +388,13 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
 
   if (!isOpen) return null;
 
+  const clientInvoices = formData.client_id
+    ? invoices.filter(inv => inv.client_id === formData.client_id)
+    : invoices;
+  const clientProjects = formData.client_id
+    ? projects.filter(p => p.client_id === formData.client_id)
+    : projects;
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -477,6 +516,88 @@ export default function ProposalBuilderModal({ isOpen, onClose, onSuccess, curre
                     </select>
                   </div>
                 </div>
+
+                {formData.client_id && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-3.5 w-3.5 text-gray-500" />
+                        <label className="block text-sm font-bold text-gray-300 mb-0">
+                          Linked Invoices
+                          {linkedInvoiceIds.length > 0 && <span className="text-[#3aa3eb] ml-1">· {linkedInvoiceIds.length}</span>}
+                        </label>
+                      </div>
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/50 p-2">
+                        {clientInvoices.length === 0 ? (
+                          <p className="text-sm text-gray-500 px-3 py-2">No invoices for this client.</p>
+                        ) : (
+                          clientInvoices.map((inv) => {
+                            const checked = linkedInvoiceIds.includes(inv.id);
+                            return (
+                              <label
+                                key={inv.id}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${checked ? 'bg-[#3aa3eb]/10 border border-[#3aa3eb]/30' : 'hover:bg-white/5 border border-transparent'}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() =>
+                                    setLinkedInvoiceIds(prev =>
+                                      prev.includes(inv.id) ? prev.filter(id => id !== inv.id) : [...prev, inv.id]
+                                    )
+                                  }
+                                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#3aa3eb] focus:ring-[#3aa3eb]/40"
+                                />
+                                <span className={`text-sm font-medium ${checked ? 'text-white' : 'text-gray-300'}`}>
+                                  {inv.public_id || `INV-${inv.id.slice(0, 6).toUpperCase()}`} · ${(Number(inv.amount) || 0).toLocaleString()} · {inv.status}
+                                </span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <FolderKanban className="h-3.5 w-3.5 text-gray-500" />
+                        <label className="block text-sm font-bold text-gray-300 mb-0">
+                          Linked Projects
+                          {linkedProjectIds.length > 0 && <span className="text-[#3aa3eb] ml-1">· {linkedProjectIds.length}</span>}
+                        </label>
+                      </div>
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/50 p-2">
+                        {clientProjects.length === 0 ? (
+                          <p className="text-sm text-gray-500 px-3 py-2">No projects for this client.</p>
+                        ) : (
+                          clientProjects.map((p) => {
+                            const checked = linkedProjectIds.includes(p.id);
+                            return (
+                              <label
+                                key={p.id}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${checked ? 'bg-[#3aa3eb]/10 border border-[#3aa3eb]/30' : 'hover:bg-white/5 border border-transparent'}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() =>
+                                    setLinkedProjectIds(prev =>
+                                      prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                                    )
+                                  }
+                                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#3aa3eb] focus:ring-[#3aa3eb]/40"
+                                />
+                                <span className={`text-sm font-medium ${checked ? 'text-white' : 'text-gray-300'}`}>
+                                  {p.name} · {p.status}
+                                </span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                   <p className="text-sm text-blue-300">

@@ -9,6 +9,7 @@ import {
   Calendar,
   FileText,
   Banknote,
+  FolderKanban,
   ShieldCheck,
   Download,
   Pencil,
@@ -314,27 +315,88 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
         </div>
       )}
 
-      {/* Linked invoice */}
-      {invoiceData && (
-        <div className="rounded-3xl bg-white/[0.03] border border-white/[0.06] p-6 sm:p-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                <Banknote size={18} className="text-gray-400" />
+      {/* Linked invoices & projects */}
+      {((proposal.proposal_invoices && proposal.proposal_invoices.length > 0) || (proposal.proposal_projects && proposal.proposal_projects.length > 0)) && (
+        <div className="rounded-3xl bg-white/[0.03] border border-white/[0.06] p-6 sm:p-8 space-y-6">
+          {proposal.proposal_invoices && proposal.proposal_invoices.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Banknote size={16} className="text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Linked Invoices</h3>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Linked Invoice</p>
-                <p className="text-white font-medium">{formatCurrency(invoiceData.amount * 100)}</p>
+              <div className="space-y-2">
+                {proposal.proposal_invoices.map((ip: any) => {
+                  const inv = ip.invoice;
+                  if (!inv) return null;
+                  const status = inv.status || 'pending';
+                  return (
+                    <button
+                      key={ip.invoice_id}
+                      onClick={() => navigate(`/invoices/${ip.invoice_id}`)}
+                      className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/20 hover:bg-white/[0.04] transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                          <FileText size={15} className="text-gray-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white font-medium text-sm truncate">
+                            {inv.title || inv.public_id || `INV-${ip.invoice_id.slice(0, 6).toUpperCase()}`}
+                          </p>
+                          <p className="text-xs text-gray-500">{(Number(inv.amount) || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          status === 'paid' ? 'bg-emerald-500/10 text-emerald-300' :
+                          status === 'pending' ? 'bg-blue-500/10 text-blue-300' :
+                          status === 'overdue' ? 'bg-red-500/10 text-red-300' :
+                          'bg-gray-500/10 text-gray-400'
+                        }`}>
+                          {status}
+                        </span>
+                        <ArrowRight size={14} className="text-gray-600 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-              invoiceData.status === 'paid' ? 'bg-emerald-500/10 text-emerald-300' :
-              invoiceData.status === 'unpaid' || invoiceData.status === 'ready' ? 'bg-blue-500/10 text-blue-300' :
-              'bg-gray-500/10 text-gray-400'
-            }`}>
-              {invoiceData.status}
-            </span>
-          </div>
+          )}
+
+          {proposal.proposal_projects && proposal.proposal_projects.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FolderKanban size={16} className="text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Linked Projects</h3>
+              </div>
+              <div className="space-y-2">
+                {proposal.proposal_projects.map((pp: any) => {
+                  const proj = pp.project;
+                  if (!proj) return null;
+                  const status = proj.status || 'planning';
+                  return (
+                    <button
+                      key={pp.project_id}
+                      onClick={() => navigate(`/projects/${pp.project_id}`)}
+                      className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/20 hover:bg-white/[0.04] transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                          <FolderKanban size={15} className="text-gray-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white font-medium text-sm truncate">{proj.name}</p>
+                          <p className="text-xs text-gray-500 capitalize">{status.replace('_', ' ')}</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={14} className="text-gray-600 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

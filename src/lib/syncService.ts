@@ -3,109 +3,146 @@ import { supabase, isSupabaseAvailable } from './supabase';
 /**
  * Sync service: keeps proposals, invoices, and projects in sync.
  *
- * - When a proposal is approved → ensure a linked invoice exists (handled in proposalService)
- *   AND create/activate a linked project.
- * - When an invoice is paid → mark the linked project as in_progress (work can start).
- * - When an invoice is voided → mark the linked project as on_hold.
+ * The link chain uses many-to-many join tables:
+ *   proposal <-> invoice  (proposal_invoices)
+ *   proposal <-> project  (proposal_projects)
+ *   invoice   <-> project (invoice_projects)
  *
- * The link chain is: proposal → invoice (invoices.proposal_id) → project (projects.invoice_link = invoice.id)
+ * Flow when a proposal is approved:
+ *   1. Ensure a linked invoice exists (legacy invoices.proposal_id kept in sync).
+ *   2. Link the proposal to that invoice in proposal_invoices.
+ *   3. Create/activate a linked project and link it in proposal_projects + invoice_projects.
+ *
+ * Flow when an invoice is paid:
+ *   - Mark all linked projects (via invoice_projects) as in_progress.
+ *
+ * Flow when an invoice is voided:
+ *   - Put all linked projects on hold.
  */
 
 export const syncService = {
   /**
-   * Called after a proposal is approved. Ensures a project exists and is linked
-   * to the proposal's invoice. Creates the project if it doesn't exist yet.
+   * Called after a proposal is approved. Ensures an invoice exists and is linked,
+   * then ensures a project exists and is linked to both the proposal and the invoice.
    */
   async syncOnProposalApproved(proposalId: string, clientId: string, proposalTitle: string) {
     if (!isSupabaseAvailable()) return;
     const sb = supabase!;
 
-    // Find the linked invoice
-    const { data: invoice } = await sb
-      .from('invoices')
-      .select('id')
-      .eq('proposal_id', proposalId)
-      .maybeSingle();
+    // Find a linked invoice (via join table first, then legacy FK)
+    const { data: joinInvoices } = await sb
+      .from('proposal_invoices')
+      .select('invoice_id')
+      .eq('proposal_id', proposalId);
 
-    if (!invoice) return; // nothing to link yet
+    let invoiceId: string | undefined = joinInvoices?.[0]?.invoice_id;
 
-    // Check if a project already exists linked to this invoice
-    const { data: existing } = await sb
-      .from('projects')
-      .select('id')
-      .eq('invoice_link', invoice.id)
-      .maybeSingle();
+    if (!invoiceId) {
+      // Fall back to legacy invoices.proposal_id
+      const { data: legacyInvoice } = await sb
+        .from('invoices')
+        .select('id')
+        .eq('proposal_id', proposalId)
+        .maybeSingle();
+      invoiceId = legacyInvoice?.id;
 
-    if (existing) {
-      // Project already exists — make sure it's not in "not_started" if we have approval
-      await sb
-        .from('projects')
-        .update({ status: 'planning' })
-        .eq('id', existing.id);
-      return;
+      if (invoiceId) {
+        // Backfill the join table
+        await sb.from('proposal_invoices').upsert(
+          { proposal_id: proposalId, invoice_id: invoiceId },
+          { onConflict: 'proposal_id,invoice_id' }
+        );
+      }
     }
 
-    // Create a new project linked to the approved proposal's invoice
-    const { error } = await sb.from('projects').insert([{
-      client_id: clientId,
-      name: proposalTitle,
-      description: `Auto-created from approved proposal: ${proposalTitle}`,
-      status: 'planning',
-      progress: 0,
-      team_size: 1,
-      project_type: 'Website',
-      priority: 'Medium',
-      billing_type: 'Fixed',
-      invoice_link: invoice.id,
-    }]);
+    if (!invoiceId) return; // nothing to link yet
 
-    if (error) {
-      console.error('[syncService] Error creating project from proposal:', error);
+    // Check if a project already exists linked to this proposal
+    const { data: existingLinks } = await sb
+      .from('proposal_projects')
+      .select('project_id, project:projects(id, status)')
+      .eq('proposal_id', proposalId);
+
+    let projectId: string | undefined = existingLinks?.[0]?.project_id;
+
+    if (projectId) {
+      // Project exists — make sure it's not stuck in "not_started"
+      const projectStatus = (existingLinks?.[0] as any)?.project?.status;
+      if (projectStatus === 'not_started') {
+        await sb.from('projects').update({ status: 'planning' }).eq('id', projectId);
+      }
+    } else {
+      // Create a new project linked to the approved proposal
+      const { data: newProject, error } = await sb.from('projects').insert([{
+        client_id: clientId,
+        name: proposalTitle,
+        description: `Auto-created from approved proposal: ${proposalTitle}`,
+        status: 'planning',
+        progress: 0,
+        team_size: 1,
+        project_type: 'Website',
+        priority: 'Medium',
+        billing_type: 'Fixed',
+      }]).select('id').single();
+
+      if (error) {
+        console.error('[syncService] Error creating project from proposal:', error);
+        return;
+      }
+      projectId = newProject.id;
+
+      // Link proposal <-> project
+      await sb.from('proposal_projects').upsert(
+        { proposal_id: proposalId, project_id: projectId },
+        { onConflict: 'proposal_id,project_id' }
+      );
     }
+
+    // Ensure invoice <-> project link exists
+    await sb.from('invoice_projects').upsert(
+      { invoice_id: invoiceId, project_id: projectId },
+      { onConflict: 'invoice_id,project_id' }
+    );
   },
 
   /**
-   * Called when an invoice transitions to paid. Marks the linked project as in_progress.
+   * Called when an invoice transitions to paid. Marks all linked projects as in_progress.
    */
   async syncOnInvoicePaid(invoiceId: string) {
     if (!isSupabaseAvailable()) return;
     const sb = supabase!;
 
-    const { data: project } = await sb
-      .from('projects')
-      .select('id, status')
-      .eq('invoice_link', invoiceId)
-      .maybeSingle();
+    const { data: links } = await sb
+      .from('invoice_projects')
+      .select('project_id, project:projects(id, status)')
+      .eq('invoice_id', invoiceId);
 
-    if (!project) return;
+    if (!links || links.length === 0) return;
 
-    // Only move to in_progress if it's in a pre-work state
-    if (project.status === 'planning' || project.status === 'not_started' || project.status === 'on_hold') {
-      await sb
-        .from('projects')
-        .update({ status: 'in_progress' })
-        .eq('id', project.id);
+    for (const link of links) {
+      const project = (link as any).project;
+      if (project && ['planning', 'not_started', 'on_hold'].includes(project.status)) {
+        await sb.from('projects').update({ status: 'in_progress' }).eq('id', project.id);
+      }
     }
   },
 
   /**
-   * Called when an invoice is voided. Puts the linked project on hold.
+   * Called when an invoice is voided. Puts all linked projects on hold.
    */
   async syncOnInvoiceVoided(invoiceId: string) {
     if (!isSupabaseAvailable()) return;
     const sb = supabase!;
 
-    const { data: project } = await sb
-      .from('projects')
-      .select('id')
-      .eq('invoice_link', invoiceId)
-      .maybeSingle();
+    const { data: links } = await sb
+      .from('invoice_projects')
+      .select('project_id')
+      .eq('invoice_id', invoiceId);
 
-    if (!project) return;
+    if (!links || links.length === 0) return;
 
-    await sb
-      .from('projects')
-      .update({ status: 'on_hold' })
-      .eq('id', project.id);
+    for (const link of links) {
+      await sb.from('projects').update({ status: 'on_hold' }).eq('id', link.project_id);
+    }
   },
 };
