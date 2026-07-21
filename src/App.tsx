@@ -187,6 +187,7 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
 import { useLoadingGuard } from './hooks/useLoadingGuard';
 
 function App() {
+  const { profile } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,6 +198,22 @@ function App() {
   useEffect(() => {
     currentUserIdRef.current = currentUser?.id || null;
   }, [currentUser?.id]);
+
+  // Merge profile data from the database (profiles table) into currentUser.
+  // The avatar URL and role live in the profiles table, NOT in the JWT's
+  // user_metadata — so on page refresh, currentUser.avatar and
+  // currentUser.role are undefined until the profile loads. This effect
+  // syncs them once AuthContext finishes loading the profile.
+  useEffect(() => {
+    if (!profile || !currentUser) return;
+    setCurrentUser(prev => {
+      if (!prev) return prev;
+      const avatar = profile.avatar_url || prev.avatar;
+      const role = (profile.role || prev.role) as UserRole;
+      if (avatar === prev.avatar && role === prev.role) return prev;
+      return { ...prev, avatar, role };
+    });
+  }, [profile?.avatar_url, profile?.role, profile?.id]);
 
   useLoadingGuard(loading, setLoading, 10000);
 
