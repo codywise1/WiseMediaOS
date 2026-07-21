@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search, Plus, Pin, Trash2, Share2, Lock, FileText, Lightbulb, Calendar,
   Phone, ClipboardList, CheckSquare, X, Tag, ChevronDown, Inbox, Star,
-  Pencil, ArrowLeft, Folder as FolderIcon,
+  Pencil, ArrowLeft, Folder as FolderIcon, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
-import { noteService, Note, NoteCategory, NoteBlock, Client, Project, UserRole } from '../lib/supabase';
+import { noteService, Note, NoteCategory, NoteBlock, UserRole } from '../lib/supabase';
 import { useToast } from '../contexts/ToastContext';
 import { formatAppDate } from '../lib/dateFormat';
 
@@ -14,14 +14,16 @@ interface AppleNotesProps {
 
 type Folder = 'all' | 'pinned' | NoteCategory | 'shared';
 
+const BRAND = '#3aa3eb';
+
 const FOLDER_META: Record<Folder, { label: string; icon: React.ElementType; color: string; bg: string }> = {
   all: { label: 'All Notes', icon: Inbox, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/10' },
-  pinned: { label: 'Pinned', icon: Star, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  pinned: { label: 'Pinned', icon: Star, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/10' },
   general: { label: 'General', icon: FileText, color: 'text-gray-400', bg: 'bg-white/5' },
-  idea: { label: 'Ideas', icon: Lightbulb, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  meeting: { label: 'Meetings', icon: Calendar, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  idea: { label: 'Ideas', icon: Lightbulb, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/10' },
+  meeting: { label: 'Meetings', icon: Calendar, color: 'text-sky-400', bg: 'bg-sky-500/10' },
   sales_call: { label: 'Sales Calls', icon: Phone, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  sop: { label: 'SOPs', icon: ClipboardList, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+  sop: { label: 'SOPs', icon: ClipboardList, color: 'text-teal-400', bg: 'bg-teal-500/10' },
   task: { label: 'Tasks', icon: CheckSquare, color: 'text-rose-400', bg: 'bg-rose-500/10' },
   shared: { label: 'Shared', icon: Share2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 };
@@ -30,7 +32,6 @@ const CATEGORY_EMOJI: Record<NoteCategory, string> = {
   general: '📝', idea: '💡', meeting: '🗓️', sales_call: '📞', sop: '📋', task: '✅',
 };
 
-// Mobile panel state: 'folders' | 'list' | 'editor'
 type MobilePanel = 'folders' | 'list' | 'editor';
 
 export default function AppleNotes({ currentUser }: AppleNotesProps) {
@@ -41,8 +42,10 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
-  // Mobile panel navigation
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('list');
+
+  // Collapsible folder sidebar (desktop)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Editor state (inline, auto-save)
   const [title, setTitle] = useState('');
@@ -78,6 +81,9 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
     [notes, selectedNoteId]
   );
 
+  // Only re-sync editor fields when the *note id* changes — NOT on updated_at.
+  // Re-syncing after auto-save would reset the textarea value and cause the
+  // cursor/scroll to jump ("goes down a bit" glitch).
   useEffect(() => {
     if (selectedNote) {
       setTitle(selectedNote.title);
@@ -96,7 +102,8 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
       setTitle(''); setBody(''); setCategory('general'); setTags([]);
       setPinned(false); setIsShared(false); setSaveState('idle');
     }
-  }, [selectedNoteId, selectedNote?.updated_at]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNoteId]);
 
   const filteredNotes = useMemo(() => {
     let result = notes;
@@ -139,6 +146,8 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
     }
   };
 
+  // Auto-save — debounced. Only fires on content change, NOT on note metadata
+  // reload, so saving never re-triggers a body reset.
   useEffect(() => {
     if (!selectedNoteId) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -153,6 +162,8 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
           title: title || 'Untitled', content: blocks, plainText, category, tags, pinned,
         } as any);
         setSaveState('saved');
+        // Update local notes WITHOUT changing updated_at in a way that
+        // re-syncs the editor (we depend on selectedNoteId only).
         setNotes((prev) => prev.map((n) =>
           n.id === selectedNoteId
             ? { ...n, title: title || 'Untitled', content: blocks, plainText, category, tags, pinned, updated_at: new Date().toISOString() }
@@ -165,6 +176,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
       }
     }, 900);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, body, category, tags, pinned, selectedNoteId]);
 
   const handleTogglePin = async () => {
@@ -238,36 +250,34 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
   };
 
   const renderNoteList = () => (
-    <div className="flex-1 overflow-y-auto custom-scrollbar">
+    <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/10 border-t-amber-400" />
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/10 border-t-[#3aa3eb]" />
         </div>
       ) : filteredNotes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <FileText size={32} className="text-gray-700 mb-3" />
           <p className="text-sm text-gray-500 font-medium">{searchQuery ? 'No results found' : 'No notes here yet'}</p>
           {!searchQuery && (
-            <button onClick={handleNewNote} className="mt-4 flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium">
+            <button onClick={handleNewNote} className="mt-4 flex items-center gap-1.5 text-xs text-[#3aa3eb] hover:text-[#59a1e5] font-medium">
               <Plus size={14} /> Create your first note
             </button>
           )}
         </div>
       ) : (
         <div>
-          {/* Pinned section */}
           {pinnedNotes.length > 0 && (
             <div>
               <div className="px-4 pt-3 pb-1 flex items-center gap-1.5">
-                <Pin size={11} className="text-amber-400" fill="currentColor" />
-                <span className="text-[11px] font-bold text-amber-400/70 uppercase tracking-widest">Pinned</span>
+                <Pin size={11} className="text-[#3aa3eb]" fill="currentColor" />
+                <span className="text-[11px] font-bold text-[#3aa3eb]/70 uppercase tracking-widest">Pinned</span>
               </div>
               {pinnedNotes.map((note) => (
                 <NoteRow key={note.id} note={note} selectedNoteId={selectedNoteId} onSelect={selectNote} />
               ))}
             </div>
           )}
-          {/* All notes section */}
           {unpinnedNotes.length > 0 && (
             <div>
               {pinnedNotes.length > 0 && (
@@ -287,14 +297,17 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
 
   const renderFolderSidebar = () => (
     <div className="flex flex-col h-full">
-      {/* Folder header */}
-      <div className="px-4 py-3 border-b border-white/5 hidden sm:block">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Folders</h2>
-        </div>
+      <div className="px-4 py-3 border-b border-white/5 hidden sm:flex items-center justify-between">
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Folders</h2>
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+          title="Collapse folders"
+        >
+          <PanelLeftClose size={15} />
+        </button>
       </div>
-      {/* Folder list */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-0.5">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-0.5 min-h-0">
         {folders.map((folder) => {
           const meta = FOLDER_META[folder];
           const isActive = activeFolder === folder;
@@ -315,11 +328,10 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
           );
         })}
       </div>
-      {/* New note button */}
       <div className="p-3 border-t border-white/5">
         <button
           onClick={handleNewNote}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-sm font-semibold transition-colors border border-amber-500/20"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#3aa3eb]/20 hover:bg-[#3aa3eb]/30 text-[#3aa3eb] text-sm font-semibold transition-colors border border-[#3aa3eb]/20"
         >
           <Plus size={16} />
           <span>New Note</span>
@@ -329,11 +341,11 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
   );
 
   const renderEditor = () => (
-    <div className="flex-1 flex flex-col min-w-0 h-full">
+    <div className="flex-1 flex flex-col min-w-0 h-full min-h-0">
       {!selectedNoteId ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-          <div className="w-20 h-20 rounded-3xl bg-amber-500/10 flex items-center justify-center mb-5 border border-amber-500/20">
-            <FileText size={36} className="text-amber-400/60" />
+          <div className="w-20 h-20 rounded-3xl bg-[#3aa3eb]/10 flex items-center justify-center mb-5 border border-[#3aa3eb]/20">
+            <FileText size={36} className="text-[#3aa3eb]/60" />
           </div>
           <h2 className="text-xl font-semibold text-gray-400">No Note Selected</h2>
           <p className="text-sm text-gray-600 mt-1.5 max-w-xs leading-relaxed">
@@ -341,7 +353,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
           </p>
           <button
             onClick={handleNewNote}
-            className="mt-6 flex items-center gap-2 px-5 py-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-sm font-semibold transition-colors border border-amber-500/20"
+            className="mt-6 flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#3aa3eb]/20 hover:bg-[#3aa3eb]/30 text-[#3aa3eb] text-sm font-semibold transition-colors border border-[#3aa3eb]/20"
           >
             <Plus size={16} /> New Note
           </button>
@@ -349,16 +361,14 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
       ) : (
         <>
           {/* Editor toolbar */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5 shrink-0">
             <div className="flex items-center gap-1">
-              {/* Mobile back button */}
               <button
                 onClick={() => setMobilePanel('list')}
                 className="md:hidden p-1.5 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors mr-1"
               >
                 <ArrowLeft size={16} />
               </button>
-              {/* Category selector */}
               <div className="relative">
                 <button
                   onClick={() => setShowCategoryMenu(!showCategoryMenu)}
@@ -392,10 +402,10 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
                 {saveState === 'saving' && 'Saving...'}
                 {saveState === 'saved' && 'Saved'}
               </span>
-              {saveState === 'saving' && <div className="w-3 h-3 rounded-full border border-white/20 border-t-amber-400 animate-spin sm:hidden" />}
+              {saveState === 'saving' && <div className="w-3 h-3 rounded-full border border-white/20 border-t-[#3aa3eb] animate-spin sm:hidden" />}
               <button
                 onClick={handleTogglePin}
-                className={`p-1.5 rounded-lg transition-colors ${pinned ? 'text-amber-400 bg-amber-500/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+                className={`p-1.5 rounded-lg transition-colors ${pinned ? 'text-[#3aa3eb] bg-[#3aa3eb]/10' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
                 title="Pin"
               >
                 <Pin size={15} fill={pinned ? 'currentColor' : 'none'} />
@@ -417,26 +427,24 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
             </div>
           </div>
 
-          {/* Editor body */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-10 lg:px-16 py-6 sm:py-8">
+          {/* Editor body — fills viewport, textarea scrolls internally */}
+          <div className="flex-1 flex flex-col min-h-0 px-5 sm:px-10 lg:px-16 py-4 sm:py-6">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title"
-              className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-white placeholder:text-gray-700 focus:outline-none mb-1"
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}
+              className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-white placeholder:text-gray-700 focus:outline-none mb-1 font-integral shrink-0"
             />
-            <div className="flex items-center gap-2 mb-5 text-xs text-gray-600 flex-wrap">
+            <div className="flex items-center gap-2 mb-4 text-xs text-gray-600 flex-wrap shrink-0">
               <span>{formatAppDate(selectedNote?.updated_at || new Date())}</span>
               {selectedNote?.client?.name && (<><span>·</span><span>{selectedNote.client.name}</span></>)}
               {isShared && (<><span>·</span><span className="text-emerald-500">Shared with client</span></>)}
             </div>
 
-            {/* Tags */}
-            <div className="flex flex-wrap items-center gap-1.5 mb-5">
+            <div className="flex flex-wrap items-center gap-1.5 mb-4 shrink-0">
               {tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 rounded-md text-xs text-amber-400">
+                <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-[#3aa3eb]/10 rounded-md text-xs text-[#3aa3eb]">
                   #{tag}
                   <button onClick={() => removeTag(tag)} className="hover:text-white"><X size={11} /></button>
                 </span>
@@ -456,7 +464,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
               ) : (
                 <button
                   onClick={() => setShowTagInput(true)}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-gray-600 hover:text-amber-400 hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs text-gray-600 hover:text-[#3aa3eb] hover:bg-white/5 transition-colors"
                 >
                   <Tag size={11} /> Add tag
                 </button>
@@ -467,7 +475,7 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Start writing..."
-              className="w-full bg-transparent text-[15px] text-gray-200 placeholder:text-gray-700 focus:outline-none resize-none leading-relaxed min-h-[50vh]"
+              className="w-full flex-1 bg-transparent text-[15px] text-gray-200 placeholder:text-gray-700 focus:outline-none resize-none leading-relaxed min-h-0 overflow-y-auto custom-scrollbar"
               style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
             />
           </div>
@@ -477,9 +485,9 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="h-full flex flex-col overflow-hidden gap-3">
       {/* Mobile folder selector bar */}
-      <div className="md:hidden">
+      <div className="md:hidden shrink-0">
         <button
           onClick={() => setShowFolderMenu(!showFolderMenu)}
           className="w-full flex items-center justify-between px-4 py-3 ios-card rounded-2xl border border-white/10"
@@ -528,43 +536,61 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
         )}
       </div>
 
-      {/* Main 3-panel layout — desktop */}
-      <div className="hidden md:flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d0f]/80 backdrop-blur-xl">
-        {/* Panel 1: Folders */}
-        <div className="w-56 shrink-0 border-r border-white/5 flex flex-col bg-black/20">
-          {renderFolderSidebar()}
-        </div>
-        {/* Panel 2: Note list */}
-        <div className="w-72 shrink-0 border-r border-white/5 flex flex-col">
-          <div className="p-3 border-b border-white/5">
+      {/* Main 3-panel layout — desktop, fits viewport */}
+      <div className="hidden md:flex flex-1 min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d0f]/80 backdrop-blur-xl">
+        {/* Collapsible folder sidebar */}
+        {sidebarOpen ? (
+          <div className="w-56 shrink-0 border-r border-white/5 flex flex-col bg-black/20 transition-all duration-200">
+            {renderFolderSidebar()}
+          </div>
+        ) : (
+          <div className="w-12 shrink-0 border-r border-white/5 flex flex-col items-center py-3 bg-black/20">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+              title="Show folders"
+            >
+              <PanelLeftOpen size={18} />
+            </button>
+            <button
+              onClick={handleNewNote}
+              className="mt-2 p-2 rounded-lg bg-[#3aa3eb]/20 hover:bg-[#3aa3eb]/30 text-[#3aa3eb] transition-colors"
+              title="New note"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+        )}
+        {/* Note list */}
+        <div className="w-72 shrink-0 border-r border-white/5 flex flex-col min-h-0">
+          <div className="p-3 border-b border-white/5 shrink-0">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search"
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-500/30"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/40"
               />
             </div>
           </div>
           {renderNoteList()}
         </div>
-        {/* Panel 3: Editor */}
+        {/* Editor */}
         {renderEditor()}
       </div>
 
       {/* Mobile single-panel navigation */}
-      <div className="md:hidden h-[calc(100vh-12rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d0f]/80 backdrop-blur-xl flex flex-col">
-        {/* Mobile search bar (always visible in list panel) */}
+      <div className="md:hidden flex-1 min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d0f]/80 backdrop-blur-xl flex flex-col">
         {mobilePanel === 'list' && (
-          <div className="p-3 border-b border-white/5">
+          <div className="p-3 border-b border-white/5 shrink-0">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search notes"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-500/30"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3aa3eb]/40"
               />
             </div>
           </div>
@@ -583,13 +609,13 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
       <button
         onClick={() => onSelect(note.id)}
         className={`w-full text-left px-4 py-3 transition-colors border-l-2 ${
-          isSelected ? 'bg-amber-500/5 border-amber-400' : 'border-transparent hover:bg-white/[0.03]'
+          isSelected ? 'bg-[#3aa3eb]/5 border-[#3aa3eb]' : 'border-transparent hover:bg-white/[0.03]'
         }`}
       >
         <div className="flex items-start gap-2 mb-1">
           <span className="text-sm leading-none mt-0.5">{CATEGORY_EMOJI[note.category]}</span>
           <h3 className="text-sm font-semibold text-white truncate flex-1">{note.title || 'Untitled'}</h3>
-          {note.pinned && <Pin size={12} className="text-amber-400 shrink-0 mt-0.5" fill="currentColor" />}
+          {note.pinned && <Pin size={12} className="text-[#3aa3eb] shrink-0 mt-0.5" fill="currentColor" />}
           {note.is_shared_with_client && <Share2 size={11} className="text-emerald-400 shrink-0 mt-0.5" />}
         </div>
         <p className="text-xs text-gray-500 line-clamp-2 ml-5 leading-relaxed">

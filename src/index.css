@@ -3,6 +3,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Integral CF';
+  src: url('https://codywise.io/wp-content/uploads/2025/03/IntegralCF-Bold.woff') format('woff'),
+       url('https://codywise.io/wp-content/uploads/2025/03/IntegralCF-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -199,6 +208,7 @@ body {
 .title-font { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 
 .font-display { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+.font-integral { font-family: 'Integral CF', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; }
 .font-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif; }
 
 .neon-glow { box-shadow: none; transition: transform 0.3s var(--spring), box-shadow 0.3s var(--ios-ease); }

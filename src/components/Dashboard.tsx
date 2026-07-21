@@ -111,15 +111,17 @@ interface ChartPoint {
 
 function buildChartData(invoices: any[], timeframe: Timeframe): ChartPoint[] {
   const now = new Date();
-  const paid = invoices.filter((i) => i.status === 'paid' && i.created_at);
+  const paid = invoices.filter((i) => i.status === 'paid' && (i.paid_at || i.issued_at || i.created_at));
   const points: ChartPoint[] = [];
+
+  const revenueDate = (inv: any) => new Date(inv.paid_at || inv.issued_at || inv.created_at);
 
   if (timeframe === '7d') {
     for (let i = 6; i >= 0; i--) {
       const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const total = paid
         .filter((inv) => {
-          const d = new Date(inv.created_at);
+          const d = revenueDate(inv);
           return d.getDate() === day.getDate() && d.getMonth() === day.getMonth() && d.getFullYear() === day.getFullYear();
         })
         .reduce((s, i) => s + i.amount, 0);
@@ -130,7 +132,7 @@ function buildChartData(invoices: any[], timeframe: Timeframe): ChartPoint[] {
       const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const total = paid
         .filter((inv) => {
-          const d = new Date(inv.created_at);
+          const d = revenueDate(inv);
           return d.getDate() === day.getDate() && d.getMonth() === day.getMonth() && d.getFullYear() === day.getFullYear();
         })
         .reduce((s, i) => s + i.amount, 0);
@@ -143,13 +145,13 @@ function buildChartData(invoices: any[], timeframe: Timeframe): ChartPoint[] {
       months.push(new Date(start.getFullYear(), start.getMonth() + m, 1));
     }
     for (const monthStart of months) {
-      const total = paid.filter((inv) => isSameMonth(new Date(inv.created_at), monthStart)).reduce((s, i) => s + i.amount, 0);
+      const total = paid.filter((inv) => isSameMonth(revenueDate(inv), monthStart)).reduce((s, i) => s + i.amount, 0);
       points.push({ label: MONTH_ABBR[monthStart.getMonth()], value: total, date: monthStart });
     }
   } else {
     for (let m = 0; m < 12; m++) {
       const monthStart = new Date(now.getFullYear(), m, 1);
-      const total = paid.filter((inv) => isSameMonth(new Date(inv.created_at), monthStart)).reduce((s, i) => s + i.amount, 0);
+      const total = paid.filter((inv) => isSameMonth(revenueDate(inv), monthStart)).reduce((s, i) => s + i.amount, 0);
       points.push({ label: MONTH_ABBR[m], value: total, date: monthStart });
     }
   }
@@ -269,22 +271,23 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           const now = new Date();
           const upcomingAppointments = meetings.filter((m: any) => new Date(m.meeting_date || m.created_at) >= now).length;
 
+          const revenueDate = (inv: any) => new Date(inv.paid_at || inv.issued_at || inv.created_at);
           const monthlyRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameMonth(new Date(inv.created_at), now))
+            .filter((inv: any) => inv.status === 'paid' && isSameMonth(revenueDate(inv), now))
             .reduce((s: number, i: any) => s + i.amount, 0);
           const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
           const lastMonthRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameMonth(new Date(inv.created_at), lastMonth))
+            .filter((inv: any) => inv.status === 'paid' && isSameMonth(revenueDate(inv), lastMonth))
             .reduce((s: number, i: any) => s + i.amount, 0);
           const quarterRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameQuarter(new Date(inv.created_at), now))
+            .filter((inv: any) => inv.status === 'paid' && isSameQuarter(revenueDate(inv), now))
             .reduce((s: number, i: any) => s + i.amount, 0);
           const yearRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameYear(new Date(inv.created_at), now))
+            .filter((inv: any) => inv.status === 'paid' && isSameYear(revenueDate(inv), now))
             .reduce((s: number, i: any) => s + i.amount, 0);
           const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').reduce((s: number, i: any) => s + i.amount, 0);
           const overdueInvoices = invoices.filter((i: any) => i.status === 'overdue').reduce((s: number, i: any) => s + i.amount, 0);
-          const paidThisMonth = invoices.filter((i: any) => i.status === 'paid' && isSameMonth(new Date(i.created_at), now));
+          const paidThisMonth = invoices.filter((i: any) => i.status === 'paid' && isSameMonth(revenueDate(i), now));
           const dealsSignedThisMonth = projects.filter((p: any) => isSameMonth(new Date(p.created_at), now) && p.status !== 'cancelled').length;
           const activeProjects = projects.filter((p: any) => p.status === 'in_progress' || p.status === 'in_review').length;
           const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
@@ -378,7 +381,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       {/* Quick Links — socials + website */}
       <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Quick Links</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {QUICK_LINKS.map((link) => (
             <motion.a
               key={link.label}
