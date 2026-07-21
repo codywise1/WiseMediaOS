@@ -190,6 +190,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authEpoch, setAuthEpoch] = useState(0);
 
   // Track current user ID to avoid unnecessary updates when switching tabs
   const currentUserIdRef = useRef<string | null>(null);
@@ -288,7 +289,7 @@ function App() {
     let subscription: any = null;
     if (isSupabaseAvailable()) {
       let recoveringNullUser = false;
-      const { data: { subscription: sub } } = authService.onAuthStateChange(async user => {
+      const { data: { subscription: sub } } = authService.onAuthStateChange(async (user, event) => {
         if (user) {
           // Only update if user changed (avoid re-renders when switching tabs)
           if (currentUserIdRef.current !== user.id) {
@@ -296,6 +297,13 @@ function App() {
           }
           // Always ensure authenticated state is set
           setIsAuthenticated(true);
+          // TOKEN_REFRESHED means a new JWT was issued. Bump authEpoch so
+          // components that depend on a valid token (Dashboard, lists) can
+          // re-fetch with the fresh token — their first load may have run
+          // against an expired JWT and silently gotten empty results from RLS.
+          if (event === 'TOKEN_REFRESHED') {
+            setAuthEpoch(e => e + 1);
+          }
         } else {
           // A null user can fire as a side-effect of a multi-tab refresh-token
           // race (the other tab consumed the shared refresh token, so this tab
@@ -533,7 +541,7 @@ function App() {
     <Router>
       <Layout currentUser={currentUser} onLogout={handleLogout} onUpdateProfile={handleUpdateProfile}>
         <Routes>
-          <Route path="/" element={<Dashboard currentUser={currentUser} />} />
+          <Route path="/" element={<Dashboard currentUser={currentUser} authEpoch={authEpoch} />} />
           <Route
             path="/clients"
             element={

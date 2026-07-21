@@ -37,6 +37,7 @@ interface User {
 
 interface DashboardProps {
   currentUser: User | null;
+  authEpoch?: number;
 }
 
 type Timeframe = '7d' | '30d' | 'quarter' | 'year';
@@ -159,7 +160,7 @@ function buildChartData(invoices: any[], timeframe: Timeframe): ChartPoint[] {
   return points;
 }
 
-export default function Dashboard({ currentUser }: DashboardProps) {
+export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(true);
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
@@ -187,7 +188,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
   React.useEffect(() => {
     loadDashboardData();
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, authEpoch]);
 
   const formatActivityTime = (date: Date) => {
     const now = new Date();

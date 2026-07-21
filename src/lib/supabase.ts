@@ -176,7 +176,19 @@ export const authService = {
 
     const sb = getSupabaseClient();
     const { data: { session } } = await sb.auth.getSession();
-    return session?.user || null;
+    if (!session) return null;
+
+    // If the access token is expired (or about to expire), force a refresh
+    // before returning the user. Without this, downstream queries (dashboard,
+    // clients, invoices, etc.) run with a stale JWT and RLS silently returns
+    // zero rows — which is why data disappears after a page refresh.
+    const expiresAtMs = session.expires_at ? session.expires_at * 1000 : 0;
+    if (expiresAtMs && expiresAtMs < Date.now() + 30_000) {
+      const { data: { session: refreshed } } = await sb.auth.refreshSession();
+      return refreshed?.user || session.user;
+    }
+
+    return session.user;
   },
 
   onAuthStateChange(callback: (user: any) => void) {
@@ -186,11 +198,12 @@ export const authService = {
 
     const sb = getSupabaseClient();
     return sb.auth.onAuthStateChange((event, session) => {
-      // Skip events that shouldn't trigger UI updates when switching tabs
-      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+      // INITIAL_SESSION fires on page load and is handled by checkAuthState
+      // — skip it here to avoid a redundant update that can race.
+      if (event === 'INITIAL_SESSION') {
         return;
       }
-      callback(session?.user || null);
+      callback(session?.user || null, event);
     });
   }
 };
