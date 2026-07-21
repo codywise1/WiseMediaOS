@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { clientService, Client, UserRole } from '../lib/supabase';
+import { clientService, invoiceService, Client, UserRole } from '../lib/supabase';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -23,6 +23,7 @@ interface ProjectModalProps {
 
 export default function ProjectModal({ isOpen, onClose, onSave, project, mode, currentUser }: ProjectModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     client_id: '',
@@ -47,6 +48,7 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
   useEffect(() => {
     if (currentUser?.role === 'admin') {
       loadClients();
+      loadInvoices();
     }
   }, [currentUser]);
 
@@ -58,6 +60,19 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
       console.error('Error loading clients:', error);
     }
   };
+
+  const loadInvoices = async () => {
+    try {
+      const invoiceData = await invoiceService.getAll();
+      setInvoices(invoiceData);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+    }
+  };
+
+  const clientInvoices = formData.client_id
+    ? invoices.filter(inv => inv.client_id === formData.client_id)
+    : invoices;
 
   useEffect(() => {
     if (project && mode === 'edit') {
@@ -312,15 +327,20 @@ export default function ProjectModal({ isOpen, onClose, onSave, project, mode, c
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Link</label>
-              <input
-                type="url"
+              <label className="block text-sm font-medium text-gray-300 mb-2">Linked Invoice</label>
+              <select
                 name="invoice_link"
                 value={formData.invoice_link}
                 onChange={handleChange}
                 className="form-input w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="https://..."
-              />
+              >
+                <option value="">No linked invoice</option>
+                {clientInvoices.map((inv) => (
+                  <option key={inv.id} value={inv.id}>
+                    {inv.public_id || `INV-${inv.id.slice(0, 6).toUpperCase()}`} · ${(Number(inv.amount) || 0).toLocaleString()}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

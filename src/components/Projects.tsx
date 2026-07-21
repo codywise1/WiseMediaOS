@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectService, clientService, Project as SbProject, UserRole } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   PencilIcon,
@@ -252,8 +253,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
         status: projectData.status.toLowerCase().replace(' ', '_'),
         progress: projectData.progress,
         budget: parseInt(projectData.budget.replace(/[$,]/g, '')) || 0,
-        due_date: projectData.dueDate,
-        start_date: projectData.startDate,
+        due_date: projectData.dueDate || null,
+        start_date: projectData.startDate || null,
         team_size: projectData.team,
         project_type: projectData.project_type,
         priority: projectData.priority,
@@ -268,10 +269,12 @@ export default function Projects({ currentUser }: ProjectsProps) {
       };
 
       if (modalMode === 'create') {
-        await projectService.create(apiData);
+        const created = await projectService.create(apiData);
+        await syncProjectInvoiceLink(created.id, projectData.invoice_link);
         toastSuccess('Project created successfully.');
       } else if (selectedProject) {
         await projectService.update(selectedProject.id, apiData);
+        await syncProjectInvoiceLink(selectedProject.id, projectData.invoice_link);
         toastSuccess('Project updated successfully.');
       }
 
@@ -295,6 +298,15 @@ export default function Projects({ currentUser }: ProjectsProps) {
         console.error('Error deleting project:', error);
         alert('Error deleting project. Please try again.');
       }
+    }
+  };
+
+  const syncProjectInvoiceLink = async (projectId: string, invoiceId: string | undefined) => {
+    if (!invoiceId) return;
+    try {
+      await supabase.from('invoice_projects').upsert({ invoice_id: invoiceId, project_id: projectId }, { onConflict: 'invoice_id,project_id' });
+    } catch (e) {
+      console.error('Error syncing project-invoice link:', e);
     }
   };
 

@@ -124,9 +124,9 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
         description: projectData.description,
         status: projectData.status.toLowerCase().replace(' ', '_'),
         progress: projectData.progress,
-        budget: parseInt(projectData.budget.replace(/[$,]/g, '')),
-        due_date: projectData.dueDate,
-        start_date: projectData.startDate,
+        budget: parseInt(projectData.budget.replace(/[$,]/g, '')) || 0,
+        due_date: projectData.dueDate || null,
+        start_date: projectData.startDate || null,
         team_size: projectData.team,
         project_type: projectData.project_type,
         priority: projectData.priority,
@@ -141,6 +141,13 @@ export default function ProjectDetail({ currentUser }: ProjectDetailProps) {
       };
 
       await projectService.update(id!, apiData);
+      // Sync the selected invoice to the join table
+      if (projectData.invoice_link) {
+        await supabase.from('invoice_projects').upsert(
+          { invoice_id: projectData.invoice_link, project_id: id! },
+          { onConflict: 'invoice_id,project_id' }
+        );
+      }
       await loadProject();
       setIsEditModalOpen(false);
     } catch (error) {

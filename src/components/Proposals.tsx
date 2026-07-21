@@ -39,6 +39,7 @@ export default function Proposals({ currentUser }: ProposalsProps) {
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<any | undefined>();
@@ -218,19 +219,39 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
   console.log('Render Proposals - User:', { id: currentUserId, role: userRole, isAgency });
 
-  const visibleProposals = proposals.filter((p: any) => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'approved') return p.status === 'approved';
-    if (statusFilter === 'pending') return p.status === 'sent' || p.status === 'viewed';
-    return true;
-  });
+  const visibleProposals = proposals
+    .filter((p: any) => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'approved') return p.status === 'approved';
+      if (statusFilter === 'pending') return p.status === 'sent' || p.status === 'viewed';
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      switch (sortBy) {
+        case 'date_asc': return new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime();
+        case 'amount_desc': return (Number(b.value) || 0) - (Number(a.value) || 0);
+        case 'amount_asc': return (Number(a.value) || 0) - (Number(b.value) || 0);
+        case 'date_desc':
+        default: return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+      }
+    });
 
   // Stats calculations
   const statsProposals = isAgency ? (proposals || []) : (visibleProposals || []);
   const awaitingCount = statsProposals.filter((p: any) => p.status === 'sent' || p.status === 'viewed').length;
   const approvedRevenue = statsProposals.filter((p: any) => p.status === 'approved').reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
   const totalPipeline = statsProposals.reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
-  const expiredValue = statsProposals.filter((p: any) => p.status === 'expired').reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
+
+  // Use the same date-based expiry check the cards use
+  const isProposalExpired = (p: any) => {
+    if (p.status === 'expired') return true;
+    if (['approved', 'declined', 'draft'].includes(p.status)) return false;
+    if (!p.expiryDate) return false;
+    const expiry = new Date(p.expiryDate);
+    if (isNaN(expiry.getTime())) return false;
+    return expiry.getTime() < Date.now();
+  };
+  const expiredValue = statsProposals.filter((p: any) => isProposalExpired(p)).reduce((sum: number, p: any) => sum + (Number(p?.value) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -258,6 +279,19 @@ export default function Proposals({ currentUser }: ProposalsProps) {
       </div>
 
       {/* Proposal Stats */}
+      <div className="flex items-center gap-3">
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="px-4 py-2.5 rounded-lg bg-slate-800/50 border border-white/10 text-white text-sm font-medium focus:border-[#3aa3eb] focus:ring-2 focus:ring-[#3aa3eb]/20 transition-all"
+        >
+          <option value="date_desc">Newest first</option>
+          <option value="date_asc">Oldest first</option>
+          <option value="amount_desc">Amount: High → Low</option>
+          <option value="amount_asc">Amount: Low → High</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Awaiting Approval', value: awaitingCount, icon: Clock, filter: 'pending' as const, color: 'text-white', iconBg: 'bg-slate-700/50' },

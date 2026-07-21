@@ -33,11 +33,10 @@ const STATUS_META: Record<Status, { label: string; color: string; dot: string }>
 export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, currentUser }: InvoiceModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     client_id: '',
     client_name: '',
-    project_id: '',
-    projectTitle: '',
     amount: '',
     dueDate: '',
     issuedDate: '',
@@ -78,8 +77,6 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
       setFormData({
         client_id: invoice.client_id || '',
         client_name: invoice.client?.name || invoice.client?.company || '',
-        project_id: invoice.project_id || '',
-        projectTitle: invoice.project?.name || '',
         amount: invoice.amount.toString(),
         dueDate: invoice.due_date ? formatToISODate(invoice.due_date) : '',
         issuedDate: invoice.issued_at ? formatToISODate(invoice.issued_at) : '',
@@ -87,13 +84,12 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         status: (['draft', 'pending', 'paid', 'overdue'].includes(invoice.status) ? invoice.status : 'draft') as Status,
         description: invoice.description
       });
+      setLinkedProjectIds((invoice as any).project_ids || (invoice.project_id ? [invoice.project_id] : []));
       setSyncState('idle');
     } else {
       setFormData({
         client_id: '',
         client_name: '',
-        project_id: '',
-        projectTitle: '',
         amount: '',
         dueDate: '',
         issuedDate: '',
@@ -101,6 +97,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         status: 'draft',
         description: ''
       });
+      setLinkedProjectIds([]);
       setSyncState('idle');
     }
   }, [invoice, mode, isOpen]);
@@ -139,14 +136,12 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     }
   };
 
-  const handleProjectSelect = (projectId: string) => {
-    const selected = projects.find(p => p.id === projectId);
-    setFormData(prev => ({
-      ...prev,
-      project_id: projectId,
-      projectTitle: selected?.name || '',
-    }));
-    setSyncState('idle');
+  const handleProjectToggle = (projectId: string) => {
+    setLinkedProjectIds(prev =>
+      prev.includes(projectId)
+        ? prev.filter(id => id !== projectId)
+        : [...prev, projectId]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,19 +149,9 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    // Flush any pending project title sync before saving
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (formData.project_id && formData.projectTitle.trim()) {
-      try {
-        await projectService.update(formData.project_id, { name: formData.projectTitle.trim() });
-      } catch (e) {
-        console.error('Final project title sync failed:', e);
-      }
-    }
-
     const invoiceData = {
       client_id: formData.client_id,
-      project_id: formData.project_id || null,
+      project_ids: linkedProjectIds,
       amount: parseInt(formData.amount),
       description: formData.description,
       due_date: formData.dueDate,
@@ -188,9 +173,8 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     setFormData(prev => ({
       ...prev,
       client_id: clientId,
-      project_id: '',
-      projectTitle: '',
     }));
+    setLinkedProjectIds([]);
     setSyncState('idle');
   };
 
@@ -221,58 +205,45 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-8 space-y-6">
-          {/* Project title — live-synced, Notion-style */}
+          {/* Linked projects — multi-select */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <LinkIcon className="h-3.5 w-3.5 text-gray-500" />
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                Project Title {formData.project_id && <span className="text-[#3aa3eb] normal-case font-medium">· Synced</span>}
+                Linked Projects {linkedProjectIds.length > 0 && <span className="text-[#3aa3eb] normal-case font-medium">· {linkedProjectIds.length} selected</span>}
               </label>
-              {syncState === 'syncing' && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <ArrowPathIcon className="h-3 w-3 animate-spin" /> syncing...
-                </span>
-              )}
-              {syncState === 'synced' && (
-                <span className="flex items-center gap-1 text-xs text-emerald-400">
-                  <CheckCircleIcon className="h-3 w-3" /> saved
-                </span>
-              )}
-              {syncState === 'error' && (
-                <span className="flex items-center gap-1 text-xs text-red-400">
-                  <ExclamationCircleIcon className="h-3 w-3" /> sync failed
-                </span>
-              )}
             </div>
             {currentUser?.role === 'admin' ? (
-              <div className="space-y-2">
-                <select
-                  value={formData.project_id}
-                  onChange={(e) => handleProjectSelect(e.target.value)}
-                  className="form-input w-full px-4 py-2.5 rounded-lg text-sm"
-                >
-                  <option value="">No linked project</option>
-                  {clientProjects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                {formData.project_id && (
-                  <input
-                    type="text"
-                    value={formData.projectTitle}
-                    onChange={(e) => handleProjectTitleChange(e.target.value)}
-                    placeholder="Project title..."
-                    className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-white placeholder:text-gray-700 focus:outline-none border-b border-white/5 pb-2 transition-colors focus:border-[#3aa3eb]/40"
-                    style={{ fontFamily: 'Integral CF, sans-serif' }}
-                  />
+              <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                {clientProjects.length === 0 ? (
+                  <p className="text-sm text-gray-600 px-3 py-2">
+                    {formData.client_id ? 'No projects for this client yet.' : 'Select a client first.'}
+                  </p>
+                ) : (
+                  clientProjects.map((p) => {
+                    const checked = linkedProjectIds.includes(p.id);
+                    return (
+                      <label
+                        key={p.id}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${checked ? 'bg-[#3aa3eb]/10 border border-[#3aa3eb]/30' : 'hover:bg-white/5 border border-transparent'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleProjectToggle(p.id)}
+                          className="h-4 w-4 rounded border-white/20 bg-white/5 text-[#3aa3eb] focus:ring-[#3aa3eb]/40"
+                        />
+                        <span className={`text-sm font-medium ${checked ? 'text-white' : 'text-gray-300'}`}>{p.name}</span>
+                      </label>
+                    );
+                  })
                 )}
               </div>
             ) : (
-              <p className="text-2xl font-bold text-white">{formData.projectTitle || 'No linked project'}</p>
-            )}
-            {formData.project_id && (
-              <p className="text-xs text-gray-600 mt-1.5">
-                Changes to this title sync to the project automatically — edit it here or on the project page.
+              <p className="text-sm text-gray-300">
+                {linkedProjectIds.length > 0
+                  ? linkedProjectIds.map(id => projects.find(p => p.id === id)?.name).filter(Boolean).join(', ')
+                  : 'No linked projects'}
               </p>
             )}
           </div>

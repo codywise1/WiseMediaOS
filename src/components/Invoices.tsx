@@ -20,6 +20,22 @@ import ConfirmDialog from './ConfirmDialog';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import PaymentModal from './PaymentModal';
 
+function isInvoiceOverdue(inv: { status: string; due_date: string | null; paid_at: string | null }): boolean {
+  if (inv.status === 'paid' || inv.status === 'void' || inv.status === 'draft') return false;
+  if (inv.status === 'overdue') return true;
+  if (!inv.due_date) return false;
+  const due = new Date(inv.due_date);
+  if (isNaN(due.getTime())) return false;
+  return due.getTime() < Date.now();
+}
+
+function daysOverdue(inv: { status: string; due_date: string | null }): number | null {
+  if (!isInvoiceOverdue(inv)) return null;
+  if (!inv.due_date) return null;
+  const due = new Date(inv.due_date);
+  return Math.floor((Date.now() - due.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 interface InvoiceRow {
   id: string;
   public_id: string | null;
@@ -35,6 +51,7 @@ interface InvoiceRow {
   paid_at: string | null;
   updated_at: string | null;
   client?: { name: string | null; email: string | null } | null;
+  invoice_projects?: { project_id: string; project: { id: string; name: string } }[] | null;
 }
 
 interface InvoiceView {
@@ -51,6 +68,8 @@ interface InvoiceView {
   due_date: string | null;
   paid_at: string | null;
   updated_at: string;
+  project_ids: string[];
+  project_names: string[];
 }
 
 interface User {
@@ -76,6 +95,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceView | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid'>('all');
+  const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
@@ -104,7 +124,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         .select(`
           id, public_id, client_id, amount, description, status, currency,
           due_date, due_at, issued_at, created_at, paid_at, updated_at,
-          client:clients(name, email)
+          client:clients(name, email),
+          invoice_projects(project_id, project:projects(id, name))
         `)
         .order('created_at', { ascending: false });
 
@@ -117,6 +138,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       const mapped: InvoiceView[] = (data as InvoiceRow[]).map(row => {
         const clientName = row.client?.name || row.client?.email || 'Unknown Client';
         const clientEmail = row.client?.email || '';
+        const ipLinks = row.invoice_projects || [];
+        const project_ids = ipLinks.map(l => l.project_id);
+        const project_names = ipLinks.map(l => l.project?.name).filter(Boolean) as string[];
         return {
           id: row.id,
           number: row.public_id || `INV-${row.id.slice(0, 6).toUpperCase()}`,
@@ -131,6 +155,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           due_date: row.due_date || row.due_at || null,
           paid_at: row.paid_at || null,
           updated_at: row.updated_at || row.paid_at || row.created_at || '',
+          project_ids,
+          project_names,
         };
       });
 
@@ -153,7 +179,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     .filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready')
     .reduce((sum, inv) => sum + inv.amount, 0);
   const totalOverdue = invoices
-    .filter(inv => inv.status === 'overdue')
+    .filter(inv => isInvoiceOverdue(inv))
     .reduce((sum, inv) => sum + inv.amount, 0);
   const totalPaid = invoices
     .filter(inv => inv.status === 'paid')
@@ -323,9 +349,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             status: invoiceData.status || 'pending',
             due_date: invoiceData.due_date || null,
             client_id: invoiceData.client_id || null,
+            issued_at: invoiceData.issued_at || null,
+            paid_at: invoiceData.paid_at || null,
           })
           .eq('id', selectedInvoice.id);
         if (updateError) throw updateError;
+
+        // Sync many-to-many project links
+        await syncInvoiceProjects(selectedInvoice.id, invoiceData.project_ids || []);
         toastSuccess('Invoice updated.');
       } else {
         const insertPayload: any = {
@@ -335,9 +366,17 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           due_date: invoiceData.due_date || null,
           client_id: invoiceData.client_id || null,
           currency: 'USD',
+          issued_at: invoiceData.issued_at || null,
+          paid_at: invoiceData.paid_at || null,
         };
-        const { error: insertError } = await supabase.from('invoices').insert(insertPayload);
+        const { data: newInvoice, error: insertError } = await supabase
+          .from('invoices')
+          .insert(insertPayload)
+          .select('id')
+          .single();
         if (insertError) throw insertError;
+
+        await syncInvoiceProjects(newInvoice.id, invoiceData.project_ids || []);
         toastSuccess('Invoice created.');
       }
       setIsModalOpen(false);
@@ -389,7 +428,21 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   };
 
   const handleSendReminder = (invoice: InvoiceView) => {
-    toastSuccess(`Payment reminder queued for ${invoice.client} ($${invoice.amount.toLocaleString()}).`);
+    toastSuccess(`Payment reminder queued for ${invoice.client} (${invoice.amount.toLocaleString()}).`);
+  };
+
+  const syncInvoiceProjects = async (invoiceId: string, projectIds: string[]) => {
+    // Remove all existing links, then insert the new set
+    const { error: delError } = await supabase
+      .from('invoice_projects')
+      .delete()
+      .eq('invoice_id', invoiceId);
+    if (delError) throw delError;
+    if (projectIds.length > 0) {
+      const rows = projectIds.map(pid => ({ invoice_id: invoiceId, project_id: pid }));
+      const { error: insError } = await supabase.from('invoice_projects').insert(rows);
+      if (insError) throw insError;
+    }
   };
 
   if (loading) {
@@ -401,11 +454,24 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   }
 
   const isAdmin = currentUser?.role === 'admin';
-  const filteredInvoices = invoices.filter(inv => {
-    if (filterStatus === 'all') return true;
-    if (filterStatus === 'unpaid') return inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready';
-    return inv.status === filterStatus;
-  });
+
+  const filteredInvoices = invoices
+    .filter(inv => {
+      if (filterStatus === 'all') return true;
+      if (filterStatus === 'unpaid') return inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready';
+      if (filterStatus === 'overdue') return isInvoiceOverdue(inv);
+      if (filterStatus === 'paid') return inv.status === 'paid';
+      return inv.status === filterStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'date_asc': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'amount_desc': return b.amount - a.amount;
+        case 'amount_asc': return a.amount - b.amount;
+        case 'date_desc':
+        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
 
   const exportCSV = () => {
     const headers = ['Invoice', 'Client', 'Status', 'Amount', 'Due Date'];
@@ -642,7 +708,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             {[
               { id: 'all', label: 'All', count: invoices.length },
               { id: 'unpaid', label: 'Unpaid', count: invoices.filter(i => i.status !== 'paid').length },
-              { id: 'overdue', label: 'Overdue', count: invoices.filter(i => i.status === 'overdue').length },
+              { id: 'overdue', label: 'Overdue', count: invoices.filter(i => isInvoiceOverdue(i)).length },
               { id: 'paid', label: 'Paid', count: invoices.filter(i => i.status === 'paid').length },
             ].map(tab => (
               <button
@@ -664,6 +730,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             Export CSV
             <Download className="h-4 w-4 group-hover:translate-y-[1px] transition-transform" />
           </button>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="px-4 py-2.5 rounded-lg bg-slate-800/50 border border-white/10 text-white text-sm font-medium focus:border-[#3aa3eb] focus:ring-2 focus:ring-[#3aa3eb]/20 transition-all"
+          >
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="amount_desc">Amount: High → Low</option>
+            <option value="amount_asc">Amount: Low → High</option>
+          </select>
         </div>
 
         {filteredInvoices.length === 0 ? (
@@ -680,7 +756,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filteredInvoices.map((invoice) => {
               const isPaid = invoice.status === 'paid';
-              const isOverdue = invoice.status === 'overdue';
+              const isOverdue = isInvoiceOverdue(invoice);
               const isPending = invoice.status === 'pending' || invoice.status === 'unpaid' || invoice.status === 'ready';
 
               const statusStyles: Record<string, { bg: string, border: string, text: string, dot: string }> = {
@@ -751,11 +827,16 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
                     {/* Client + Amount */}
                     <div className="flex items-end justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-gray-200">{invoice.client}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-200 truncate">{invoice.client}</p>
                         <p className={`text-xs font-medium mt-1 ${dueColor}`}>{dueDisplay}</p>
+                        {invoice.project_names.length > 0 && (
+                          <p className="text-[10px] text-gray-500 mt-1 truncate">
+                            {invoice.project_names.length === 1 ? invoice.project_names[0] : `${invoice.project_names.length} projects`}
+                          </p>
+                        )}
                       </div>
-                      <span className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
+                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: 'Integral CF, Montserrat, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </div>
@@ -804,7 +885,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </>
-                        ) : (invoice.status === 'pending' || invoice.status === 'overdue') ? (
+                        ) : (invoice.status === 'pending' || isOverdue) ? (
                           <button
                             onClick={() => handlePayInvoice(invoice)}
                             className="px-4 py-2 rounded-xl bg-[#3aa3eb] text-white text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(58,163,235,0.4)]"

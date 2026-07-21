@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { clientService, invoiceService, Client, Invoice, UserRole } from '../lib/supabase';
+import { supabase, clientService, invoiceService, Client, Invoice, UserRole } from '../lib/supabase';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -34,6 +34,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const { id } = useParams<{ id: string }>();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [linkedProjects, setLinkedProjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -60,6 +61,14 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         setInvoice(foundInvoice);
         const foundClient = clientsData.find(c => c.id === foundInvoice.client_id);
         setClient(foundClient || null);
+
+        // Fetch linked projects via join table
+        const { data: ipRows } = await supabase
+          .from('invoice_projects')
+          .select('project_id, project:projects(id, name)')
+          .eq('invoice_id', id);
+        const projects = (ipRows || []).map((r: any) => r.project).filter(Boolean);
+        setLinkedProjects(projects);
       } else {
         navigate('/invoices');
       }
@@ -73,7 +82,23 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
 
   const handleSaveInvoice = async (invoiceData: any) => {
     try {
-      await invoiceService.update(id!, invoiceData);
+      await invoiceService.update(id!, {
+        amount: Number(invoiceData.amount) || 0,
+        description: invoiceData.description || null,
+        status: invoiceData.status || 'pending',
+        due_date: invoiceData.due_date || null,
+        client_id: invoiceData.client_id || null,
+        issued_at: invoiceData.issued_at || null,
+        paid_at: invoiceData.paid_at || null,
+      });
+      // Sync many-to-many project links
+      const { error: delError } = await supabase.from('invoice_projects').delete().eq('invoice_id', id!);
+      if (delError) throw delError;
+      if (invoiceData.project_ids?.length) {
+        const rows = invoiceData.project_ids.map((pid: string) => ({ invoice_id: id!, project_id: pid }));
+        const { error: insError } = await supabase.from('invoice_projects').insert(rows);
+        if (insError) throw insError;
+      }
       await loadInvoiceData();
       setIsEditModalOpen(false);
     } catch (error) {
@@ -338,6 +363,25 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                   <p className="text-white">{formatAppDate(invoice.created_at)}</p>
                 </div>
               </div>
+
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-gray-400 mb-2">Linked Projects</p>
+                {linkedProjects.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {linkedProjects.map(p => (
+                      <a
+                        key={p.id}
+                        href={`/projects/${p.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#3aa3eb]/10 border border-[#3aa3eb]/20 text-sm text-white hover:bg-[#3aa3eb]/20 transition-all"
+                      >
+                        {p.name}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No linked projects</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -395,7 +439,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               isOpen={isEditModalOpen}
               onClose={() => setIsEditModalOpen(false)}
               onSave={handleSaveInvoice}
-              invoice={invoice}
+              invoice={{ ...invoice, project_ids: linkedProjects.map(p => p.id) } as any}
               mode="edit"
             />
 
