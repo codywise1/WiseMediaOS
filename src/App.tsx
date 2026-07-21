@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Clients from './components/Clients';
@@ -185,6 +185,18 @@ function CommunityGuard({ children }: { children: React.ReactElement }) {
 }
 
 import { useLoadingGuard } from './hooks/useLoadingGuard';
+
+function TrailingSlashRedirect() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const path = location.pathname;
+    if (path !== '/' && path.endsWith('/')) {
+      navigate(path.replace(/\/+$/, ''), { replace: true });
+    }
+  }, [location.pathname, navigate]);
+  return null;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -532,6 +544,7 @@ function App() {
   return (
     <Router>
       <Layout currentUser={currentUser} onLogout={handleLogout} onUpdateProfile={handleUpdateProfile}>
+        <TrailingSlashRedirect />
         <Routes>
           <Route path="/" element={<Dashboard currentUser={currentUser} />} />
           <Route
