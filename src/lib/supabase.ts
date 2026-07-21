@@ -175,8 +175,8 @@ export const authService = {
     }
 
     const sb = getSupabaseClient();
-    const { data: { user } } = await sb.auth.getUser();
-    return user;
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.user || null;
   },
 
   onAuthStateChange(callback: (user: any) => void) {
