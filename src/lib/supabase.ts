@@ -270,6 +270,7 @@ export interface Invoice {
   client_id: string;
   proposal_id?: string;
   project_id?: string | null;
+  title?: string;
   amount: number;
   description: string;
   status: 'draft' | 'ready' | 'pending' | 'unpaid' | 'paid' | 'overdue' | 'void';

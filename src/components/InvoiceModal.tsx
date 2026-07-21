@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { clientService, projectService, invoiceService, Client, Project, Invoice, UserRole } from '../lib/supabase';
+import { proposalService, Proposal } from '../lib/proposalService';
 import { formatToISODate } from '../lib/dateFormat';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Link as LinkIcon } from 'lucide-react';
+import { Link as LinkIcon, FileText } from 'lucide-react';
 
 interface InvoiceModalProps {
   isOpen: boolean;
@@ -30,8 +31,10 @@ const inputCls = 'form-input w-full px-4 py-3 rounded-xl text-sm';
 export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, currentUser }: InvoiceModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
+    title: '',
     client_id: '',
     client_name: '',
     amount: '',
@@ -39,38 +42,38 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     issuedDate: '',
     paidDate: '',
     status: 'draft' as Status,
-    description: ''
+    description: '',
+    proposal_id: '',
   });
-  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (currentUser?.role === 'admin') {
       loadClients();
       loadProjects();
+      loadProposals();
     }
   }, [currentUser]);
 
   const loadClients = async () => {
-    try {
-      setClients(await clientService.getAll());
-    } catch (error) {
-      console.error('Error loading clients:', error);
-    }
+    try { setClients(await clientService.getAll()); }
+    catch (e) { console.error('Error loading clients:', e); }
   };
 
   const loadProjects = async () => {
-    try {
-      setProjects(await projectService.getAll());
-    } catch (error) {
-      console.error('Error loading projects:', error);
-    }
+    try { setProjects(await projectService.getAll()); }
+    catch (e) { console.error('Error loading projects:', e); }
+  };
+
+  const loadProposals = async () => {
+    try { setProposals(await proposalService.getAll()); }
+    catch (e) { console.error('Error loading proposals:', e); }
   };
 
   useEffect(() => {
     if (invoice && mode === 'edit') {
       setFormData({
+        title: (invoice as any).title || '',
         client_id: invoice.client_id || '',
         client_name: invoice.client?.name || invoice.client?.company || '',
         amount: invoice.amount.toString(),
@@ -78,14 +81,13 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         issuedDate: invoice.issued_at ? formatToISODate(invoice.issued_at) : '',
         paidDate: invoice.paid_at ? formatToISODate(invoice.paid_at) : '',
         status: (['draft', 'pending', 'paid', 'overdue'].includes(invoice.status) ? invoice.status : 'draft') as Status,
-        description: invoice.description
+        description: invoice.description,
+        proposal_id: invoice.proposal_id || (invoice as any).proposal_id || '',
       });
       setLinkedProjectIds((invoice as any).project_ids || (invoice.project_id ? [invoice.project_id] : []));
-      setSyncState('idle');
     } else {
-      setFormData({ client_id: '', client_name: '', amount: '', dueDate: '', issuedDate: '', paidDate: '', status: 'draft', description: '' });
+      setFormData({ title: '', client_id: '', client_name: '', amount: '', dueDate: '', issuedDate: '', paidDate: '', status: 'draft', description: '', proposal_id: '' });
       setLinkedProjectIds([]);
-      setSyncState('idle');
     }
   }, [invoice, mode, isOpen]);
 
@@ -93,33 +95,9 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     ? projects.filter(p => p.client_id === formData.client_id)
     : projects;
 
-  const syncProjectTitle = useCallback(async (projectId: string, newTitle: string) => {
-    if (!projectId || !newTitle.trim()) {
-      setSyncState('idle');
-      return;
-    }
-    setSyncState('syncing');
-    try {
-      await projectService.update(projectId, { name: newTitle.trim() });
-      setSyncState('synced');
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, name: newTitle.trim() } : p));
-      setTimeout(() => setSyncState('idle'), 2000);
-    } catch (error) {
-      console.error('Error syncing project title:', error);
-      setSyncState('error');
-      setTimeout(() => setSyncState('idle'), 3000);
-    }
-  }, []);
-
-  const handleProjectTitleChange = (value: string) => {
-    setFormData(prev => ({ ...prev, projectTitle: value }));
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (formData.project_id) {
-      debounceRef.current = setTimeout(() => {
-        syncProjectTitle(formData.project_id, value);
-      }, 800);
-    }
-  };
+  const clientProposals = formData.client_id
+    ? proposals.filter(p => p.client_id === formData.client_id)
+    : proposals;
 
   const handleProjectToggle = (projectId: string) => {
     setLinkedProjectIds(prev =>
@@ -127,12 +105,40 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     );
   };
 
+  const handleProposalChange = (proposalId: string) => {
+    setFormData(prev => ({ ...prev, proposal_id: proposalId }));
+    if (proposalId) {
+      const proposal = proposals.find(p => p.id === proposalId);
+      if (proposal) {
+        // Auto-fill title from proposal title if empty, and amount from proposal value
+        setFormData(prev => ({
+          ...prev,
+          proposal_id: proposalId,
+          title: prev.title || proposal.title,
+          client_id: prev.client_id || proposal.client_id,
+          amount: prev.amount || (proposal.value ? (proposal.value / 100).toString() : prev.amount),
+        }));
+        // Auto-link the proposal's project if it has one
+        if ((proposal as any).project_id && !linkedProjectIds.includes((proposal as any).project_id)) {
+          setLinkedProjectIds(prev => [...prev, (proposal as any).project_id]);
+        }
+      }
+    }
+  };
+
+  const handleClientChange = (clientId: string) => {
+    setFormData(prev => ({ ...prev, client_id: clientId, proposal_id: '' }));
+    setLinkedProjectIds([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
     const invoiceData = {
+      title: formData.title.trim(),
       client_id: formData.client_id,
+      proposal_id: formData.proposal_id || null,
       project_ids: linkedProjectIds,
       amount: parseInt(formData.amount),
       description: formData.description,
@@ -149,12 +155,6 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleClientChange = (clientId: string) => {
-    setFormData(prev => ({ ...prev, client_id: clientId }));
-    setLinkedProjectIds([]);
-    setSyncState('idle');
   };
 
   const statusMeta = STATUS_META[formData.status];
@@ -180,6 +180,50 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
       }
     >
       <form id="invoice-form" onSubmit={handleSubmit} className="space-y-5">
+        {/* Title */}
+        <div>
+          <label className={labelCls}>Invoice Title</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className={inputCls}
+            placeholder="e.g. Website Design — Landing Page Build"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1.5">Shown as the invoice name. Use the service or proposal name.</p>
+        </div>
+
+        {/* Linked proposal */}
+        {currentUser?.role === 'admin' && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="h-3.5 w-3.5 text-gray-500" />
+              <label className={labelCls}>
+                Linked Proposal
+                {formData.proposal_id && <span className="text-emerald-400 ml-1">· Linked</span>}
+              </label>
+            </div>
+            <select
+              name="proposal_id"
+              value={formData.proposal_id}
+              onChange={(e) => handleProposalChange(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">No linked proposal</option>
+              {clientProposals.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} · ${(p.value / 100).toLocaleString()} · {p.status}
+                </option>
+              ))}
+            </select>
+            {formData.proposal_id && (
+              <p className="text-xs text-emerald-400/70 mt-1.5">Amount and title auto-filled from proposal. Adjust as needed.</p>
+            )}
+          </div>
+        )}
+
         {/* Linked projects */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -351,7 +395,6 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
             rows={3}
             className={`${inputCls} resize-none`}
             placeholder="What is this invoice for?"
-            required
           />
         </div>
       </form>

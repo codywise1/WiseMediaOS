@@ -35,6 +35,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [linkedProjects, setLinkedProjects] = useState<{ id: string; name: string }[]>([]);
+  const [linkedProposal, setLinkedProposal] = useState<{ id: string; title: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -69,6 +70,18 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           .eq('invoice_id', id);
         const projects = (ipRows || []).map((r: any) => r.project).filter(Boolean);
         setLinkedProjects(projects);
+
+        // Fetch linked proposal
+        if (foundInvoice.proposal_id) {
+          const { data: proposal } = await supabase
+            .from('proposals')
+            .select('id, title')
+            .eq('id', foundInvoice.proposal_id)
+            .maybeSingle();
+          setLinkedProposal(proposal as any);
+        } else {
+          setLinkedProposal(null);
+        }
       } else {
         navigate('/invoices');
       }
@@ -83,14 +96,16 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
   const handleSaveInvoice = async (invoiceData: any) => {
     try {
       await invoiceService.update(id!, {
+        title: invoiceData.title || null,
         amount: Number(invoiceData.amount) || 0,
         description: invoiceData.description || null,
         status: invoiceData.status || 'pending',
         due_date: invoiceData.due_date || null,
         client_id: invoiceData.client_id || null,
+        proposal_id: invoiceData.proposal_id || null,
         issued_at: invoiceData.issued_at || null,
         paid_at: invoiceData.paid_at || null,
-      });
+      } as any);
       // Sync many-to-many project links
       const { error: delError } = await supabase.from('invoice_projects').delete().eq('invoice_id', id!);
       if (delError) throw delError;
@@ -152,6 +167,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
 
   const daysUntilDue = getDaysUntilDue(invoice.due_date);
   const displayClientName = client?.company || client?.name || 'Client';
+  const displayTitle = (invoice as any).title || invoice.description || `Invoice for ${displayClientName}`;
 
 
   const handleDownloadPDF = async () => {
@@ -191,7 +207,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                 className="text-2xl md:text-4xl font-bold text-white mb-2"
                 style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}
               >
-                Invoice for {displayClientName}
+                {displayTitle}
               </h1>
               <p className="text-base md:text-xl text-gray-300">
                 {invoice.description} · ${(invoice.amount || 0).toLocaleString()}
@@ -365,6 +381,21 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               </div>
 
               <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-gray-400 mb-2">Linked Proposal</p>
+                {linkedProposal ? (
+                  <a
+                    href={`/proposals/${linkedProposal.id}`}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#3aa3eb]/10 border border-[#3aa3eb]/20 text-sm text-white hover:bg-[#3aa3eb]/20 transition-all"
+                  >
+                    <DocumentTextIcon className="h-4 w-4 text-[#3aa3eb]" />
+                    {linkedProposal.title}
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-500">No linked proposal</p>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-white/10">
                 <p className="text-xs text-gray-400 mb-2">Linked Projects</p>
                 {linkedProjects.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -439,8 +470,9 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               isOpen={isEditModalOpen}
               onClose={() => setIsEditModalOpen(false)}
               onSave={handleSaveInvoice}
-              invoice={{ ...invoice, project_ids: linkedProjects.map(p => p.id) } as any}
+              invoice={{ ...invoice, title: (invoice as any).title || '', proposal_id: invoice.proposal_id || (invoice as any).proposal_id || '', project_ids: linkedProjects.map(p => p.id) } as any}
               mode="edit"
+              currentUser={currentUser as any}
             />
 
             <ConfirmDialog

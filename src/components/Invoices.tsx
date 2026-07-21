@@ -14,6 +14,7 @@ import {
   CheckCircle,
   AlertTriangle,
   ArrowRight,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
@@ -42,7 +43,9 @@ interface InvoiceRow {
   public_id: string | null;
   client_id: string | null;
   amount: number | string | null;
+  title: string | null;
   description: string | null;
+  proposal_id: string | null;
   status: string | null;
   currency: string | null;
   due_date: string | null;
@@ -53,11 +56,13 @@ interface InvoiceRow {
   updated_at: string | null;
   client?: { name: string | null; email: string | null } | null;
   invoice_projects?: { project_id: string; project: { id: string; name: string } }[] | null;
+  proposal?: { id: string; title: string } | null;
 }
 
 interface InvoiceView {
   id: string;
   number: string;
+  title: string;
   amount: number;
   currency: string;
   status: string;
@@ -65,6 +70,8 @@ interface InvoiceView {
   client: string;
   client_email: string;
   client_id: string | null;
+  proposal_id: string | null;
+  proposal_title: string | null;
   created_at: string;
   due_date: string | null;
   paid_at: string | null;
@@ -122,10 +129,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       const { data, error: queryError } = await supabase
         .from('invoices')
         .select(`
-          id, public_id, client_id, amount, description, status, currency,
+          id, public_id, client_id, amount, title, description, proposal_id, status, currency,
           due_date, due_at, issued_at, created_at, paid_at, updated_at,
           client:clients(name, email),
-          invoice_projects(project_id, project:projects(id, name))
+          invoice_projects(project_id, project:projects(id, name)),
+          proposal:proposals(id, title)
         `)
         .order('created_at', { ascending: false });
 
@@ -141,9 +149,11 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         const ipLinks = row.invoice_projects || [];
         const project_ids = ipLinks.map(l => l.project_id);
         const project_names = ipLinks.map(l => l.project?.name).filter(Boolean) as string[];
+        const proposalData = Array.isArray(row.proposal) ? row.proposal[0] : row.proposal;
         return {
           id: row.id,
           number: row.public_id || `INV-${row.id.slice(0, 6).toUpperCase()}`,
+          title: row.title || row.description || 'Untitled Invoice',
           amount: Number(row.amount) || 0,
           currency: (row.currency || 'USD').toLowerCase(),
           status: row.status || 'pending',
@@ -151,6 +161,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           client: clientName,
           client_email: clientEmail,
           client_id: row.client_id,
+          proposal_id: row.proposal_id || null,
+          proposal_title: proposalData?.title || null,
           created_at: row.created_at || '',
           due_date: row.due_date || row.due_at || null,
           paid_at: row.paid_at || null,
@@ -330,11 +342,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         const { error: updateError } = await supabase
           .from('invoices')
           .update({
+            title: invoiceData.title || null,
             amount: Number(invoiceData.amount) || 0,
             description: invoiceData.description || null,
             status: invoiceData.status || 'pending',
             due_date: invoiceData.due_date || null,
             client_id: invoiceData.client_id || null,
+            proposal_id: invoiceData.proposal_id || null,
             issued_at: invoiceData.issued_at || null,
             paid_at: invoiceData.paid_at || null,
           })
@@ -346,11 +360,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         toastSuccess('Invoice updated.');
       } else {
         const insertPayload: any = {
+          title: invoiceData.title || null,
           amount: Number(invoiceData.amount) || 0,
           description: invoiceData.description || null,
           status: invoiceData.status || 'pending',
           due_date: invoiceData.due_date || null,
           client_id: invoiceData.client_id || null,
+          proposal_id: invoiceData.proposal_id || null,
           currency: 'USD',
           issued_at: invoiceData.issued_at || null,
           paid_at: invoiceData.paid_at || null,
@@ -734,11 +750,25 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                   <div className="p-5 space-y-4">
                     {/* Top: Invoice number + status pill */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-1 h-8 rounded-full ${style.dot}`} />
-                        <span className="text-sm font-black text-white tracking-widest" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
-                          {invoice.number}
-                        </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 mb-1">
+                          <div className={`w-1 h-5 rounded-full ${style.dot} shrink-0`} />
+                          <span className="text-[10px] font-black text-gray-500 tracking-widest shrink-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                            {invoice.number}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-bold text-white truncate leading-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                          {invoice.title}
+                        </h3>
+                        {invoice.proposal_title && (
+                          <a
+                            href={`/proposals`}
+                            className="inline-flex items-center gap-1 mt-1 text-[10px] text-[#3aa3eb] hover:text-[#59a1e5] transition-colors"
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {invoice.proposal_title}
+                          </a>
+                        )}
                       </div>
                       <span
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0"
@@ -843,7 +873,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         title="Delete Invoice"
         message={
           selectedInvoice
-            ? `Are you sure you want to delete the invoice for "${selectedInvoice.client}" ($${selectedInvoice.amount.toLocaleString()})?`
+            ? `Are you sure you want to delete "${selectedInvoice.title || selectedInvoice.description || selectedInvoice.client}" (${selectedInvoice.amount.toLocaleString()})?`
             : 'Are you sure you want to delete this invoice?'
         }
       />

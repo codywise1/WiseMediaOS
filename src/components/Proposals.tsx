@@ -12,6 +12,7 @@ import {
   CheckCircle,
   TrendingUp,
   XCircle,
+  FileText,
 } from 'lucide-react';
 import ProposalBuilderModal from './ProposalBuilderModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -384,6 +385,17 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                       </h3>
                       <p className="text-sm text-gray-400 mt-1">{proposal.client}</p>
                     </div>
+
+                    {/* Linked invoice badge */}
+                    {proposal.invoice?.id && (
+                      <a
+                        href={`/invoices/${proposal.invoice.id}`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-all w-fit"
+                      >
+                        <FileText className="h-3 w-3" />
+                        Invoice {proposal.invoice.public_id ? proposal.invoice.public_id : 'linked'}
+                      </a>
+                    )}
 
                     {/* Service pills */}
                     <div className="flex flex-wrap gap-1.5">
