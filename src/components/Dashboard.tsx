@@ -25,13 +25,8 @@ import {
   Calendar,
   ChevronRight,
   Globe,
-  Instagram,
-  Youtube,
-  Twitter,
-  Linkedin,
-  Facebook,
-  Send,
 } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 interface User {
   email: string;
@@ -47,13 +42,12 @@ interface DashboardProps {
 type Timeframe = '7d' | '30d' | 'quarter' | 'year';
 
 const QUICK_LINKS = [
-  { label: 'My Website', url: 'https://wisemedia.io', icon: Globe, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
-  { label: 'Instagram', url: 'https://instagram.com/wisemedia', icon: Instagram, color: 'text-pink-400', bg: 'bg-pink-500/15' },
-  { label: 'YouTube', url: 'https://youtube.com/@wisemedia', icon: Youtube, color: 'text-red-400', bg: 'bg-red-500/15' },
-  { label: 'Twitter / X', url: 'https://twitter.com/wisemedia', icon: Twitter, color: 'text-white', bg: 'bg-white/10' },
-  { label: 'LinkedIn', url: 'https://linkedin.com/company/wisemedia', icon: Linkedin, color: 'text-blue-400', bg: 'bg-blue-500/15' },
-  { label: 'Facebook', url: 'https://facebook.com/wisemedia', icon: Facebook, color: 'text-blue-300', bg: 'bg-blue-600/15' },
-  { label: 'Telegram', url: 'https://t.me/wisemedia', icon: Send, color: 'text-cyan-400', bg: 'bg-cyan-500/15' },
+  { label: 'My Website', url: 'https://wisemedia.io', icon: null, brand: null, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
+  { label: 'X (Twitter)', url: 'https://x.com/WiseMedia33', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
+  { label: 'Instagram', url: 'https://wisemedia.io', icon: null, brand: 'instagram' as const, color: 'text-pink-400', bg: 'bg-pink-500/15' },
+  { label: 'YouTube', url: 'https://www.youtube.com/@CodyConsultant', icon: null, brand: 'youtube' as const, color: 'text-red-400', bg: 'bg-red-500/15' },
+  { label: 'LinkedIn', url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/', icon: null, brand: 'linkedin' as const, color: 'text-blue-400', bg: 'bg-blue-500/15' },
+  { label: 'Facebook', url: 'https://www.facebook.com/wisemedia.io/', icon: null, brand: 'facebook' as const, color: 'text-blue-300', bg: 'bg-blue-600/15' },
 ];
 
 const containerVariants = {
@@ -396,7 +390,11 @@ export default function Dashboard({ currentUser }: DashboardProps) {
               className="glass-card rounded-2xl p-3 sm:p-4 flex flex-col items-center gap-2 group"
             >
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center ${link.bg} group-hover:scale-110 transition-transform`}>
-                <link.icon className={link.color} size={20} />
+                {link.brand ? (
+                  <BrandLogo name={link.brand} size={20} className={link.color} />
+                ) : (
+                  <Globe className={link.color} size={20} />
+                )}
               </div>
               <span className="text-[10px] sm:text-xs text-gray-400 font-medium text-center leading-tight">{link.label}</span>
             </motion.a>
