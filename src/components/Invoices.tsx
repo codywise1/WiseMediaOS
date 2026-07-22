@@ -73,6 +73,7 @@ interface InvoiceView {
   proposal_id: string | null;
   proposal_title: string | null;
   created_at: string;
+  issued_at: string | null;
   due_date: string | null;
   paid_at: string | null;
   updated_at: string;
@@ -164,6 +165,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           proposal_id: row.proposal_id || null,
           proposal_title: proposalData?.title || null,
           created_at: row.created_at || '',
+          issued_at: row.issued_at || null,
           due_date: row.due_date || row.due_at || null,
           paid_at: row.paid_at || null,
           updated_at: row.updated_at || row.paid_at || row.created_at || '',
