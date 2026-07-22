@@ -78,7 +78,7 @@ export default function ClientNoteDetail() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#3aa3eb]/5 rounded-full blur-[80px] pointer-events-none" />
 
                 <div className="relative z-10 space-y-4 max-w-4xl">
-                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight uppercase font-display">
+                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight uppercase font-display">
                         {note.title}
                     </h1>
 

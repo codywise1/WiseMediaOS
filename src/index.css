@@ -205,9 +205,9 @@ body {
   box-shadow: 0 0 20px rgba(58, 163, 235, 0.2);
 }
 
-.title-font { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+.title-font { font-family: 'Integral CF', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 
-.font-display { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+.font-display { font-family: 'Integral CF', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 .font-integral { font-family: 'Integral CF', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-weight: 700; }
 .font-body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif; }
 
