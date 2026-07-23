@@ -415,7 +415,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
         <p className="text-sm text-gray-500 font-medium mb-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
-        <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight font-display">
           {getGreeting()}, Mr. {getLastName(currentUser?.name)}
         </h1>
         <p className="text-gray-400 mt-2 text-sm sm:text-base">

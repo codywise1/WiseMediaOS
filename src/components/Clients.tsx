@@ -270,7 +270,7 @@ export default function Clients({ currentUser }: ClientsProps) {
             <h1 className="font-display font-bold gradient-text leading-tight tracking-tight uppercase mb-2" style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)' }}>
               Clients
             </h1>
-            <p className="text-gray-300">
+            <p className="text-gray-400 font-body text-sm sm:text-base">
               {currentUser?.role === 'admin'
                 ? 'Manage client relationships, context, and ongoing work.'
                 : 'Your company profile, contacts, and shared information.'}
@@ -278,30 +278,18 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
             {/* View Toggle */}
-            <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg p-1 shrink-0">
+            <div className="ios-segmented shrink-0">
               <button
                 onClick={() => handleViewModeChange('cards')}
-                className={`p-2 rounded transition-colors ${viewMode === 'cards'
-                  ? 'bg-[#3aa3eb] text-white'
-                  : 'text-gray-400 hover:text-white'
-                  }
-                shrink-glow-button
-                `}
-                title="Card View"
+                className={`ios-segmented-btn ${viewMode === 'cards' ? 'active' : ''}`}
               >
-                <Squares2X2Icon className="h-5 w-5" />
+                <Squares2X2Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> Cards
               </button>
               <button
                 onClick={() => handleViewModeChange('table')}
-                className={`p-2 rounded transition-colors ${viewMode === 'table'
-                  ? 'bg-[#3aa3eb] text-white'
-                  : 'text-gray-400 hover:text-white'
-                  }
-                shrink-glow-button
-                `}
-                title="Table View"
+                className={`ios-segmented-btn ${viewMode === 'table' ? 'active' : ''}`}
               >
-                <Bars3Icon className="h-5 w-5" />
+                <Bars3Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> List
               </button>
             </div>
 
@@ -320,7 +308,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         {/* Search and Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
+            <label className="ios-section-header !px-1 !pb-1">Search</label>
             <div className="relative">
               <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -328,17 +316,17 @@ export default function Clients({ currentUser }: ClientsProps) {
                 placeholder="Search clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Client State</label>
+            <label className="ios-section-header !px-1 !pb-1">Client State</label>
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
             >
               <option value="all">All States</option>
               <option value="prospect">Prospect</option>
@@ -350,11 +338,11 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Industry</label>
+            <label className="ios-section-header !px-1 !pb-1">Industry</label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
             >
               <option value="all">All Categories</option>
               {uniqueCategories.map(cat => (
@@ -364,11 +352,11 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Location</label>
+            <label className="ios-section-header !px-1 !pb-1">Location</label>
             <select
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
             >
               <option value="all">All Locations</option>
               {uniqueLocations.map(loc => (
@@ -378,11 +366,11 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Sort by Date</label>
+            <label className="ios-section-header !px-1 !pb-1">Sort by Date</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-              className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 focus:border-[#3aa3eb]/50 transition-all"
             >
               <option value="newest">Newest to Oldest</option>
               <option value="oldest">Oldest to Newest</option>
@@ -395,27 +383,27 @@ export default function Clients({ currentUser }: ClientsProps) {
           <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
             <span className="text-gray-400">Active filters:</span>
             {searchQuery && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-gray-300 font-body">
                 Search: {searchQuery}
               </span>
             )}
             {stateFilter !== 'all' && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-gray-300 font-body">
                 State: {stateFilter.charAt(0).toUpperCase() + stateFilter.slice(1)}
               </span>
             )}
             {categoryFilter !== 'all' && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-gray-300 font-body">
                 Category: {categoryFilter}
               </span>
             )}
             {locationFilter !== 'all' && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-gray-300 font-body">
                 Location: {locationFilter}
               </span>
             )}
             {sortBy !== 'newest' && (
-              <span className="px-2 py-1 bg-slate-700 rounded-md text-gray-300">
+              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-gray-300 font-body">
                 Sort: {sortBy === 'oldest' ? 'Oldest to Newest' : 'Newest to Oldest'}
               </span>
             )}
@@ -427,7 +415,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 setLocationFilter('all');
                 setSortBy('newest');
               }}
-              className="text-[#3aa3eb] hover:text-blue-300 font-medium shrink-glow-button"
+              className="text-[#3aa3eb] hover:text-[#4ab3fb] font-medium font-body ml-1"
             >
               Clear all
             </button>
@@ -449,62 +437,62 @@ export default function Clients({ currentUser }: ClientsProps) {
               <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm text-white font-medium truncate">Total Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{clients.length}</p>
+              <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Total Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white font-display">{clients.length}</p>
             </div>
           </div>
         </div>
 
         <div
           onClick={() => setStateFilter('active')}
-          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'active'
-            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
-            : 'hover-glow border-white/10'
+          className={`ios-card rounded-2xl p-5 sm:p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'active'
+            ? 'border-[#3aa3eb]/60 ring-1 ring-[#3aa3eb]/40'
+            : 'border-white/10'
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+            <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
               <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm text-white font-medium truncate">Active Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{activeClients}</p>
+              <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Active Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white font-display">{activeClients}</p>
             </div>
           </div>
         </div>
 
         <div
           onClick={() => setStateFilter('vip')}
-          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'vip'
-            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
-            : 'hover-glow border-white/10'
+          className={`ios-card rounded-2xl p-5 sm:p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'vip'
+            ? 'border-[#3aa3eb]/60 ring-1 ring-[#3aa3eb]/40'
+            : 'border-white/10'
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+            <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
               <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm text-white font-medium truncate">VIP Clients</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{clients.filter(c => c.status === 'vip').length}</p>
+              <p className="text-xs sm:text-sm text-gray-400 font-body truncate">VIP Clients</p>
+              <p className="text-xl sm:text-2xl font-bold text-white font-display">{clients.filter(c => c.status === 'vip').length}</p>
             </div>
           </div>
         </div>
 
         <div
           onClick={() => setStateFilter('prospect')}
-          className={`glass-card rounded-xl p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'prospect'
-            ? 'border-[#3aa3eb] shadow-[0_0_15px_rgba(58,163,235,0.3)] ring-1 ring-[#3aa3eb]'
-            : 'hover-glow border-white/10'
+          className={`ios-card rounded-2xl p-5 sm:p-6 cursor-pointer transition-all duration-300 ${stateFilter === 'prospect'
+            ? 'border-[#3aa3eb]/60 ring-1 ring-[#3aa3eb]/40'
+            : 'border-white/10'
             }`}
         >
           <div className="flex items-center">
-            <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
+            <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
               <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm text-white font-medium truncate">Prospects</p>
-              <p className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>{prospects}</p>
+              <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Prospects</p>
+              <p className="text-xl sm:text-2xl font-bold text-white font-display">{prospects}</p>
             </div>
           </div>
         </div>
@@ -527,18 +515,18 @@ export default function Clients({ currentUser }: ClientsProps) {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
 
             return (
-              <div key={client.id} className="glass-card hover-glow rounded-2xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group border border-white/10 relative overflow-hidden">
+              <div key={client.id} className="ios-card rounded-2xl p-4 sm:p-6 transition-all duration-300 group relative overflow-hidden">
                 {/* Background Glow Effect */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#3aa3eb]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 {/* Header Section */}
-                <div className="mb-6 sm:mb-8 relative z-10">
+                <div className="mb-5 sm:mb-6 relative z-10">
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase truncate mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase truncate mb-1 font-display">
                       {client.company || client.name}
                     </h3>
-                    <p className="text-gray-300 text-sm font-semibold mb-3 truncate">
+                    <p className="text-gray-400 text-sm font-body mb-3 truncate">
                       {client.name}
                     </p>
 
@@ -573,42 +561,42 @@ export default function Clients({ currentUser }: ClientsProps) {
                 </div>
 
                 {/* Contact Info Section */}
-                <div className="space-y-3 mb-6 relative z-10">
+                <div className="ios-list rounded-2xl mb-5 relative z-10">
                   {/* Email */}
-                  <a href={`mailto:${client.email}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <EnvelopeIcon className="h-5 w-5 text-gray-300 group-hover/item:text-white transition-colors shrink-0" />
-                      <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-semibold">
+                  <a href={`mailto:${client.email}`} className="ios-row group/item cursor-pointer">
+                    <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                      <EnvelopeIcon className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
+                      <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-body">
                         {client.email}
                       </span>
                     </div>
-                    <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-white transition-colors" />
+                    <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
                   </a>
 
                   {/* Phone */}
                   {client.phone && (
-                    <a href={`tel:${client.phone}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group/item cursor-pointer">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <PhoneIcon className="h-5 w-5 text-gray-300 group-hover/item:text-white transition-colors shrink-0" />
-                        <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-semibold">
+                    <a href={`tel:${client.phone}`} className="ios-row group/item cursor-pointer">
+                      <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                        <PhoneIcon className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
+                        <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-body">
                           {formatPhoneNumber(client.phone)}
                         </span>
                       </div>
-                      <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-white transition-colors" />
+                      <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
                     </a>
                   )}
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10 gap-2">
-                  <span className="text-xs text-gray-400 font-semibold truncate">
+                <div className="flex items-center justify-between pt-4 border-t border-white/10 relative z-10 gap-2">
+                  <span className="text-xs text-gray-500 font-body truncate">
                     Added {formatAppDate(client.created_at)}
                   </span>
 
-                  <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewClient(client); }}
-                      className="text-gray-400 hover:text-white transition-colors p-2"
+                      className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                       title="View Details"
                     >
                       <EyeIcon className="h-5 w-5" />
@@ -617,14 +605,14 @@ export default function Clients({ currentUser }: ClientsProps) {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditClient(client); }}
-                          className="text-gray-400 hover:text-[#3aa3eb] transition-colors p-2"
+                          className="p-2 rounded-lg text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/15 transition-all"
                           title="Edit"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteClient(client); }}
-                          className="text-gray-400 hover:text-red-400 transition-colors p-2"
+                          className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/15 transition-all"
                           title="Delete"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -640,10 +628,10 @@ export default function Clients({ currentUser }: ClientsProps) {
       )}
 
       {filteredClients.length === 0 && clients.length > 0 && (
-        <div className="glass-card rounded-xl p-12 text-center">
-          <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-white mb-2">No clients match your filters</h3>
-          <p className="text-gray-400 mb-6">
+        <div className="ios-card rounded-2xl p-12 text-center">
+          <UserGroupIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-2 font-display uppercase tracking-wide">No clients match your filters</h3>
+          <p className="text-gray-400 mb-6 font-body">
             Try adjusting your search or filter criteria to see more results.
           </p>
           <button
@@ -662,12 +650,12 @@ export default function Clients({ currentUser }: ClientsProps) {
       )}
 
       {clients.length === 0 && (
-        <div className="glass-card rounded-xl p-12 text-center">
-          <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-white mb-2">
+        <div className="ios-card rounded-2xl p-12 text-center">
+          <UserGroupIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-2 font-display uppercase tracking-wide">
             {loading ? 'Loading clients...' : 'No clients yet'}
           </h3>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-6 font-body">
             {loading
               ? 'Please wait while we load your clients.'
               : 'Start by adding your first client to manage projects and relationships.'
