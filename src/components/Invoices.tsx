@@ -17,6 +17,7 @@ import {
   Link as LinkIcon,
   DollarSign,
   BarChart3,
+  Ban,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
