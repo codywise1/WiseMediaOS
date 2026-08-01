@@ -449,14 +449,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3aa3eb]"></div>
-      </div>
-    );
-  }
-
   const isAdmin = currentUser?.role === 'admin';
 
   const filteredInvoices = invoices
@@ -469,7 +461,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       return inv.status === filterStatus;
     })
     .sort((a, b) => {
-      // Sort by the most relevant date: paid_at for paid invoices, else due_date, else created_at
       const sortDate = (inv: InvoiceView) => {
         const paid = paidDateObj(inv);
         if (paid) return paid.getTime();
@@ -506,6 +497,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     observer.observe(el);
     return () => observer.disconnect();
   }, [filteredInvoices.length]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3aa3eb]"></div>
+      </div>
+    );
+  }
 
   const visibleInvoices = filteredInvoices.slice(0, displayCount);
 

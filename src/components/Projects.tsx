@@ -347,119 +347,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  const moveProject = async (projectId: string, newStatus: string) => {
-    // Cast string to ProjectStatus for local update
-    const status = newStatus as ProjectStatus;
-
-    try {
-      console.log('Moving project:', projectId, 'to status:', status);
-
-      // Update the project in the local state immediately for better UX
-      setProjects(prevProjects => {
-        const updated = prevProjects.map(p => {
-          if (p.id === projectId) {
-            console.log('Updating project:', p.id, 'from', p.status, 'to', status);
-            return { ...p, status: status, color: getStatusColor(status) };
-          }
-          return p;
-        });
-        return updated;
-      });
-
-      // Update in the backend
-      await projectService.update(projectId, { status: status });
-      console.log('Project updated successfully in backend');
-    } catch (error) {
-      console.error('Error updating project status:', error);
-      // Reload projects to revert the optimistic update on error
-      await loadProjects();
-    }
-  };
-
-  const handleDragStart = (e: React.DragEvent, project: Project) => {
-    if (!isAdmin) return;
-
-    console.log('Drag start:', project.id, project.name);
-    setIsDragging(true);
-    setDraggedProject(project);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', project.id);
-
-    const target = e.currentTarget as HTMLElement;
-    setTimeout(() => {
-      target.style.opacity = '0.4';
-    }, 0);
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    if (!isAdmin) return;
-
-    const target = e.currentTarget as HTMLElement;
-    if (target) {
-      target.style.opacity = '1';
-    }
-
-    // Small delay to ensure drop completes first and prevent click
-    setTimeout(() => {
-      setDraggedProject(null);
-      setDragOverColumn(null);
-      setIsDragging(false);
-    }, 100);
-  };
-
-  const handleDragOver = (e: React.DragEvent, columnId: string) => {
-    if (!isAdmin) return;
-
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverColumn(columnId);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    if (!isAdmin) return;
-
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    const currentTarget = e.currentTarget as HTMLElement;
-
-    if (!currentTarget.contains(relatedTarget)) {
-      setDragOverColumn(null);
-    }
-  };
-
-  const handleDrop = async (e: React.DragEvent, columnId: string) => {
-    if (!isAdmin) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverColumn(null);
-    setDraggedProject(null);
-
-    const draggedId = e.dataTransfer.getData('text/plain');
-    console.log('Drop - draggedId:', draggedId, 'columnId:', columnId);
-
-    if (!draggedId) {
-      console.log('No dragged ID found');
-      return;
-    }
-
-    const project = projects.find(p => p.id === draggedId);
-    console.log('Found project:', project?.name, 'current status:', project?.status);
-
-    if (project && project.status !== columnId) {
-      console.log('Moving project to new column');
-      await moveProject(draggedId, columnId);
-    } else {
-      console.log('Project not moved - same status or not found');
-    }
-  };
   const isAdmin = currentUser?.role === 'admin';
 
   // Sorted and filtered projects
@@ -492,6 +379,14 @@ export default function Projects({ currentUser }: ProjectsProps) {
     });
     return sorted;
   }, [projects, searchTerm, statusFilter, clientFilter, industryFilter, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   const visibleProjects = sortedProjects;
 
