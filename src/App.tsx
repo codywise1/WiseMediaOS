@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './components/Dashboard';
 import Clients from './components/Clients';
 import ClientDetail from './components/ClientDetail';
@@ -589,8 +590,8 @@ function App() {
           <Route path="/client/notes" element={<ClientNotes currentUser={currentUser} />} />
           <Route path="/client/notes/:id" element={<ClientNoteDetail />} />
 
-          <Route path="/invoices" element={<Invoices currentUser={currentUser} />} />
-          <Route path="/invoices/:id" element={<InvoiceDetail currentUser={currentUser} />} />
+          <Route path="/invoices" element={<ErrorBoundary label="Invoices"><Invoices currentUser={currentUser} /></ErrorBoundary>} />
+          <Route path="/invoices/:id" element={<ErrorBoundary label="Invoice Detail"><InvoiceDetail currentUser={currentUser} /></ErrorBoundary>} />
           <Route path="/appointments" element={<Navigate to="/meetings" replace />} />
           <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
           <Route path="/proposals/:id" element={<ProposalDetail currentUser={currentUser} />} />
