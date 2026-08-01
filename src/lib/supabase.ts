@@ -306,6 +306,8 @@ export interface Invoice {
   due_at?: string; // Some parts of the app use due_at
   locked_from_send?: boolean;
   activation_source?: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
   created_at: string;
   updated_at: string;
   client?: Client;

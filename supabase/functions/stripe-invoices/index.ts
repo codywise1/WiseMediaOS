@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       if (inv.status === 'open') status = 'pending';
       else if (inv.status === 'paid') status = 'paid';
       else if (inv.status === 'uncollectible') status = 'overdue';
-      else if (inv.status === 'void') status = 'overdue';
+      else if (inv.status === 'void') status = 'void';
       else if (inv.status === 'draft') status = 'draft';
 
       // Payment date — use status_transitions.paid_at when available

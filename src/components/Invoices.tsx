@@ -21,22 +21,20 @@ import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import PaymentModal from './PaymentModal';
-
-function isInvoiceOverdue(inv: { status: string; due_date: string | null; paid_at: string | null }): boolean {
-  if (inv.status === 'paid' || inv.status === 'void' || inv.status === 'draft') return false;
-  if (inv.status === 'overdue') return true;
-  if (!inv.due_date) return false;
-  const due = new Date(inv.due_date);
-  if (isNaN(due.getTime())) return false;
-  return due.getTime() < Date.now();
-}
-
-function daysOverdue(inv: { status: string; due_date: string | null }): number | null {
-  if (!isInvoiceOverdue(inv)) return null;
-  if (!inv.due_date) return null;
-  const due = new Date(inv.due_date);
-  return Math.floor((Date.now() - due.getTime()) / (1000 * 60 * 60 * 24));
-}
+import {
+  isVoid,
+  isUnpaid,
+  isInvoiceOverdue,
+  totalUnpaid,
+  totalOverdue,
+  totalOutstanding,
+  totalPaid,
+  countUnpaid,
+  countOverdue,
+  countPaid,
+  countVoid,
+  paidDateObj,
+} from '../lib/invoiceAggregations';
 
 interface InvoiceRow {
   id: string;
@@ -76,6 +74,8 @@ interface InvoiceView {
   issued_at: string | null;
   due_date: string | null;
   paid_at: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
   updated_at: string;
   project_ids: string[];
   project_names: string[];
@@ -168,6 +168,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           issued_at: row.issued_at || null,
           due_date: row.due_date || row.due_at || null,
           paid_at: row.paid_at || null,
+          voided_at: row.voided_at || null,
+          void_reason: row.void_reason || null,
           updated_at: row.updated_at || row.paid_at || row.created_at || '',
           project_ids,
           project_names,
@@ -189,33 +191,15 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     loadInvoices();
   }, [loadInvoices]);
 
-  const totalPending = invoices
-    .filter(inv => inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready')
-    .reduce((sum, inv) => sum + inv.amount, 0);
-  const totalOverdue = invoices
-    .filter(inv => isInvoiceOverdue(inv))
-    .reduce((sum, inv) => sum + inv.amount, 0);
-  const totalPaid = invoices
-    .filter(inv => inv.status === 'paid')
-    .reduce((sum, inv) => sum + inv.amount, 0);
-  const totalOutstanding = totalPending + totalOverdue;
+  const totalPending = totalUnpaid(invoices);
+  const totalOverdueAmt = totalOverdue(invoices);
+  const totalPaid = totalPaid(invoices);
+  const totalOutstanding = totalOutstanding(invoices);
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const currentQuarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-
-  // Revenue is recognized on the date the invoice was actually paid.
-  // Unpaid invoices (even if status='paid' with no paid_at) are excluded.
-  const paidDate = (inv: InvoiceView): string | null =>
-    inv.status === 'paid' && inv.paid_at ? inv.paid_at : null;
-
-  const paidDateObj = (inv: InvoiceView): Date | null => {
-    const pd = paidDate(inv);
-    if (!pd) return null;
-    const d = new Date(pd);
-    return Number.isNaN(d.getTime()) ? null : d;
-  };
 
   const revenue7d = invoices
     .filter(inv => { const d = paidDateObj(inv); return d !== null && d >= sevenDaysAgo; })
@@ -363,6 +347,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             proposal_id: invoiceData.proposal_id || null,
             issued_at: invoiceData.issued_at || null,
             paid_at: invoiceData.paid_at || null,
+            void_reason: invoiceData.void_reason || null,
           })
           .eq('id', selectedInvoice.id);
         if (updateError) throw updateError;
@@ -382,6 +367,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           currency: 'USD',
           issued_at: invoiceData.issued_at || null,
           paid_at: invoiceData.paid_at || null,
+          void_reason: invoiceData.void_reason || null,
         };
         const { data: newInvoice, error: insertError } = await supabase
           .from('invoices')
@@ -472,8 +458,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const filteredInvoices = invoices
     .filter(inv => {
       if (filterStatus === 'all') return true;
-      if (filterStatus === 'unpaid') return inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'ready';
+      if (filterStatus === 'unpaid') return isUnpaid(inv);
       if (filterStatus === 'overdue') return isInvoiceOverdue(inv);
+      if (filterStatus === 'void') return isVoid(inv);
       if (filterStatus === 'paid') return inv.status === 'paid';
       return inv.status === filterStatus;
     })
@@ -642,7 +629,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           {[
             { label: 'Invoices Sent · 30d', value: invoices.length, icon: Eye, iconBg: 'bg-[#3aa3eb]/20' },
             { label: 'Total Cash Collected', value: `${totalPaid.toLocaleString()}`, icon: CheckCircle, iconBg: 'bg-green-500/20' },
-            { label: 'Overdue Funds', value: `${totalOverdue.toLocaleString()}`, icon: AlertTriangle, iconBg: 'bg-red-500/20' },
+            { label: 'Overdue Funds', value: `${totalOverdueAmt.toLocaleString()}`, icon: AlertTriangle, iconBg: 'bg-red-500/20' },
             { label: 'Total Outstanding', value: `${totalOutstanding.toLocaleString()}`, icon: CreditCard, iconBg: 'bg-blue-500/20' },
           ].map((stat, idx) => (
             <div key={idx} className="glass-card rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-300 hover-glow border border-white/10">
@@ -664,9 +651,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
           <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 overflow-x-auto ios-scroll">
             {[
               { id: 'all', label: 'All', count: invoices.length },
-              { id: 'unpaid', label: 'Unpaid', count: invoices.filter(i => i.status !== 'paid').length },
-              { id: 'overdue', label: 'Overdue', count: invoices.filter(i => isInvoiceOverdue(i)).length },
-              { id: 'paid', label: 'Paid', count: invoices.filter(i => i.status === 'paid').length },
+              { id: 'unpaid', label: 'Unpaid', count: countUnpaid(invoices) },
+              { id: 'overdue', label: 'Overdue', count: countOverdue(invoices) },
+              { id: 'void', label: 'Void', count: countVoid(invoices) },
+              { id: 'paid', label: 'Paid', count: countPaid(invoices) },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -724,6 +712,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 pending: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
                 unpaid: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
                 ready: { bg: 'rgba(59, 163, 234, 0.15)', border: 'rgba(59, 163, 234, 0.4)', text: 'rgb(96, 165, 250)', dot: 'bg-[#3aa3eb]' },
+                void: { bg: 'rgba(100, 116, 139, 0.12)', border: 'rgba(100, 116, 139, 0.3)', text: 'rgb(148, 163, 184)', dot: 'bg-slate-600' },
                 default: { bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)', text: 'rgb(203, 213, 225)', dot: 'bg-slate-500' }
               };
               const style = statusStyles[invoice.status.toLowerCase()] || statusStyles.default;
@@ -732,7 +721,10 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               const dueDateStr = invoice.due_date || '';
               let dueDisplay = '';
               let dueColor = 'text-gray-400';
-              if (isPaid) {
+              if (invoice.status === 'void') {
+                dueDisplay = invoice.voided_at ? `Voided ${formatAppDate(invoice.voided_at)}` : 'Voided';
+                dueColor = 'text-gray-500';
+              } else if (isPaid) {
                 dueDisplay = invoice.paid_at ? `Paid on ${formatAppDate(invoice.paid_at)}` : 'Paid';
                 dueColor = 'text-green-400';
               } else if (!dueDateStr) {
@@ -808,8 +800,13 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                             {invoice.project_names.length === 1 ? invoice.project_names[0] : `${invoice.project_names.length} projects`}
                           </p>
                         )}
+                        {invoice.status === 'void' && invoice.void_reason && (
+                          <p className="text-[10px] text-gray-600 mt-1 italic truncate" title={invoice.void_reason}>
+                            {invoice.void_reason}
+                          </p>
+                        )}
                       </div>
-                      <span className="text-2xl font-black text-white tracking-tight shrink-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                      <span className={`text-2xl font-black tracking-tight shrink-0 ${invoice.status === 'void' ? 'text-gray-600 line-through' : 'text-white'}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                         ${invoice.amount.toLocaleString()}
                       </span>
                     </div>
@@ -840,8 +837,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           <>
                             <button
                               onClick={() => handleSendReminder(invoice)}
-                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
-                              title="Send Reminder"
+                              disabled={invoice.status === 'void'}
+                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={invoice.status === 'void' ? 'Cannot send reminder for a voided invoice' : 'Send Reminder'}
                             >
                               <Mail className="h-4 w-4" />
                             </button>

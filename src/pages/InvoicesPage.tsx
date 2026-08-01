@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader';
 import { formatAppDate, formatToISODate } from '../lib/dateFormat';
 import {
   Plus, X, Calendar, ArrowRight, FileText, TrendingUp, Clock,
-  AlertCircle, CheckCircle2, ChevronRight, Download,
+  AlertCircle, CheckCircle2, ChevronRight, Download, Ban,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +29,7 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string; 
   pending: { label: 'Pending', dot: 'bg-amber-400', text: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
   overdue: { label: 'Overdue', dot: 'bg-rose-400', text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
   draft: { label: 'Draft', dot: 'bg-slate-400', text: 'text-slate-300', bg: 'bg-slate-500/10', border: 'border-slate-500/20' },
+  void: { label: 'Void', dot: 'bg-slate-600', text: 'text-slate-500', bg: 'bg-slate-700/15', border: 'border-slate-600/30' },
 };
 
 function StatusPill({ status }: { status: string }) {
@@ -245,7 +246,7 @@ export default function InvoicesPage() {
                 const due = new Date(invoice.due_date);
                 const today = new Date();
                 const daysUntilDue = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                const isOverdue = invoice.status !== 'paid' && daysUntilDue < 0;
+                const isOverdue = invoice.status !== 'paid' && invoice.status !== 'void' && daysUntilDue < 0;
 
                 return (
                   <button
@@ -257,10 +258,12 @@ export default function InvoicesPage() {
                       {/* Left: status icon */}
                       <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${
                         invoice.status === 'paid' ? 'bg-emerald-500/15' :
+                        invoice.status === 'void' ? 'bg-slate-700/30' :
                         invoice.status === 'overdue' || isOverdue ? 'bg-rose-500/15' :
                         'bg-amber-500/15'
                       }`}>
                         {invoice.status === 'paid' ? <CheckCircle2 size={20} className="text-emerald-400" /> :
+                         invoice.status === 'void' ? <Ban size={20} className="text-slate-500" /> :
                          isOverdue ? <AlertCircle size={20} className="text-rose-400" /> :
                          <Clock size={20} className="text-amber-400" />}
                       </div>

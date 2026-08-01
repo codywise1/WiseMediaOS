@@ -16,13 +16,14 @@ interface InvoiceModalProps {
   currentUser?: { role: UserRole } | null;
 }
 
-type Status = 'draft' | 'pending' | 'paid' | 'overdue';
+type Status = 'draft' | 'pending' | 'paid' | 'overdue' | 'void';
 
 const STATUS_META: Record<Status, { label: string; color: string; dot: string }> = {
   draft: { label: 'Draft', color: 'text-gray-400', dot: 'bg-gray-500' },
   pending: { label: 'Pending', color: 'text-amber-400', dot: 'bg-amber-500' },
   paid: { label: 'Paid', color: 'text-emerald-400', dot: 'bg-emerald-500' },
   overdue: { label: 'Overdue', color: 'text-red-400', dot: 'bg-red-500' },
+  void: { label: 'Void', color: 'text-slate-400', dot: 'bg-slate-600' },
 };
 
 const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
@@ -42,6 +43,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
     issuedDate: '',
     paidDate: '',
     status: 'draft' as Status,
+    voidReason: '',
     description: '',
     proposal_id: '',
   });
@@ -80,13 +82,14 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
         dueDate: invoice.due_date ? formatToISODate(invoice.due_date) : '',
         issuedDate: invoice.issued_at ? formatToISODate(invoice.issued_at) : '',
         paidDate: invoice.paid_at ? formatToISODate(invoice.paid_at) : '',
-        status: (['draft', 'pending', 'paid', 'overdue'].includes(invoice.status) ? invoice.status : 'draft') as Status,
+        status: (['draft', 'pending', 'paid', 'overdue', 'void'].includes(invoice.status) ? invoice.status : 'draft') as Status,
+        voidReason: (invoice as any).void_reason || '',
         description: invoice.description,
         proposal_id: invoice.proposal_id || (invoice as any).proposal_id || '',
       });
       setLinkedProjectIds((invoice as any).project_ids || (invoice.project_id ? [invoice.project_id] : []));
     } else {
-      setFormData({ title: '', client_id: '', client_name: '', amount: '', dueDate: '', issuedDate: '', paidDate: '', status: 'draft', description: '', proposal_id: '' });
+      setFormData({ title: '', client_id: '', client_name: '', amount: '', dueDate: '', issuedDate: '', paidDate: '', status: 'draft', voidReason: '', description: '', proposal_id: '' });
       setLinkedProjectIds([]);
     }
   }, [invoice, mode, isOpen]);
@@ -145,6 +148,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
       due_date: formData.dueDate,
       issued_at: formData.issuedDate || null,
       paid_at: formData.status === 'paid' ? (formData.paidDate || new Date().toISOString()) : (formData.paidDate || null),
+      void_reason: formData.status === 'void' ? (formData.voidReason.trim() || null) : null,
       status: formData.status
     };
     onSave(invoiceData as Partial<Invoice>);
@@ -329,6 +333,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
                 <option value="pending">Pending</option>
                 <option value="paid">Paid</option>
                 <option value="overdue">Overdue</option>
+                <option value="void">Void</option>
               </select>
               <div className={`absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${statusMeta.dot}`} />
             </div>
@@ -382,6 +387,23 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
               className={inputCls}
               isClearable
             />
+          </div>
+        )}
+
+        {/* Void reason — full width, only when status is void */}
+        {formData.status === 'void' && (
+          <div>
+            <label className={labelCls}>Reason</label>
+            <input
+              type="text"
+              name="voidReason"
+              value={formData.voidReason}
+              onChange={handleChange}
+              className={inputCls}
+              placeholder="e.g. Voided in Stripe — subscription cycle replaced"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1.5">Required. Explains why this invoice was voided. The void timestamp is stamped automatically.</p>
           </div>
         )}
 

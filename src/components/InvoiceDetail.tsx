@@ -108,6 +108,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         proposal_id: invoiceData.proposal_id || null,
         issued_at: invoiceData.issued_at || null,
         paid_at: invoiceData.paid_at || null,
+        void_reason: invoiceData.void_reason ?? null,
       } as any);
       // Sync many-to-many project links
       const { error: delError } = await supabase.from('invoice_projects').delete().eq('invoice_id', id!);
@@ -143,6 +144,8 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
         return 'bg-yellow-600/20 text-yellow-300 border-yellow-600/30';
       case 'overdue':
         return 'bg-red-600/20 text-red-300 border-red-600/30';
+      case 'void':
+        return 'bg-slate-700/30 text-slate-400 border-slate-600/40';
       case 'draft':
         return 'bg-gray-600/20 text-gray-300 border-gray-600/30';
       default:
@@ -221,7 +224,7 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
           {isAdmin && (
             <div className="flex items-center space-x-3">
               <span className={`px-4 py-2 rounded-xl text-sm font-medium border ${getStatusColor(invoice.status)}`}>
-                {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                {invoice.status === 'void' ? 'Void' : invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
               </span>
               <button
                 onClick={() => setIsEditModalOpen(true)}
@@ -297,9 +300,21 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
               <span className="text-xs text-gray-400">Status</span>
             </div>
             <p className="text-lg font-medium text-white">
-              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+              {invoice.status === 'void' ? 'Void' : invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
             </p>
           </div>
+
+          {invoice.status === 'void' && (invoice as any).voided_at && (
+            <div className="bg-slate-800/30 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <CalendarIcon className="h-4 w-4 text-slate-400" />
+                <span className="text-xs text-gray-400">Voided At</span>
+              </div>
+              <p className="text-lg font-medium text-slate-400">
+                {formatAppDate((invoice as any).voided_at)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -416,6 +431,13 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                   <p className="text-sm text-gray-500">No linked projects</p>
                 )}
               </div>
+
+              {invoice.status === 'void' && (invoice as any).void_reason && (
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-xs text-gray-400 mb-1">Void Reason</p>
+                  <p className="text-sm text-slate-400 italic">{(invoice as any).void_reason}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -442,7 +464,11 @@ export default function InvoiceDetail({ currentUser }: InvoiceDetailProps) {
                     </>
                   )}
                 </button>
-                <button className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button">
+                <button
+                  className="w-full btn-secondary py-3 rounded-xl flex items-center justify-center space-x-2 shrink-glow-button disabled:opacity-30 disabled:cursor-not-allowed"
+                  disabled={invoice.status === 'void'}
+                  title={invoice.status === 'void' ? 'Cannot send a voided invoice' : 'Send to Client'}
+                >
                   <EnvelopeIcon className="h-5 w-5" />
                   <span>Send to Client</span>
                 </button>
