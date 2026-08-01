@@ -10,7 +10,7 @@ import {
   EyeIcon
 } from '@heroicons/react/24/outline';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
-import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+type SolanaWeb3 = typeof import('@solana/web3.js');
 
 interface Invoice {
   id: string;
@@ -526,13 +526,14 @@ Amount: ${(paymentMeta?.solAmount || 0).toFixed(6)} SOL
         return;
       }
       const amountSOL = invoice.amount / price;
-      const connection = new Connection(rpcUrl, 'confirmed');
-      const fromPubkey = new PublicKey(walletAddress);
-      const toPubkey = new PublicKey(treasuryAddress);
+      const web3: SolanaWeb3 = await import('@solana/web3.js');
+      const connection = new web3.Connection(rpcUrl, 'confirmed');
+      const fromPubkey = new web3.PublicKey(walletAddress);
+      const toPubkey = new web3.PublicKey(treasuryAddress);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey });
-      const lamportsToSend = Math.round(amountSOL * LAMPORTS_PER_SOL);
-      tx.add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports: lamportsToSend }));
+      const tx = new web3.Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey });
+      const lamportsToSend = Math.round(amountSOL * web3.LAMPORTS_PER_SOL);
+      tx.add(web3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports: lamportsToSend }));
       const provider = getSelectedProvider();
       const signed = await provider.signAndSendTransaction(tx);
       const signature = signed.signature || signed?.txid || signed;

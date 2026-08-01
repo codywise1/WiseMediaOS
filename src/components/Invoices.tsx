@@ -106,7 +106,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceView | undefined>();
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid' | 'void'>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
   const [isMobile, setIsMobile] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
@@ -137,7 +137,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         .from('invoices')
         .select(`
           id, public_id, client_id, amount, title, description, proposal_id, status, currency,
-          due_date, due_at, issued_at, created_at, paid_at, updated_at,
+          due_date, due_at, issued_at, created_at, paid_at, updated_at, voided_at, void_reason,
           client:clients(name, email),
           invoice_projects(project_id, project:projects(id, name)),
           proposal:proposals!invoices_proposal_id_fkey(id, title)
