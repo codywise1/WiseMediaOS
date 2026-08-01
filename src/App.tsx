@@ -37,6 +37,7 @@ import LiveMeetingPage from './pages/LiveMeetingPage';
 import MeetingDetailPage from './pages/MeetingDetailPage';
 import ClientNotes from './pages/ClientNotes';
 import ClientNoteDetail from './pages/ClientNoteDetail';
+import PayrollPage from './pages/PayrollPage';
 // import CommunityProPage from './pages/CommunityProPage';
 // import CommunityResourcesPage from './pages/CommunityResourcesPage';
 // import CommunitySettingsPage from './pages/CommunitySettingsPage';
@@ -789,6 +790,12 @@ function App() {
             path="/analytics"
             element={
               <AnalyticsPage />
+            }
+          />
+          <Route
+            path="/payroll"
+            element={
+              <PayrollPage />
             }
           />
           <Route
