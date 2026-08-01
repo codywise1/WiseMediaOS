@@ -23,8 +23,8 @@ export default function CreatorHome() {
 
   const shortcuts = [
     { title: 'Courses', description: 'Browse the catalog and pick up where you left off.', icon: PlayCircleIcon, action: () => navigate('/community/courses') },
-    { title: 'Lessons', description: 'Resume your last lesson and revisit quick notes.', icon: SparklesIcon, action: () => navigate('/community/courses/1') },
-    { title: 'Club', description: 'Jump into the Creator Club chat.', icon: ChatBubbleOvalLeftIcon, action: () => navigate('/community') },
+    { title: 'Resources', description: 'Explore templates, guides, and downloadable assets.', icon: SparklesIcon, action: () => navigate('/community/hub') },
+    { title: 'Marketplace', description: 'Browse products, design resources, and video assets.', icon: ChatBubbleOvalLeftIcon, action: () => navigate('/community/marketplace') },
   ];
 
   const greeting = `${getGreeting()}, Mr. ${getLastName(profile?.full_name)}`;
@@ -33,7 +33,7 @@ export default function CreatorHome() {
     <div className="space-y-6 sm:space-y-8">
       <PageHeader
         title="Creator Club"
-        subtitle={`${greeting} — jump into your courses, resources, and community.`}
+        subtitle={`${greeting} — jump into your courses, resources, and marketplace.`}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">

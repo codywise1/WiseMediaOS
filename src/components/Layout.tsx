@@ -133,7 +133,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       label: 'Learning',
       items: [
         { name: 'Courses', href: '/community/courses', icon: BookOpen },
-        { name: 'Resources', href: '/community/courses', icon: LayoutGrid }
+        { name: 'Resources', href: '/community/hub', icon: LayoutGrid }
       ]
     },
     {

@@ -6,15 +6,15 @@ import {
     VideoCameraIcon,
     ClipboardDocumentCheckIcon,
     LightBulbIcon,
-    HashtagIcon,
     BanknotesIcon,
     Squares2X2Icon,
     ListBulletIcon
 } from '@heroicons/react/24/outline';
-import { noteService, Note, NoteCategory } from '../lib/supabase';
+import { noteService, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDate } from '../lib/dateFormat';
 import { useDebounce } from '../hooks/useDebounce';
+import PageHeader from '../components/PageHeader';
 
 interface ClientNotesProps {
     currentUser: any;
@@ -106,18 +106,11 @@ export default function ClientNotes({ currentUser }: ClientNotesProps) {
 
     return (
         <div className="space-y-8 pb-20">
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-white/5 p-8 md:p-12">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-[#3aa3eb]/10 rounded-full blur-[100px] pointer-events-none" />
-                <div className="relative z-10 max-w-2xl">
-                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4 font-display uppercase">
-                        Shared Intelligence
-                    </h1>
-                    <p className="text-lg text-gray-400 leading-relaxed">
-                        Access strategy documents, meeting records, and project updates shared by the Wise Media team.
-                    </p>
-                </div>
-            </div>
+            {/* Header */}
+            <PageHeader
+                title="Shared Intelligence"
+                subtitle="Access strategy documents, meeting records, and project updates shared by the Wise Media team."
+            />
 
             {/* Filters Toolbar */}
             <div className="sticky top-4 z-30 glass-card rounded-2xl border border-white/10 p-4 flex flex-col md:flex-row gap-4 items-center justify-between backdrop-blur-xl">

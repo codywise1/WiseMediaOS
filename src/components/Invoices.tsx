@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
+import { supabase, isSupabaseAvailable, authService, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import {
   FileText,
@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Link as LinkIcon,
+  DollarSign,
+  BarChart3,
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
@@ -126,6 +128,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         setLoadError('Database is not configured.');
         return;
       }
+
+      await authService.ensureValidSession();
 
       const { data, error: queryError } = await supabase
         .from('invoices')
@@ -669,6 +673,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         </div>
       )}
 
+      {/* Business Performance — live from invoices, clients, projects & proposals */}
+      {isAdmin && <BusinessPerformanceInline invoices={invoices} />}
+
       {/* Invoice Cards — iOS Style */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2">
@@ -1115,5 +1122,61 @@ function SaaSGrowthChart({
         </svg>
       </div>
     </div>
+  );
+}
+
+// ─── Business Performance inline section ──────────────────────────────────
+function BusinessPerformanceInline({ invoices }: { invoices: InvoiceView[] }) {
+  const {
+    totalUnpaid: outstanding,
+    totalOverdue: overdueAmt,
+    totalPaid: collected,
+    countUnpaid: unpaidCount,
+    countOverdue: overdueCount,
+    countPaid: paidCount,
+  } = useMemo(() => ({
+    totalUnpaid: totalUnpaid(invoices),
+    totalOverdue: totalOverdue(invoices),
+    totalPaid: totalPaid(invoices),
+    countUnpaid: countUnpaid(invoices),
+    countOverdue: countOverdue(invoices),
+    countPaid: countPaid(invoices),
+  }), [invoices]);
+
+  const collectionRate = paidCount + unpaidCount > 0
+    ? Math.round((paidCount / (paidCount + unpaidCount)) * 100)
+    : 0;
+
+  const fmtMoney = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  const kpis = [
+    { label: 'Collected', value: fmtMoney(collected), sub: `${paidCount} invoices paid`, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { label: 'Outstanding', value: fmtMoney(outstanding), sub: `${unpaidCount} unpaid`, color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    { label: 'Overdue', value: fmtMoney(overdueAmt), sub: `${overdueCount} invoices`, color: 'text-rose-400', bg: 'bg-rose-500/15' },
+    { label: 'Collection Rate', value: `${collectionRate}%`, sub: 'Paid vs total', color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
+  ];
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-2">
+        <BarChart3 className="h-4 w-4 text-[#3aa3eb]" />
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Business Performance</h2>
+        <span className="text-[10px] text-gray-600 font-body">Live from your invoices, clients, projects & proposals</span>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 stat-group">
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="glass-card rounded-2xl p-5 flex flex-col gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${kpi.bg}`}>
+              <DollarSign className={`h-4 w-4 ${kpi.color}`} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white tracking-tight tabular-nums">{kpi.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{kpi.label}</p>
+              <p className="text-[11px] text-gray-600 mt-0.5">{kpi.sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
