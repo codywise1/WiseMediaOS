@@ -11,6 +11,7 @@ import {
   UserRole
 } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
+import { getInvoiceMetrics, quarterStart, monthStart, priorMonthStart, yearStart, priorYearStart, isVoid, isInvoiceOverdue, totalUnpaid, totalOverdue } from '../lib/invoiceMetrics';
 import {
   DollarSign,
   FileText,
@@ -164,6 +165,10 @@ function buildChartData(invoices: any[], timeframe: Timeframe): ChartPoint[] {
 export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(true);
+  const [loadingInvoices, setLoadingInvoices] = React.useState(true);
+  const [loadingProjects, setLoadingProjects] = React.useState(true);
+  const [loadingClients, setLoadingClients] = React.useState(true);
+  const [loadingActivity, setLoadingActivity] = React.useState(true);
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
   const [allInvoices, setAllInvoices] = React.useState<any[]>([]);
   const [timeframe, setTimeframe] = React.useState<Timeframe>('30d');
@@ -183,6 +188,8 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
     upcomingAppointments: 0,
     activeClients: 0,
     totalInvoices: 0,
+    totalClients: 0,
+    quarterDeltaPct: null as number | null,
   });
 
   const hasLoadedRef = React.useRef(false);
@@ -305,24 +312,59 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
           const now = new Date();
           const upcomingAppointments = meetings.filter((m: any) => new Date(m.meeting_date || m.created_at) >= now).length;
 
-          const revenueDate = (inv: any) => new Date(inv.paid_at || inv.issued_at || inv.created_at);
-          const monthlyRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameMonth(revenueDate(inv), now))
-            .reduce((s: number, i: any) => s + i.amount, 0);
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const lastMonthRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameMonth(revenueDate(inv), lastMonth))
-            .reduce((s: number, i: any) => s + i.amount, 0);
-          const quarterRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameQuarter(revenueDate(inv), now))
-            .reduce((s: number, i: any) => s + i.amount, 0);
-          const yearRevenue = invoices
-            .filter((inv: any) => inv.status === 'paid' && isSameYear(revenueDate(inv), now))
-            .reduce((s: number, i: any) => s + i.amount, 0);
-          const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').reduce((s: number, i: any) => s + i.amount, 0);
-          const overdueInvoices = invoices.filter((i: any) => i.status === 'overdue').reduce((s: number, i: any) => s + i.amount, 0);
-          const paidThisMonth = invoices.filter((i: any) => i.status === 'paid' && isSameMonth(revenueDate(i), now));
-          const dealsSignedThisMonth = projects.filter((p: any) => isSameMonth(new Date(p.created_at), now) && p.status !== 'cancelled').length;
+          const qStart = quarterStart(now);
+          const mStart = monthStart(now);
+          const lmStart = priorMonthStart(now);
+          const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          const yStart = yearStart(now);
+          const lmEnd = mStart;
+
+          // Unified metrics — single source of truth
+          const qMetrics = getInvoiceMetrics(invoices, {
+            now: now.toISOString(),
+            periodStart: qStart.toISOString(),
+            periodEnd: now.toISOString(),
+          });
+          const mMetrics = getInvoiceMetrics(invoices, {
+            now: now.toISOString(),
+            periodStart: mStart.toISOString(),
+            periodEnd: mEnd.toISOString(),
+          });
+          const yMetrics = getInvoiceMetrics(invoices, {
+            now: now.toISOString(),
+            periodStart: yStart.toISOString(),
+            periodEnd: now.toISOString(),
+          });
+
+          // Revenue using the unified module (paid only, void excluded)
+          const monthlyRevenue = mMetrics.periodRevenue;
+          const lastMonthRevenue = getInvoiceMetrics(invoices, {
+            now: now.toISOString(),
+            periodStart: lmStart.toISOString(),
+            periodEnd: lmEnd.toISOString(),
+          }).periodRevenue;
+          const quarterRevenue = qMetrics.periodRevenue;
+          const yearRevenue = yMetrics.periodRevenue;
+
+          // Outstanding and overdue from the unified module
+          const pendingInvoices = totalUnpaid(invoices);
+          const overdueInvoices = totalOverdue(invoices);
+
+          // Paid this month using the unified period revenue for the month
+          const paidThisMonthCount = invoices.filter((i: any) =>
+            i.status === 'paid' && !isVoid(i) &&
+            (() => { const d = new Date(i.paid_at || i.issued_at || i.created_at); return d >= mStart && d < mEnd; })()
+          ).length;
+          const invoicesPaidThisMonth = monthlyRevenue;
+
+          // Deals signed this month — same date filter as Q3 (month, not quarter)
+          const dealsSignedThisMonth = projects.filter((p: any) => {
+            const d = new Date(p.created_at); return d >= mStart && d < mEnd && p.status !== 'cancelled';
+          }).length;
+
+          // Client counts — active = status 'active', not total
+          const activeClients = clients.filter((c: any) => c.status === 'active').length;
+
           const activeProjects = projects.filter((p: any) => p.status === 'in_progress' || p.status === 'in_review').length;
           const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
 
@@ -330,11 +372,17 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
             activeProjects, completedProjects, totalProjects: projects.length,
             monthlyRevenue, lastMonthRevenue, quarterRevenue, yearRevenue,
             pendingInvoices, overdueInvoices,
-            invoicesPaidThisMonth: paidThisMonth.reduce((s: number, i: any) => s + i.amount, 0),
-            invoicesPaidThisMonthCount: paidThisMonth.length,
-            dealsSignedThisMonth, upcomingAppointments, activeClients: clients.length, totalInvoices: invoices.length,
+            invoicesPaidThisMonth,
+            invoicesPaidThisMonthCount: paidThisMonthCount,
+            dealsSignedThisMonth, upcomingAppointments, activeClients, totalInvoices: invoices.length,
+            totalClients: clients.length,
+            quarterDeltaPct: qMetrics.deltaPct,
           });
           buildRecentActivities(projects as any[], invoices as any[], meetings as any[]);
+          setLoadingInvoices(false);
+          setLoadingProjects(false);
+          setLoadingClients(false);
+          setLoadingActivity(false);
         } else if (currentUser?.id) {
           const clientRecord = await clientService.getByEmail(currentUser.email).catch(() => null);
           const effectiveClientId = clientRecord?.id || currentUser.id;
@@ -355,7 +403,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
           });
 
           setAllInvoices(invoices);
-          const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').reduce((s: number, i: any) => s + i.amount, 0);
+          const pendingInvoices = totalUnpaid(invoices);
           setStats((s) => ({
             ...s,
             activeProjects: projects.filter((p: any) => p.status === 'in_progress' || p.status === 'in_review').length,
@@ -364,6 +412,9 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
             pendingInvoices, totalInvoices: invoices.length, upcomingAppointments: appointments.length,
           }));
           buildRecentActivities(projects as any[], invoices as any[], appointments as any[]);
+          setLoadingInvoices(false);
+          setLoadingProjects(false);
+          setLoadingActivity(false);
         }
       } catch (dbError) {
         console.log('Database not available:', dbError);
@@ -374,7 +425,14 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       if (isFirstLoad) setRecentActivities([]);
     } finally {
       clearTimeout(safetyTimeout);
-      if (isFirstLoad) { setLoading(false); hasLoadedRef.current = true; }
+      if (isFirstLoad) {
+        setLoading(false);
+        hasLoadedRef.current = true;
+        setLoadingInvoices(false);
+        setLoadingProjects(false);
+        setLoadingClients(false);
+        setLoadingActivity(false);
+      }
     }
   };
 
@@ -388,17 +446,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
   const maxChart = Math.max(...chartData.map((p) => p.value), 1);
   const totalChart = chartData.reduce((s, p) => s + p.value, 0);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-          className="h-10 w-10 border-2 border-white/10 border-t-[#3aa3eb] rounded-full"
-        />
-      </div>
-    );
-  }
+  const isLoading = loading || loadingInvoices || loadingProjects || loadingClients;
 
   const isAdmin = currentUser?.role === 'admin';
   const quarterLabel = `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`;
@@ -503,26 +551,26 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
               Details <ChevronRight size={12} />
             </button>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            <SnapshotCard
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stat-group">
+            {loadingInvoices ? <SkeletonCard /> : <SnapshotCard
               icon={<DollarSign size={18} />}
               iconBg="bg-emerald-500/15 text-emerald-400"
               value={formatCurrency(stats.quarterRevenue)}
               label="Revenue collected"
-              pill={revenueChange !== 0 ? { value: revenueChange, positive: revenueChange > 0 } : undefined}
-            />
-            <SnapshotCard
+              pill={stats.quarterDeltaPct !== null && stats.quarterDeltaPct !== 0 ? { value: stats.quarterDeltaPct, positive: stats.quarterDeltaPct > 0 } : undefined}
+            />}
+            {loadingProjects ? <SkeletonCard /> : <SnapshotCard
               icon={<Briefcase size={18} />}
               iconBg="bg-[#3aa3eb]/15 text-[#3aa3eb]"
               value={stats.dealsSignedThisMonth.toString()}
               label="Deals signed"
-            />
-            <SnapshotCard
+            />}
+            {loadingInvoices ? <SkeletonCard /> : <SnapshotCard
               icon={<CheckCircle2 size={18} />}
               iconBg="bg-violet-500/15 text-violet-400"
               value={stats.invoicesPaidThisMonthCount.toString()}
               label={`Invoices paid · ${formatCurrency(stats.invoicesPaidThisMonth)}`}
-            />
+            />}
           </div>
         </motion.div>
       )}
@@ -531,25 +579,26 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       {isAdmin && (
         <motion.div variants={itemVariants}>
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">{new Date().getFullYear()} YTD</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            <SnapshotCard
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stat-group">
+            {loadingInvoices ? <SkeletonCard /> : <SnapshotCard
               icon={<TrendingUp size={18} />}
               iconBg="bg-emerald-500/15 text-emerald-400"
               value={formatCurrency(stats.yearRevenue)}
               label="Annual revenue"
-            />
-            <SnapshotCard
+            />}
+            {loadingClients ? <SkeletonCard /> : <SnapshotCard
               icon={<Users size={18} />}
               iconBg="bg-[#3aa3eb]/15 text-[#3aa3eb]"
               value={stats.activeClients.toString()}
               label="Active clients"
-            />
-            <SnapshotCard
+              sub={`of ${stats.totalClients} total`}
+            />}
+            {loadingInvoices ? <SkeletonCard /> : <SnapshotCard
               icon={<FileText size={18} />}
               iconBg="bg-violet-500/15 text-violet-400"
               value={stats.totalInvoices.toString()}
               label="Total invoices"
-            />
+            />}
           </div>
         </motion.div>
       )}
@@ -557,12 +606,12 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       {/* Overview Stats */}
       <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Overview</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatTile icon={Briefcase} label="Active Projects" value={stats.activeProjects.toString()} sub={`${stats.completedProjects} completed`} color="blue" onClick={() => navigate('/projects')} />
-          <StatTile icon={DollarSign} label="Outstanding" value={formatCurrency(stats.pendingInvoices)} sub={stats.overdueInvoices > 0 ? `${formatCurrency(stats.overdueInvoices)} overdue` : 'No overdue'} color={stats.overdueInvoices > 0 ? 'red' : 'neutral'} onClick={() => navigate('/invoices')} />
-          <StatTile icon={Clock} label="Upcoming Calls" value={stats.upcomingAppointments.toString()} sub="Scheduled" color="blue" onClick={() => navigate('/meetings')} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 stat-group">
+          <StatTile icon={Briefcase} label="Active Projects" value={loadingProjects ? '—' : stats.activeProjects.toString()} sub={loadingProjects ? 'Loading…' : `${stats.completedProjects} completed`} color="blue" onClick={() => navigate('/projects')} />
+          <StatTile icon={DollarSign} label="Outstanding" value={loadingInvoices ? '—' : formatCurrency(stats.pendingInvoices)} sub={loadingInvoices ? 'Loading…' : stats.overdueInvoices > 0 ? `${formatCurrency(stats.overdueInvoices)} overdue` : 'No overdue'} color={stats.overdueInvoices > 0 ? 'red' : 'neutral'} onClick={() => navigate('/invoices')} />
+          <StatTile icon={Clock} label="Upcoming Calls" value={loadingActivity ? '—' : stats.upcomingAppointments.toString()} sub="Scheduled" color="blue" onClick={() => navigate('/meetings')} />
           {isAdmin ? (
-            <StatTile icon={Users} label="Active Clients" value={stats.activeClients.toString()} sub={`${stats.totalProjects} projects total`} color="neutral" onClick={() => navigate('/clients')} />
+            <StatTile icon={Users} label="Total Clients" value={loadingClients ? '—' : stats.totalClients.toString()} sub={loadingClients ? 'Loading…' : `${stats.activeClients} active · ${stats.totalProjects} projects`} color="neutral" onClick={() => navigate('/clients')} />
           ) : (
             <StatTile icon={FileText} label="Total Invoices" value={stats.totalInvoices.toString()} sub={`${stats.completedProjects} done`} color="neutral" onClick={() => navigate('/invoices')} />
           )}
@@ -584,7 +633,14 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Recent Activity</h2>
         <div className="glass-card rounded-2xl overflow-hidden">
-          {recentActivities.length > 0 ? (
+          {loadingActivity ? (
+            <div className="py-12 text-center">
+              <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
+                <div className="h-4 w-4 border-2 border-white/10 border-t-[#3aa3eb] rounded-full animate-spin" />
+                Loading activity…
+              </div>
+            </div>
+          ) : recentActivities.length > 0 ? (
             <div className="divide-y divide-white/5">
               <AnimatePresence>
                 {recentActivities.map((activity, i) => (
@@ -825,14 +881,27 @@ function RevenueLineChart({ data }: { data: ChartPoint[] }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="glass-card rounded-2xl p-5 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3 h-9">
+        <div className="w-9 h-9 rounded-xl bg-white/5 animate-pulse" />
+      </div>
+      <div className="h-8 bg-white/5 rounded-lg animate-pulse mb-2" />
+      <div className="h-3 bg-white/5 rounded animate-pulse w-2/3" />
+    </div>
+  );
+}
+
 function SnapshotCard({
-  icon, iconBg, value, label, pill,
+  icon, iconBg, value, label, pill, sub,
 }: {
   icon: React.ReactNode;
   iconBg: string;
   value: string;
   label: string;
   pill?: { value: number; positive: boolean };
+  sub?: string;
 }) {
   return (
     <motion.div
@@ -853,6 +922,7 @@ function SnapshotCard({
       </div>
       <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight tabular-nums">{value}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
+      {sub && <p className="text-[11px] text-gray-600 mt-0.5">{sub}</p>}
     </motion.div>
   );
 }

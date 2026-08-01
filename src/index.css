@@ -62,42 +62,41 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(58, 163, 235, 0.45); }
 
-/* ---------- iOS Material Surfaces ---------- */
+/* ---------- Opaque Surfaces ---------- */
 .glass-card {
-  background: rgba(28, 28, 30, 0.72);
-  backdrop-filter: var(--ios-blur);
-  -webkit-backdrop-filter: var(--ios-blur);
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: #16181c;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 4px 16px 0 rgba(0, 0, 0, 0.24);
 }
 
 .glass-card-flat {
-  background: rgba(28, 28, 30, 0.6);
-  backdrop-filter: var(--ios-blur);
-  -webkit-backdrop-filter: var(--ios-blur);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: #16181c;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
 }
 
-/* iOS-style content card — flush media + padded body */
+/* Opaque content card */
 .ios-card {
-  background: rgba(28, 28, 30, 0.6);
-  backdrop-filter: var(--ios-blur);
-  -webkit-backdrop-filter: var(--ios-blur);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset, 0 4px 16px 0 rgba(0, 0, 0, 0.2);
-  transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ios-ease), border-color 0.25s var(--ios-ease);
+  background: #16181c;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.12s var(--ios-ease), box-shadow 0.18s var(--ios-ease), border-color 0.18s var(--ios-ease);
 }
 .ios-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.08) inset, 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 8px 24px 0 rgba(0, 0, 0, 0.28);
 }
 
-/* iOS grouped list container */
 .ios-list {
-  background: rgba(28, 28, 30, 0.6);
-  backdrop-filter: var(--ios-blur);
-  -webkit-backdrop-filter: var(--ios-blur);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: #16181c;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
@@ -505,27 +504,29 @@ body {
 
 /* Profile and Logout Cards */
 .profile-card {
-  background: rgba(30, 41, 59, 0.9);
-  backdrop-filter: var(--ios-blur);
+  background: #1c1f24;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   transition: all 0.3s var(--spring);
   color: #e2e8f0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 .profile-card:hover {
-  background: rgba(30, 41, 59, 1);
+  background: #21252b;
   color: #ffffff;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(89, 161, 229, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 .logout-card {
-  background: rgba(30, 41, 59, 0.9);
-  backdrop-filter: var(--ios-blur);
+  background: #1c1f24;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   transition: all 0.3s var(--spring);
   color: #ffffff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 .logout-card:hover {
-  background: rgba(30, 41, 59, 1);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 20px rgba(89, 161, 229, 0.15);
+  background: #21252b;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
 /* Enhanced border utilities */
@@ -570,11 +571,38 @@ input[type="range"].slider::-moz-range-thumb:hover {
   box-shadow: 0 4px 12px rgba(58, 163, 235, 0.6);
 }
 
-/* ---------- Press feedback (iOS haptic feel) ---------- */
-/* Press scale on active only — removed the global hover shrink that shrank everything */
+/* ---------- Motion system ---------- */
+/* Card press: scale(0.98), 120ms */
+.card-press { transition: transform 0.12s var(--ios-ease); }
+.card-press:active { transform: scale(0.98); }
+
+/* Hover lift (pointer devices only): 2px + brand glow, 180ms */
+@media (hover: hover) and (pointer: fine) {
+  .card-lift { transition: transform 0.18s var(--ios-ease), box-shadow 0.18s var(--ios-ease), border-color 0.18s var(--ios-ease); }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 24px rgba(58, 163, 235, 0.12), 0 8px 32px rgba(0, 0, 0, 0.28);
+    border-color: rgba(58, 163, 235, 0.2);
+  }
+}
+
+/* Tab/filter cross-fade: 200ms */
+.fade-swap { animation: fade-swap 0.2s var(--ios-ease) forwards; }
+@keyframes fade-swap {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Spring sheet enter: cubic-bezier(0.32, 0.72, 0, 1), 380ms */
+.ios-sheet-enter { animation: ios-sheet-up 0.38s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+/* Spring modal enter */
+.ios-modal-enter { animation: ios-modal-in 0.38s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+/* Press feedback (iOS haptic feel) */
 button:active,
 a:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
   transition: transform 0.12s var(--ios-ease);
 }
 
@@ -591,20 +619,20 @@ a:active {
   -webkit-backdrop-filter: blur(8px);
 }
 .ios-modal-panel {
-  background: rgba(28, 28, 30, 0.85);
-  backdrop-filter: var(--ios-blur-strong);
-  -webkit-backdrop-filter: var(--ios-blur-strong);
-  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  background: #1c1f24;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-2xl);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 20px 48px rgba(0, 0, 0, 0.32);
 }
 .ios-sheet-panel {
-  background: rgba(28, 28, 30, 0.9);
-  backdrop-filter: var(--ios-blur-strong);
-  -webkit-backdrop-filter: var(--ios-blur-strong);
+  background: #1c1f24;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-top-left-radius: var(--radius-2xl);
   border-top-right-radius: var(--radius-2xl);
-  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
 }
 .ios-grabber {
@@ -663,8 +691,8 @@ a:active {
 
 /* Safe area padding for notched devices */
 @supports (padding: max(0px)) {
-  .pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
-  .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+  .pb-safe { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .pt-safe { padding-top: calc(12px + env(safe-area-inset-top)); }
   .pl-safe { padding-left: max(0.75rem, env(safe-area-inset-left)); }
   .pr-safe { padding-right: max(0.75rem, env(safe-area-inset-right)); }
 }
@@ -813,6 +841,21 @@ html {
     transition: background 0.1s ease;
   }
 }
+
+/* Mobile stat groups: 1 full-width column, no orphaned cards */
+@media (max-width: 767px) {
+  .stat-group { grid-template-columns: 1fr !important; }
+}
+
+/* Edge fade mask for scrollable pill rows */
+.edge-fade-right {
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+
+/* Scroll snap for segmented controls */
+.snap-x { scroll-snap-type: x mandatory; }
+.snap-start { scroll-snap-align: start; }
 
 /* Smooth font rendering */
 body {

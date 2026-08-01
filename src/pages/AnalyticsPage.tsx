@@ -117,9 +117,13 @@ export default function AnalyticsPage() {
   };
 
   const formatDuration = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = Math.round(seconds % 60);
-    return `${m}m ${s}s`;
+    const totalSeconds = Math.round(seconds);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   const maxUsers = gaData?.chart?.length ? Math.max(...gaData.chart.map(p => p.users), 1) : 1;
@@ -250,7 +254,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               <MetricCard
                 label="Bounce Rate"
-                value={`${gaData.overview.bounceRate}%`}
+                value={`${(gaData.overview.bounceRate * 100).toFixed(1)}%`}
                 pct={gaData.overview.bounceRatePct}
                 icon={<ArrowRightLeft className="h-5 w-5" />}
                 accent="yellow"
@@ -272,7 +276,8 @@ export default function AnalyticsPage() {
               />
               <MetricCard
                 label="Engagement Rate"
-                value={`${gaData.overview.engagementRate}%`}
+                value={`${(gaData.overview.engagementRate * 100).toFixed(1)}%`}
+                pct={gaData.overview.engagementRate !== undefined ? 0 : undefined}
                 icon={<Zap className="h-5 w-5" />}
                 accent="green"
                 hidePct
@@ -713,10 +718,10 @@ function BusinessPerformanceSection() {
 
         // Outstanding accounts receivable: unpaid, non-draft invoices by amount
         const outstanding = invoices
-          .filter(i => i.status !== 'paid' && i.status !== 'draft')
+          .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void')
           .reduce((s, i) => s + (i.amount || 0), 0);
         const overdue = invoices
-          .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.due_date && new Date(i.due_date) < now)
+          .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void' && i.due_date && new Date(i.due_date) < now)
           .reduce((s, i) => s + (i.amount || 0), 0);
 
         // 6-month revenue trend (by paid_at month)

@@ -481,6 +481,30 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       }
     });
 
+  const [displayCount, setDisplayCount] = useState(20);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setDisplayCount(20);
+  }, [filterStatus, searchQuery]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayCount((c) => Math.min(c + 20, filteredInvoices.length));
+        }
+      },
+      { rootMargin: '300px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredInvoices.length]);
+
+  const visibleInvoices = filteredInvoices.slice(0, displayCount);
+
   const exportCSV = () => {
     const headers = ['Invoice', 'Client', 'Status', 'Amount', 'Due Date'];
     const rows = filteredInvoices.map(inv => [
@@ -870,6 +894,14 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                 </div>
               );
             })}
+            {displayCount < filteredInvoices.length && (
+              <div ref={sentinelRef} className="col-span-full py-6 text-center">
+                <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
+                  <div className="h-4 w-4 border-2 border-white/10 border-t-[#3aa3eb] rounded-full animate-spin" />
+                  Loading more invoices...
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

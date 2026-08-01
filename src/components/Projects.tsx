@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectService, clientService, Project as SbProject, UserRole } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
@@ -8,13 +8,48 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
   ArrowDownIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  EllipsisHorizontalIcon,
+  EyeIcon,
+  FunnelIcon,
+  XMarkIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from './ConfirmDialog';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import { useToast } from '../contexts/ToastContext';
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
+  );
+  React.useEffect(() => {
+    const mql = window.matchMedia(query);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [query]);
+  return matches;
+}
+
+function isProjectOverdue(dueDate: string, status: string): boolean {
+  if (!dueDate || status === 'completed') return false;
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime();
+}
+
+function daysOverdue(dueDate: string): number {
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  return Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 interface User {
   email: string;
@@ -96,8 +131,10 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [industryFilter, setIndustryFilter] = useState('all');
   const [clients, setClients] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [activeTab, setActiveTab] = useState(kanbanColumns[0].id);
-  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<'due' | 'amount' | 'client'>('due');
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const [displayCount, setDisplayCount] = useState(20);
 
   useLoadingGuard(loading, setLoading);
 
@@ -425,16 +462,38 @@ export default function Projects({ currentUser }: ProjectsProps) {
   };
   const isAdmin = currentUser?.role === 'admin';
 
-  // Apply filters
-  const visibleProjects = projects.filter(project => {
-    const matchesSearch = !searchTerm ||
-      project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.client?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
-    const matchesIndustry = industryFilter === 'all' || project.industry === industryFilter;
-    return matchesSearch && matchesStatus && matchesClient && matchesIndustry;
-  });
+  // Sorted and filtered projects
+  const sortedProjects = React.useMemo(() => {
+    const filtered = projects.filter(project => {
+      const matchesSearch = !searchTerm ||
+        project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.client?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
+      const matchesIndustry = industryFilter === 'all' || project.industry === industryFilter;
+      return matchesSearch && matchesStatus && matchesClient && matchesIndustry;
+    });
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      if (sortBy === 'due') {
+        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        return aDate - bDate;
+      }
+      if (sortBy === 'amount') {
+        const aBudget = parseFloat(a.budget.replace(/[^0-9.]/g, '')) || 0;
+        const bBudget = parseFloat(b.budget.replace(/[^0-9.]/g, '')) || 0;
+        return bBudget - aBudget;
+      }
+      if (sortBy === 'client') {
+        return (a.client || '').localeCompare(b.client || '');
+      }
+      return 0;
+    });
+    return sorted;
+  }, [projects, searchTerm, statusFilter, clientFilter, industryFilter, sortBy]);
+
+  const visibleProjects = sortedProjects;
 
   const uniqueIndustries = Array.from(new Set(projects.map(p => p.industry).filter(Boolean)));
 
@@ -476,7 +535,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden p-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-gray-300 hover:text-white transition-all transition-all"
+                className="lg:hidden p-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-gray-300 hover:text-white transition-all"
               >
                 <AdjustmentsHorizontalIcon className="h-5 w-5" />
               </button>
@@ -492,32 +551,44 @@ export default function Projects({ currentUser }: ProjectsProps) {
             </div>
           </div>
 
-          {/* Mobile Tabs */}
-          <div className="lg:hidden flex overflow-x-auto pb-2 mb-6 gap-2 custom-scrollbar">
-            {kanbanColumns.map((col) => {
-              const isActive = activeTab === col.id;
-              const count = getProjectsByStatus(col.id).length;
-              return (
-                <button
-                  key={col.id}
-                  onClick={() => setActiveTab(col.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 border ${isActive
-                    ? 'bg-blue-500/20 border-blue-500/50 text-white shadow-lg shadow-blue-500/10'
-                    : 'bg-slate-800/30 border-slate-700/50 text-gray-400 hover:border-slate-600'
-                    }`}
-                >
-                  <div className={`w-2 h-2 rounded-full ${col.color}`}></div>
-                  <span className="text-xs font-bold tracking-tight">{col.title}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700/50 text-gray-500'}`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Mobile Segmented Control — scroll-snap, no wrap, edge fade */}
+          {!isDesktop && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 overflow-x-auto snap-x edge-fade-right" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 py-1">
+                  {kanbanColumns.map((col) => {
+                    const isActive = activeTab === col.id;
+                    const count = visibleProjects.filter(p => p.status === col.id).length;
+                    return (
+                      <button
+                        key={col.id}
+                        onClick={() => { setActiveTab(col.id); setDisplayCount(20); }}
+                        className={`snap-start flex items-center gap-1.5 px-3.5 h-11 rounded-full whitespace-nowrap transition-all duration-200 border shrink-0 ${isActive
+                          ? 'bg-[#3aa3eb]/20 border-[#3aa3eb]/50 text-white'
+                          : 'bg-white/[0.06] border-white/8 text-gray-400'
+                        }`}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${col.color}`} />
+                        <span className="text-xs font-semibold">{col.title}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]' : 'bg-white/8 text-gray-500'}`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFilterSheet(true)}
+                className="shrink-0 flex items-center gap-1.5 px-3 h-11 rounded-full bg-white/[0.06] border border-white/8 text-gray-300"
+              >
+                <FunnelIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
 
-          {/* Filters */}
-          <div className={`${showFilters ? 'block' : 'hidden'} lg:block transition-all duration-300`}>
+          {/* Desktop Filters — hidden on mobile */}
+          <div className="hidden lg:block">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search</label>
@@ -620,7 +691,90 @@ export default function Projects({ currentUser }: ProjectsProps) {
         </div>
       </div>
 
-      {/* Kanban Board - Scrollable Area */}
+      {/* Mobile: single-status list with infinite scroll */}
+      {!isDesktop && (
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-4">
+          <div className="space-y-3">
+            {(() => {
+              const statusProjects = sortedProjects.filter(p => p.status === activeTab);
+              const shown = statusProjects.slice(0, displayCount);
+              return (
+                <>
+                  {shown.map((project) => {
+                    const overdue = isProjectOverdue(project.dueDate, project.status);
+                    const odDays = overdue ? daysOverdue(project.dueDate) : 0;
+                    return (
+                      <div
+                        key={project.id}
+                        className="card-press card-lift bg-[#16181c] border border-white/8 rounded-xl p-4 cursor-pointer"
+                        onClick={() => handleViewProject(project)}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="text-white font-semibold text-[17px] leading-tight flex-1 min-w-0 truncate">
+                            {project.name}
+                          </h4>
+                          <span className="text-white font-bold text-base tabular-nums shrink-0">
+                            {project.budget}
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm truncate mb-2">
+                          {project.client} · {project.project_type || 'General'}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">
+                              Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}
+                            </span>
+                            {overdue && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                                Overdue {odDays}d
+                              </span>
+                            )}
+                          </div>
+                          <ProjectOverflowMenu
+                            project={project}
+                            isAdmin={isAdmin}
+                            onView={handleViewProject}
+                            onEdit={handleEditProject}
+                            onDelete={handleDeleteProject}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {statusProjects.length > displayCount && (
+                    <div
+                      ref={(el) => {
+                        if (!el) return;
+                        const observer = new IntersectionObserver((entries) => {
+                          if (entries[0].isIntersecting) {
+                            setDisplayCount(c => Math.min(c + 20, statusProjects.length));
+                          }
+                        }, { rootMargin: '200px' });
+                        observer.observe(el);
+                      }}
+                      className="py-4 text-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
+                        <div className="h-4 w-4 border-2 border-white/10 border-t-[#3aa3eb] rounded-full animate-spin" />
+                        Loading more...
+                      </div>
+                    </div>
+                  )}
+                  {statusProjects.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16 px-4 rounded-xl border-2 border-dashed border-slate-700/50">
+                      <p className="text-gray-400 text-sm font-medium">No projects in this stage</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Kanban Board */}
+      {isDesktop && (
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full flex lg:grid lg:grid-cols-4 gap-6 overflow-x-auto lg:overflow-x-visible pb-4 pt-8 custom-scrollbar">
           {kanbanColumns.map((column) => (
@@ -647,70 +801,62 @@ export default function Projects({ currentUser }: ProjectsProps) {
               </div>
 
               <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-4">
-                {getProjectsByStatus(column.id).map((project) => (
-                  <div
-                    key={project.id}
-                    className={`group bg-[#0d1117]/50 border border-gray-800/50 hover:border-blue-500/30 rounded-[10px] p-4 sm:p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''}`}
-                    draggable={isAdmin}
-                    onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
-                    onDragEnd={isAdmin ? handleDragEnd : undefined}
-                    onClick={(e) => {
-                      if (!isDragging) {
-                        handleViewProject(project);
-                      } else {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                  >
-                    <div className="space-y-4">
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
-                          {project.name}
-                        </h4>
-                        <p className="text-gray-400 text-xs font-medium truncate">
-                          {project.client}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
-                          {project.project_type || 'General'}
-                        </span>
-                        {/* Action hints - shown on hover */}
-                        <div className="flex items-center space-x-1 sm:space-x-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
-                            className="text-gray-400 hover:text-blue-400 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
-                            className="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+                {getProjectsByStatus(column.id).map((project) => {
+                  const overdue = isProjectOverdue(project.dueDate, project.status);
+                  const odDays = overdue ? daysOverdue(project.dueDate) : 0;
+                  return (
+                    <div
+                      key={project.id}
+                      className={`group bg-[#0d1117]/50 border border-gray-800/50 hover:border-blue-500/30 rounded-[10px] p-4 sm:p-5 transition-all duration-300 cursor-pointer ${draggedProject?.id === project.id ? 'opacity-40 scale-95 outline-none' : ''}`}
+                      draggable={isAdmin}
+                      onDragStart={isAdmin ? (e) => handleDragStart(e, project) : undefined}
+                      onDragEnd={isAdmin ? handleDragEnd : undefined}
+                      onClick={(e) => {
+                        if (!isDragging) {
+                          handleViewProject(project);
+                        } else {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-1.5 min-w-0">
+                          <h4 className="text-white font-black text-base leading-tight min-w-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                            {project.name}
+                          </h4>
+                          <p className="text-gray-400 text-xs font-medium truncate">
+                            {project.client}
+                          </p>
                         </div>
-                      </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-0.5">
-                          {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Due Date</span> */}
-                          <span className="text-xs text-gray-300">
-                            {project.status === 'in_progress' ? (getDaysUntilDue(project.dueDate) || 'Due: —') : `Due: ${project.dueDate ? formatAppDate(project.dueDate) : '—'}`}
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(59, 163, 234, 0.33)', border: '1px solid rgba(59, 163, 234, 1)', color: '#ffffff' }}>
+                            {project.project_type || 'General'}
                           </span>
+                          {overdue && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                              Overdue {odDays}d
+                            </span>
+                          )}
                         </div>
-                        <div className="text-right flex flex-col gap-0.5">
-                          {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Value</span> */}
-                          <span className="text-xs text-gray-300">
-                            {project.budget}
-                          </span>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-gray-300">
+                              {project.status === 'in_progress' ? (getDaysUntilDue(project.dueDate) || 'Due: —') : `Due: ${project.dueDate ? formatAppDate(project.dueDate) : '—'}`}
+                            </span>
+                          </div>
+                          <div className="text-right flex flex-col gap-0.5">
+                            <span className="text-xs text-gray-300">
+                              {project.budget}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {getProjectsByStatus(column.id).length === 0 && (
                   <div className={`flex flex-col items-center justify-center py-16 px-4 rounded-xl border-2 border-dashed transition-all duration-300 ${dragOverColumn === column.id
@@ -733,6 +879,26 @@ export default function Projects({ currentUser }: ProjectsProps) {
           ))}
         </div>
       </div>
+      )}
+
+      {/* Mobile Filter Sheet */}
+      {!isDesktop && (
+        <ProjectFilterSheet
+          open={showFilterSheet}
+          onClose={() => setShowFilterSheet(false)}
+          onApply={() => setShowFilterSheet(false)}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          clientFilter={clientFilter}
+          setClientFilter={setClientFilter}
+          industryFilter={industryFilter}
+          setIndustryFilter={setIndustryFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          clients={clients}
+          industries={Array.from(new Set(projects.map(p => p.industry).filter(Boolean))) as string[]}
+        />
+      )}
 
       <ProjectModal
         isOpen={isModalOpen}
@@ -751,5 +917,151 @@ export default function Projects({ currentUser }: ProjectsProps) {
         message={`Are you sure you want to delete "${selectedProject?.name}"? This action cannot be undone.`}
       />
     </div >
+  );
+}
+
+function ProjectOverflowMenu({ project, isAdmin, onView, onEdit, onDelete }: {
+  project: any;
+  isAdmin: boolean;
+  onView: (p: any) => void;
+  onEdit: (p: any) => void;
+  onDelete: (p: any) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+      >
+        <EllipsisHorizontalIcon className="h-5 w-5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
+          <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(project); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
+            <EyeIcon className="h-4 w-4" /> View
+          </button>
+          {isAdmin && (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(project); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
+                <PencilIcon className="h-4 w-4" /> Edit
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(project); }} className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                <TrashIcon className="h-4 w-4" /> Delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectFilterSheet({
+  open, onClose, onApply,
+  searchTerm, setSearchTerm,
+  clientFilter, setClientFilter,
+  industryFilter, setIndustryFilter,
+  sortBy, setSortBy,
+  clients, industries,
+}: {
+  open: boolean; onClose: () => void; onApply: () => void;
+  searchTerm: string; setSearchTerm: (v: string) => void;
+  clientFilter: string; setClientFilter: (v: string) => void;
+  industryFilter: string; setIndustryFilter: (v: string) => void;
+  sortBy: 'due' | 'amount' | 'client'; setSortBy: (v: 'due' | 'amount' | 'client') => void;
+  clients: { id: string; name: string }[];
+  industries: string[];
+}) {
+  const startY = useRef<number | null>(null);
+  if (!open) return null;
+
+  const handleTouchStart = (e: React.TouchEvent) => { startY.current = e.touches[0].clientY; };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY.current === null) return;
+    if (e.touches[0].clientY - startY.current > 80) { onClose(); startY.current = null; }
+  };
+  const activeCount = [searchTerm, clientFilter !== 'all', industryFilter !== 'all', sortBy !== 'due'].filter(Boolean).length;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        className="ios-sheet-panel ios-sheet-enter absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1.5 rounded-full bg-white/20" />
+        </div>
+        <div className="flex items-center justify-between px-5 pb-3 border-b border-white/8">
+          <h3 className="text-lg font-bold text-white">Filters & Sort</h3>
+          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-white">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Search</label>
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Client</label>
+            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="all">All Clients</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Industry</label>
+            <select value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="all">All Industries</option>
+              {industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sort By</label>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'due' | 'amount' | 'client')} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="due">Due Date</option>
+              <option value="amount">Amount</option>
+              <option value="client">Client Name</option>
+            </select>
+          </div>
+        </div>
+        <div className="sticky bottom-0 flex gap-3 px-5 py-4 border-t border-white/8" style={{ background: '#1c1f24', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={() => { setSearchTerm(''); setClientFilter('all'); setIndustryFilter('all'); setSortBy('due'); }}
+            className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-300 font-medium"
+            style={{ fontSize: '16px' }}
+          >
+            Clear all
+          </button>
+          <button
+            onClick={onApply}
+            className="flex-1 py-3 bg-[#3aa3eb] rounded-xl text-white font-medium"
+            style={{ fontSize: '16px' }}
+          >
+            Apply{activeCount > 0 ? ` (${activeCount})` : ''}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

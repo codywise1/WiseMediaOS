@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
@@ -12,7 +12,11 @@ import {
   Squares2X2Icon,
   Bars3Icon,
   MagnifyingGlassIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  EllipsisHorizontalIcon,
+  FunnelIcon,
+  XMarkIcon,
+  ArrowUpOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRight } from 'lucide-react';
 import ClientModal from './ClientModal';
@@ -22,6 +26,190 @@ import CategoryBadge from './CategoryBadge';
 import { clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 import { formatPhoneNumber } from '../lib/phoneFormat';
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [query]);
+  return matches;
+}
+
+function FilterSheet({
+  open,
+  onClose,
+  onApply,
+  searchQuery, setSearchQuery,
+  stateFilter, setStateFilter,
+  categoryFilter, setCategoryFilter,
+  locationFilter, setLocationFilter,
+  sortBy, setSortBy,
+  uniqueCategories,
+  uniqueLocations,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onApply: () => void;
+  searchQuery: string; setSearchQuery: (v: string) => void;
+  stateFilter: string; setStateFilter: (v: string) => void;
+  categoryFilter: string; setCategoryFilter: (v: string) => void;
+  locationFilter: string; setLocationFilter: (v: string) => void;
+  sortBy: 'newest' | 'oldest'; setSortBy: (v: 'newest' | 'oldest') => void;
+  uniqueCategories: string[];
+  uniqueLocations: string[];
+}) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const startY = useRef<number | null>(null);
+  const activeCount = [searchQuery, stateFilter !== 'all', categoryFilter !== 'all', locationFilter !== 'all', sortBy !== 'newest'].filter(Boolean).length;
+
+  if (!open) return null;
+
+  const handleTouchStart = (e: React.TouchEvent) => { startY.current = e.touches[0].clientY; };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY.current === null) return;
+    const delta = e.touches[0].clientY - startY.current;
+    if (delta > 80) { onClose(); startY.current = null; }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        ref={sheetRef}
+        className="ios-sheet-panel ios-sheet-enter absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1.5 rounded-full bg-white/20" />
+        </div>
+        <div className="flex items-center justify-between px-5 pb-3 border-b border-white/8">
+          <h3 className="text-lg font-bold text-white">Filters</h3>
+          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-white">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Search</label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+n                type="text"
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50"
+                style={{ fontSize: '16px' }}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Client State</label>
+            <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="all">All States</option>
+              <option value="prospect">Prospect</option>
+              <option value="active">Active</option>
+              <option value="vip">VIP</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Industry</label>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="all">All Categories</option>
+              {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Location</label>
+            <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="all">All Locations</option>
+              {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sort by Date</label>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')} className="w-full px-4 py-3 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50" style={{ fontSize: '16px' }}>
+              <option value="newest">Newest to Oldest</option>
+              <option value="oldest">Oldest to Newest</option>
+            </select>
+          </div>
+        </div>
+        <div className="sticky bottom-0 flex gap-3 px-5 py-4 border-t border-white/8" style={{ background: '#1c1f24', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={() => { setSearchQuery(''); setStateFilter('all'); setCategoryFilter('all'); setLocationFilter('all'); setSortBy('newest'); }}
+            className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-300 font-medium"
+            style={{ fontSize: '16px' }}
+          >
+            Clear all
+          </button>
+          <button
+            onClick={onApply}
+            className="flex-1 py-3 bg-[#3aa3eb] rounded-xl text-white font-medium"
+            style={{ fontSize: '16px' }}
+          >
+            Apply{activeCount > 0 ? ` (${activeCount})` : ''}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OverflowMenu({ client, isAdmin, onView, onEdit, onDelete }: {
+  client: Client;
+  isAdmin: boolean;
+  onView: (c: Client) => void;
+  onEdit: (c: Client) => void;
+  onDelete: (c: Client) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+        title="More"
+      >
+        <EllipsisHorizontalIcon className="h-5 w-5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
+          <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
+            <EyeIcon className="h-4 w-4" /> View Details
+          </button>
+          {isAdmin && (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
+                <PencilIcon className="h-4 w-4" /> Edit
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(client); }} className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                <TrashIcon className="h-4 w-4" /> Delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface User {
   email: string;
@@ -54,6 +242,9 @@ export default function Clients({ currentUser }: ClientsProps) {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     return (localStorage.getItem('clients_view_mode') as 'cards' | 'table') || 'cards';
   });
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const effectiveViewMode = isDesktop ? viewMode : 'cards';
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [stateFilter, setStateFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -248,6 +439,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
   const uniqueCategories = Array.from(new Set(clients.map(c => c.category).filter(Boolean)));
   const uniqueLocations = Array.from(new Set(clients.map(c => c.location).filter(Boolean)));
+  const activeFilterCount = [searchQuery, stateFilter !== 'all', categoryFilter !== 'all', locationFilter !== 'all', sortBy !== 'newest'].filter(Boolean).length;
 
 
   if (loading) {
@@ -277,21 +469,37 @@ export default function Clients({ currentUser }: ClientsProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
-            {/* View Toggle */}
-            <div className="ios-segmented shrink-0">
+            {/* View Toggle — hidden on mobile, forced to cards */}
+            {isDesktop && (
+              <div className="ios-segmented shrink-0">
+                <button
+                  onClick={() => handleViewModeChange('cards')}
+                  className={`ios-segmented-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                >
+                  <Squares2X2Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> Cards
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('table')}
+                  className={`ios-segmented-btn ${viewMode === 'table' ? 'active' : ''}`}
+                >
+                  <Bars3Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> List
+                </button>
+              </div>
+            )}
+
+            {/* Mobile filter button */}
+            {!isDesktop && (
               <button
-                onClick={() => handleViewModeChange('cards')}
-                className={`ios-segmented-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                onClick={() => setShowFilterSheet(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-gray-300"
               >
-                <Squares2X2Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> Cards
+                <FunnelIcon className="h-5 w-5" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#3aa3eb] text-white text-[10px] font-bold">{activeFilterCount}</span>
+                )}
               </button>
-              <button
-                onClick={() => handleViewModeChange('table')}
-                className={`ios-segmented-btn ${viewMode === 'table' ? 'active' : ''}`}
-              >
-                <Bars3Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> List
-              </button>
-            </div>
+            )}
 
             {isAdmin && (
               <button
@@ -305,8 +513,8 @@ export default function Clients({ currentUser }: ClientsProps) {
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        {/* Search and Filters — desktop only, mobile uses bottom sheet */}
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div className="space-y-1.5">
             <label className="ios-section-header !px-1 !pb-1">Search</label>
             <div className="relative">
@@ -499,7 +707,7 @@ export default function Clients({ currentUser }: ClientsProps) {
       </div>
 
       {/* Clients Display */}
-      {viewMode === 'table' ? (
+      {effectiveViewMode === 'table' ? (
         <ClientTableView
           clients={filteredClients}
           isAdmin={isAdmin}
@@ -592,34 +800,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                   <span className="text-xs text-gray-500 font-body truncate">
                     Added {formatAppDate(client.created_at)}
                   </span>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleViewClient(client); }}
-                      className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                      title="View Details"
-                    >
-                      <EyeIcon className="h-5 w-5" />
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEditClient(client); }}
-                          className="p-2 rounded-lg text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/15 transition-all"
-                          title="Edit"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteClient(client); }}
-                          className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/15 transition-all"
-                          title="Delete"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <OverflowMenu client={client} isAdmin={isAdmin} onView={handleViewClient} onEdit={handleEditClient} onDelete={handleDeleteClient} />
                 </div>
               </div>
             );
@@ -671,6 +852,24 @@ export default function Clients({ currentUser }: ClientsProps) {
           )}
         </div>
       )}
+
+      <FilterSheet
+        open={showFilterSheet}
+        onClose={() => setShowFilterSheet(false)}
+        onApply={() => setShowFilterSheet(false)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        stateFilter={stateFilter}
+        setStateFilter={setStateFilter}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        locationFilter={locationFilter}
+        setLocationFilter={setLocationFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        uniqueCategories={uniqueCategories}
+        uniqueLocations={uniqueLocations}
+      />
 
       <ClientModal
         isOpen={isModalOpen}

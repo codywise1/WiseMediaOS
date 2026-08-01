@@ -383,8 +383,8 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         )}
 
         {/* Mobile Bottom Tab Bar (iOS style) */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe">
-          <div className="glass-card border-t border-white/10 px-2 pt-2 pb-1 backdrop-blur-xl bg-black/40">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+          <div className="border-t border-white/10 px-2 pt-2" style={{ background: '#16181c' }}>
             <div className="flex items-center justify-around max-w-md mx-auto">
               {dockItems.map(item => {
                 const isActive = location.pathname === item.href
