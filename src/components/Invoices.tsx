@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseAvailable, authService, UserRole } from '../lib/supabase';
@@ -22,8 +22,9 @@ import {
 import { useToast } from '../contexts/ToastContext';
 import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
-import { generateInvoicePDF } from '../utils/pdfGenerator';
-import PaymentModal from './PaymentModal';
+const generateInvoicePDF = (invoice: any) =>
+  import('../utils/pdfGenerator').then(m => m.generateInvoicePDF(invoice));
+const PaymentModal = lazy(() => import('./PaymentModal'));
 import {
   isVoid,
   isUnpaid,
@@ -936,15 +937,17 @@ export default function Invoices({ currentUser }: InvoicesProps) {
       />
 
       {selectedInvoice && (
-        <PaymentModal
-          isOpen={isPaymentModalOpen}
-          onClose={() => {
-            setIsPaymentModalOpen(false);
-            setSelectedInvoice(undefined);
-          }}
-          invoice={selectedInvoice as any}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
+        <Suspense fallback={null}>
+          <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => {
+              setIsPaymentModalOpen(false);
+              setSelectedInvoice(undefined);
+            }}
+            invoice={selectedInvoice as any}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        </Suspense>
       )}
     </div>
   );
