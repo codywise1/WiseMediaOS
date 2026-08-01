@@ -110,6 +110,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
   const [generatingPDFId, setGeneratingPDFId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
