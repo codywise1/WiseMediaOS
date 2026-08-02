@@ -869,3 +869,12 @@ body {
   .h-screen { height: 100dvh; }
   .min-h-screen { min-height: 100dvh; }
 }
+
+/* Hide scrollbar for horizontally scrollable filter bars */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

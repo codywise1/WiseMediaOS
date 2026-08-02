@@ -698,26 +698,26 @@ export default function CommunityFeedPage() {
                         <p className="text-white font-bold truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {authorName}
                         </p>
-                        <span className="text-xs text-gray-500" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                        <span className="text-xs text-gray-500 whitespace-nowrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                           {formatAppDateTime(post.created_at)}
                         </span>
                         {post.is_pinned && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#3AA3EB]/20 text-[#3AA3EB] border border-[#3AA3EB]/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#3AA3EB]/20 text-[#3AA3EB] border border-[#3AA3EB]/30 whitespace-nowrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             PINNED
                           </span>
                         )}
                         {post.is_featured && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 whitespace-nowrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             FEATURED
                           </span>
                         )}
                         {post.is_hidden && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 whitespace-nowrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             HIDDEN
                           </span>
                         )}
                         {post.visibility === 'pro' && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 whitespace-nowrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                             PRO
                           </span>
                         )}
@@ -742,7 +742,7 @@ export default function CommunityFeedPage() {
                     </div>
 
                     {(isAdmin || post.user_id === profile?.id) && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end sm:flex-nowrap">
                         {isAdmin && (
                           <>
                             <button
@@ -750,21 +750,21 @@ export default function CommunityFeedPage() {
                               className={`p-2 rounded-lg transition-colors ${post.is_pinned ? 'text-[#3AA3EB] bg-[#3AA3EB]/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
                               title={post.is_pinned ? 'Unpin Post' : 'Pin Post'}
                             >
-                              <Pin size={18} />
+                              <Pin size={16} />
                             </button>
                             <button
                               onClick={() => togglePostFlag(post.id, 'is_featured', !!post.is_featured)}
                               className={`p-2 rounded-lg transition-colors ${post.is_featured ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
                               title={post.is_featured ? 'Unfeature Post' : 'Feature Post'}
                             >
-                              <Star size={18} />
+                              <Star size={16} />
                             </button>
                             <button
                               onClick={() => togglePostFlag(post.id, 'is_hidden', !!post.is_hidden)}
                               className={`p-2 rounded-lg transition-colors ${post.is_hidden ? 'text-red-400 bg-red-400/10' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
                               title={post.is_hidden ? 'Unhide Post' : 'Hide Post'}
                             >
-                              {post.is_hidden ? <Eye size={18} /> : <EyeOff size={18} />}
+                              {post.is_hidden ? <Eye size={16} /> : <EyeOff size={16} />}
                             </button>
                           </>
                         )}
@@ -778,14 +778,14 @@ export default function CommunityFeedPage() {
                           className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                           title="Edit Post"
                         >
-                          <Edit2 size={18} />
+                          <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => confirmDeletePost(post.id)}
                           className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                           title="Delete Post"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     )}

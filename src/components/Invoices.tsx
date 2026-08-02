@@ -856,9 +856,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
                       <button
                         onClick={() => navigate(`/invoices/${invoice.id}`)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors whitespace-nowrap"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 shrink-0" />
                         View Details
                       </button>
                       <div className="flex items-center gap-1.5">

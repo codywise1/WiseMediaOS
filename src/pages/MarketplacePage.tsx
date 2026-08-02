@@ -241,13 +241,15 @@ export default function MarketplacePage() {
             </button>
           )}
         </div>
-        <div className="ios-segmented w-full overflow-x-auto">
-          {CATEGORIES.map((cat) => (
-            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-              className={`ios-segmented-btn flex-1 ${selectedCategory === cat.id ? 'active' : ''}`}>
-              {cat.label}
-            </button>
-          ))}
+        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="ios-segmented inline-flex min-w-max">
+            {CATEGORIES.map((cat) => (
+              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+                className={`ios-segmented-btn flex-shrink-0 ${selectedCategory === cat.id ? 'active' : ''}`}>
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
