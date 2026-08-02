@@ -3,8 +3,8 @@ import { DocumentTextIcon, CreditCardIcon, TruckIcon, CheckBadgeIcon } from '@he
 import PageHeader from '../components/PageHeader';
 
 const orders = [
-  { id: 'ORD-1024', client: 'Acme Corp', total: '$4,200', status: 'Processing', date: '2025-05-04', method: 'Stripe' },
-  { id: 'ORD-1023', client: 'Nova Labs', total: '$1,180', status: 'Paid', date: '2025-05-02', method: 'PayPal' },
+  { id: 'ORD-1024', client: 'Acme Corp', total: '$4,200', status: 'Processing', date: '2025-05-04', method: 'Card' },
+  { id: 'ORD-1023', client: 'Nova Labs', total: '$1,180', status: 'Paid', date: '2025-05-02', method: 'Bank' },
   { id: 'ORD-1022', client: 'Pixel Studio', total: '$890', status: 'Shipped', date: '2025-05-01', method: 'Card' },
   { id: 'ORD-1021', client: 'Orion Media', total: '$2,430', status: 'Pending', date: '2025-04-29', method: 'Invoice' },
 ];
@@ -79,7 +79,7 @@ export default function Orders() {
               </div>
               <div className="col-span-2 text-gray-300">{order.date}</div>
               <div className="col-span-1 flex justify-end text-gray-300">
-                {order.method === 'Stripe' ? <CreditCardIcon className="h-5 w-5" /> : order.method === 'Invoice' ? <TruckIcon className="h-5 w-5" /> : <CreditCardIcon className="h-5 w-5" />}
+                {order.method === 'Invoice' ? <TruckIcon className="h-5 w-5" /> : <CreditCardIcon className="h-5 w-5" />}
               </div>
             </div>
           ))}

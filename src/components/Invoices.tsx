@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseAvailable, authService, UserRole } from '../lib/supabase';
@@ -24,7 +24,6 @@ import InvoiceModal from './InvoiceModal';
 import ConfirmDialog from './ConfirmDialog';
 const generateInvoicePDF = (invoice: any) =>
   import('../utils/pdfGenerator').then(m => m.generateInvoicePDF(invoice));
-const PaymentModal = lazy(() => import('./PaymentModal'));
 import {
   isVoid,
   isUnpaid,
@@ -104,8 +103,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceView | undefined>();
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [filterStatus, setFilterStatus] = useState<'all' | 'unpaid' | 'overdue' | 'paid' | 'void'>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'>('date_desc');
@@ -412,13 +411,22 @@ export default function Invoices({ currentUser }: InvoicesProps) {
     }
   };
 
-  const handlePayInvoice = (invoice: InvoiceView) => {
-    setSelectedInvoice(invoice);
-    setIsPaymentModalOpen(true);
-  };
-
-  const handlePaymentSuccess = async () => {
-    await loadInvoices();
+  const handleMarkPaid = async (invoice: InvoiceView) => {
+    try {
+      setMarkingPaidId(invoice.id);
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ status: 'paid', paid_at: new Date().toISOString() })
+        .eq('id', invoice.id);
+      if (updateError) throw updateError;
+      toastSuccess(`Invoice ${invoice.number} marked as paid.`);
+      await loadInvoices();
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      toastError(error instanceof Error ? error.message : 'Failed to update invoice.');
+    } finally {
+      setMarkingPaidId(null);
+    }
   };
 
   const handleDownloadPDF = async (invoice: InvoiceView) => {
@@ -868,6 +876,20 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         </button>
                         {isAdmin ? (
                           <>
+                            {(invoice.status === 'pending' || invoice.status === 'unpaid' || isOverdue) && (
+                              <button
+                                onClick={() => handleMarkPaid(invoice)}
+                                disabled={markingPaidId === invoice.id}
+                                className="px-3 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:scale-105 hover:bg-emerald-400 transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                              >
+                                {markingPaidId === invoice.id ? (
+                                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white" />
+                                ) : (
+                                  <CheckCircle className="h-3.5 w-3.5" />
+                                )}
+                                Mark Paid
+                              </button>
+                            )}
                             <button
                               onClick={() => handleSendReminder(invoice)}
                               disabled={invoice.status === 'void'}
@@ -889,12 +911,18 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </>
-                        ) : (invoice.status === 'pending' || isOverdue) ? (
+                        ) : (invoice.status === 'pending' || invoice.status === 'unpaid' || isOverdue) ? (
                           <button
-                            onClick={() => handlePayInvoice(invoice)}
-                            className="px-4 py-2 rounded-xl bg-[#3aa3eb] text-white text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(58,163,235,0.4)]"
+                            onClick={() => handleMarkPaid(invoice)}
+                            disabled={markingPaidId === invoice.id}
+                            className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:scale-105 hover:bg-emerald-400 transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                           >
-                            Pay Now
+                            {markingPaidId === invoice.id ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white" />
+                            ) : (
+                              <CheckCircle className="h-3.5 w-3.5" />
+                            )}
+                            Mark Paid
                           </button>
                         ) : null}
                       </div>
@@ -936,19 +964,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         }
       />
 
-      {selectedInvoice && (
-        <Suspense fallback={null}>
-          <PaymentModal
-            isOpen={isPaymentModalOpen}
-            onClose={() => {
-              setIsPaymentModalOpen(false);
-              setSelectedInvoice(undefined);
-            }}
-            invoice={selectedInvoice as any}
-            onPaymentSuccess={handlePaymentSuccess}
-          />
-        </Suspense>
-      )}
     </div>
   );
 }

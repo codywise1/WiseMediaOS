@@ -400,7 +400,7 @@ export default function InvoiceModal({ isOpen, onClose, onSave, invoice, mode, c
               value={formData.voidReason}
               onChange={handleChange}
               className={inputCls}
-              placeholder="e.g. Voided in Stripe — subscription cycle replaced"
+              placeholder="e.g. Voided — client cancelled the project"
               required
             />
             <p className="text-xs text-gray-500 mt-1.5">Required. Explains why this invoice was voided. The void timestamp is stamped automatically.</p>
