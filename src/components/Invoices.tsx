@@ -199,8 +199,8 @@ export default function Invoices({ currentUser }: InvoicesProps) {
 
   const totalPending = totalUnpaid(invoices);
   const totalOverdueAmt = totalOverdue(invoices);
-  const totalPaid = totalPaid(invoices);
-  const totalOutstanding = totalOutstanding(invoices);
+  const totalPaidAmt = totalPaid(invoices);
+  const totalOutstandingAmt = totalOutstanding(invoices);
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -654,7 +654,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Collected</span>
-                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>${totalPaid.toLocaleString()}</span>
+                <span className="text-2xl font-black text-green-400 tabular-nums" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>${totalPaidAmt.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -666,9 +666,9 @@ export default function Invoices({ currentUser }: InvoicesProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[
             { label: 'Invoices Sent · 30d', value: invoices.length, icon: Eye, iconBg: 'bg-[#3aa3eb]/20' },
-            { label: 'Total Cash Collected', value: `${totalPaid.toLocaleString()}`, icon: CheckCircle, iconBg: 'bg-green-500/20' },
+            { label: 'Total Cash Collected', value: `${totalPaidAmt.toLocaleString()}`, icon: CheckCircle, iconBg: 'bg-green-500/20' },
             { label: 'Overdue Funds', value: `${totalOverdueAmt.toLocaleString()}`, icon: AlertTriangle, iconBg: 'bg-red-500/20' },
-            { label: 'Total Outstanding', value: `${totalOutstanding.toLocaleString()}`, icon: CreditCard, iconBg: 'bg-blue-500/20' },
+            { label: 'Total Outstanding', value: `${totalOutstandingAmt.toLocaleString()}`, icon: CreditCard, iconBg: 'bg-blue-500/20' },
           ].map((stat, idx) => (
             <div key={idx} className="glass-card rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-300 hover-glow border border-white/10">
               <div className={`p-2 sm:p-3 rounded-xl ${stat.iconBg} shrink-0`}>
