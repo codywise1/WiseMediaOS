@@ -133,6 +133,8 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [sortBy, setSortBy] = useState<'due' | 'amount' | 'client'>('due');
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('not_started');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [displayCount, setDisplayCount] = useState(20);
 
@@ -335,6 +337,51 @@ export default function Projects({ currentUser }: ProjectsProps) {
         console.error('Error deleting project:', error);
         alert('Error deleting project. Please try again.');
       }
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, project: Project) => {
+    setDraggedProject(project);
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', project.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedProject(null);
+    setDragOverColumn(null);
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverColumn !== columnId) {
+      setDragOverColumn(columnId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColumn(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+    if (!draggedProject || draggedProject.status === columnId) {
+      setDraggedProject(null);
+      setIsDragging(false);
+      return;
+    }
+    const projectId = draggedProject.id;
+    setDraggedProject(null);
+    setIsDragging(false);
+    try {
+      await projectService.update(projectId, { status: columnId });
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: columnId as ProjectStatus } : p));
+    } catch (error) {
+      console.error('Error updating project status:', error);
+      toastError('Failed to update project status');
     }
   };
 
