@@ -8,7 +8,6 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
   ArrowDownIcon,
-  AdjustmentsHorizontalIcon,
   EllipsisHorizontalIcon,
   EyeIcon,
   FunnelIcon,
@@ -83,6 +82,16 @@ const kanbanColumns = [
   { id: 'completed', title: 'Completed', color: 'bg-green-500' }
 ];
 
+const statusAccentColor = (status: ProjectStatus) => {
+  switch (status) {
+    case 'not_started': return '#64748b';
+    case 'in_progress': return '#3aa3eb';
+    case 'in_review': return '#f59e0b';
+    case 'completed': return '#22c55e';
+    default: return '#64748b';
+  }
+};
+
 const ScrollbarStyles = () => (
   <style>{`
     .custom-scrollbar::-webkit-scrollbar {
@@ -133,7 +142,6 @@ export default function Projects({ currentUser }: ProjectsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [sortBy, setSortBy] = useState<'due' | 'amount' | 'client'>('due');
   const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('not_started');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [displayCount, setDisplayCount] = useState(20);
@@ -464,27 +472,21 @@ export default function Projects({ currentUser }: ProjectsProps) {
       {/* Header & Filters Section */}
       <div className="space-y-2">
         {/* Header */}
-        <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="glass-card neon-glow rounded-2xl p-3 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6">
             <div className="min-w-0">
-              <h1 className="font-display font-bold gradient-text leading-tight tracking-tight uppercase mb-2" style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)' }}>Projects</h1>
-              <p className="text-gray-400 text-sm sm:text-base">
+              <h1 className="font-display font-bold gradient-text leading-tight tracking-tight uppercase mb-1 sm:mb-2" style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)' }}>Projects</h1>
+              <p className="hidden sm:block text-gray-400 text-sm sm:text-base">
                 {currentUser?.role === 'admin'
                   ? 'Track progress, timelines, and deliverables across all work.'
                   : 'View active work, progress, and milestones.'}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden p-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-gray-300 hover:text-white transition-all"
-              >
-                <AdjustmentsHorizontalIcon className="h-5 w-5" />
-              </button>
               {isAdmin && (
                 <button
                   onClick={handleNewProject}
-                  className="btn-header-glass flex-1 sm:flex-none space-x-2"
+                  className="btn-header-glass flex-1 sm:flex-none space-x-2 h-11"
                 >
                   <span className="btn-text-glow whitespace-nowrap">New Project</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
@@ -493,11 +495,11 @@ export default function Projects({ currentUser }: ProjectsProps) {
             </div>
           </div>
 
-          {/* Mobile Segmented Control — scroll-snap, no wrap, edge fade */}
+          {/* Mobile Segmented Control — iOS pill selector */}
           {!isDesktop && (
             <div className="flex items-center gap-2 mb-4">
               <div className="flex-1 overflow-x-auto snap-x edge-fade-right" style={{ scrollbarWidth: 'none' }}>
-                <div className="flex gap-2 py-1">
+                <div className="flex gap-1.5 py-0.5">
                   {kanbanColumns.map((col) => {
                     const isActive = activeTab === col.id;
                     const count = visibleProjects.filter(p => p.status === col.id).length;
@@ -505,14 +507,13 @@ export default function Projects({ currentUser }: ProjectsProps) {
                       <button
                         key={col.id}
                         onClick={() => { setActiveTab(col.id); setDisplayCount(20); }}
-                        className={`snap-start flex items-center gap-1.5 px-3.5 h-11 rounded-full whitespace-nowrap transition-all duration-200 border shrink-0 ${isActive
-                          ? 'bg-[#3aa3eb]/20 border-[#3aa3eb]/50 text-white'
-                          : 'bg-white/[0.06] border-white/8 text-gray-400'
+                        className={`snap-start flex items-center gap-1.5 px-4 h-9 rounded-full whitespace-nowrap transition-all duration-200 shrink-0 ${isActive
+                          ? 'bg-[#3aa3eb] text-white shadow-[0_2px_8px_rgba(58,163,235,0.3)]'
+                          : 'bg-white/[0.06] text-gray-400 active:bg-white/10'
                         }`}
                       >
-                        <div className={`w-2 h-2 rounded-full ${col.color}`} />
-                        <span className="text-xs font-semibold">{col.title}</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]' : 'bg-white/8 text-gray-500'}`}>
+                        <span className="text-[13px] font-semibold" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{col.title}</span>
+                        <span className={`text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-white/10 text-gray-500'}`}>
                           {count}
                         </span>
                       </button>
@@ -522,7 +523,7 @@ export default function Projects({ currentUser }: ProjectsProps) {
               </div>
               <button
                 onClick={() => setShowFilterSheet(true)}
-                className="shrink-0 flex items-center gap-1.5 px-3 h-11 rounded-full bg-white/[0.06] border border-white/8 text-gray-300"
+                className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.06] text-gray-300 active:bg-white/10 transition-colors"
               >
                 <FunnelIcon className="h-4 w-4" />
               </button>
@@ -648,38 +649,47 @@ export default function Projects({ currentUser }: ProjectsProps) {
                     return (
                       <div
                         key={project.id}
-                        className="card-press card-lift bg-[#16181c] border border-white/8 rounded-xl p-4 cursor-pointer"
+                        className="card-press card-lift relative bg-[#1c1c1e]/80 backdrop-blur-xl border border-white/10 rounded-2xl cursor-pointer overflow-hidden"
                         onClick={() => handleViewProject(project)}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-white font-semibold text-[17px] leading-tight flex-1 min-w-0 truncate">
-                            {project.name}
-                          </h4>
-                          <span className="text-white font-bold text-base tabular-nums shrink-0">
-                            {project.budget}
-                          </span>
-                        </div>
-                        <p className="text-gray-400 text-sm truncate mb-2">
-                          {project.client} · {project.project_type || 'General'}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              Due: {project.dueDate ? formatAppDate(project.dueDate) : '—'}
+                        <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: statusAccentColor(project.status) }} />
+                        <div className="pl-5 pr-3 py-3.5">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="text-white font-semibold text-[16px] leading-tight flex-1 min-w-0 truncate" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
+                              {project.name}
+                            </h4>
+                            <span className="text-white font-bold text-[15px] tabular-nums shrink-0">
+                              {project.budget}
                             </span>
-                            {overdue && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
-                                Overdue {odDays}d
-                              </span>
-                            )}
                           </div>
-                          <ProjectOverflowMenu
-                            project={project}
-                            isAdmin={isAdmin}
-                            onView={handleViewProject}
-                            onEdit={handleEditProject}
-                            onDelete={handleDeleteProject}
-                          />
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <p className="text-gray-400 text-[13px] truncate">
+                              {project.client}
+                            </p>
+                            <span className="text-gray-600 text-xs">·</span>
+                            <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-white/8 text-gray-400 shrink-0">
+                              {project.project_type || 'General'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">
+                                {project.dueDate ? formatAppDate(project.dueDate) : 'No due date'}
+                              </span>
+                              {overdue && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                                  {odDays}d overdue
+                                </span>
+                              )}
+                            </div>
+                            <ProjectOverflowMenu
+                              project={project}
+                              isAdmin={isAdmin}
+                              onView={handleViewProject}
+                              onEdit={handleEditProject}
+                              onDelete={handleDeleteProject}
+                            />
+                          </div>
                         </div>
                       </div>
                     );

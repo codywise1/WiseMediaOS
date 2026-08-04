@@ -6,6 +6,7 @@ import { serviceTemplates } from '../config/serviceTemplates';
 import {
   fetchLogoDataUrl,
   stripMarkdown,
+  renderTermsHtml,
   fmtMoney,
   fmtDate,
   fmtDateLong,
@@ -292,7 +293,7 @@ export const generateTermsAndConditionsPDF = async (proposalTitle: string, clien
         </div>
       </div>
 
-      <div style="font-size: 13px; color: ${SLATE}; line-height: 1.8; white-space: pre-wrap;">${stripMarkdown(termsText)}</div>
+      <div style="font-size: 13px; color: ${SLATE}; line-height: 1.8;">${renderTermsHtml(termsText)}</div>
 
       ${footerBlock()}
     </div>

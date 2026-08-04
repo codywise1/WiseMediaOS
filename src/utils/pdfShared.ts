@@ -45,6 +45,77 @@ export function stripMarkdown(text: string): string {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
 }
 
+export function renderTermsHtml(
+  text: string,
+  opts: { headingColor?: string; bodyColor?: string; accent?: string; line?: string } = {},
+): string {
+  if (!text) return '';
+  const ink = opts.headingColor || INK;
+  const body = opts.bodyColor || SLATE;
+  const accent = opts.accent || ACCENT;
+  const line = opts.line || LINE;
+
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (s: string) =>
+    esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: 700; color: ' + ink + ';">$1</strong>')
+      .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em style="font-style: italic;">$1</em>');
+
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
+  const blocks: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    if (!trimmed) { i++; continue; }
+
+    if (trimmed === '---') {
+      blocks.push('<hr style="border: 0; border-top: 1px solid ' + line + '; margin: 24px 0;" />');
+      i++; continue;
+    }
+
+    const h2 = trimmed.match(/^##\s+(.+)$/);
+    if (h2) {
+      blocks.push('<h2 style="font-size: 18px; font-weight: 800; color: ' + ink + '; margin: 28px 0 12px; letter-spacing: -0.3px;">' + inline(h2[1]) + '</h2>');
+      i++; continue;
+    }
+
+    const h3 = trimmed.match(/^###\s+(.+)$/);
+    if (h3) {
+      blocks.push('<h3 style="font-size: 14px; font-weight: 700; color: ' + ink + '; margin: 22px 0 8px;">' + inline(h3[1]) + '</h3>');
+      i++; continue;
+    }
+
+    const h1 = trimmed.match(/^#\s+(.+)$/);
+    if (h1) {
+      blocks.push('<h2 style="font-size: 20px; font-weight: 800; color: ' + ink + '; margin: 28px 0 12px; letter-spacing: -0.3px;">' + inline(h1[1]) + '</h2>');
+      i++; continue;
+    }
+
+    if (trimmed.startsWith('- ')) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('- ')) {
+        items.push(lines[i].trim().slice(2));
+        i++;
+      }
+      blocks.push('<ul style="list-style: none; padding-left: 0; margin: 0 0 14px;">' +
+        items.map(item => '<li style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;"><span style="color: ' + accent + '; font-weight: bold; flex-shrink: 0;">&bull;</span><span style="font-size: 12px; color: ' + body + '; line-height: 1.7;">' + inline(item) + '</span></li>').join('') +
+        '</ul>');
+      continue;
+    }
+
+    const para: string[] = [];
+    while (i < lines.length && lines[i].trim() && !lines[i].trim().startsWith('#') && !lines[i].trim().startsWith('- ') && lines[i].trim() !== '---') {
+      para.push(lines[i].trim());
+      i++;
+    }
+    blocks.push('<p style="font-size: 12px; color: ' + body + '; line-height: 1.7; margin: 0 0 14px;">' + inline(para.join(' ')) + '</p>');
+  }
+
+  return blocks.join('\n');
+}
+
 export function fmtMoney(n: number, cents = false): string {
   const v = cents ? n / 100 : n;
   return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

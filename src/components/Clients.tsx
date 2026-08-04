@@ -191,7 +191,7 @@ function OverflowMenu({ client, isAdmin, onView, onEdit, onDelete }: {
         <EllipsisHorizontalIcon className="h-5 w-5" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
+        <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
           <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
             <EyeIcon className="h-4 w-4" /> View Details
           </button>
@@ -723,9 +723,9 @@ export default function Clients({ currentUser }: ClientsProps) {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
 
             return (
-              <div key={client.id} className="ios-card rounded-2xl p-4 sm:p-6 transition-all duration-300 group relative overflow-hidden">
+              <div key={client.id} className="ios-card rounded-2xl p-4 sm:p-6 transition-all duration-300 group relative">
                 {/* Background Glow Effect */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#3aa3eb]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#3aa3eb]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-2xl"></div>
 
                 {/* Header Section */}
                 <div className="mb-5 sm:mb-6 relative z-10">

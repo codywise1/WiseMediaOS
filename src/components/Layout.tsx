@@ -383,8 +383,15 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
         )}
 
         {/* Mobile Bottom Tab Bar (iOS style) */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
-          <div className="border-t border-white/10 px-2 pt-2" style={{ background: '#16181c' }}>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div
+            className="rounded-t-3xl px-2 pt-2 pb-1 border-t border-white/10"
+            style={{
+              background: 'rgba(20, 20, 22, 0.72)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            }}
+          >
             <div className="flex items-center justify-around max-w-md mx-auto">
               {dockItems.map(item => {
                 const isActive = location.pathname === item.href
@@ -392,22 +399,24 @@ export default function Layout({ children, currentUser, onLogout, onUpdateProfil
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={`flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 min-w-[60px] ${isActive
-                      ? 'text-brand-400 scale-105'
-                      : 'text-gray-400 active:scale-95'
+                    className={`flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-200 min-w-[64px] ${isActive
+                      ? 'text-brand-400'
+                      : 'text-gray-500 active:scale-95'
                       }`}
                   >
-                    <item.icon className={`h-6 w-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                    <span className="text-[10px] font-medium truncate max-w-[64px]">{item.name}</span>
+                    <item.icon className={`h-[24px] w-[24px] transition-all ${isActive ? 'stroke-[2.5]' : ''}`} />
+                    <span className="text-[10px] font-medium truncate max-w-[64px]" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{item.name}</span>
+                    <div className={`h-1 rounded-full transition-all duration-300 ${isActive ? 'w-6 bg-[#3aa3eb]' : 'w-0 bg-transparent'}`} />
                   </NavLink>
                 )
               })}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 text-gray-400 active:scale-95 min-w-[60px]"
+                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-200 text-gray-500 active:scale-95 min-w-[64px]"
               >
-                <MoreHorizontal className="h-6 w-6" />
-                <span className="text-[10px] font-medium">More</span>
+                <MoreHorizontal className="h-[24px] w-[24px]" />
+                <span className="text-[10px] font-medium" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>More</span>
+                <div className="h-1 w-0 bg-transparent transition-all duration-300" />
               </button>
             </div>
           </div>
