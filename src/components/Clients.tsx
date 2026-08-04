@@ -3,22 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
 import {
-  UserGroupIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  Squares2X2Icon,
-  Bars3Icon,
-  MagnifyingGlassIcon,
-  ChevronRightIcon,
-  EllipsisHorizontalIcon,
-  FunnelIcon,
-  XMarkIcon,
-  ArrowUpOnSquareIcon
-} from '@heroicons/react/24/outline';
-import { ArrowRight } from 'lucide-react';
+  Users,
+  Phone,
+  Mail,
+  Pencil,
+  Trash2,
+  Eye,
+  LayoutGrid,
+  List,
+  Search,
+  ChevronRight,
+  MoreHorizontal,
+  Filter,
+  X,
+  ExternalLink,
+  ArrowRight
+} from 'lucide-react';
 import ClientModal from './ClientModal';
 import ConfirmDialog from './ConfirmDialog';
 import ClientTableView from './ClientTableView';
@@ -91,16 +91,16 @@ function FilterSheet({
         <div className="flex items-center justify-between px-5 pb-3 border-b border-white/8">
           <h3 className="text-lg font-bold text-white">Filters</h3>
           <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-white">
-            <XMarkIcon className="h-5 w-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
         <div className="px-5 py-4 space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Search</label>
             <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-n                type="text"
+                type="text"
                 placeholder="Search clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -188,20 +188,20 @@ function OverflowMenu({ client, isAdmin, onView, onEdit, onDelete }: {
         className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
         title="More"
       >
-        <EllipsisHorizontalIcon className="h-5 w-5" />
+        <MoreHorizontal className="h-5 w-5" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
+        <div className="absolute right-0 top-full mt-2 z-[60] w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
           <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
-            <EyeIcon className="h-4 w-4" /> View Details
+            <Eye className="h-4 w-4" /> View Details
           </button>
           {isAdmin && (
             <>
               <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
-                <PencilIcon className="h-4 w-4" /> Edit
+                <Pencil className="h-4 w-4" /> Edit
               </button>
               <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(client); }} className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
-                <TrashIcon className="h-4 w-4" /> Delete
+                <Trash2 className="h-4 w-4" /> Delete
               </button>
             </>
           )}
@@ -476,13 +476,13 @@ export default function Clients({ currentUser }: ClientsProps) {
                   onClick={() => handleViewModeChange('cards')}
                   className={`ios-segmented-btn ${viewMode === 'cards' ? 'active' : ''}`}
                 >
-                  <Squares2X2Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> Cards
+                  <LayoutGrid className="h-4 w-4 inline -mt-0.5 mr-1" /> Cards
                 </button>
                 <button
                   onClick={() => handleViewModeChange('table')}
                   className={`ios-segmented-btn ${viewMode === 'table' ? 'active' : ''}`}
                 >
-                  <Bars3Icon className="h-4 w-4 inline -mt-0.5 mr-1" /> List
+                  <List className="h-4 w-4 inline -mt-0.5 mr-1" /> List
                 </button>
               </div>
             )}
@@ -493,7 +493,7 @@ export default function Clients({ currentUser }: ClientsProps) {
                 onClick={() => setShowFilterSheet(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-gray-300"
               >
-                <FunnelIcon className="h-5 w-5" />
+                <Filter className="h-5 w-5" />
                 Filters
                 {activeFilterCount > 0 && (
                   <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#3aa3eb] text-white text-[10px] font-bold">{activeFilterCount}</span>
@@ -518,7 +518,7 @@ export default function Clients({ currentUser }: ClientsProps) {
           <div className="space-y-1.5">
             <label className="ios-section-header !px-1 !pb-1">Search</label>
             <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search clients..."
@@ -642,7 +642,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         >
           <div className="flex items-center">
             <div className={`p-2 sm:p-3 rounded-lg ${stateFilter === 'all' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/20'}`}>
-              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Total Clients</p>
@@ -660,7 +660,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         >
           <div className="flex items-center">
             <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'active' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
-              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Active Clients</p>
@@ -678,7 +678,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         >
           <div className="flex items-center">
             <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'vip' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
-              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-gray-400 font-body truncate">VIP Clients</p>
@@ -696,7 +696,7 @@ export default function Clients({ currentUser }: ClientsProps) {
         >
           <div className="flex items-center">
             <div className={`p-2.5 sm:p-3 rounded-xl ${stateFilter === 'prospect' ? 'bg-[#3aa3eb]' : 'bg-[#3aa3eb]/15'}`}>
-              <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm text-gray-400 font-body truncate">Prospects</p>
@@ -723,12 +723,15 @@ export default function Clients({ currentUser }: ClientsProps) {
             const statusInfo = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.active;
 
             return (
-              <div key={client.id} className="ios-card rounded-2xl p-4 sm:p-6 transition-all duration-300 group relative">
+              <div key={client.id} className="ios-card rounded-2xl p-4 sm:p-6 transition-all duration-300 group relative overflow-visible">
                 {/* Background Glow Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#3aa3eb]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-2xl"></div>
 
-                {/* Header Section */}
-                <div className="mb-5 sm:mb-6 relative z-10">
+                {/* Header Section — tappable to open detail */}
+                <div
+                  className="mb-5 sm:mb-6 relative z-10 cursor-pointer"
+                  onClick={() => handleViewClient(client)}
+                >
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase truncate mb-1 font-display">
@@ -773,24 +776,24 @@ export default function Clients({ currentUser }: ClientsProps) {
                   {/* Email */}
                   <a href={`mailto:${client.email}`} className="ios-row group/item cursor-pointer">
                     <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
-                      <EnvelopeIcon className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
+                      <Mail className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
                       <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-body">
                         {client.email}
                       </span>
                     </div>
-                    <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
                   </a>
 
                   {/* Phone */}
                   {client.phone && (
                     <a href={`tel:${client.phone}`} className="ios-row group/item cursor-pointer">
                       <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
-                        <PhoneIcon className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
+                        <Phone className="h-5 w-5 text-gray-400 group-hover/item:text-[#3aa3eb] transition-colors shrink-0" />
                         <span className="text-sm text-gray-200 group-hover/item:text-white truncate font-body">
                           {formatPhoneNumber(client.phone)}
                         </span>
                       </div>
-                      <ChevronRightIcon className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
+                      <ChevronRight className="h-4 w-4 text-gray-600 group-hover/item:text-gray-400 transition-colors shrink-0" />
                     </a>
                   )}
                 </div>
@@ -800,7 +803,16 @@ export default function Clients({ currentUser }: ClientsProps) {
                   <span className="text-xs text-gray-500 font-body truncate">
                     Added {formatAppDate(client.created_at)}
                   </span>
-                  <OverflowMenu client={client} isAdmin={isAdmin} onView={handleViewClient} onEdit={handleEditClient} onDelete={handleDeleteClient} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleViewClient(client)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3aa3eb]/10 text-[#3aa3eb] text-xs font-bold hover:bg-[#3aa3eb]/20 hover:text-white transition-all"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      View
+                    </button>
+                    <OverflowMenu client={client} isAdmin={isAdmin} onView={handleViewClient} onEdit={handleEditClient} onDelete={handleDeleteClient} />
+                  </div>
                 </div>
               </div>
             );
@@ -810,7 +822,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
       {filteredClients.length === 0 && clients.length > 0 && (
         <div className="ios-card rounded-2xl p-12 text-center">
-          <UserGroupIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+          <Users className="h-12 w-12 text-gray-500 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-white mb-2 font-display uppercase tracking-wide">No clients match your filters</h3>
           <p className="text-gray-400 mb-6 font-body">
             Try adjusting your search or filter criteria to see more results.
@@ -832,7 +844,7 @@ export default function Clients({ currentUser }: ClientsProps) {
 
       {clients.length === 0 && (
         <div className="ios-card rounded-2xl p-12 text-center">
-          <UserGroupIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+          <Users className="h-12 w-12 text-gray-500 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-white mb-2 font-display uppercase tracking-wide">
             {loading ? 'Loading clients...' : 'No clients yet'}
           </h3>

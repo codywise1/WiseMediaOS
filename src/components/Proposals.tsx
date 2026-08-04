@@ -443,18 +443,18 @@ export default function Proposals({ currentUser }: ProposalsProps) {
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <button
-                        onClick={() => handleViewProposal(proposal.id)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-[#3aa3eb] hover:text-white transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View Details
-                      </button>
                       <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleViewProposal(proposal.id)}
+                          className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => handleDownloadPDF(proposal)}
                           disabled={generatingPDFId === proposal.id}
-                          className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                          className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
                           title="Download PDF"
                         >
                           {generatingPDFId === proposal.id ? (
@@ -467,14 +467,14 @@ export default function Proposals({ currentUser }: ProposalsProps) {
                           <>
                             <button
                               onClick={() => navigate(`/proposals/${proposal.id}`)}
-                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                              className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProposal(proposal)}
-                              className="p-2 rounded-full bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                              className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
                               title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
