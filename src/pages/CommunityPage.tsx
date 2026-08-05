@@ -1282,40 +1282,21 @@ export default function CommunityPage() {
       <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-5">
         <div className="lg:w-80 flex-shrink-0">
           <GlassCard disableHover className="h-full flex flex-col p-4">
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setView('channels')}
-                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'channels'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
-              >
-                <Hash className="inline mr-2" size={16} />
-                Channels
-              </button>
-              <button
-                onClick={() => setView('private')}
-                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'private'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
-              >
-                <MessageSquare className="inline mr-2" size={16} />
-                Direct
-              </button>
-              <button
-                onClick={() => setView('email')}
-                className={`flex-1 px-4 py-2 rounded-lg transition-all font-medium border ${view === 'email'
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
-              >
-                <Mail className="inline mr-2" size={16} />
-                Email
-              </button>
+            <div className="mb-4">
+              <div className="ios-segmented inline-flex w-full">
+                <button onClick={() => setView('channels')}
+                  className={`ios-segmented-btn flex-1 ${view === 'channels' ? 'active' : ''}`}>
+                  Channels
+                </button>
+                <button onClick={() => setView('private')}
+                  className={`ios-segmented-btn flex-1 ${view === 'private' ? 'active' : ''}`}>
+                  Direct
+                </button>
+                <button onClick={() => setView('email')}
+                  className={`ios-segmented-btn flex-1 ${view === 'email' ? 'active' : ''}`}>
+                  Email
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
