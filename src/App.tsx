@@ -38,6 +38,7 @@ import LiveMeetingPage from './pages/LiveMeetingPage';
 import MeetingDetailPage from './pages/MeetingDetailPage';
 import ClientNotes from './pages/ClientNotes';
 import ClientNoteDetail from './pages/ClientNoteDetail';
+import CreatorMembersPage from './pages/CreatorMembersPage';
 // import CommunityProPage from './pages/CommunityProPage';
 // import CommunityResourcesPage from './pages/CommunityResourcesPage';
 // import CommunitySettingsPage from './pages/CommunitySettingsPage';
@@ -702,6 +703,14 @@ function App() {
             element={
               <AdminGuard>
                 <AdminBackendPage />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/community/members"
+            element={
+              <AdminGuard>
+                <CreatorMembersPage />
               </AdminGuard>
             }
           />

@@ -796,33 +796,32 @@ export default function Invoices({ currentUser }: InvoicesProps) {
               return (
                 <div
                   key={invoice.id}
-                  className="ios-card group relative rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
+                  className="ios-card group relative flex flex-col rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-2xl hover:shadow-black/20"
                 >
-                  <div className="p-5 space-y-4">
+                  {/* Colored top accent bar */}
+                  <div className="h-0.5 w-full" style={{ background: style.text, opacity: 0.6 }} />
+
+                  <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Top: Invoice number + status pill */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2.5 mb-1">
-                          <div className={`w-1 h-5 rounded-full ${style.dot} shrink-0`} />
-                          <span className="text-[10px] font-black text-gray-500 tracking-widest shrink-0" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-black text-gray-500 tracking-widest" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                             {invoice.number}
                           </span>
                         </div>
-                        <h3 className="text-base font-bold text-white truncate leading-tight" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
+                        <h3 className="text-sm font-bold text-white leading-snug line-clamp-2" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Display, Inter, sans-serif' }}>
                           {invoice.title}
                         </h3>
                         {invoice.proposal_title && (
-                          <a
-                            href={`/proposals`}
-                            className="inline-flex items-center gap-1 mt-1 text-[10px] text-[#3aa3eb] hover:text-[#59a1e5] transition-colors"
-                          >
+                          <a href="/proposals" className="inline-flex items-center gap-1 mt-1 text-[10px] text-[#3aa3eb] hover:text-[#59a1e5] transition-colors">
                             <LinkIcon className="h-3 w-3" />
                             {invoice.proposal_title}
                           </a>
                         )}
                       </div>
                       <span
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 mt-0.5"
                         style={{ backgroundColor: style.bg, border: `1px solid ${style.border}`, color: style.text }}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
@@ -830,18 +829,18 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </span>
                     </div>
 
-                    {/* Client + Amount */}
+                    {/* Client + Amount row */}
                     <div className="flex items-end justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-gray-200 truncate">{invoice.client}</p>
-                        <p className={`text-xs font-medium mt-1 ${dueColor}`}>{dueDisplay}</p>
+                        <p className={`text-xs font-medium mt-0.5 ${dueColor}`}>{dueDisplay}</p>
                         {invoice.project_names.length > 0 && (
-                          <p className="text-[10px] text-gray-500 mt-1 truncate">
+                          <p className="text-[10px] text-gray-500 mt-0.5 truncate">
                             {invoice.project_names.length === 1 ? invoice.project_names[0] : `${invoice.project_names.length} projects`}
                           </p>
                         )}
                         {invoice.status === 'void' && invoice.void_reason && (
-                          <p className="text-[10px] text-gray-600 mt-1 italic truncate" title={invoice.void_reason}>
+                          <p className="text-[10px] text-gray-600 mt-0.5 italic truncate" title={invoice.void_reason}>
                             {invoice.void_reason}
                           </p>
                         )}
@@ -851,8 +850,12 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                       </span>
                     </div>
 
-                    {/* Bottom: Actions */}
-                    <div className="pt-3 border-t border-white/5 space-y-2">
+                    {/* Spacer so footer always sits at the bottom */}
+                    <div className="flex-1" />
+
+                    {/* Footer: icon actions + status row — always same height */}
+                    <div className="pt-3 border-t border-white/5 space-y-2.5">
+                      {/* Icon action row */}
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${invoice.id}`); }}
@@ -892,19 +895,43 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                           </>
                         )}
                       </div>
-                      {(invoice.status === 'pending' || invoice.status === 'unpaid' || isOverdue) && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleMarkPaid(invoice); }}
-                          disabled={markingPaidId === invoice.id}
-                          className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:bg-emerald-400 active:scale-95 transition-all shadow-[0_0_15px_rgba(16,185,129,0.35)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-                        >
-                          {markingPaidId === invoice.id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white" />
-                          ) : (
-                            <CheckCircle className="h-3.5 w-3.5" />
-                          )}
-                          Mark Paid
-                        </button>
+
+                      {/* Bottom row: always rendered so height is consistent */}
+                      {(invoice.status === 'pending' || invoice.status === 'unpaid' || isOverdue) ? (
+                        isAdmin ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleMarkPaid(invoice); }}
+                            disabled={markingPaidId === invoice.id}
+                            className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:bg-emerald-400 active:scale-95 transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                          >
+                            {markingPaidId === invoice.id ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white" />
+                            ) : (
+                              <CheckCircle className="h-3.5 w-3.5" />
+                            )}
+                            Mark Paid
+                          </button>
+                        ) : (
+                          <div className="w-full py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[10px] font-bold tracking-widest flex items-center justify-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                            Payment Pending
+                          </div>
+                        )
+                      ) : isPaid ? (
+                        <div className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-widest flex items-center justify-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Paid {invoice.paid_at ? formatAppDate(invoice.paid_at) : ''}
+                        </div>
+                      ) : invoice.status === 'void' ? (
+                        <div className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-[10px] font-bold tracking-widest flex items-center justify-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                          Voided
+                        </div>
+                      ) : (
+                        <div className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-[10px] font-bold tracking-widest flex items-center justify-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </div>
                       )}
                     </div>
                   </div>

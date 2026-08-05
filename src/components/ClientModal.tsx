@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { Client } from '../lib/supabase';
+import { Client, supabase, isSupabaseAvailable } from '../lib/supabase';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -57,13 +57,28 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
 
   useEffect(() => { if (!isOpen) setIsSubmitting(false); }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     if (!formData.name.trim() || !formData.email.trim()) { alert('Name and email are required.'); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) { alert('Please enter a valid email address.'); return; }
     setIsSubmitting(true);
+
+    // Auto-provision a login account for new clients (default password: WiseMedia)
+    if (mode === 'create' && isSupabaseAvailable()) {
+      try {
+        const { data: { session } } = await supabase!.auth.getSession();
+        if (session?.access_token) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-client-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify({ email: formData.email.trim().toLowerCase(), name: formData.name.trim(), phone: formData.phone.trim() || undefined }),
+          });
+        }
+      } catch { /* Non-fatal: client record still saves */ }
+    }
+
     onSave({
       ...(mode === 'edit' && client ? client : {}),
       ...formData,
@@ -104,6 +119,12 @@ export default function ClientModal({ isOpen, onClose, onSave, client, mode }: C
       }
     >
       <form id="client-form" onSubmit={handleSubmit} className="space-y-5">
+        {mode === 'create' && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#3aa3eb]/10 border border-[#3aa3eb]/20 text-sm text-[#3aa3eb]">
+            <svg className="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" /></svg>
+            <span>A login account will be created for this client. Their email will be their username and the default password is <strong className="font-bold">WiseMedia</strong>.</span>
+          </div>
+        )}
         {/* Name + Email */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

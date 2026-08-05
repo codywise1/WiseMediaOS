@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Folder, FileText, Calendar, ClipboardList, CircleUser as UserCircle, LogOut, Pencil, X, MoreHorizontal, MessageCircle, MessagesSquare, BookOpen, Copy, LayoutGrid, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
+import { Home, Folder, FileText, Calendar, ClipboardList, CircleUser as UserCircle, LogOut, Pencil, X, MoreHorizontal, MessageCircle, MessagesSquare, BookOpen, Copy, LayoutGrid, ChevronLeft, ChevronRight, BarChart3, Users } from 'lucide-react'
 import TopNav from './TopNav'
 import ProfileModal from './ProfileModal'
 import { UserRole } from '../lib/supabase'
@@ -74,7 +74,8 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
         { name: 'Community', href: '/community', icon: MessageCircle },
         { name: 'Messages', href: '/community/messages', icon: MessagesSquare },
         { name: 'Education', href: '/community/courses', icon: BookOpen },
-        { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
+        { name: 'Marketplace', href: '/community/marketplace', icon: Copy },
+        { name: 'Members', href: '/community/members', icon: Users }
       ]
     }
   ],
