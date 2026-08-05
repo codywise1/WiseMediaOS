@@ -51,9 +51,9 @@ const QUICK_LINKS = [
   { label: '@WiseMedia33',    url: 'https://x.com/WiseMedia33',                            brand: 'x' as const,       color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'YouTube',         url: 'https://www.youtube.com/@CodyConsultant',              brand: 'youtube' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'LinkedIn',        url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/',    brand: 'linkedin' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
-  { label: 'Instagram',       url: 'https://www.instagram.com/wisemedia.io/',             brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: '@wisemedia.io',   url: 'https://www.instagram.com/wisemedia.io/',             brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: '@codywise.sol',   url: 'https://www.instagram.com/codywise.sol/',             brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'Facebook',        url: 'https://www.facebook.com/wisemedia.io/',              brand: 'facebook' as const,  color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
-  { label: '@codywise.sol',   url: 'https://www.sns.id/profile?domain=codywise.sol',     brand: 'solana' as const,    color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
 ];
 
 const containerVariants = {
