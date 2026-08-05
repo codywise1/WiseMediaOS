@@ -45,12 +45,12 @@ interface DashboardProps {
 type Timeframe = '7d' | '30d' | 'quarter' | 'year';
 
 const QUICK_LINKS = [
-  { label: 'My Website', url: 'https://wisemedia.io', icon: null, brand: null, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
-  { label: 'X (Twitter)', url: 'https://x.com/WiseMedia33', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
-  { label: 'Instagram', url: 'https://wisemedia.io', icon: null, brand: 'instagram' as const, color: 'text-pink-400', bg: 'bg-pink-500/15' },
+  { label: 'codywise.io', url: 'https://codywise.io', icon: null, brand: null, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
+  { label: 'wisemedia.io', url: 'https://wisemedia.io', icon: null, brand: null, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+  { label: '@CodyConsultant', url: 'https://x.com/CodyConsultant', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
+  { label: '@WiseMedia33', url: 'https://x.com/WiseMedia33', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
   { label: 'YouTube', url: 'https://www.youtube.com/@CodyConsultant', icon: null, brand: 'youtube' as const, color: 'text-red-400', bg: 'bg-red-500/15' },
   { label: 'LinkedIn', url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/', icon: null, brand: 'linkedin' as const, color: 'text-blue-400', bg: 'bg-blue-500/15' },
-  { label: 'Facebook', url: 'https://www.facebook.com/wisemedia.io/', icon: null, brand: 'facebook' as const, color: 'text-blue-300', bg: 'bg-blue-600/15' },
 ];
 
 const containerVariants = {
@@ -171,7 +171,9 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
   const [loadingActivity, setLoadingActivity] = React.useState(true);
   const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
   const [allInvoices, setAllInvoices] = React.useState<any[]>([]);
-  const [timeframe, setTimeframe] = React.useState<Timeframe>('30d');
+  const [timeframe, setTimeframe] = React.useState<Timeframe>(
+    () => (localStorage.getItem('dash_timeframe') as Timeframe) || '30d'
+  );
   const [stats, setStats] = React.useState({
     activeProjects: 0,
     completedProjects: 0,
@@ -519,7 +521,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
               {(['7d', '30d', 'quarter', 'year'] as Timeframe[]).map((tf) => (
                 <button
                   key={tf}
-                  onClick={() => setTimeframe(tf)}
+                  onClick={() => { setTimeframe(tf); localStorage.setItem('dash_timeframe', tf); }}
                   className="relative px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
                   style={{ color: timeframe === tf ? '#fff' : 'rgba(255,255,255,0.4)' }}
                 >
