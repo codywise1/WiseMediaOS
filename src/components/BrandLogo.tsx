@@ -1,5 +1,5 @@
 interface BrandLogoProps {
-  name: 'x' | 'instagram' | 'youtube' | 'linkedin' | 'facebook';
+  name: 'x' | 'instagram' | 'youtube' | 'linkedin' | 'facebook' | 'solana';
   size?: number;
   className?: string;
 }
@@ -14,6 +14,12 @@ export default function BrandLogo({ name, size = 20, className = '' }: BrandLogo
   };
 
   switch (name) {
+    case 'solana':
+      return (
+        <svg {...props} fill="currentColor" viewBox="0 0 397.7 311.7">
+          <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7zm0-164.7c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1L333.1 143c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.5zM333.1 3.8C330.7 1.4 327.4 0 323.9 0H6.5C.7 0-2.2 7 1.9 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1L333.1 3.8z"/>
+        </svg>
+      );
     case 'x':
       return (
         <svg {...props} fill="currentColor">

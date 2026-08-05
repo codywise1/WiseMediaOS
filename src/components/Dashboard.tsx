@@ -51,8 +51,9 @@ const QUICK_LINKS = [
   { label: '@WiseMedia33',    url: 'https://x.com/WiseMedia33',                            brand: 'x' as const,       color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'YouTube',         url: 'https://www.youtube.com/@CodyConsultant',              brand: 'youtube' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'LinkedIn',        url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/',    brand: 'linkedin' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
-  { label: 'Instagram',       url: 'https://www.instagram.com/wisemedia33/',              brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'Instagram',       url: 'https://www.instagram.com/wisemedia.io/',             brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
   { label: 'Facebook',        url: 'https://www.facebook.com/wisemedia.io/',              brand: 'facebook' as const,  color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: '@codywise.sol',   url: 'https://www.sns.id/profile?domain=codywise.sol',     brand: 'solana' as const,    color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
 ];
 
 const containerVariants = {
@@ -478,7 +479,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       {/* Quick Links — socials + website */}
       <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Quick Links</h2>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
           {QUICK_LINKS.map((link) => (
             <motion.a
               key={link.label}
