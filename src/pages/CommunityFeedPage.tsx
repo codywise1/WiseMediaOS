@@ -4,6 +4,8 @@ import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import MentionDropdown from '../components/MentionDropdown';
+import { useMentionInput } from '../hooks/useMentionInput';
 import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatAppDateTime } from '../lib/dateFormat';
@@ -106,6 +108,43 @@ const getVimeoId = (url: string) => {
   return (match && match[1]) ? match[1] : null;
 };
 
+function CommentInput({ postId, value, onChange, onSubmit, disabled }: {
+  postId: string; value: string; onChange: (v: string) => void;
+  onSubmit: () => void; disabled: boolean;
+}) {
+  const mention = useMentionInput(value, onChange);
+  return (
+    <div className="flex gap-2">
+      <div className="flex-1 relative">
+        <input
+          ref={mention.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={value}
+          onChange={mention.handleChange}
+          onKeyDown={(e) => {
+            mention.handleKeyDown(e);
+            if (e.key === 'Enter' && !mention.mention.active) { e.preventDefault(); onSubmit(); }
+          }}
+          placeholder="Write a comment... (@ to mention)"
+          className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
+        />
+        {mention.mention.active && (
+          <MentionDropdown users={mention.users} selectedIndex={mention.selectedIndex} onSelect={mention.selectMention} />
+        )}
+      </div>
+      <button
+        onClick={onSubmit}
+        disabled={disabled || !value.trim()}
+        className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
+        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
+      >
+        Post
+      </button>
+    </div>
+  );
+}
+
 export default function CommunityFeedPage() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -115,6 +154,7 @@ export default function CommunityFeedPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTitle, setComposerTitle] = useState('');
   const [composerBody, setComposerBody] = useState('');
+  const composerMention = useMentionInput(composerBody, setComposerBody);
   const [composerTags, setComposerTags] = useState<FeedTag[]>([]);
   const [composerVisibility, setComposerVisibility] = useState<Visibility>('all');
   const [composerAttachmentUrl, setComposerAttachmentUrl] = useState('');
@@ -938,24 +978,13 @@ export default function CommunityFeedPage() {
                         })}
                       </div>
 
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={commentDrafts[post.id] || ''}
-                          onChange={(e) => setCommentDrafts(prev => ({ ...prev, [post.id]: e.target.value }))}
-                          placeholder="Write a comment..."
-                          className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-                          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '14px' }}
-                        />
-                        <button
-                          onClick={() => submitComment(post.id)}
-                          disabled={!profile?.id || postingComment[post.id] || !(commentDrafts[post.id] || '').trim()}
-                          className="px-4 py-3 bg-[#3AA3EB] hover:bg-[#2a92da] disabled:bg-[#3AA3EB]/50 text-white rounded-lg transition-colors font-medium"
-                          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
-                        >
-                          Post
-                        </button>
-                      </div>
+                      <CommentInput
+                        postId={post.id}
+                        value={commentDrafts[post.id] || ''}
+                        onChange={(v) => setCommentDrafts(prev => ({ ...prev, [post.id]: v }))}
+                        onSubmit={() => submitComment(post.id)}
+                        disabled={!profile?.id || !!postingComment[post.id]}
+                      />
                     </div>
                   )}
                 </div>
@@ -986,14 +1015,25 @@ export default function CommunityFeedPage() {
 
           <div className="space-y-2">
             <label className="text-sm text-gray-300" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Body</label>
-            <textarea
-              value={composerBody}
-              onChange={(e) => setComposerBody(e.target.value)}
-              rows={6}
-              className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
-              placeholder="Share an update, ask a question, or drop a win..."
-            />
+            <div className="relative">
+              <textarea
+                ref={composerMention.inputRef as React.RefObject<HTMLTextAreaElement>}
+                value={composerBody}
+                onChange={composerMention.handleChange}
+                onKeyDown={composerMention.handleKeyDown}
+                rows={6}
+                className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-lg text-white focus:border-[#3AA3EB] focus:ring-2 focus:ring-[#3AA3EB]/50 focus:outline-none"
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
+                placeholder="Share an update, ask a question, or drop a win... (type @ to mention)"
+              />
+              {composerMention.mention.active && (
+                <MentionDropdown
+                  users={composerMention.users}
+                  selectedIndex={composerMention.selectedIndex}
+                  onSelect={composerMention.selectMention}
+                />
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

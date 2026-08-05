@@ -31,6 +31,22 @@ export function isVideoUrl(url: string): boolean {
 
 // URL regex for splitting text — matches http/https links
 const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
+// Mention regex — matches @Word or @Word.Word
+const MENTION_RE = /(@[\w.-]+)/g;
+
+function renderTextWithMentions(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts = text.split(MENTION_RE);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <span key={`${keyPrefix}-m${i}`} className="text-[#3aa3eb] font-semibold">
+          {part}
+        </span>
+      );
+    }
+    return part ? <React.Fragment key={`${keyPrefix}-t${i}`}>{part}</React.Fragment> : null;
+  }).filter(Boolean) as React.ReactNode[];
+}
 
 export function renderMessageBody(body: string, opts?: { maxEmbedWidth?: string }): React.ReactNode[] {
   if (!body) return [];
@@ -85,8 +101,11 @@ export function renderMessageBody(body: string, opts?: { maxEmbedWidth?: string 
       );
       return;
     }
-    // Plain text segment
-    if (part) nodes.push(<React.Fragment key={`txt-${i}`}>{part}</React.Fragment>);
+    // Plain text segment — render with mention highlights
+    if (part) {
+      const mentionNodes = renderTextWithMentions(part, `txt-${i}`);
+      nodes.push(...mentionNodes);
+    }
   });
 
   return nodes;

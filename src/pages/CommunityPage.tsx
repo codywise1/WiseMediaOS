@@ -3,13 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import Modal from '../components/Modal';
 import PageHeader from '../components/PageHeader';
-import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus, Lock, Unlock, Archive, ArchiveRestore, Mail } from 'lucide-react';
-
+import { Send, Hash, MessageSquare, ChevronDown, ChevronRight, Plus, Settings, CreditCard as Edit2, Trash2, X, Check, Paperclip, Upload, SmilePlus, Lock, Unlock, Archive, ArchiveRestore } from 'lucide-react';
+import MentionDropdown from '../components/MentionDropdown';
+import { useMentionInput } from '../hooks/useMentionInput';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, isSupabaseAvailable, clientService, Client, UserRole } from '../lib/supabase';
 import { formatAppDateTime } from '../lib/dateFormat';
 import { renderMessageBody } from '../lib/messageEmbeds';
-import EmailInbox from '../components/EmailInbox';
 
 interface Channel {
   id: string;
@@ -105,8 +105,9 @@ export default function CommunityPage() {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const msgMention = useMentionInput(newMessage, setNewMessage);
   const [sending, setSending] = useState(false);
-  const [view, setView] = useState<'channels' | 'private' | 'email'>('channels');
+  const [view, setView] = useState<'channels' | 'private'>('channels');
   const [clients, setClients] = useState<Client[]>([]);
   const [privateConversations, setPrivateConversations] = useState<PrivateConversation[]>([]);
   const [selectedUser, setSelectedUser] = useState<PrivateConversation | null>(null);
@@ -1300,9 +1301,8 @@ export default function CommunityPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
-              {view === 'email' ? (
+              {false ? (
                 <div className="py-8 text-center">
-                  <Mail size={28} className="text-gray-600 mx-auto mb-2" />
                   <p className="text-gray-500 text-xs" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
                     info@wisemedia.io
                   </p>
@@ -1497,11 +1497,7 @@ export default function CommunityPage() {
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
-          {view === 'email' ? (
-            <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-2 sm:p-3">
-              <EmailInbox />
-            </GlassCard>
-          ) : (
+          {(
           <GlassCard disableHover className="flex-1 flex flex-col overflow-hidden p-5">
             <div className="pb-4 border-b border-white/10">
               {view === 'channels' && selectedChannel ? (
@@ -1928,14 +1924,22 @@ export default function CommunityPage() {
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <input
+                        ref={msgMention.inputRef as React.RefObject<HTMLInputElement>}
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}...`}
+                        onChange={msgMention.handleChange}
+                        onKeyDown={(e) => {
+                          msgMention.handleKeyDown(e);
+                          if (e.key === 'Enter' && !msgMention.mention.active) sendMessage();
+                        }}
+                        placeholder={`Message ${view === 'channels' ? `#${selectedChannel?.name}` : getConversationName(selectedUser)}... (@ to mention)`}
                         className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-2xl text-white focus:border-[#59a1e5] focus:ring-2 focus:ring-[#59a1e5]/50 focus:outline-none transition-all"
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif', fontSize: '16px' }}
                         disabled={sending}
                       />
+                      {msgMention.mention.active && (
+                        <MentionDropdown users={msgMention.users} selectedIndex={msgMention.selectedIndex} onSelect={msgMention.selectMention} />
+                      )}
                     </div>
                     <button
                       type="button"
