@@ -8,7 +8,6 @@ import {
   CreditCard,
   Pencil,
   Trash2,
-  Mail,
   Download,
   Eye,
   CheckCircle,
@@ -853,7 +852,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                     </div>
 
                     {/* Bottom: Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div className="pt-3 border-t border-white/5 space-y-2">
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${invoice.id}`); }}
@@ -877,14 +876,6 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         {isAdmin && (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleSendReminder(invoice); }}
-                              disabled={invoice.status === 'void'}
-                              className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-[#3aa3eb] hover:bg-[#3aa3eb]/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                              title={invoice.status === 'void' ? 'Cannot send reminder for a voided invoice' : 'Send Reminder'}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </button>
-                            <button
                               onClick={(e) => { e.stopPropagation(); handleEditInvoice(invoice); }}
                               className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                               title="Edit Invoice"
@@ -905,7 +896,7 @@ export default function Invoices({ currentUser }: InvoicesProps) {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMarkPaid(invoice); }}
                           disabled={markingPaidId === invoice.id}
-                          className="px-4 py-2.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:scale-105 hover:bg-emerald-400 transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                          className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black tracking-widest hover:bg-emerald-400 active:scale-95 transition-all shadow-[0_0_15px_rgba(16,185,129,0.35)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                         >
                           {markingPaidId === invoice.id ? (
                             <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white" />

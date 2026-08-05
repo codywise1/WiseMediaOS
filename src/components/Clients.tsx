@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useLoadingGuard } from '../hooks/useLoadingGuard';
@@ -171,27 +172,46 @@ function OverflowMenu({ client, isAdmin, onView, onEdit, onDelete }: {
   onDelete: (c: Client) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+  const updateCoords = useCallback(() => {
+    if (!btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    setCoords({ top: r.bottom + 8, right: window.innerWidth - r.right });
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (btnRef.current && btnRef.current.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateCoords();
+    setOpen(v => !v);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        ref={btnRef}
+        onClick={handleToggle}
         className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
         title="More"
       >
         <MoreHorizontal className="h-5 w-5" />
       </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 z-[60] w-44 rounded-xl border border-white/10 py-1 shadow-2xl" style={{ background: '#1c1f24' }}>
+      {open && createPortal(
+        <div
+          className="fixed w-44 rounded-xl border border-white/10 py-1 shadow-2xl"
+          style={{ top: coords.top, right: coords.right, background: '#1c1f24', zIndex: 9999 }}
+        >
           <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(client); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2">
             <Eye className="h-4 w-4" /> View Details
           </button>
@@ -205,9 +225,10 @@ function OverflowMenu({ client, isAdmin, onView, onEdit, onDelete }: {
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
