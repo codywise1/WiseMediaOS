@@ -225,30 +225,32 @@ export default function MarketplacePage() {
       />
 
       {/* Search + Category filter */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search products..."
-            className="form-input w-full pl-11 pr-4 py-3 rounded-2xl text-sm"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10">
-              <X size={16} className="text-gray-400" />
-            </button>
-          )}
-        </div>
-        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
-          <div className="ios-segmented inline-flex min-w-max">
-            {CATEGORIES.map((cat) => (
-              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                className={`ios-segmented-btn flex-shrink-0 ${selectedCategory === cat.id ? 'active' : ''}`}>
-                {cat.label}
+      <div className="glass-card neon-glow rounded-2xl p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+          <div className="relative sm:order-2 sm:ml-auto sm:w-56 flex-shrink-0">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="form-input w-full pl-9 pr-8 py-2 rounded-xl text-sm"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-white/10">
+                <X size={14} className="text-gray-400" />
               </button>
-            ))}
+            )}
+          </div>
+          <div className="overflow-x-auto scrollbar-hide sm:order-1">
+            <div className="ios-segmented inline-flex min-w-max">
+              {CATEGORIES.map((cat) => (
+                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+                  className={`ios-segmented-btn flex-shrink-0 ${selectedCategory === cat.id ? 'active' : ''}`}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

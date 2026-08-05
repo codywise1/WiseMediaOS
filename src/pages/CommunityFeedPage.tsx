@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, CreditCard as Edit2, Plus, Pin, Star, EyeOff, Eye } from 'lucide-react';
+import { MessageCircle, ArrowRight, X, Trash2, Upload, Paperclip, CreditCard as Edit2, Plus, Pin, Star, EyeOff, Eye, Search } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
@@ -111,6 +111,7 @@ export default function CommunityFeedPage() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [selectedTag, setSelectedTag] = useState<FeedTag | 'All'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTitle, setComposerTitle] = useState('');
   const [composerBody, setComposerBody] = useState('');
@@ -147,10 +148,14 @@ export default function CommunityFeedPage() {
   }, [profile?.role]);
 
   const visiblePosts = useMemo(() => {
-    const visible = posts.filter(p => !p.is_hidden || isAdmin);
-    if (selectedTag === 'All') return visible;
-    return visible.filter(p => (p.tags || []).some(tag => tag.toLowerCase() === selectedTag.toLowerCase()));
-  }, [posts, selectedTag, isAdmin]);
+    let visible = posts.filter(p => !p.is_hidden || isAdmin);
+    if (selectedTag !== 'All') visible = visible.filter(p => (p.tags || []).some(tag => tag.toLowerCase() === selectedTag.toLowerCase()));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      visible = visible.filter(p => p.title?.toLowerCase().includes(q) || p.body?.toLowerCase().includes(q));
+    }
+    return visible;
+  }, [posts, selectedTag, searchQuery, isAdmin]);
 
   useEffect(() => {
     if (!isSupabaseAvailable()) {
@@ -580,24 +585,31 @@ export default function CommunityFeedPage() {
           </button>
         ) : undefined}
       />
-      <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6">
-        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
-          <div className="ios-segmented inline-flex min-w-max">
-            <button
-              onClick={() => setSelectedTag('All')}
-              className={`ios-segmented-btn flex-shrink-0 ${selectedTag === 'All' ? 'active' : ''}`}
-            >
-              All
-            </button>
-            {TAGS.map(tag => (
-              <button
-                key={tag}
-                onClick={() => setSelectedTag(tag)}
-                className={`ios-segmented-btn flex-shrink-0 ${selectedTag === tag ? 'active' : ''}`}
-              >
-                {tag}
+      <div className="glass-card neon-glow rounded-2xl p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+          {/* Mobile: search first for iOS feel */}
+          <div className="relative sm:order-2 sm:ml-auto sm:w-56 flex-shrink-0">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search posts..."
+              className="form-input w-full pl-9 pr-8 py-2 rounded-xl text-sm"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-white/10">
+                <X size={14} className="text-gray-400" />
               </button>
-            ))}
+            )}
+          </div>
+          <div className="overflow-x-auto scrollbar-hide sm:order-1">
+            <div className="ios-segmented inline-flex min-w-max">
+              <button onClick={() => setSelectedTag('All')} className={`ios-segmented-btn flex-shrink-0 ${selectedTag === 'All' ? 'active' : ''}`}>All</button>
+              {TAGS.map(tag => (
+                <button key={tag} onClick={() => setSelectedTag(tag)} className={`ios-segmented-btn flex-shrink-0 ${selectedTag === tag ? 'active' : ''}`}>{tag}</button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
