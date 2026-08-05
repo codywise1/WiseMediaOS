@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DollarSign, Users, BookOpen, ShoppingBag, TrendingUp, AlertCircle, Calendar, Lightbulb, LayoutDashboard } from 'lucide-react';
+import { DollarSign, Users, BookOpen, ShoppingBag, TrendingUp, AlertCircle, Calendar, Lightbulb } from 'lucide-react';
 import GlassCard from '../GlassCard';
 import PageHeader from '../PageHeader';
 import { supabase, authService } from '../../lib/supabase';
@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface Stats {
   totalRevenue: number;
-  subscriptions: { free: number; pro: number; elite: number };
+  memberCount: number;
   topCourse: { title: string; enrollments: number } | null;
   marketplaceActivity: { topSeller: string; downloads: number } | null;
   upcomingAppointments: number;
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const { profile } = useAuth();
   const [stats, setStats] = useState<Stats>({
     totalRevenue: 0,
-    subscriptions: { free: 0, pro: 0, elite: 0 },
+    memberCount: 0,
     topCourse: null,
     marketplaceActivity: null,
     upcomingAppointments: 0,
@@ -43,28 +43,23 @@ export default function AdminDashboard() {
   async function fetchStats() {
     await authService.ensureValidSession();
     const results = await Promise.allSettled([
-      supabase.from('profiles').select('role'),
+      supabase.from('profiles').select('role').eq('role', 'member'),
       supabase.from('courses').select('title, enrollment_count').order('enrollment_count', { ascending: false }).limit(1),
       supabase.from('marketplace_items').select('title, downloads').order('downloads', { ascending: false }).limit(1),
       supabase.from('appointments').select('id').eq('status', 'scheduled').gte('scheduled_at', new Date().toISOString()),
       supabase.from('invoices').select('amount').eq('status', 'pending'),
     ]);
-    const profilesRes = results[0].status === 'fulfilled' ? results[0].value : { data: null, error: null };
-    const coursesRes = results[1].status === 'fulfilled' ? results[1].value : { data: null, error: null };
-    const marketplaceRes = results[2].status === 'fulfilled' ? results[2].value : { data: null, error: null };
-    const appointmentsRes = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: null };
-    const invoicesRes = results[4].status === 'fulfilled' ? results[4].value : { data: null, error: null };
+    const membersRes      = results[0].status === 'fulfilled' ? results[0].value : { data: null };
+    const coursesRes      = results[1].status === 'fulfilled' ? results[1].value : { data: null };
+    const marketplaceRes  = results[2].status === 'fulfilled' ? results[2].value : { data: null };
+    const appointmentsRes = results[3].status === 'fulfilled' ? results[3].value : { data: null };
+    const invoicesRes     = results[4].status === 'fulfilled' ? results[4].value : { data: null };
 
-    const subscriptions = {
-      free: profilesRes.data?.filter(p => p.role === 'free').length || 0,
-      pro: profilesRes.data?.filter(p => p.role === 'pro').length || 0,
-      elite: profilesRes.data?.filter(p => p.role === 'elite').length || 0,
-    };
     const totalRevenue = invoicesRes.data?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
 
     setStats({
       totalRevenue,
-      subscriptions,
+      memberCount: membersRes.data?.length || 0,
       topCourse: coursesRes.data?.[0] ? { title: coursesRes.data[0].title, enrollments: coursesRes.data[0].enrollment_count } : null,
       marketplaceActivity: marketplaceRes.data?.[0] ? { topSeller: marketplaceRes.data[0].title, downloads: marketplaceRes.data[0].downloads } : null,
       upcomingAppointments: appointmentsRes.data?.length || 0,
@@ -99,14 +94,8 @@ export default function AdminDashboard() {
               <Users className="text-blue-400" size={20} />
             </div>
           </div>
-          <h3 className="text-gray-400 mb-1 text-xs sm:text-sm font-body">Total Members</h3>
-          <p className="text-2xl sm:text-3xl font-bold text-white font-display mb-1">
-            {stats.subscriptions.free + stats.subscriptions.pro + stats.subscriptions.elite}
-          </p>
-          <div className="flex gap-2 text-xs font-body">
-            <span className="text-gray-400">Free: {stats.subscriptions.free}</span>
-            <span className="text-gray-400">Pro: {stats.subscriptions.pro}</span>
-          </div>
+          <h3 className="text-gray-400 mb-1 text-xs sm:text-sm font-body">Creator Members</h3>
+          <p className="text-2xl sm:text-3xl font-bold text-white font-display">{stats.memberCount}</p>
         </GlassCard>
 
         <GlassCard>
@@ -175,7 +164,7 @@ export default function AdminDashboard() {
         </div>
         <div className="space-y-3">
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <p className="text-white text-sm font-body">Consider launching a new Pro-tier course to increase subscription upgrades</p>
+            <p className="text-white text-sm font-body">Consider creating a new course or marketplace resource for your Creator Club members.</p>
           </div>
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
             <p className="text-white text-sm font-body">

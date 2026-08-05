@@ -197,11 +197,7 @@ export default function AdminBackendPage() {
                       <td className="py-3 px-4 text-white" style={fontBody}>{user.full_name || 'N/A'}</td>
                       <td className="py-3 px-4 text-gray-300" style={fontBody}>{user.email}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                          user.role === 'elite' ? 'bg-yellow-500/20 text-yellow-400' :
-                            user.role === 'pro' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-gray-500/20 text-gray-400'
-                          }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-red-500/20 text-red-400' : user.role === 'member' ? 'bg-[#3aa3eb]/20 text-[#3aa3eb]' : 'bg-gray-500/20 text-gray-400'}`}>
                           {user.role?.toUpperCase()}
                         </span>
                       </td>
@@ -381,10 +377,9 @@ export default function AdminBackendPage() {
                     </div>
                     <div>
                       <label className={labelClass} style={fontBody}>Role</label>
-                      <select value={editingItem?.role || 'free'} onChange={(e) => setEditingItem({ ...editingItem, role: e.target.value })} className={inputClass} style={fontBody}>
-                        <option value="free">Free</option>
-                        <option value="pro">Pro</option>
-                        <option value="elite">Elite</option>
+                      <select value={editingItem?.role || 'member'} onChange={(e) => setEditingItem({ ...editingItem, role: e.target.value })} className={inputClass} style={fontBody}>
+                        <option value="member">Creator Member</option>
+                        <option value="client">Client</option>
                         <option value="admin">Admin</option>
                       </select>
                     </div>

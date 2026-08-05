@@ -35,20 +35,19 @@ interface NavGroup {
   items: NavItem[]
 }
 
-type NormalizedRole = 'admin' | 'staff' | 'client' | 'member'
+type NormalizedRole = 'admin' | 'member' | 'client'
 
 const normalizeRole = (role?: string): NormalizedRole => {
   const value = (role || '').toLowerCase()
   if (value === 'admin') return 'admin'
-  if (value === 'staff') return 'staff'
-  if (value === 'elite' || value === 'pro' || value === 'free') return 'member'
-  return 'client'
+  if (value === 'member' || value === 'free' || value === 'pro' || value === 'elite' || value === 'staff') return 'member'
+  if (value === 'client' || value === 'user') return 'client'
+  return 'member' // default for self-signups
 }
 
 const roleLabel = (role?: string) => {
   const value = normalizeRole(role)
   if (value === 'admin') return 'Administrator'
-  if (value === 'staff') return 'Staff'
   if (value === 'member') return 'Creator Member'
   return 'Client'
 }
@@ -69,7 +68,7 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     },
     {
-      label: 'Community',
+      label: 'Creator Club',
       items: [
         { name: 'Community', href: '/community', icon: MessageCircle },
         { name: 'Messages', href: '/community/messages', icon: MessagesSquare },
@@ -79,67 +78,29 @@ const navByRole: Record<NormalizedRole, NavGroup[]> = {
       ]
     }
   ],
-  staff: [
-    { label: 'Overview', items: [{ name: 'Dashboard', href: '/', icon: Home }] },
+  client: [
     {
-      label: 'Work',
+      label: 'Portal',
       items: [
-        { name: 'Clients', href: '/clients', icon: UserCircle },
+        { name: 'Home', href: '/', icon: Home },
         { name: 'Projects', href: '/projects', icon: Folder },
         { name: 'Notes', href: '/notes', icon: FileText },
-        { name: 'Meetings', href: '/meetings', icon: Calendar },
         { name: 'Proposals', href: '/proposals', icon: ClipboardList },
+        { name: 'Meetings', href: '/meetings', icon: Calendar },
         { name: 'Invoices', href: '/invoices', icon: FileText }
-      ]
-    },
-    {
-      label: 'Community',
-      items: [
-        { name: 'Community', href: '/community', icon: MessageCircle },
-        { name: 'Chat', href: '/community/messages', icon: MessagesSquare },
-        { name: 'Education (Courses)', href: '/community/courses', icon: BookOpen },
-        { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
     }
   ],
-  client: [
-    { label: 'Overview', items: [{ name: 'Home', href: '/', icon: Home }] },
-    {
-      label: 'Work',
-      items: [
-        { name: 'Projects', href: '/projects', icon: Folder },
-        { name: 'Notes', href: '/client/notes', icon: FileText },
-        { name: 'Proposals', href: '/proposals', icon: ClipboardList }
-      ]
-    },
-    { label: 'Billing', items: [{ name: 'Invoices', href: '/invoices', icon: FileText }] },
-    {
-      label: 'Community',
-      items: [
-        { name: 'Messages', href: '/community/messages', icon: MessagesSquare }
-      ]
-    },
-    { label: 'Learning', items: [{ name: 'Courses', href: '/community/courses', icon: BookOpen }] }
-  ],
   member: [
-    { label: 'Overview', items: [{ name: 'Creator Home', href: '/creator', icon: Home }] },
     {
-      label: 'Community',
+      label: 'Creator Club',
       items: [
+        { name: 'Home', href: '/creator', icon: Home },
         { name: 'Community', href: '/community', icon: MessageCircle },
-        { name: 'Direct Messages', href: '/community/messages', icon: MessagesSquare }
+        { name: 'Messages', href: '/community/messages', icon: MessagesSquare },
+        { name: 'Education', href: '/community/courses', icon: BookOpen },
+        { name: 'Marketplace', href: '/community/marketplace', icon: Copy }
       ]
-    },
-    {
-      label: 'Learning',
-      items: [
-        { name: 'Courses', href: '/community/courses', icon: BookOpen },
-        { name: 'Resources', href: '/community/hub', icon: LayoutGrid }
-      ]
-    },
-    {
-      label: 'Marketplace',
-      items: [{ name: 'Marketplace', href: '/community/marketplace', icon: Copy }]
     }
   ]
 }

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Search, Users, Crown, Star, Zap, Mail, Calendar, MapPin, Filter, X } from 'lucide-react';
-import { supabase, isSupabaseAvailable, UserRole } from '../lib/supabase';
+import { Search, Users, Star, Mail, Calendar, MapPin, X } from 'lucide-react';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import { formatAppDate } from '../lib/dateFormat';
 
 interface Member {
   id: string;
   full_name: string | null;
   email: string;
-  role: UserRole;
+  role: string;
   avatar_url: string | null;
   location: string | null;
   subscription_type: string | null;
@@ -16,19 +16,11 @@ interface Member {
   twitter: string | null;
 }
 
-const tierConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
-  elite: { label: 'Elite', color: 'text-yellow-300', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: Crown },
-  pro:   { label: 'Pro',   color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/10', border: 'border-[#3aa3eb]/30', icon: Star },
-  free:  { label: 'Free',  color: 'text-gray-400',  bg: 'bg-white/5',       border: 'border-white/10',    icon: Zap },
-};
-
-function TierBadge({ role }: { role: string }) {
-  const cfg = tierConfig[role] ?? tierConfig.free;
-  const Icon = cfg.icon;
+function MemberBadge() {
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.border} ${cfg.color}`}>
-      <Icon className="h-3 w-3" />
-      {cfg.label}
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-[#3aa3eb]/10 border-[#3aa3eb]/30 text-[#3aa3eb]">
+      <Star className="h-3 w-3" />
+      Creator
     </span>
   );
 }
@@ -37,9 +29,7 @@ function MemberAvatar({ member }: { member: Member }) {
   const initials = (member.full_name || member.email)
     .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   if (member.avatar_url) {
-    return (
-      <img src={member.avatar_url} alt={member.full_name ?? ''} className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/10" />
-    );
+    return <img src={member.avatar_url} alt={member.full_name ?? ''} className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/10" />;
   }
   return (
     <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#3aa3eb]/30 to-[#3aa3eb]/10 flex items-center justify-center ring-2 ring-white/10">
@@ -52,19 +42,16 @@ export default function CreatorMembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [tierFilter, setTierFilter] = useState<'all' | 'elite' | 'pro' | 'free'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
 
-  useEffect(() => {
-    loadMembers();
-  }, []);
+  useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
     if (!isSupabaseAvailable()) { setLoading(false); return; }
     const { data, error } = await supabase!
       .from('profiles')
       .select('id, full_name, email, role, avatar_url, location, subscription_type, created_at, instagram, twitter')
-      .in('role', ['free', 'pro', 'elite'])
+      .eq('role', 'member')
       .order('created_at', { ascending: false });
     if (!error && data) setMembers(data as Member[]);
     setLoading(false);
@@ -73,9 +60,7 @@ export default function CreatorMembersPage() {
   const filtered = members
     .filter(m => {
       const q = search.toLowerCase();
-      const matchesSearch = !q || (m.full_name ?? '').toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
-      const matchesTier = tierFilter === 'all' || m.role === tierFilter;
-      return matchesSearch && matchesTier;
+      return !q || (m.full_name ?? '').toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
     })
     .sort((a, b) => {
       if (sortBy === 'name') return (a.full_name ?? a.email).localeCompare(b.full_name ?? b.email);
@@ -83,10 +68,6 @@ export default function CreatorMembersPage() {
       const bT = new Date(b.created_at).getTime();
       return sortBy === 'newest' ? bT - aT : aT - bT;
     });
-
-  const eliteCount = members.filter(m => m.role === 'elite').length;
-  const proCount   = members.filter(m => m.role === 'pro').length;
-  const freeCount  = members.filter(m => m.role === 'free').length;
 
   return (
     <div className="space-y-8">
@@ -101,23 +82,16 @@ export default function CreatorMembersPage() {
           </div>
         </div>
 
-        {/* Stat pills */}
+        {/* Stat pill */}
         <div className="flex flex-wrap gap-3 mb-6">
-          {[
-            { label: 'Total Members', value: members.length, color: 'text-white' },
-            { label: 'Elite', value: eliteCount, color: 'text-yellow-300' },
-            { label: 'Pro', value: proCount, color: 'text-[#3aa3eb]' },
-            { label: 'Free', value: freeCount, color: 'text-gray-400' },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-              <span className={`text-lg font-black ${s.color}`}>{s.value}</span>
-              <span className="text-xs text-gray-500">{s.label}</span>
-            </div>
-          ))}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+            <span className="text-lg font-black text-[#3aa3eb]">{members.length}</span>
+            <span className="text-xs text-gray-500">Total Members</span>
+          </div>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -133,16 +107,6 @@ export default function CreatorMembersPage() {
               </button>
             )}
           </div>
-          <select
-            value={tierFilter}
-            onChange={e => setTierFilter(e.target.value as typeof tierFilter)}
-            className="px-4 py-2.5 bg-white/[0.08] border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3aa3eb]/50 text-sm"
-          >
-            <option value="all">All Tiers</option>
-            <option value="elite">Elite</option>
-            <option value="pro">Pro</option>
-            <option value="free">Free</option>
-          </select>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -164,44 +128,28 @@ export default function CreatorMembersPage() {
             <Users className="h-12 w-12 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400 text-lg font-medium">No members found</p>
             <p className="text-gray-600 text-sm mt-1">
-              {members.length === 0 ? 'No Creator Club members have signed up yet.' : 'Try adjusting your filters.'}
+              {members.length === 0 ? 'No Creator Club members have signed up yet.' : 'Try adjusting your search.'}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(member => (
               <div key={member.id} className="ios-card rounded-2xl p-4 sm:p-5 flex flex-col gap-4 hover:bg-white/[0.07] transition-all duration-200">
-                {/* Top row: avatar + name + tier */}
                 <div className="flex items-start gap-3">
                   <MemberAvatar member={member} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-white truncate leading-tight">{member.full_name ?? '—'}</p>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{member.email}</p>
-                    <div className="mt-1.5">
-                      <TierBadge role={member.role} />
-                    </div>
+                    <div className="mt-1.5"><MemberBadge /></div>
                   </div>
                 </div>
-
-                {/* Meta row */}
                 <div className="flex flex-col gap-1.5 text-xs text-gray-500">
                   {member.location && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      {member.location}
-                    </span>
+                    <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0" />{member.location}</span>
                   )}
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 shrink-0" />
-                    Joined {formatAppDate(member.created_at)}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    {member.email}
-                  </span>
+                  <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 shrink-0" />Joined {formatAppDate(member.created_at)}</span>
+                  <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 shrink-0" />{member.email}</span>
                 </div>
-
-                {/* Social handles */}
                 {(member.instagram || member.twitter) && (
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5 text-xs text-gray-500">
                     {member.instagram && <span>@{member.instagram.replace(/^@/, '')} (IG)</span>}
@@ -213,7 +161,6 @@ export default function CreatorMembersPage() {
           </div>
         )}
 
-        {/* Footer count */}
         {!loading && filtered.length > 0 && (
           <p className="text-center text-xs text-gray-600 mt-6">
             Showing {filtered.length} of {members.length} members

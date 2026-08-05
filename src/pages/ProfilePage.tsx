@@ -414,10 +414,9 @@ export default function ProfilePage() {
                         <div className="text-white font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Reviewer</div>
                       </div>
                     )}
-                    {profile?.role === 'elite' && (
-                      <div className="p-4 bg-yellow-500/10 rounded-lg text-center border border-yellow-500/30">
-                        <div className="text-2xl mb-2">👑</div>
-                        <div className="text-yellow-400 font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Elite Member</div>
+                    {profile?.role === 'member' && (
+                      <div className="p-4 bg-[#3aa3eb]/10 rounded-lg text-center border border-[#3aa3eb]/30">
+                        <div className="text-[#3aa3eb] font-bold text-sm" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>Creator Member</div>
                       </div>
                     )}
                     {profile?.role === 'admin' && (

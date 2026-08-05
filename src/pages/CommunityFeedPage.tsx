@@ -150,7 +150,7 @@ export default function CommunityFeedPage() {
   const isPro = useMemo(() => {
     const role = (profile?.role || '').toLowerCase();
     const sub = (profile?.subscription_type || 'free').toLowerCase();
-    return role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || sub === 'pro';
+    return role === 'admin' || role === 'member';
   }, [profile?.role, profile?.subscription_type]);
 
   const canViewPost = (post: CommunityPost) => {

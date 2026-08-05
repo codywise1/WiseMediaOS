@@ -69,7 +69,7 @@ export default function NoteDetail({ currentUser }: NoteDetailProps) {
         tagInput: ''
     });
 
-    const isAdminOrStaff = currentUser?.role === 'admin' || currentUser?.role === 'staff';
+    const isAdminOrStaff = currentUser?.role === 'admin';
     const isInitialLoad = useRef(true);
 
     useEffect(() => {

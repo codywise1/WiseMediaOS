@@ -78,112 +78,62 @@ interface User {
   company?: string;
 }
 
+function AccessDenied({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="glass-card p-6 sm:p-8 rounded-2xl max-w-md text-center border border-white/10">
+        <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>{title}</h2>
+        <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>{message}</p>
+      </div>
+    </div>
+  );
+}
+
+function useRole() {
+  const { profile, user } = useAuth();
+  const raw = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
+  // Normalize legacy values
+  if (['free', 'pro', 'elite', 'staff'].includes(raw)) return 'member';
+  if (raw === 'user') return 'client';
+  if (raw === 'admin' || raw === 'member' || raw === 'client') return raw as 'admin' | 'member' | 'client';
+  return 'member' as const; // default for self-signups
+}
+
+/** Admin-only pages (agency tools, member management) */
 function AdminGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user } = useAuth();
-
-  // In demo mode (no Supabase), allow admin routes
-  if (!isSupabaseAvailable()) {
-    return children;
-  }
-
-  const profileRole = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  if (!profileRole || profileRole !== 'admin') {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="glass-card p-6 sm:p-8 rounded-2xl max-w-md text-center border border-white/10">
-          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Admin Only</h2>
-          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
-            You need administrator privileges to access this area.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  const role = useRole();
+  if (!isSupabaseAvailable()) return children;
+  if (role !== 'admin') return <AccessDenied title="Admin Only" message="You need administrator privileges to access this area." />;
   return children;
 }
 
+/** Client portal pages — admin and clients only, members cannot access */
+function ClientPortalGuard({ children }: { children: React.ReactElement }) {
+  const role = useRole();
+  if (!isSupabaseAvailable()) return children;
+  if (role === 'member') return <AccessDenied title="Client Portal" message="This area is for Wise Media clients. Sign in with your client account to continue." />;
+  return children;
+}
+
+/** Creator community pages — admin and members only, clients cannot access */
+function MemberPortalGuard({ children }: { children: React.ReactElement }) {
+  const role = useRole();
+  if (!isSupabaseAvailable()) return children;
+  if (role === 'client') return <AccessDenied title="Creator Club" message="Creator Club is for Wise Media Creator members. Sign in with your Creator account to continue." />;
+  return children;
+}
+
+// Keep for any remaining usages - maps to ClientPortalGuard behaviour
 function StaffOrAdminGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user } = useAuth();
-
-  // In demo mode (no Supabase), allow staff/admin routes
-  if (!isSupabaseAvailable()) {
-    return children;
-  }
-
-  const profileRole = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  const isAllowed = profileRole === 'admin' || profileRole === 'staff';
-  if (!isAllowed) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="glass-card p-6 sm:p-8 rounded-2xl max-w-md text-center border border-white/10">
-          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Staff Only</h2>
-          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
-            You don't have access to the client list.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  const role = useRole();
+  if (!isSupabaseAvailable()) return children;
+  if (role !== 'admin') return <AccessDenied title="Admin Only" message="You need administrator privileges to access this area." />;
   return children;
 }
 
-function ProOnlyGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user } = useAuth();
-
-  const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  const subscription = (profile as any)?.subscription_type || user?.user_metadata?.subscription_type || 'free';
-  const isPro = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || subscription === 'pro';
-
-  if (!isPro) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="glass-card p-6 sm:p-8 rounded-2xl max-w-md text-center border border-white/10 space-y-4">
-          <h2 className="text-white font-bold text-2xl" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Pro Creators only</h2>
-          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
-            This content is exclusive to Pro Creators. Upgrade to unlock it.
-          </p>
-          <a
-            href="/community/pro"
-            className="btn-primary inline-flex justify-center w-full"
-          >
-            Go to Pro upgrade
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  return children;
-}
-
+// Legacy alias kept to avoid broken references in routes not yet migrated
 function CommunityGuard({ children }: { children: React.ReactElement }) {
-  const { profile, user } = useAuth();
-
-  // In demo mode (no Supabase), allow community routes
-  if (!isSupabaseAvailable()) {
-    return children;
-  }
-
-  // Allow access for admin and creator roles (elite, pro, free). Block generic 'user' or missing profile.
-  const role = (profile?.role || user?.user_metadata?.role || '').toLowerCase();
-  const allowed = role === 'admin' || role === 'staff' || role === 'elite' || role === 'pro' || role === 'free' || role === 'user';
-
-  if (!allowed) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="glass-card p-6 sm:p-8 rounded-2xl max-w-md text-center border border-white/10">
-          <h2 className="text-white font-bold text-2xl mb-2" style={{ fontFamily: 'Montserrat, system-ui, sans-serif' }}>Access Restricted</h2>
-          <p className="text-gray-400" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}>
-            Creator Club is available to Creators and Admins. Please sign in with a Creator account.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return children;
+  return <MemberPortalGuard>{children}</MemberPortalGuard>;
 }
 
 import { useLoadingGuard } from './hooks/useLoadingGuard';
@@ -230,7 +180,7 @@ function App() {
       const next: User = {
         id: user.id,
         email: user.email || '',
-        role: (user.user_metadata?.role as UserRole) || 'user',
+        role: (user.user_metadata?.role as UserRole) || 'member',
         name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
         avatar: user.user_metadata?.avatar,
         phone: user.user_metadata?.phone,
@@ -404,35 +354,33 @@ function App() {
         setIsAuthenticated(true);
         console.log('Admin login successful');
         return true;
-      } else if (email.toLowerCase() === 'staff' && password === 'staff') {
+      } else if (email.toLowerCase() === 'member' && password === 'member') {
         const userData: User = {
-          id: 'staff-demo-id',
-          email: 'staff@wisemedia.io',
-          role: 'staff',
-          name: 'Demo Staff',
+          id: 'member-demo-id',
+          email: 'member@wisemedia.io',
+          role: 'member',
+          name: 'Demo Creator',
           phone: '+1 (555) 246-8100',
-          company: 'Wise Media'
+          company: 'Creator Club'
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
-        console.log('Staff login successful');
         return true;
-      } else if (email.toLowerCase() === 'user' && password === 'user') {
+      } else if (email.toLowerCase() === 'client' && password === 'client') {
         const userData: User = {
-          id: 'user-demo-id',
-          email: 'user@wisemedia.io',
-          role: 'user',
+          id: 'client-demo-id',
+          email: 'client@wisemedia.io',
+          role: 'client',
           name: 'Demo Client',
           phone: '+1 (555) 987-6543',
           company: 'Client Corp'
         };
         setCurrentUser(userData);
         setIsAuthenticated(true);
-        console.log('User login successful');
         return true;
       } else {
         console.log('Invalid demo credentials');
-        throw new Error('Invalid credentials. Use admin/admin, staff/staff, or user/user.');
+        throw new Error('Invalid credentials. Use admin/admin, member/member, or client/client.');
       }
     } else {
       try {
@@ -441,7 +389,7 @@ function App() {
           const userData: User = {
             id: user.id,
             email: user.email || '',
-            role: (user.user_metadata?.role as UserRole) || 'user',
+            role: (user.user_metadata?.role as UserRole) || 'member',
             name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
             phone: user.user_metadata?.phone,
             company: user.user_metadata?.company,
@@ -582,20 +530,20 @@ function App() {
               </StaffOrAdminGuard>
             }
           />
-          <Route path="/projects" element={<Projects currentUser={currentUser} />} />
-          <Route path="/projects/:id" element={<ProjectDetail currentUser={currentUser} />} />
-          <Route path="/notes" element={<AppleNotes currentUser={currentUser} />} />
-          <Route path="/notes/:id" element={<NoteDetail currentUser={currentUser} />} />
+          <Route path="/projects" element={<ClientPortalGuard><Projects currentUser={currentUser} /></ClientPortalGuard>} />
+          <Route path="/projects/:id" element={<ClientPortalGuard><ProjectDetail currentUser={currentUser} /></ClientPortalGuard>} />
+          <Route path="/notes" element={<ClientPortalGuard><AppleNotes currentUser={currentUser} /></ClientPortalGuard>} />
+          <Route path="/notes/:id" element={<ClientPortalGuard><NoteDetail currentUser={currentUser} /></ClientPortalGuard>} />
 
           {/* Client Portal Routes */}
           <Route path="/client/notes" element={<ClientNotes currentUser={currentUser} />} />
           <Route path="/client/notes/:id" element={<ClientNoteDetail />} />
 
-          <Route path="/invoices" element={<ErrorBoundary label="Invoices"><Invoices currentUser={currentUser} /></ErrorBoundary>} />
-          <Route path="/invoices/:id" element={<ErrorBoundary label="Invoice Detail"><InvoiceDetail currentUser={currentUser} /></ErrorBoundary>} />
+          <Route path="/invoices" element={<ClientPortalGuard><ErrorBoundary label="Invoices"><Invoices currentUser={currentUser} /></ErrorBoundary></ClientPortalGuard>} />
+          <Route path="/invoices/:id" element={<ClientPortalGuard><ErrorBoundary label="Invoice Detail"><InvoiceDetail currentUser={currentUser} /></ErrorBoundary></ClientPortalGuard>} />
           <Route path="/appointments" element={<Navigate to="/meetings" replace />} />
-          <Route path="/proposals" element={<Proposals currentUser={currentUser} />} />
-          <Route path="/proposals/:id" element={<ProposalDetail currentUser={currentUser} />} />
+          <Route path="/proposals" element={<ClientPortalGuard><Proposals currentUser={currentUser} /></ClientPortalGuard>} />
+          <Route path="/proposals/:id" element={<ClientPortalGuard><ProposalDetail currentUser={currentUser} /></ClientPortalGuard>} />
           <Route path="/support" element={<Support currentUser={currentUser} />} />
           {/* Community Module */}
           <Route
@@ -714,21 +662,21 @@ function App() {
               </AdminGuard>
             }
           />
-          <Route path="/meetings" element={<MeetingsPage />} />
+          <Route path="/meetings" element={<ClientPortalGuard><MeetingsPage /></ClientPortalGuard>} />
           <Route
             path="/meetings/live/:id"
             element={
-              <StaffOrAdminGuard>
+              <AdminGuard>
                 <LiveMeetingPage />
-              </StaffOrAdminGuard>
+              </AdminGuard>
             }
           />
           <Route
             path="/meetings/:id"
             element={
-              <StaffOrAdminGuard>
+              <ClientPortalGuard>
                 <MeetingDetailPage />
-              </StaffOrAdminGuard>
+              </ClientPortalGuard>
             }
           />
           {/* <Route
@@ -798,15 +746,17 @@ function App() {
           <Route
             path="/analytics"
             element={
-              <AnalyticsPage />
+              <AdminGuard>
+                <AnalyticsPage />
+              </AdminGuard>
             }
           />
           <Route
             path="/creator"
             element={
-              <CommunityGuard>
+              <MemberPortalGuard>
                 <CreatorHome />
-              </CommunityGuard>
+              </MemberPortalGuard>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />

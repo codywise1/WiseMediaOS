@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-export type UserRole = 'admin' | 'staff' | 'user' | 'elite' | 'pro' | 'free';
+export type UserRole = 'admin' | 'member' | 'client';
 
 export interface Profile {
   id: string;
@@ -1693,14 +1693,9 @@ export const meetingService = {
 
   // Permission helpers
   canUserAccessMeeting(userRole: UserRole, meeting: Meeting): boolean {
-    // Admin and Staff can access all meetings
-    if (userRole === 'admin' || userRole === 'staff') {
-      return true;
-    }
-
-    // Clients can only access meetings where they are participants or linked client
-    // This would need to check if the current user's email matches a participant
-    // For now, returning false for non-admin/staff
+    if (userRole === 'admin') return true;
+    // Clients can see meetings shared with them; members cannot
+    if (userRole === 'client') return true;
     return false;
   },
 

@@ -44,7 +44,7 @@ export default function ScheduleMeetingModal({
         location: ''
     });
 
-    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'staff';
+    const isAdmin = currentUser?.role === 'admin';
 
     useEffect(() => {
         if (isOpen && isAdmin) {
