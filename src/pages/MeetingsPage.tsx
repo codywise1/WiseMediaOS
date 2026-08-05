@@ -12,7 +12,7 @@ export default function MeetingsPage() {
     <div className="h-full flex flex-col overflow-hidden gap-4">
       <PageHeader
         title="Meetings"
-        subtitle="Join the conference room — no link needed"
+        subtitle="Join your meeting instantly."
         action={
           <a
             href={WHEREBY_URL}

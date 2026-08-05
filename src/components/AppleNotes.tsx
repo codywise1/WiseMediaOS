@@ -5,6 +5,7 @@ import {
   Pencil, ArrowLeft, Folder as FolderIcon, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { noteService, Note, NoteCategory, NoteBlock, UserRole } from '../lib/supabase';
+import PageHeader from './PageHeader';
 import { useToast } from '../contexts/ToastContext';
 import { formatAppDate } from '../lib/dateFormat';
 
@@ -486,6 +487,19 @@ export default function AppleNotes({ currentUser }: AppleNotesProps) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden gap-3">
+      <PageHeader
+        title="Notes"
+        subtitle="Your ideas, organized."
+        action={
+          <button
+            onClick={handleNewNote}
+            className="btn-header-glass shrink-0 flex items-center gap-2"
+          >
+            <Plus size={16} />
+            <span className="btn-text-glow text-sm">New Note</span>
+          </button>
+        }
+      />
       {/* Mobile folder selector bar */}
       <div className="md:hidden shrink-0">
         <button

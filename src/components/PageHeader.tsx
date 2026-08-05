@@ -8,7 +8,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <div className="glass-card neon-glow rounded-2xl p-5 sm:p-6 lg:p-8">
+    <div className="glass-card rounded-2xl p-5 sm:p-6 lg:p-8" style={{ boxShadow: '0 0 0 1px rgba(58,163,235,0.10), 0 4px 32px rgba(0,0,0,0.35)' }}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1
