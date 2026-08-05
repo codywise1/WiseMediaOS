@@ -10,7 +10,7 @@ import { formatAppDateTime } from '../lib/dateFormat';
 import { renderMessageBody } from '../lib/messageEmbeds';
 
 type FeedTag = 'General' | 'Design' | 'Dev' | 'Branding' | 'Wins' | 'Questions';
-type Visibility = 'all' | 'pro';
+type Visibility = 'all' | 'pro'; // kept for DB compat
 
 interface PostAuthor {
   full_name: string | null;
@@ -111,7 +111,6 @@ export default function CommunityFeedPage() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [selectedTag, setSelectedTag] = useState<FeedTag | 'All'>('All');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'pro_only'>('all');
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTitle, setComposerTitle] = useState('');
   const [composerBody, setComposerBody] = useState('');
@@ -147,28 +146,11 @@ export default function CommunityFeedPage() {
     return (profile?.role || '').toLowerCase() === 'admin';
   }, [profile?.role]);
 
-  const isPro = useMemo(() => {
-    const role = (profile?.role || '').toLowerCase();
-    const sub = (profile?.subscription_type || 'free').toLowerCase();
-    return role === 'admin' || role === 'member';
-  }, [profile?.role, profile?.subscription_type]);
-
-  const canViewPost = (post: CommunityPost) => {
-    if (post.is_hidden && !isAdmin) return false;
-    if (post.visibility === 'all') return true;
-    return isPro;
-  };
-
   const visiblePosts = useMemo(() => {
-    const filteredBySubscription = posts.filter(canViewPost);
-    const filteredByTag = selectedTag === 'All'
-      ? filteredBySubscription
-      : filteredBySubscription.filter(p => (p.tags || []).some(tag => tag.toLowerCase() === selectedTag.toLowerCase()));
-    if (visibilityFilter === 'pro_only') {
-      return filteredByTag.filter(p => p.visibility === 'pro');
-    }
-    return filteredByTag;
-  }, [posts, selectedTag, visibilityFilter, isPro]);
+    const visible = posts.filter(p => !p.is_hidden || isAdmin);
+    if (selectedTag === 'All') return visible;
+    return visible.filter(p => (p.tags || []).some(tag => tag.toLowerCase() === selectedTag.toLowerCase()));
+  }, [posts, selectedTag, isAdmin]);
 
   useEffect(() => {
     if (!isSupabaseAvailable()) {
@@ -516,13 +498,10 @@ export default function CommunityFeedPage() {
     }
   }
 
-  const composerCanSelectPro = isPro;
-  const visibilityOptions: { value: Visibility; label: string }[] = composerCanSelectPro
-    ? [
-      { value: 'all', label: 'All Creators' },
-      { value: 'pro', label: 'Pro Creators only' },
-    ]
-    : [{ value: 'all', label: 'All Creators' }];
+  const visibilityOptions: { value: Visibility; label: string }[] = [
+    { value: 'all', label: 'All Creators' },
+    { value: 'pro', label: 'Pro Creators only' },
+  ];
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -602,15 +581,11 @@ export default function CommunityFeedPage() {
         ) : undefined}
       />
       <div className="glass-card neon-glow rounded-2xl p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="ios-segmented inline-flex min-w-max">
             <button
               onClick={() => setSelectedTag('All')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${selectedTag === 'All'
-                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
+              className={`ios-segmented-btn flex-shrink-0 ${selectedTag === 'All' ? 'active' : ''}`}
             >
               All
             </button>
@@ -618,39 +593,11 @@ export default function CommunityFeedPage() {
               <button
                 key={tag}
                 onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-2 rounded-lg text-sm transition-all border ${selectedTag === tag
-                  ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                  }`}
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
+                className={`ios-segmented-btn flex-shrink-0 ${selectedTag === tag ? 'active' : ''}`}
               >
                 {tag}
               </button>
             ))}
-          </div>
-
-          <div className="lg:ml-auto flex items-center gap-2">
-            <button
-              onClick={() => setVisibilityFilter('all')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${visibilityFilter === 'all'
-                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
-            >
-              All Posts
-            </button>
-            <button
-              onClick={() => setVisibilityFilter('pro_only')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all border ${visibilityFilter === 'pro_only'
-                ? 'bg-[#3AA3EB]/20 border-[#3AA3EB]/50 text-white'
-                : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
-              style={{ fontFamily: '-apple-system, BlinkMacSystemFont, SF Pro Text, Inter, sans-serif' }}
-              disabled={!isPro}
-            >
-              Pro Only
-            </button>
           </div>
         </div>
       </div>
