@@ -45,12 +45,14 @@ interface DashboardProps {
 type Timeframe = '7d' | '30d' | 'quarter' | 'year';
 
 const QUICK_LINKS = [
-  { label: 'codywise.io', url: 'https://codywise.io', icon: null, brand: null, color: 'text-[#3aa3eb]', bg: 'bg-[#3aa3eb]/15' },
-  { label: 'wisemedia.io', url: 'https://wisemedia.io', icon: null, brand: null, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-  { label: '@CodyConsultant', url: 'https://x.com/CodyConsultant', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
-  { label: '@WiseMedia33', url: 'https://x.com/WiseMedia33', icon: null, brand: 'x' as const, color: 'text-white', bg: 'bg-white/10' },
-  { label: 'YouTube', url: 'https://www.youtube.com/@CodyConsultant', icon: null, brand: 'youtube' as const, color: 'text-red-400', bg: 'bg-red-500/15' },
-  { label: 'LinkedIn', url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/', icon: null, brand: 'linkedin' as const, color: 'text-blue-400', bg: 'bg-blue-500/15' },
+  { label: 'codywise.io',     url: 'https://codywise.io',                                  brand: null,               color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'wisemedia.io',    url: 'https://wisemedia.io',                                 brand: null,               color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: '@CodyConsultant', url: 'https://x.com/CodyConsultant',                         brand: 'x' as const,       color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: '@WiseMedia33',    url: 'https://x.com/WiseMedia33',                            brand: 'x' as const,       color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'YouTube',         url: 'https://www.youtube.com/@CodyConsultant',              brand: 'youtube' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'LinkedIn',        url: 'https://www.linkedin.com/in/cody-wise-3a76a4168/',    brand: 'linkedin' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'Instagram',       url: 'https://www.instagram.com/wisemedia33/',              brand: 'instagram' as const, color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
+  { label: 'Facebook',        url: 'https://www.facebook.com/wisemedia.io/',              brand: 'facebook' as const,  color: 'text-white', bg: 'bg-[#3aa3eb]/20' },
 ];
 
 const containerVariants = {
@@ -476,7 +478,7 @@ export default function Dashboard({ currentUser, authEpoch }: DashboardProps) {
       {/* Quick Links — socials + website */}
       <motion.div variants={itemVariants}>
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Quick Links</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
           {QUICK_LINKS.map((link) => (
             <motion.a
               key={link.label}
