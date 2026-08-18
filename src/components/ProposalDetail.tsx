@@ -551,6 +551,19 @@ export default function ProposalDetail({ currentUser }: ProposalDetailProps) {
             <Pencil size={16} /> Modify Proposal
           </button>
         </div>
+      ) : canRevise ? (
+        <div className="rounded-3xl bg-white/[0.03] border border-white/[0.06] p-8 text-center space-y-3">
+          <p className="text-sm text-gray-400">
+            This proposal is <span className="text-white font-semibold capitalize">{proposal.status.replace('_', ' ')}</span> and can't be edited directly.
+            Revise it to revert to draft and make changes.
+          </p>
+          <button
+            onClick={handleRevise}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#3aa3eb] text-white font-semibold hover:bg-[#59a1e5] transition-colors"
+          >
+            <Pencil size={16} /> Revise to Edit
+          </button>
+        </div>
       ) : null}
 
       <ProposalBuilderModal

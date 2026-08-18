@@ -543,7 +543,7 @@ function App() {
           <Route path="/invoices/:id" element={<ClientPortalGuard><ErrorBoundary label="Invoice Detail"><InvoiceDetail currentUser={currentUser} /></ErrorBoundary></ClientPortalGuard>} />
           <Route path="/appointments" element={<Navigate to="/meetings" replace />} />
           <Route path="/proposals" element={<ClientPortalGuard><Proposals currentUser={currentUser} /></ClientPortalGuard>} />
-          <Route path="/proposals/:id" element={<ClientPortalGuard><ProposalDetail currentUser={currentUser} /></ClientPortalGuard>} />
+          <Route path="/proposals/:id" element={<ClientPortalGuard><ErrorBoundary label="Proposal Detail"><ProposalDetail currentUser={currentUser} /></ErrorBoundary></ClientPortalGuard>} />
           <Route path="/support" element={<Support currentUser={currentUser} />} />
           {/* Community Module */}
           <Route
