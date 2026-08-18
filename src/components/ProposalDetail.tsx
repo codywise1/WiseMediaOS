@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Sparkles,
   Pen,
+  ArrowRight,
 } from 'lucide-react';
 import { proposalService, ProposalItem } from '../lib/proposalService';
 import { serviceTemplates } from '../config/serviceTemplates';
