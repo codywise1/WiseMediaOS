@@ -39,7 +39,6 @@ import MeetingDetailPage from './pages/MeetingDetailPage';
 import ClientNotes from './pages/ClientNotes';
 import ClientNoteDetail from './pages/ClientNoteDetail';
 import CreatorMembersPage from './pages/CreatorMembersPage';
-import CleaningPage from './pages/CleaningPage';
 // import CommunityProPage from './pages/CommunityProPage';
 // import CommunityResourcesPage from './pages/CommunityResourcesPage';
 // import CommunitySettingsPage from './pages/CommunitySettingsPage';
@@ -663,7 +662,6 @@ function App() {
               </AdminGuard>
             }
           />
-          <Route path="/cleaning" element={<AdminGuard><CleaningPage /></AdminGuard>} />
           <Route path="/meetings" element={<ClientPortalGuard><MeetingsPage /></ClientPortalGuard>} />
           <Route
             path="/meetings/live/:id"
