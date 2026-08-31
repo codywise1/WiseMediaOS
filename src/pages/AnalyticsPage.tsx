@@ -362,7 +362,7 @@ export default function AnalyticsPage() {
             )}
 
             {/* Visitors chart + Top pages */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
               <VisitorsChart chart={gaData.chart} formatDate={formatDate} />
 
               {/* Top pages */}
@@ -636,11 +636,15 @@ function VisitorsChart({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(600);
+  const [height, setHeight] = useState(260);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const el = containerRef.current;
-    const update = () => setWidth(el.clientWidth);
+    const update = () => {
+      setWidth(el.clientWidth);
+      setHeight(Math.max(el.clientHeight, 120));
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -652,7 +656,7 @@ function VisitorsChart({
   const maxVal = Math.max(...values, 1);
   const minVal = 0;
   const W = Math.max(width, 1);
-  const H = 260;
+  const H = Math.max(height, 120);
   const padL = 8;
   const padR = 8;
   const padT = 16;
@@ -699,9 +703,9 @@ function VisitorsChart({
   };
 
   return (
-    <GlassCard className="lg:col-span-3 p-4 sm:p-5">
+    <GlassCard className="lg:col-span-3 p-4 sm:p-5 flex flex-col h-full">
       {/* Header + metric switcher */}
-      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2 shrink-0">
         <div>
           <h3 className="text-base font-bold text-white font-display">{metricCfg.label}</h3>
           <p className="text-xs text-gray-500 font-body mt-0.5">
@@ -722,7 +726,7 @@ function VisitorsChart({
       </div>
 
       {/* Chart */}
-      <div ref={containerRef} className="mt-3 relative" style={{ height: H }}>
+      <div ref={containerRef} className="mt-3 relative flex-1 min-h-0">
         {chart.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm text-gray-500 font-body">No chart data</p>
