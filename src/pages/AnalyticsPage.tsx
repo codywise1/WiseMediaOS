@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import GlassCard from '../components/GlassCard';
 import PageHeader from '../components/PageHeader';
 import {
@@ -22,11 +22,7 @@ import {
   FileText,
   ArrowRightLeft,
   Zap,
-  DollarSign,
   CheckCircle2,
-  Send,
-  Target,
-  Briefcase,
 } from 'lucide-react';
 import { supabase, isSupabaseAvailable } from '../lib/supabase';
 
@@ -125,8 +121,6 @@ export default function AnalyticsPage() {
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
   };
-
-  const maxUsers = gaData?.chart?.length ? Math.max(...gaData.chart.map(p => p.users), 1) : 1;
 
   const activationUrl = (() => {
     if (!error) return null;
@@ -368,47 +362,8 @@ export default function AnalyticsPage() {
             )}
 
             {/* Visitors chart + Top pages */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-              {/* Chart */}
-              <GlassCard className="lg:col-span-3 p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-base font-bold text-white font-display">Unique Visitors</h3>
-                    <p className="text-xs text-gray-500 font-body mt-0.5">Daily · last 28 days</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-body">
-                    <span className="h-2 w-2 rounded-full bg-[#3aa3eb]" />
-                    Visitors
-                  </div>
-                </div>
-                <div className="h-56 sm:h-64 flex items-end justify-between gap-[2px] sm:gap-1">
-                  {gaData.chart.map((point, i) => {
-                    const heightPct = Math.max((point.users / maxUsers) * 100, 2);
-                    return (
-                      <div
-                        key={i}
-                        className="flex-1 min-w-0 group relative"
-                        style={{ height: '100%' }}
-                      >
-                        <div
-                          className="absolute bottom-0 left-0 right-0 rounded-t-md transition-all duration-300 ease-out bg-gradient-to-t from-[#3aa3eb]/80 to-[#5bc0f0] group-hover:from-[#5bc0f0] group-hover:to-[#7dd3f5]"
-                          style={{ height: `${heightPct}%` }}
-                        />
-                        <div className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0f172a] border border-[#3aa3eb]/30 rounded-md px-2 py-1 text-[10px] text-white whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                          <span className="text-gray-400">{formatDate(point.date)}: </span>
-                          <span className="font-semibold">{point.users}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {gaData.chart.length > 0 && (
-                  <div className="flex justify-between mt-3 text-[10px] text-gray-500 font-body">
-                    <span>{formatDate(gaData.chart[0].date)}</span>
-                    <span>{formatDate(gaData.chart[gaData.chart.length - 1].date)}</span>
-                  </div>
-                )}
-              </GlassCard>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+              <VisitorsChart chart={gaData.chart} formatDate={formatDate} />
 
               {/* Top pages */}
               <GlassCard className="lg:col-span-2 p-4 sm:p-5">
@@ -655,13 +610,220 @@ export default function AnalyticsPage() {
           </div>
         )}
       </section>
-
-      {/* Business Performance has moved to the Invoices page */}
     </div>
   );
 }
 
-/** Business Performance section has been moved to the Invoices page. */
+/* ---------- iOS-style Visitors Chart ---------- */
+
+type ChartMetric = 'users' | 'sessions' | 'pageviews';
+
+const CHART_METRICS: { key: ChartMetric; label: string; color: string; gradientId: string }[] = [
+  { key: 'users', label: 'Visitors', color: '#3aa3eb', gradientId: 'grad-users' },
+  { key: 'sessions', label: 'Sessions', color: '#5bc0f0', gradientId: 'grad-sessions' },
+  { key: 'pageviews', label: 'Pageviews', color: '#34d399', gradientId: 'grad-pageviews' },
+];
+
+function VisitorsChart({
+  chart,
+  formatDate,
+}: {
+  chart: GAData['chart'];
+  formatDate: (s: string) => string;
+}) {
+  const [metric, setMetric] = useState<ChartMetric>('users');
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(600);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const update = () => setWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const metricCfg = CHART_METRICS.find(m => m.key === metric)!;
+  const values = chart.map(p => p[metric]);
+  const maxVal = Math.max(...values, 1);
+  const minVal = 0;
+  const W = Math.max(width, 1);
+  const H = 260;
+  const padL = 8;
+  const padR = 8;
+  const padT = 16;
+  const padB = 28;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const xStep = chart.length > 1 ? chartW / (chart.length - 1) : 0;
+  const xPos = (i: number) => padL + i * xStep;
+  const yScale = (v: number) => padT + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
+
+  // Smooth area path (Catmull-Rom → Bézier)
+  const pts = chart.map((p, i) => ({ x: xPos(i), y: yScale(p[metric]) }));
+  let linePath = '';
+  if (pts.length === 1) {
+    linePath = `M ${pts[0].x} ${pts[0].y}`;
+  } else {
+    linePath = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i];
+      const p1 = pts[i + 1];
+      const cpx = (p0.x + p1.x) / 2;
+      linePath += ` C ${cpx} ${p0.y}, ${cpx} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+  }
+  const areaPath = pts.length > 0
+    ? `${linePath} L ${pts[pts.length - 1].x} ${padT + chartH} L ${pts[0].x} ${padT + chartH} Z`
+    : '';
+
+  const total = values.reduce((a, b) => a + b, 0);
+  const avg = chart.length ? Math.round(total / chart.length) : 0;
+
+  const handleMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!svgRef.current || chart.length === 0) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    let nearest = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < chart.length; i++) {
+      const d = Math.abs(xPos(i) - px);
+      if (d < bestDist) { bestDist = d; nearest = i; }
+    }
+    setHoverIdx(nearest);
+  };
+
+  return (
+    <GlassCard className="lg:col-span-3 p-4 sm:p-5">
+      {/* Header + metric switcher */}
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+        <div>
+          <h3 className="text-base font-bold text-white font-display">{metricCfg.label}</h3>
+          <p className="text-xs text-gray-500 font-body mt-0.5">
+            Daily · last 28 days · avg {avg.toLocaleString()}
+          </p>
+        </div>
+        <div className="ios-segmented">
+          {CHART_METRICS.map(m => (
+            <button
+              key={m.key}
+              className={`ios-segmented-btn ${metric === m.key ? 'active' : ''}`}
+              onClick={() => { setMetric(m.key); setHoverIdx(null); }}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div ref={containerRef} className="mt-3 relative" style={{ height: H }}>
+        {chart.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-gray-500 font-body">No chart data</p>
+          </div>
+        ) : (
+          <svg
+            ref={svgRef}
+            width={W}
+            height={H}
+            viewBox={`0 0 ${W} ${H}`}
+            className="block"
+            onPointerMove={handleMove}
+            onPointerLeave={() => setHoverIdx(null)}
+            style={{ touchAction: 'pan-y' }}
+          >
+            <defs>
+              <linearGradient id={metricCfg.gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={metricCfg.color} stopOpacity="0.35" />
+                <stop offset="100%" stopColor={metricCfg.color} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+
+            {/* Horizontal grid lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map(frac => {
+              const y = padT + chartH * frac;
+              const val = Math.round(maxVal * (1 - frac));
+              return (
+                <g key={frac}>
+                  <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+                  <text x={padL + 2} y={y - 4} fill="rgba(255,255,255,0.25)" fontSize="9" fontFamily="-apple-system, sans-serif">
+                    {val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Area fill */}
+            <path d={areaPath} fill={`url(#${metricCfg.gradientId})`} />
+
+            {/* Line */}
+            <path
+              d={linePath}
+              fill="none"
+              stroke={metricCfg.color}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Hover indicator */}
+            {hoverIdx !== null && chart[hoverIdx] && (
+              <g>
+                <line
+                  x1={xPos(hoverIdx)} y1={padT} x2={xPos(hoverIdx)} y2={padT + chartH}
+                  stroke={metricCfg.color} strokeWidth="1" strokeOpacity="0.4" strokeDasharray="3 3"
+                />
+                <circle cx={xPos(hoverIdx)} cy={yScale(chart[hoverIdx][metric])} r="5" fill={metricCfg.color} stroke="#0b0d10" strokeWidth="2" />
+              </g>
+            )}
+
+            {/* X-axis labels (first, middle, last) */}
+            {chart.length > 0 && [0, Math.floor(chart.length / 2), chart.length - 1]
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .map(idx => (
+                <text
+                  key={idx}
+                  x={xPos(idx)}
+                  y={H - 6}
+                  fill="rgba(255,255,255,0.3)"
+                  fontSize="9"
+                  fontFamily="-apple-system, sans-serif"
+                  textAnchor={idx === 0 ? 'start' : idx === chart.length - 1 ? 'end' : 'middle'}
+                >
+                  {formatDate(chart[idx].date)}
+                </text>
+              ))}
+          </svg>
+        )}
+
+        {/* Floating tooltip */}
+        {hoverIdx !== null && chart[hoverIdx] && (
+          <div
+            className="absolute pointer-events-none z-10 bg-[#0b0d10]/95 border border-white/10 rounded-lg px-3 py-2 shadow-xl transition-opacity"
+            style={{
+              left: Math.min(Math.max(xPos(hoverIdx) / W * 100, 12), 88) + '%',
+              top: 4,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <p className="text-[10px] text-gray-400 font-body">{formatDate(chart[hoverIdx].date)}</p>
+            <p className="text-sm font-bold text-white font-display">
+              {chart[hoverIdx][metric].toLocaleString()} <span className="text-gray-500 font-body font-normal text-xs">{metricCfg.label}</span>
+            </p>
+          </div>
+        )}
+      </div>
+    </GlassCard>
+  );
+}
+
+/* ---------- Metric Card ---------- */
 
 const accentMap = {
   blue:   { bg: 'bg-[#3aa3eb]/15',  text: 'text-[#3aa3eb]',  ring: 'ring-[#3aa3eb]/25' },
@@ -716,6 +878,3 @@ function MetricCard({
     </GlassCard>
   );
 }
-
-
-
